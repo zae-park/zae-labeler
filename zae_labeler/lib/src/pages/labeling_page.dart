@@ -17,6 +17,11 @@ class LabelingPage extends StatefulWidget {
 class _LabelingPageState extends State<LabelingPage> {
   late FocusNode _focusNode;
   String _selectedMode = 'single_classification';
+  final List<String> _modes = [
+    'single_classification',
+    'multi_classification',
+    'segmentation'
+  ];
 
   @override
   void initState() {
@@ -43,6 +48,10 @@ class _LabelingPageState extends State<LabelingPage> {
         } else {
           labelingVM.moveNext();
         }
+      } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+        _changeMode(-1);
+      } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+        _changeMode(1);
       } else if (LogicalKeyboardKey.digit0.keyId <= event.logicalKey.keyId &&
           event.logicalKey.keyId <= LogicalKeyboardKey.digit9.keyId) {
         int index = event.logicalKey.keyId - LogicalKeyboardKey.digit0.keyId;
@@ -52,6 +61,22 @@ class _LabelingPageState extends State<LabelingPage> {
         }
       }
     }
+  }
+
+  // 모드 전환 함수
+  void _changeMode(int delta) {
+    int currentIndex = _modes.indexOf(_selectedMode);
+    int newIndex = currentIndex + delta;
+
+    if (newIndex < 0) {
+      newIndex = _modes.length - 1; // 마지막 모드로 순환
+    } else if (newIndex >= _modes.length) {
+      newIndex = 0; // 첫 번째 모드로 순환
+    }
+
+    setState(() {
+      _selectedMode = _modes[newIndex];
+    });
   }
 
   // 다운로드 진행도 표시 및 완료 메시지
@@ -146,6 +171,61 @@ class _LabelingPageState extends State<LabelingPage> {
               onKey: (event) => _handleKeyEvent(event, labelingVM),
               child: Column(
                 children: [
+                  // 라벨링 모드 선택 (세로 리스트)
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      children: _modes.map((mode) {
+                        String displayText;
+                        switch (mode) {
+                          case 'single_classification':
+                            displayText = 'Single Classification';
+                            break;
+                          case 'multi_classification':
+                            displayText = 'Multi Classification';
+                            break;
+                          case 'segmentation':
+                            displayText = 'Segmentation';
+                            break;
+                          default:
+                            displayText = mode;
+                        }
+
+                        bool isSelected = _selectedMode == mode;
+
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedMode = mode;
+                            });
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 12.0, horizontal: 16.0),
+                            margin: const EdgeInsets.symmetric(vertical: 4.0),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? Colors.blueAccent
+                                  : Colors.grey[200],
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                            child: Text(
+                              displayText,
+                              style: TextStyle(
+                                color: isSelected ? Colors.white : Colors.black,
+                                fontSize: 16,
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const Divider(),
                   // 데이터 시각화 (fl_chart 사용)
                   Expanded(
                     child: Padding(
@@ -161,34 +241,6 @@ class _LabelingPageState extends State<LabelingPage> {
                     child: Text(
                       '데이터 ${labelingVM.currentIndex + 1}/${labelingVM.dataFiles.length} - ${labelingVM.currentFileName}',
                       style: const TextStyle(fontSize: 16),
-                    ),
-                  ),
-                  // 라벨링 모드 선택
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: DropdownButton<String>(
-                      value: _selectedMode,
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'single_classification',
-                          child: Text('Single Classification'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'multi_classification',
-                          child: Text('Multi Classification'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'segmentation',
-                          child: Text('Segmentation'),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            _selectedMode = value;
-                          });
-                        }
-                      },
                     ),
                   ),
                   // 라벨 입력 키패드 (프로젝트에서 설정한 클래스만 표시)
