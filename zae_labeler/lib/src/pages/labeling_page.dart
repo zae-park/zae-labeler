@@ -110,26 +110,28 @@ class _LabelingPageState extends State<LabelingPage> {
         appBar: AppBar(
           title: Text('${project.name} 라벨링'),
           actions: [
-            PopupMenuButton<String>(
-              onSelected: (value) {
-                final labelingVM =
-                    Provider.of<LabelingViewModel>(context, listen: false);
-                if (value == 'zip') {
-                  _downloadLabels(context, labelingVM, true);
-                } else if (value == 'no_zip') {
-                  _downloadLabels(context, labelingVM, false);
-                }
-              },
-              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                const PopupMenuItem<String>(
-                  value: 'zip',
-                  child: Text('ZIP 압축 후 다운로드'),
-                ),
-                const PopupMenuItem<String>(
-                  value: 'no_zip',
-                  child: Text('.zae 파일만 다운로드'),
-                ),
-              ],
+            Builder(
+              builder: (context) => PopupMenuButton<String>(
+                onSelected: (value) {
+                  final labelingVM =
+                      Provider.of<LabelingViewModel>(context, listen: false);
+                  if (value == 'zip') {
+                    _downloadLabels(context, labelingVM, true);
+                  } else if (value == 'no_zip') {
+                    _downloadLabels(context, labelingVM, false);
+                  }
+                },
+                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                  const PopupMenuItem<String>(
+                    value: 'zip',
+                    child: Text('ZIP 압축 후 다운로드'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'no_zip',
+                    child: Text('.zae 파일만 다운로드'),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
