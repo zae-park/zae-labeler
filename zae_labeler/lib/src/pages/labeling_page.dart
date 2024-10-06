@@ -4,6 +4,7 @@ import 'package:flutter/services.dart'; // RawKeyDownEvent 및 LogicalKeyboardKe
 import 'package:provider/provider.dart';
 import '../view_models/labeling_view_model.dart';
 import '../models/project_model.dart';
+import '../models/label_entry.dart';
 import '../charts/time_series_chart.dart';
 
 class LabelingPage extends StatefulWidget {
@@ -15,6 +16,7 @@ class LabelingPage extends StatefulWidget {
 
 class _LabelingPageState extends State<LabelingPage> {
   late FocusNode _focusNode;
+  String _selectedMode = 'single_classification';
 
   @override
   void initState() {
@@ -45,8 +47,8 @@ class _LabelingPageState extends State<LabelingPage> {
           event.logicalKey.keyId <= LogicalKeyboardKey.digit9.keyId) {
         int index = event.logicalKey.keyId - LogicalKeyboardKey.digit0.keyId;
         if (index < labelingVM.project.classes.length) {
-          labelingVM.addOrUpdateLabel(
-              labelingVM.currentIndex, labelingVM.project.classes[index]);
+          labelingVM.addOrUpdateLabel(labelingVM.currentIndex,
+              labelingVM.project.classes[index], _selectedMode);
         }
       }
     }
@@ -106,38 +108,39 @@ class _LabelingPageState extends State<LabelingPage> {
 
     return ChangeNotifierProvider(
       create: (_) => LabelingViewModel(project: project),
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('${project.name} 라벨링'),
-          actions: [
-            Builder(
-              builder: (context) => PopupMenuButton<String>(
-                onSelected: (value) {
-                  final labelingVM =
-                      Provider.of<LabelingViewModel>(context, listen: false);
-                  if (value == 'zip') {
-                    _downloadLabels(context, labelingVM, true);
-                  } else if (value == 'no_zip') {
-                    _downloadLabels(context, labelingVM, false);
-                  }
-                },
-                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                  const PopupMenuItem<String>(
-                    value: 'zip',
-                    child: Text('ZIP 압축 후 다운로드'),
+      child: Consumer<LabelingViewModel>(
+        builder: (context, labelingVM, child) {
+          return Scaffold(
+            appBar: AppBar(
+              title: Text('${project.name} 라벨링'),
+              actions: [
+                Builder(
+                  builder: (context) => PopupMenuButton<String>(
+                    onSelected: (value) {
+                      final labelingVM = Provider.of<LabelingViewModel>(context,
+                          listen: false);
+                      if (value == 'zip') {
+                        _downloadLabels(context, labelingVM, true);
+                      } else if (value == 'no_zip') {
+                        _downloadLabels(context, labelingVM, false);
+                      }
+                    },
+                    itemBuilder: (BuildContext context) =>
+                        <PopupMenuEntry<String>>[
+                      const PopupMenuItem<String>(
+                        value: 'zip',
+                        child: Text('ZIP 압축 후 다운로드'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'no_zip',
+                        child: Text('.zae 파일만 다운로드'),
+                      ),
+                    ],
                   ),
-                  const PopupMenuItem<String>(
-                    value: 'no_zip',
-                    child: Text('.zae 파일만 다운로드'),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-        body: Consumer<LabelingViewModel>(
-          builder: (context, labelingVM, child) {
-            return RawKeyboardListener(
+            body: RawKeyboardListener(
               focusNode: _focusNode,
               autofocus: true,
               onKey: (event) => _handleKeyEvent(event, labelingVM),
@@ -160,6 +163,34 @@ class _LabelingPageState extends State<LabelingPage> {
                       style: const TextStyle(fontSize: 16),
                     ),
                   ),
+                  // 라벨링 모드 선택
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: DropdownButton<String>(
+                      value: _selectedMode,
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'single_classification',
+                          child: Text('Single Classification'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'multi_classification',
+                          child: Text('Multi Classification'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'segmentation',
+                          child: Text('Segmentation'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            _selectedMode = value;
+                          });
+                        }
+                      },
+                    ),
+                  ),
                   // 라벨 입력 키패드 (프로젝트에서 설정한 클래스만 표시)
                   Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -168,7 +199,8 @@ class _LabelingPageState extends State<LabelingPage> {
                       children: List.generate(labelingVM.project.classes.length,
                           (index) {
                         final label = labelingVM.project.classes[index];
-                        final isSelected = labelingVM.isLabelSelected(label);
+                        final isSelected =
+                            labelingVM.isLabelSelected(label, _selectedMode);
 
                         return ElevatedButton(
                           style: ElevatedButton.styleFrom(
@@ -177,7 +209,7 @@ class _LabelingPageState extends State<LabelingPage> {
                           ),
                           onPressed: () {
                             labelingVM.addOrUpdateLabel(
-                                labelingVM.currentIndex, label);
+                                labelingVM.currentIndex, label, _selectedMode);
                           },
                           child: Text(label),
                         );
@@ -188,7 +220,7 @@ class _LabelingPageState extends State<LabelingPage> {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
-                      '현재 라벨: ${labelingVM.currentLabel}',
+                      '현재 라벨: ${labelingVM.currentLabelEntryToString()}',
                       style: const TextStyle(fontSize: 16),
                     ),
                   ),
@@ -215,10 +247,33 @@ class _LabelingPageState extends State<LabelingPage> {
                   ),
                 ],
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
+  }
+}
+
+extension LabelingViewModelExtension on LabelingViewModel {
+  String currentLabelEntryToString() {
+    LabelEntry entry = currentLabelEntry;
+    List<String> labelStrings = [];
+
+    if (entry.singleClassification != null) {
+      labelStrings.add('Single: ${entry.singleClassification!.label}');
+    }
+    if (entry.multiClassification != null &&
+        entry.multiClassification!.labels.isNotEmpty) {
+      labelStrings
+          .add('Multi: ${entry.multiClassification!.labels.join(', ')}');
+    }
+    if (entry.segmentation != null &&
+        entry.segmentation!.label.indice.isNotEmpty) {
+      labelStrings
+          .add('Segmentation: ${entry.segmentation!.label.classes.join(', ')}');
+    }
+
+    return labelStrings.join(' | ');
   }
 }
