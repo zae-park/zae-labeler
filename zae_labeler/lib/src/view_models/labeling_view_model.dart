@@ -1,17 +1,17 @@
 // lib/src/view_models/labeling_view_model.dart
 import 'package:flutter/material.dart';
-import '../models/label_model.dart';
+import '../models/label_entry.dart';
 import '../models/project_model.dart';
 import '../utils/storage_helper.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
-import 'package:archive/archive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:convert';
+import 'package:archive/archive.dart';
 
 class LabelingViewModel extends ChangeNotifier {
   final Project project;
-  List<Label> _labels = [];
+  List<LabelEntry> _labelEntries = [];
   int _currentIndex = 0;
   List<File> _dataFiles = []; // 데이터 파일 목록
   List<double> _currentData = []; // 시계열 데이터
@@ -22,28 +22,31 @@ class LabelingViewModel extends ChangeNotifier {
     loadDataFiles();
   }
 
-  List<Label> get labels => _labels;
+  List<LabelEntry> get labelEntries => _labelEntries;
   int get currentIndex => _currentIndex;
   List<File> get dataFiles => _dataFiles;
   List<double> get currentData => _currentData;
   String get currentFileName => _dataFiles.isNotEmpty
       ? path.basename(_dataFiles[_currentIndex].path)
       : '';
-  String get currentLabel {
+  LabelEntry get currentLabelEntry {
     if (_currentIndex < 0 || _currentIndex >= _dataFiles.length) {
-      return '';
+      return LabelEntry(dataFilename: '', dataPath: '');
     }
 
     final dataId = _dataFiles[_currentIndex].path;
-    final label = _labels.firstWhere((labelItem) => labelItem.dataId == dataId,
-        orElse: () => Label(dataId: dataId, labels: []));
-
-    return label.labels.join(', ');
+    final entry =
+        _labelEntries.firstWhere((labelEntry) => labelEntry.dataPath == dataId,
+            orElse: () => LabelEntry(
+                  dataFilename: path.basename(dataId),
+                  dataPath: dataId,
+                ));
+    return entry;
   }
 
   // 라벨 로드
   Future<void> loadLabels() async {
-    _labels = await StorageHelper.loadLabels();
+    _labelEntries = await StorageHelper.loadLabelEntries();
     notifyListeners();
   }
 
@@ -77,28 +80,89 @@ class LabelingViewModel extends ChangeNotifier {
   }
 
   // 라벨 추가 또는 수정
-  void addOrUpdateLabel(int dataIndex, String label) {
+  void addOrUpdateLabel(int dataIndex, String label, String mode) {
     if (dataIndex < 0 || dataIndex >= _dataFiles.length) return;
     final dataId = _dataFiles[dataIndex].path;
 
-    final existingLabelIndex =
-        _labels.indexWhere((labelItem) => labelItem.dataId == dataId);
+    final existingEntryIndex =
+        _labelEntries.indexWhere((entry) => entry.dataPath == dataId);
 
-    if (existingLabelIndex != -1) {
-      // 이미 존재하는 라벨 업데이트
-      _labels[existingLabelIndex].labels = [label];
+    if (existingEntryIndex != -1) {
+      // 이미 존재하는 엔트리 업데이트
+      LabelEntry entry = _labelEntries[existingEntryIndex];
+      switch (mode) {
+        case 'single_classification':
+          entry.singleClassification = SingleClassificationLabel(
+            labeledAt: DateTime.now().toIso8601String(),
+            label: label,
+          );
+          break;
+        case 'multi_classification':
+          if (entry.multiClassification == null) {
+            entry.multiClassification = MultiClassificationLabel(
+              labeledAt: DateTime.now().toIso8601String(),
+              labels: [label],
+            );
+          } else {
+            if (!entry.multiClassification!.labels.contains(label)) {
+              entry.multiClassification!.labels.add(label);
+              entry.multiClassification!.labeledAt =
+                  DateTime.now().toIso8601String();
+            }
+          }
+          break;
+        case 'segmentation':
+          // Segmentation 라벨 추가 로직 필요
+          // 예시로, 분리된 인덱스와 클래스 리스트를 입력받는다고 가정
+          // 실제 구현은 사용자의 요구에 따라 달라질 수 있습니다.
+          break;
+        default:
+          break;
+      }
     } else {
-      // 새로운 라벨 추가
-      _labels.add(Label(dataId: dataId, labels: [label]));
+      // 새로운 엔트리 추가
+      LabelEntry newEntry = LabelEntry(
+        dataFilename: path.basename(dataId),
+        dataPath: dataId,
+      );
+      switch (mode) {
+        case 'single_classification':
+          newEntry.singleClassification = SingleClassificationLabel(
+            labeledAt: DateTime.now().toIso8601String(),
+            label: label,
+          );
+          break;
+        case 'multi_classification':
+          newEntry.multiClassification = MultiClassificationLabel(
+            labeledAt: DateTime.now().toIso8601String(),
+            labels: [label],
+          );
+          break;
+        case 'segmentation':
+          // Segmentation 라벨 추가 로직 필요
+          break;
+        default:
+          break;
+      }
+      _labelEntries.add(newEntry);
     }
 
-    StorageHelper.saveLabels(_labels);
+    StorageHelper.saveLabelEntries(_labelEntries);
     notifyListeners();
   }
 
   // 현재 라벨이 선택되었는지 확인
-  bool isLabelSelected(String label) {
-    return currentLabel.contains(label);
+  bool isLabelSelected(String label, String mode) {
+    LabelEntry entry = currentLabelEntry;
+    switch (mode) {
+      case 'single_classification':
+        return entry.singleClassification?.label == label;
+      case 'multi_classification':
+        return entry.multiClassification?.labels.contains(label) ?? false;
+      // Segmentation mode는 UI에서 별도로 관리 필요
+      default:
+        return false;
+    }
   }
 
   // 데이터 이동
@@ -116,12 +180,13 @@ class LabelingViewModel extends ChangeNotifier {
     }
   }
 
-  // 다운로드 기능: return the path instead of handling context
+  // 다운로드 기능: path 반환
   Future<String> downloadLabelsAsZae() async {
     final directory = await getApplicationDocumentsDirectory();
     final zaeFile = File('${directory.path}/labels.zae');
 
-    final zaeContent = _labels.map((label) => label.toJson()).toList();
+    final zaeContent =
+        _labelEntries.map((labelEntry) => labelEntry.toJson()).toList();
     zaeFile.writeAsStringSync(jsonEncode(zaeContent));
 
     return zaeFile.path;
@@ -130,8 +195,8 @@ class LabelingViewModel extends ChangeNotifier {
   Future<String> downloadLabelsAsZip() async {
     final archive = Archive();
 
-    for (var label in _labels) {
-      final file = File(label.dataId);
+    // 데이터 파일을 아카이브에 추가
+    for (var file in _dataFiles) {
       if (file.existsSync()) {
         final fileBytes = file.readAsBytesSync();
         archive.addFile(
@@ -139,6 +204,13 @@ class LabelingViewModel extends ChangeNotifier {
       }
     }
 
+    // labels.json을 아카이브에 추가
+    final labelsJson =
+        jsonEncode(_labelEntries.map((e) => e.toJson()).toList());
+    archive.addFile(ArchiveFile('labels.json', labelsJson.length,
+        utf8.encode(labelsJson))); // labels.json 파일 추가
+
+    // 아카이브를 ZIP으로 인코딩
     final zipData = ZipEncoder().encode(archive);
     if (zipData != null) {
       final directory = await getApplicationDocumentsDirectory();
