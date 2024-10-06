@@ -40,25 +40,6 @@ class ConfigurationPage extends StatelessWidget {
                       },
                     ),
                     const SizedBox(height: 20),
-                    // 데이터 디렉토리 선택
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            configVM.dataDirectory.isEmpty
-                                ? '데이터 디렉토리를 선택해주세요.'
-                                : '디렉토리: ${configVM.dataDirectory}',
-                          ),
-                        ),
-                        ElevatedButton(
-                          onPressed: () async {
-                            await configVM.setDataDirectory();
-                          },
-                          child: const Text('디렉토리 선택'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
                     // 라벨링 모드 선택
                     const Text(
                       '라벨링 모드 선택',
@@ -135,9 +116,19 @@ class ConfigurationPage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 20),
-                    // 확인 버튼
+                    // 데이터 디렉토리 선택 버튼
                     ElevatedButton(
                       onPressed: () async {
+                        await configVM.setDataDirectory();
+                      },
+                      child: Text(configVM.dataDirectory.isEmpty
+                          ? '데이터 디렉토리 선택'
+                          : '선택된 디렉토리: ${configVM.dataDirectory}'),
+                    ),
+                    const SizedBox(height: 20),
+                    // 확인 버튼
+                    ElevatedButton(
+                      onPressed: () {
                         if (_formKey.currentState!.validate()) {
                           if (configVM.selectedMode == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -159,7 +150,7 @@ class ConfigurationPage extends StatelessWidget {
                             return;
                           }
                           // 프로젝트 생성
-                          await Provider.of<ProjectManagerViewModel>(context,
+                          Provider.of<ProjectManagerViewModel>(context,
                                   listen: false)
                               .createProject(
                             _projectNameController.text.trim(),
