@@ -20,6 +20,7 @@ class StorageHelper {
   static Future<List<Project>> loadProjects() async {
     final prefs = await SharedPreferences.getInstance();
     List<String>? projectsJson = prefs.getStringList(projectsKey);
+    if (projectsJson == null) return [];
     return projectsJson
         .map((projectStr) =>
             Project.fromJson(jsonDecode(projectStr) as Map<String, dynamic>))
@@ -38,6 +39,7 @@ class StorageHelper {
   static Future<List<Label>> loadLabels() async {
     final prefs = await SharedPreferences.getInstance();
     List<String>? labelsJson = prefs.getStringList(labelsKey);
+    if (labelsJson == null) return [];
     return labelsJson
         .map((labelStr) =>
             Label.fromJson(jsonDecode(labelStr) as Map<String, dynamic>))

@@ -1,15 +1,16 @@
-// lib/src/view_models/project_manager.dart
+// lib/src/view_models/project_manager_view_model.dart
 import 'package:flutter/material.dart';
 import '../models/project_model.dart';
 import '../utils/storage_helper.dart';
-import 'dart:uuid';
+import 'package:uuid/uuid.dart'; // 올바른 import 경로
 
-class ProjectManager extends ChangeNotifier {
+class ProjectManagerViewModel extends ChangeNotifier {
   List<Project> _projects = [];
+  final Uuid _uuid = const Uuid(); // Uuid 인스턴스 생성
 
   List<Project> get projects => _projects;
 
-  ProjectManager() {
+  ProjectManagerViewModel() {
     // 초기화 시 프로젝트 로드
     loadProjects();
   }
@@ -24,7 +25,7 @@ class ProjectManager extends ChangeNotifier {
   Future<void> createProject(
       String name, LabelingMode mode, List<String> classes) async {
     final newProject = Project(
-      id: Uuid().v4(),
+      id: _uuid.v4(), // Uuid 사용
       name: name,
       mode: mode,
       classes: classes,

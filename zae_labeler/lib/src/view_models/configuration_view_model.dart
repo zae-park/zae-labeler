@@ -1,7 +1,7 @@
 // lib/src/view_models/configuration_view_model.dart
 import 'package:flutter/material.dart';
-import '../models/project_model.dart';
-import 'project_manager.dart';
+import '../models/project_model.dart'; // 필요 시 유지
+// import 'project_manager.dart'; // 사용되지 않으므로 제거
 
 class ConfigurationViewModel extends ChangeNotifier {
   LabelingMode? _selectedMode;

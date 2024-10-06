@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/label_model.dart';
 import '../models/project_model.dart';
 import '../utils/storage_helper.dart';
+// import 'package:logger/logger.dart'; // 로깅 패키지 사용 시
 
 class LabelingViewModel extends ChangeNotifier {
   final Project project;
@@ -78,9 +79,11 @@ class LabelingViewModel extends ChangeNotifier {
     }
   }
 
-  // 다운로드 기능 (예시로 콘솔 출력)
+  // 다운로드 기능 (예시로 콘솔 출력 대신 주석 처리)
   void downloadLabels() {
     // 실제 ZIP 압축 및 다운로드 로직 필요
-    print('라벨링 데이터 다운로드');
+    // print('라벨링 데이터 다운로드');
+    // 또는 로깅 프레임워크 사용 예:
+    // Logger().i('라벨링 데이터 다운로드');
   }
 }
