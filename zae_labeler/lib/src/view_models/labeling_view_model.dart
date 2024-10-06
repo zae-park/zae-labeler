@@ -9,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:archive/archive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:convert'; // jsonEncode를 사용하기 위해 추가
+import 'package:flutter/services.dart'; // RawKeyDownEvent 및 LogicalKeyboardKey 사용을 위해 추가
 
 class LabelingViewModel extends ChangeNotifier {
   final Project project;
@@ -16,6 +17,7 @@ class LabelingViewModel extends ChangeNotifier {
   int _currentIndex = 0;
   List<File> _dataFiles = []; // 데이터 파일 목록
   List<double> _currentData = []; // 시계열 데이터
+  bool _isDownloading = false;
 
   LabelingViewModel({required this.project}) {
     // 초기화 시 라벨 로드 및 데이터 로드
@@ -27,6 +29,20 @@ class LabelingViewModel extends ChangeNotifier {
   int get currentIndex => _currentIndex;
   List<File> get dataFiles => _dataFiles;
   List<double> get currentData => _currentData;
+  String get currentFileName => _dataFiles.isNotEmpty
+      ? path.basename(_dataFiles[_currentIndex].path)
+      : '';
+  String get currentLabel {
+    if (_currentIndex < 0 || _currentIndex >= _dataFiles.length) {
+      return '';
+    }
+
+    final dataId = _dataFiles[_currentIndex].path;
+    final label = _labels.firstWhere((labelItem) => labelItem.dataId == dataId,
+        orElse: () => Label(dataId: dataId, labels: []));
+
+    return label.labels.join(', ');
+  }
 
   // 라벨 로드
   Future<void> loadLabels() async {
@@ -68,32 +84,24 @@ class LabelingViewModel extends ChangeNotifier {
     if (dataIndex < 0 || dataIndex >= _dataFiles.length) return;
     final dataId = _dataFiles[dataIndex].path;
 
-    final existingLabel = _labels.firstWhere(
-        (labelItem) => labelItem.dataId == dataId,
-        orElse: () => Label(dataId: dataId, labels: []));
+    final existingLabelIndex =
+        _labels.indexWhere((labelItem) => labelItem.dataId == dataId);
 
-    if (project.mode == LabelingMode.singleClassification ||
-        project.mode == LabelingMode.segmentation) {
-      // 싱글 라벨링 또는 세그멘테이션의 경우 기존 라벨 덮어쓰기
-      if (existingLabel.labels.isNotEmpty) {
-        existingLabel.labels[0] = label;
-      } else {
-        existingLabel.labels.add(label);
-      }
-    } else if (project.mode == LabelingMode.multiClassification) {
-      // 멀티 라벨링의 경우 라벨 추가
-      if (!existingLabel.labels.contains(label)) {
-        existingLabel.labels.add(label);
-      }
-    }
-
-    // 기존에 없으면 추가
-    if (!_labels.contains(existingLabel)) {
-      _labels.add(existingLabel);
+    if (existingLabelIndex != -1) {
+      // 이미 존재하는 라벨 업데이트
+      _labels[existingLabelIndex].labels = [label];
+    } else {
+      // 새로운 라벨 추가
+      _labels.add(Label(dataId: dataId, labels: [label]));
     }
 
     StorageHelper.saveLabels(_labels);
     notifyListeners();
+  }
+
+  // 현재 라벨이 선택되었는지 확인
+  bool isLabelSelected(String label) {
+    return currentLabel.contains(label);
   }
 
   // 데이터 이동
@@ -111,36 +119,109 @@ class LabelingViewModel extends ChangeNotifier {
     }
   }
 
-  // ZIP 압축 후 다운로드
-  Future<void> downloadLabelsAsZip() async {
-    final archive = Archive();
+  // 다운로드 기능
+  Future<void> downloadLabels(BuildContext context) async {
+    if (_isDownloading) return;
 
-    for (var label in _labels) {
-      final file = File(label.dataId);
-      if (file.existsSync()) {
-        final fileBytes = file.readAsBytesSync();
-        archive.addFile(
-            ArchiveFile(path.basename(file.path), fileBytes.length, fileBytes));
+    _isDownloading = true;
+    notifyListeners();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        title: Text('다운로드 중'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('라벨링 데이터를 다운로드하고 있습니다...'),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      final directory = await getExternalStorageDirectory();
+      if (directory == null) {
+        throw Exception('저장소에 접근할 수 없습니다.');
       }
-    }
 
-    final zipData = ZipEncoder().encode(archive);
-    if (zipData != null) {
-      final directory = await getApplicationDocumentsDirectory();
-      final zipFile = File('${directory.path}/labels.zip');
-      zipFile.writeAsBytesSync(zipData);
-      Share.shareXFiles([XFile(zipFile.path)], text: '라벨링 데이터 ZIP 파일입니다.');
+      final zaeFile = File('${directory.path}/labels.zae');
+
+      final zaeContent = _labels.map((label) => label.toJson()).toList();
+      zaeFile.writeAsStringSync(jsonEncode(zaeContent));
+
+      if (!mounted) return;
+
+      Navigator.of(context).pop(); // 다운로드 중 다이얼로그 닫기
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('다운로드 완료: ${zaeFile.path}')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      Navigator.of(context).pop(); // 다운로드 중 다이얼로그 닫기
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('다운로드 실패: $e')),
+      );
+    } finally {
+      _isDownloading = false;
+      notifyListeners();
     }
   }
 
   // .zae 파일만 다운로드
-  Future<void> downloadLabelsAsZae() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final zaeFile = File('${directory.path}/labels.zae');
+  Future<void> downloadLabelsAsZae(BuildContext context) async {
+    if (_isDownloading) return;
 
-    final zaeContent = _labels.map((label) => label.toJson()).toList();
-    zaeFile.writeAsStringSync(jsonEncode(zaeContent));
+    _isDownloading = true;
+    notifyListeners();
 
-    Share.shareXFiles([XFile(zaeFile.path)], text: '라벨링 데이터 .zae 파일입니다.');
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        title: Text('다운로드 중'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('라벨링 데이터를 다운로드하고 있습니다...'),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final zaeFile = File('${directory.path}/labels.zae');
+
+      final zaeContent = _labels.map((label) => label.toJson()).toList();
+      zaeFile.writeAsStringSync(jsonEncode(zaeContent));
+
+      if (!mounted) return;
+
+      Navigator.of(context).pop(); // 다운로드 중 다이얼로그 닫기
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('다운로드 완료: ${zaeFile.path}')),
+      );
+
+      Share.shareXFiles([XFile(zaeFile.path)], text: '라벨링 데이터 .zae 파일입니다.');
+    } catch (e) {
+      if (!mounted) return;
+
+      Navigator.of(context).pop(); // 다운로드 중 다이얼로그 닫기
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('다운로드 실패: $e')),
+      );
+    } finally {
+      _isDownloading = false;
+      notifyListeners();
+    }
   }
 }
