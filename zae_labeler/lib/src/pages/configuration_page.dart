@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../view_models/configuration_view_model.dart';
-import '../view_models/project_manager.dart';
+import '../view_models/project_manager_view_model.dart';
 import '../models/project_model.dart';
 
 class ConfigurationPage extends StatelessWidget {
@@ -133,7 +133,8 @@ class ConfigurationPage extends StatelessWidget {
                             return;
                           }
                           // 프로젝트 생성
-                          Provider.of<ProjectManager>(context, listen: false)
+                          Provider.of<ProjectManagerViewModel>(context,
+                                  listen: false)
                               .createProject(
                             _projectNameController.text.trim(),
                             configVM.selectedMode!,

@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => const ProjectListPage(),
         '/configuration': (context) => ConfigurationPage(),
-        '/labeling': (context) => const LabelingPage(),
+        '/labeling': (context) => LabelingPage(),
       },
     );
   }
