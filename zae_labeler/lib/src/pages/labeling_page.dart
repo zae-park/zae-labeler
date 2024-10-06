@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../view_models/labeling_view_model.dart';
 import '../models/project_model.dart';
-import 'package:fl_chart/fl_chart.dart';
+import '../charts/time_series_chart.dart';
 
 class LabelingPage extends StatelessWidget {
   const LabelingPage({super.key});
@@ -20,13 +20,26 @@ class LabelingPage extends StatelessWidget {
         appBar: AppBar(
           title: Text('${project.name} 라벨링'),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.download),
-              onPressed: () {
-                Provider.of<LabelingViewModel>(context, listen: false)
-                    .downloadLabels();
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'zip') {
+                  Provider.of<LabelingViewModel>(context, listen: false)
+                      .downloadLabelsAsZip();
+                } else if (value == 'no_zip') {
+                  Provider.of<LabelingViewModel>(context, listen: false)
+                      .downloadLabelsAsZae();
+                }
               },
-              tooltip: '다운로드',
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                const PopupMenuItem<String>(
+                  value: 'zip',
+                  child: Text('ZIP 압축 후 다운로드'),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'no_zip',
+                  child: Text('.zae 파일만 다운로드'),
+                ),
+              ],
             ),
           ],
         ),
@@ -39,26 +52,16 @@ class LabelingPage extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: labelingVM.currentData.isNotEmpty
-                        ? LineChart(
-                            LineChartData(
-                              gridData: FlGridData(show: true),
-                              titlesData: FlTitlesData(
-                                leftTitles: SideTitles(showTitles: true),
-                                bottomTitles: SideTitles(showTitles: true),
-                              ),
-                              borderData: FlBorderData(show: true),
-                              lineBarsData: [
-                                LineChartBarData(
-                                  spots: generateSpots(labelingVM.currentData),
-                                  isCurved: true,
-                                  colors: [Colors.blue],
-                                  barWidth: 2,
-                                  belowBarData: BarAreaData(show: false),
-                                ),
-                              ],
-                            ),
-                          )
+                        ? TimeSeriesChart(data: labelingVM.currentData)
                         : const Center(child: Text('데이터가 없습니다.')),
+                  ),
+                ),
+                // 현재 데이터 인덱스 표시
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    '데이터 ${labelingVM.currentIndex + 1}/${labelingVM.dataFiles.length}',
+                    style: const TextStyle(fontSize: 16),
                   ),
                 ),
                 // 라벨 입력 키패드
@@ -72,12 +75,39 @@ class LabelingPage extends StatelessWidget {
                         child: ElevatedButton(
                           onPressed: () {
                             labelingVM.addOrUpdateLabel(
-                                labelingVM.currentData, index.toString());
+                                labelingVM.currentIndex, index.toString());
                           },
                           child: Text('$index'),
                         ),
                       );
                     }),
+                  ),
+                ),
+                // 현재 라벨 표시
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Consumer<LabelingViewModel>(
+                    builder: (context, labelingVM, child) {
+                      if (labelingVM.currentIndex < 0 ||
+                          labelingVM.currentIndex >=
+                              labelingVM.dataFiles.length) {
+                        return const Text(
+                          '현재 라벨: 없음',
+                          style: TextStyle(fontSize: 16),
+                        );
+                      }
+
+                      final dataId =
+                          labelingVM.dataFiles[labelingVM.currentIndex].path;
+                      final label = labelingVM.labels.firstWhere(
+                          (labelItem) => labelItem.dataId == dataId,
+                          orElse: () => Label(dataId: dataId, labels: []));
+
+                      return Text(
+                        '현재 라벨: ${label.labels.join(', ')}',
+                        style: const TextStyle(fontSize: 16),
+                      );
+                    },
                   ),
                 ),
                 // 데이터 이동 버튼
@@ -107,19 +137,5 @@ class LabelingPage extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  // 시계열 데이터 문자열을 차트 데이터 포인트로 변환
-  List<FlSpot> generateSpots(String data) {
-    // 예시로 콤마로 구분된 숫자 문자열을 사용
-    List<String> parts = data.split(',');
-    List<FlSpot> spots = [];
-    for (int i = 0; i < parts.length; i++) {
-      double? value = double.tryParse(parts[i]);
-      if (value != null) {
-        spots.add(FlSpot(i.toDouble(), value));
-      }
-    }
-    return spots;
   }
 }
