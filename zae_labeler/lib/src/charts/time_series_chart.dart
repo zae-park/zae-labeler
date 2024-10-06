@@ -9,27 +9,36 @@ class TimeSeriesChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LineChart(
-      LineChartData(
-        gridData: FlGridData(show: true),
-        titlesData: FlTitlesData(
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(showTitles: true),
+    double minY = data.reduce((a, b) => a < b ? a : b);
+    double maxY = data.reduce((a, b) => a > b ? a : b);
+    double margin = (maxY - minY) * 0.1; // y축 마진 10%
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0), // 하단 눈금이 잘리지 않도록 패딩 추가
+      child: LineChart(
+        LineChartData(
+          minY: minY - margin,
+          maxY: maxY + margin,
+          gridData: FlGridData(show: true),
+          titlesData: FlTitlesData(
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(showTitles: true),
+            ),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(showTitles: true),
+            ),
           ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(showTitles: true),
-          ),
+          borderData: FlBorderData(show: true),
+          lineBarsData: [
+            LineChartBarData(
+              spots: generateSpots(data),
+              isCurved: false, // 곡선 대신 직선으로 표시
+              color: Colors.blue,
+              barWidth: 2,
+              belowBarData: BarAreaData(show: false),
+            ),
+          ],
         ),
-        borderData: FlBorderData(show: true),
-        lineBarsData: [
-          LineChartBarData(
-            spots: generateSpots(data),
-            isCurved: true,
-            color: Colors.blue,
-            barWidth: 2,
-            belowBarData: BarAreaData(show: false),
-          ),
-        ],
       ),
     );
   }
