@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>데이터 디렉토리에 접근하기 위해 필요합니다.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>데이터 저장을 위해 필요합니다.</string>
 </dict>
 </plist>
