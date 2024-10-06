@@ -4,7 +4,6 @@ import 'package:flutter/services.dart'; // RawKeyDownEvent 및 LogicalKeyboardKe
 import 'package:provider/provider.dart';
 import '../view_models/labeling_view_model.dart';
 import '../models/project_model.dart';
-import '../models/label_model.dart';
 import '../charts/time_series_chart.dart';
 
 class LabelingPage extends StatefulWidget {
@@ -53,6 +52,52 @@ class _LabelingPageState extends State<LabelingPage> {
     }
   }
 
+  // 다운로드 진행도 표시 및 완료 메시지
+  Future<void> _downloadLabels(
+      BuildContext context, LabelingViewModel labelingVM, bool asZip) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        title: Text('다운로드 중'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('라벨링 데이터를 다운로드하고 있습니다...'),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      String filePath;
+      if (asZip) {
+        filePath = await labelingVM.downloadLabelsAsZip();
+        // ZIP 파일 공유 기능을 추가하려면 여기에서 처리
+      } else {
+        filePath = await labelingVM.downloadLabelsAsZae();
+        // .zae 파일 공유 기능을 추가하려면 여기에서 처리
+      }
+
+      if (!mounted) return; // 위젯이 여전히 마운트되어 있는지 확인
+
+      Navigator.of(context).pop(); // 다운로드 중 다이얼로그 닫기
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('다운로드 완료: $filePath')),
+      );
+    } catch (e) {
+      if (!mounted) return; // 위젯이 여전히 마운트되어 있는지 확인
+
+      Navigator.of(context).pop(); // 다운로드 중 다이얼로그 닫기
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('다운로드 실패: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // 전달된 프로젝트 객체 받기
@@ -65,13 +110,26 @@ class _LabelingPageState extends State<LabelingPage> {
         appBar: AppBar(
           title: Text('${project.name} 라벨링'),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.download),
-              onPressed: () {
-                Provider.of<LabelingViewModel>(context, listen: false)
-                    .downloadLabels(context);
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                final labelingVM =
+                    Provider.of<LabelingViewModel>(context, listen: false);
+                if (value == 'zip') {
+                  _downloadLabels(context, labelingVM, true);
+                } else if (value == 'no_zip') {
+                  _downloadLabels(context, labelingVM, false);
+                }
               },
-              tooltip: '다운로드',
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                const PopupMenuItem<String>(
+                  value: 'zip',
+                  child: Text('ZIP 압축 후 다운로드'),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'no_zip',
+                  child: Text('.zae 파일만 다운로드'),
+                ),
+              ],
             ),
           ],
         ),
@@ -100,13 +158,14 @@ class _LabelingPageState extends State<LabelingPage> {
                       style: const TextStyle(fontSize: 16),
                     ),
                   ),
-                  // 라벨 입력 키패드
+                  // 라벨 입력 키패드 (프로젝트에서 설정한 클래스만 표시)
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Wrap(
                       spacing: 8.0,
-                      children: List.generate(project.classes.length, (index) {
-                        final label = project.classes[index];
+                      children: List.generate(labelingVM.project.classes.length,
+                          (index) {
+                        final label = labelingVM.project.classes[index];
                         final isSelected = labelingVM.isLabelSelected(label);
 
                         return ElevatedButton(
