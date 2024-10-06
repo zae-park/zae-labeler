@@ -1,8 +1,11 @@
 // lib/src/utils/storage_helper.dart
 import 'dart:convert';
+import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
 import '../models/project_model.dart';
 import '../models/label_model.dart';
+import '../models/label_entry.dart';
 
 class StorageHelper {
   static const String projectsKey = 'projects';
@@ -44,5 +47,28 @@ class StorageHelper {
         .map((labelStr) =>
             Label.fromJson(jsonDecode(labelStr) as Map<String, dynamic>))
         .toList();
+  }
+
+  // 라벨 Entry 불러오기
+  static Future<List<LabelEntry>> loadLabelEntries() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/labels.json');
+
+    if (await file.exists()) {
+      String content = await file.readAsString();
+      List<dynamic> jsonData = jsonDecode(content);
+      return jsonData.map((e) => LabelEntry.fromJson(e)).toList();
+    } else {
+      return [];
+    }
+  }
+
+  // 라벨 Entry 저장하기
+  static Future<void> saveLabelEntries(List<LabelEntry> labelEntries) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/labels.json');
+    List<Map<String, dynamic>> jsonData =
+        labelEntries.map((e) => e.toJson()).toList();
+    await file.writeAsString(jsonEncode(jsonData));
   }
 }
