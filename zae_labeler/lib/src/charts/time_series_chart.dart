@@ -25,7 +25,7 @@ class TimeSeriesChart extends StatelessWidget {
           LineChartBarData(
             spots: generateSpots(data),
             isCurved: true,
-            colors: [Colors.blue],
+            color: Colors.blue,
             barWidth: 2,
             belowBarData: BarAreaData(show: false),
           ),

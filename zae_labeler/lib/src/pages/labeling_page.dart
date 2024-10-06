@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../view_models/labeling_view_model.dart';
 import '../models/project_model.dart';
+import '../models/label_model.dart';
 import '../charts/time_series_chart.dart';
 
 class LabelingPage extends StatelessWidget {

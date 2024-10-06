@@ -8,6 +8,7 @@ import 'package:path/path.dart' as path;
 import 'package:share_plus/share_plus.dart';
 import 'package:archive/archive.dart';
 import 'package:path_provider/path_provider.dart';
+import 'dart:convert'; // jsonEncode를 사용하기 위해 추가
 
 class LabelingViewModel extends ChangeNotifier {
   final Project project;
@@ -128,7 +129,7 @@ class LabelingViewModel extends ChangeNotifier {
       final directory = await getApplicationDocumentsDirectory();
       final zipFile = File('${directory.path}/labels.zip');
       zipFile.writeAsBytesSync(zipData);
-      Share.shareFiles([zipFile.path], text: '라벨링 데이터 ZIP 파일입니다.');
+      Share.shareXFiles([XFile(zipFile.path)], text: '라벨링 데이터 ZIP 파일입니다.');
     }
   }
 
@@ -140,6 +141,6 @@ class LabelingViewModel extends ChangeNotifier {
     final zaeContent = _labels.map((label) => label.toJson()).toList();
     zaeFile.writeAsStringSync(jsonEncode(zaeContent));
 
-    Share.shareFiles([zaeFile.path], text: '라벨링 데이터 .zae 파일입니다.');
+    Share.shareXFiles([XFile(zaeFile.path)], text: '라벨링 데이터 .zae 파일입니다.');
   }
 }
