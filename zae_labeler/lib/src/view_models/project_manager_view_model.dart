@@ -22,13 +22,14 @@ class ProjectManagerViewModel extends ChangeNotifier {
   }
 
   // 새 프로젝트 생성
-  Future<void> createProject(
-      String name, LabelingMode mode, List<String> classes) async {
+  Future<void> createProject(String name, LabelingMode mode,
+      List<String> classes, String dataDirectory) async {
     final newProject = Project(
       id: _uuid.v4(), // Uuid 사용
       name: name,
       mode: mode,
       classes: classes,
+      dataDirectory: dataDirectory,
     );
     _projects.add(newProject);
     await StorageHelper.saveProjects(_projects);

@@ -40,6 +40,25 @@ class ConfigurationPage extends StatelessWidget {
                       },
                     ),
                     const SizedBox(height: 20),
+                    // 데이터 디렉토리 선택
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            configVM.dataDirectory.isEmpty
+                                ? '데이터 디렉토리를 선택해주세요.'
+                                : '디렉토리: ${configVM.dataDirectory}',
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () async {
+                            await configVM.setDataDirectory();
+                          },
+                          child: const Text('디렉토리 선택'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
                     // 라벨링 모드 선택
                     const Text(
                       '라벨링 모드 선택',
@@ -118,7 +137,7 @@ class ConfigurationPage extends StatelessWidget {
                     const SizedBox(height: 20),
                     // 확인 버튼
                     ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         if (_formKey.currentState!.validate()) {
                           if (configVM.selectedMode == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -132,13 +151,21 @@ class ConfigurationPage extends StatelessWidget {
                             );
                             return;
                           }
+                          if (configVM.dataDirectory.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('데이터 디렉토리를 선택해주세요.')),
+                            );
+                            return;
+                          }
                           // 프로젝트 생성
-                          Provider.of<ProjectManagerViewModel>(context,
+                          await Provider.of<ProjectManagerViewModel>(context,
                                   listen: false)
                               .createProject(
                             _projectNameController.text.trim(),
                             configVM.selectedMode!,
                             configVM.classes,
+                            configVM.dataDirectory,
                           );
                           // 프로젝트 목록 페이지로 이동
                           Navigator.pop(context);

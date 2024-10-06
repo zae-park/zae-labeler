@@ -4,12 +4,14 @@ class Project {
   String name; // 프로젝트 이름
   LabelingMode mode; // 라벨링 모드
   List<String> classes; // 설정된 클래스 목록
+  String dataDirectory; // 데이터가 저장된 디렉토리 경로
 
   Project({
     required this.id,
     required this.name,
     required this.mode,
     required this.classes,
+    required this.dataDirectory,
   });
 
   // JSON으로 변환
@@ -18,6 +20,7 @@ class Project {
         'name': name,
         'mode': mode.toString(),
         'classes': classes,
+        'dataDirectory': dataDirectory,
       };
 
   // JSON에서 객체 생성
@@ -28,6 +31,7 @@ class Project {
             (e) => e.toString() == json['mode'],
             orElse: () => LabelingMode.singleClassification),
         classes: List<String>.from(json['classes']),
+        dataDirectory: json['dataDirectory'] ?? '',
       );
 }
 
