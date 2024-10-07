@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'src/pages/project_list_page.dart';
 import 'src/pages/configuration_page.dart';
 import 'src/pages/labeling_page.dart';
-import 'src/view_models/project_manager_view_model.dart';
+import 'src/view_models/project_view_model.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,8 +18,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<ProjectManagerViewModel>(
-          create: (_) => ProjectManagerViewModel(),
+        ChangeNotifierProvider<ProjectViewModel>(
+          create: (_) => ProjectViewModel(),
         ),
         // 다른 Provider들이 있다면 여기에 추가
       ],
@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
         initialRoute: '/',
         routes: {
           '/': (context) => const ProjectListPage(),
-          '/configuration': (context) => ConfigurationPage(),
+          '/configuration': (context) => const ConfigureProjectPage(),
           '/labeling': (context) => const LabelingPage(),
         },
       ),
