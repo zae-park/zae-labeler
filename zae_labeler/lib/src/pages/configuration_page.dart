@@ -5,6 +5,8 @@ import '../models/project_model.dart';
 import '../view_models/project_view_model.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:file_picker/file_picker.dart'; // 파일 선택을 위한 패키지 (필요 시 추가)
+
 class ConfigureProjectPage extends StatefulWidget {
   final Project? project;
 
@@ -17,7 +19,7 @@ class ConfigureProjectPage extends StatefulWidget {
 class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  String _selectedMode = 'single_classification';
+  LabelingMode _selectedMode = LabelingMode.singleClassification;
   final List<String> _classes = [];
   String _dataDirectory = '';
 
@@ -26,8 +28,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
     super.initState();
     if (widget.project != null) {
       _nameController.text = widget.project!.name;
-      _selectedMode =
-          widget.project!.mode.toString().split('.').last.toLowerCase();
+      _selectedMode = widget.project!.mode;
       _classes.addAll(widget.project!.classes);
       _dataDirectory = widget.project!.dataDirectory;
     }
@@ -45,9 +46,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
       final project = Project(
         id: widget.project?.id ?? const Uuid().v4(),
         name: _nameController.text,
-        mode: LabelingMode.values.firstWhere(
-            (e) => e.toString().split('.').last.toLowerCase() == _selectedMode,
-            orElse: () => LabelingMode.singleClassification),
+        mode: _selectedMode,
         classes: _classes,
         dataDirectory: _dataDirectory,
       );
@@ -103,6 +102,15 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
     });
   }
 
+  Future<void> _pickDataDirectory() async {
+    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+    if (selectedDirectory != null) {
+      setState(() {
+        _dataDirectory = selectedDirectory;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -127,28 +135,34 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
                 },
               ),
               const SizedBox(height: 16),
-              // 라벨링 모드 선택
-              DropdownButtonFormField<String>(
+              // 라벨링 모드 선택 (DropdownButtonFormField 수정)
+              DropdownButtonFormField<LabelingMode>(
                 value: _selectedMode,
                 decoration: const InputDecoration(labelText: '라벨링 모드'),
-                items: const [
-                  DropdownMenuItem(
-                    value: 'single_classification',
-                    child: Text('Single Classification'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'multi_classification',
-                    child: Text('Multi Classification'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'segmentation',
-                    child: Text('Segmentation'),
-                  ),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
+                items: LabelingMode.values.map((mode) {
+                  String displayText;
+                  switch (mode) {
+                    case LabelingMode.singleClassification:
+                      displayText = 'Single Classification';
+                      break;
+                    case LabelingMode.multiClassification:
+                      displayText = 'Multi Classification';
+                      break;
+                    case LabelingMode.segmentation:
+                      displayText = 'Segmentation';
+                      break;
+                    default:
+                      displayText = mode.toString();
+                  }
+                  return DropdownMenuItem<LabelingMode>(
+                    value: mode,
+                    child: Text(displayText),
+                  );
+                }).toList(),
+                onChanged: (LabelingMode? newMode) {
+                  if (newMode != null) {
                     setState(() {
-                      _selectedMode = value;
+                      _selectedMode = newMode;
                     });
                   }
                 },
@@ -177,19 +191,30 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
                 );
               }).toList(),
               const SizedBox(height: 16),
-              // 데이터 디렉토리
-              TextFormField(
-                initialValue: _dataDirectory,
-                decoration: const InputDecoration(labelText: '데이터 디렉토리 경로'),
-                onChanged: (value) {
-                  _dataDirectory = value;
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return '데이터 디렉토리 경로를 입력하세요';
-                  }
-                  return null;
-                },
+              // 데이터 디렉토리 선택
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      readOnly: true,
+                      decoration: const InputDecoration(
+                        labelText: '데이터 디렉토리 경로',
+                        hintText: '디렉토리를 선택하세요',
+                      ),
+                      controller: TextEditingController(text: _dataDirectory),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return '데이터 디렉토리 경로를 선택하세요';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.folder_open),
+                    onPressed: _pickDataDirectory,
+                  ),
+                ],
               ),
               const SizedBox(height: 32),
               // 저장 버튼
