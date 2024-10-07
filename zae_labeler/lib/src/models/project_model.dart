@@ -18,7 +18,7 @@ class Project {
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
-        'mode': mode.toString(),
+        'mode': mode.toString().split('.').last,
         'classes': classes,
         'dataDirectory': dataDirectory,
       };
@@ -28,7 +28,7 @@ class Project {
         id: json['id'],
         name: json['name'],
         mode: LabelingMode.values.firstWhere(
-            (e) => e.toString() == json['mode'],
+            (e) => e.toString().split('.').last.toLowerCase() == json['mode'],
             orElse: () => LabelingMode.singleClassification),
         classes: List<String>.from(json['classes']),
         dataDirectory: json['dataDirectory'] ?? '',
