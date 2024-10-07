@@ -1,7 +1,4 @@
 // lib/src/pages/project_list_page.dart
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +7,8 @@ import '../view_models/project_view_model.dart';
 import '../models/project_model.dart';
 import '../pages/configuration_page.dart'; // 프로젝트 설정 수정 페이지
 import '../utils/storage_helper.dart';
+import 'dart:convert';
+import 'dart:io';
 
 class ProjectListPage extends StatelessWidget {
   const ProjectListPage({Key? key}) : super(key: key);
@@ -26,6 +25,20 @@ class ProjectListPage extends StatelessWidget {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('프로젝트 공유 실패: $e')),
+      );
+    }
+  }
+
+  Future<void> _downloadProjectConfig(
+      BuildContext context, Project project) async {
+    try {
+      String filePath = await StorageHelper.downloadProjectConfig(project);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('프로젝트 설정 파일이 다운로드되었습니다: $filePath')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('프로젝트 설정 파일 다운로드 실패: $e')),
       );
     }
   }
@@ -84,6 +97,34 @@ class ProjectListPage extends StatelessWidget {
     );
   }
 
+  Future<void> _confirmDelete(
+      BuildContext context, ProjectViewModel projectVM, Project project) async {
+    bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('프로젝트 삭제'),
+        content: Text('${project.name} 프로젝트를 정말 삭제하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('삭제', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await projectVM.removeProject(project.id);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${project.name} 프로젝트가 삭제되었습니다.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ProjectViewModel>(
@@ -115,52 +156,48 @@ class ProjectListPage extends StatelessWidget {
             itemCount: projectVM.projects.length,
             itemBuilder: (context, index) {
               final project = projectVM.projects[index];
-              return Dismissible(
-                key: Key(project.id),
-                direction: DismissDirection.endToStart,
-                background: Container(
-                  color: Colors.red,
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: const Icon(Icons.delete, color: Colors.white),
+              return ListTile(
+                title: Text(project.name),
+                subtitle:
+                    Text('모드: ${project.mode.toString().split('.').last}'),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                ConfigureProjectPage(project: project),
+                          ),
+                        );
+                      },
+                      tooltip: '프로젝트 수정',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.download),
+                      onPressed: () => _downloadProjectConfig(context, project),
+                      tooltip: '프로젝트 설정 다운로드',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.share),
+                      onPressed: () => _shareProject(context, project),
+                      tooltip: '프로젝트 공유',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () =>
+                          _confirmDelete(context, projectVM, project),
+                      tooltip: '프로젝트 삭제',
+                    ),
+                  ],
                 ),
-                onDismissed: (direction) {
-                  projectVM.removeProject(project.id);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${project.name} 프로젝트가 삭제되었습니다.')),
-                  );
+                onTap: () {
+                  // 프로젝트 선택 시 라벨링 페이지로 이동
+                  Navigator.pushNamed(context, '/labeling', arguments: project);
                 },
-                child: ListTile(
-                  title: Text(project.name),
-                  subtitle:
-                      Text('모드: ${project.mode.toString().split('.').last}'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  ConfigureProjectPage(project: project),
-                            ),
-                          );
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.share),
-                        onPressed: () => _shareProject(context, project),
-                      ),
-                    ],
-                  ),
-                  onTap: () {
-                    // 프로젝트 선택 시 라벨링 페이지로 이동
-                    Navigator.pushNamed(context, '/labeling',
-                        arguments: project);
-                  },
-                ),
               );
             },
           ),
