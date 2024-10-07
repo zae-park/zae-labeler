@@ -66,15 +66,17 @@ class LabelingViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // 현재 데이터 파일 로드 (예시로 CSV 파일의 첫 번째 열을 시계열 데이터로 사용)
+  // 현재 데이터 파일 로드 (모든 값을 읽고 파싱)
   void loadCurrentData() {
     if (_currentIndex >= 0 && _currentIndex < _dataFiles.length) {
       final file = _dataFiles[_currentIndex];
       final lines = file.readAsLinesSync();
-      _currentData = lines.map((line) {
-        final parts = line.split(',');
-        return double.tryParse(parts[0]) ?? 0.0;
-      }).toList();
+
+      // 모든 값을 읽고 파싱하여 _currentData에 저장
+      _currentData = lines
+          .expand((line) => line.split(','))
+          .map((part) => double.tryParse(part.trim()) ?? 0.0)
+          .toList();
     }
     notifyListeners();
   }
