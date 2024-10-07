@@ -9,10 +9,12 @@ import '../pages/configuration_page.dart'; // 프로젝트 설정 수정 페이�
 import '../utils/storage_helper.dart';
 import 'dart:convert';
 import 'dart:io';
+import 'package:file_picker/file_picker.dart'; // 파일 선택을 위한 패키지 추가
 
 class ProjectListPage extends StatelessWidget {
   const ProjectListPage({Key? key}) : super(key: key);
 
+  // 프로젝트 공유 기능
   Future<void> _shareProject(BuildContext context, Project project) async {
     try {
       final projectJson = project.toJson();
@@ -29,6 +31,7 @@ class ProjectListPage extends StatelessWidget {
     }
   }
 
+  // 프로젝트 설정 파일 다운로드 기능
   Future<void> _downloadProjectConfig(
       BuildContext context, Project project) async {
     try {
@@ -43,60 +46,46 @@ class ProjectListPage extends StatelessWidget {
     }
   }
 
+  // 프로젝트 가져오기 기능 (파일 선택 다이얼로그 사용)
   Future<void> _importProject(BuildContext context) async {
-    // 파일 선택 및 프로젝트 추가 로직 구현
-    // 예시로, 파일 선택 후 JSON 파싱하여 프로젝트 추가
-    // 실제 구현은 사용자의 요구에 따라 다를 수 있습니다.
-    // 여기서는 간단한 AlertDialog로 구현
-    showDialog(
-      context: context,
-      builder: (context) {
-        final filePathController = TextEditingController();
-        return AlertDialog(
-          title: const Text('프로젝트 가져오기'),
-          content: TextField(
-            controller: filePathController,
-            decoration: const InputDecoration(labelText: '프로젝트 설정 파일 경로'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                final filePath = filePathController.text;
-                if (filePath.isNotEmpty) {
-                  try {
-                    final file = File(filePath);
-                    if (await file.exists()) {
-                      final content = await file.readAsString();
-                      final jsonData = jsonDecode(content);
-                      final project = Project.fromJson(jsonData);
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
 
-                      final projectVM =
-                          Provider.of<ProjectViewModel>(context, listen: false);
-                      await projectVM.addProject(project);
+      if (result != null && result.files.single.path != null) {
+        String filePath = result.files.single.path!;
+        final file = File(filePath);
+        if (await file.exists()) {
+          final content = await file.readAsString();
+          final jsonData = jsonDecode(content);
+          final project = Project.fromJson(jsonData);
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text('${project.name} 프로젝트가 가져와졌습니다.')),
-                      );
-                      Navigator.pop(context);
-                    } else {
-                      throw Exception('파일이 존재하지 않습니다.');
-                    }
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('프로젝트 가져오기 실패: $e')),
-                    );
-                  }
-                }
-              },
-              child: const Text('가져오기'),
-            ),
-          ],
+          final projectVM =
+              Provider.of<ProjectViewModel>(context, listen: false);
+          await projectVM.addProject(project);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${project.name} 프로젝트가 가져와졌습니다.')),
+          );
+        } else {
+          throw Exception('선택한 파일이 존재하지 않습니다.');
+        }
+      } else {
+        // 사용자가 파일 선택을 취소한 경우
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('파일 선택이 취소되었습니다.')),
         );
-      },
-    );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('프로젝트 가져오기 실패: $e')),
+      );
+    }
   }
 
+  // 프로젝트 삭제 시 확인 다이얼로그
   Future<void> _confirmDelete(
       BuildContext context, ProjectViewModel projectVM, Project project) async {
     bool? confirmed = await showDialog<bool>(
@@ -142,6 +131,7 @@ class ProjectListPage extends StatelessWidget {
                         builder: (_) => const ConfigureProjectPage()),
                   );
                 },
+                tooltip: '프로젝트 생성',
               ),
               IconButton(
                 icon: const Icon(Icons.file_upload),

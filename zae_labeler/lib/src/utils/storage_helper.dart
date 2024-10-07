@@ -1,16 +1,12 @@
 // lib/src/utils/storage_helper.dart
 import 'dart:convert';
 import 'dart:io';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:path_provider/path_provider.dart';
 import '../models/project_model.dart';
-import '../models/label_model.dart';
 import '../models/label_entry.dart';
+import 'package:path_provider/path_provider.dart';
 
 class StorageHelper {
-  static const String projectsKey = 'projects';
-  static const String labelsKey = 'labels';
+  // 기존 메서드들...
 
   // 프로젝트 설정 파일 다운로드
   static Future<String> downloadProjectConfig(Project project) async {
@@ -39,7 +35,12 @@ class StorageHelper {
     }
 
     // 파일 경로 설정
-    String filePath = '${directory.path}\\${project.name}_config.json';
+    String filePath;
+    if (Platform.isWindows) {
+      filePath = '${directory.path}\\${project.name}_config.json';
+    } else {
+      filePath = '${directory.path}/${project.name}_config.json';
+    }
     File file = File(filePath);
 
     // 프로젝트를 JSON으로 변환하여 파일에 저장
@@ -49,45 +50,31 @@ class StorageHelper {
     return filePath;
   }
 
-  // 프로젝트 저장
-  static Future<void> saveProjects(List<Project> projects) async {
-    final prefs = await SharedPreferences.getInstance();
-    List<String> projectsJson =
-        projects.map((project) => jsonEncode(project.toJson())).toList();
-    await prefs.setStringList(projectsKey, projectsJson);
-  }
+  // 기존 메서드들...
 
-  // 프로젝트 불러오기
+  // 프로젝트 목록 로드 및 저장 메서드 (이미 구현되어 있을 경우 생략 가능)
   static Future<List<Project>> loadProjects() async {
-    final prefs = await SharedPreferences.getInstance();
-    List<String>? projectsJson = prefs.getStringList(projectsKey);
-    if (projectsJson == null) return [];
-    return projectsJson
-        .map((projectStr) =>
-            Project.fromJson(jsonDecode(projectStr) as Map<String, dynamic>))
-        .toList();
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/projects.json');
+
+    if (await file.exists()) {
+      String content = await file.readAsString();
+      List<dynamic> jsonData = jsonDecode(content);
+      return jsonData.map((e) => Project.fromJson(e)).toList();
+    } else {
+      return [];
+    }
   }
 
-  // 라벨 저장
-  static Future<void> saveLabels(List<Label> labels) async {
-    final prefs = await SharedPreferences.getInstance();
-    List<String> labelsJson =
-        labels.map((label) => jsonEncode(label.toJson())).toList();
-    await prefs.setStringList(labelsKey, labelsJson);
+  static Future<void> saveProjects(List<Project> projects) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/projects.json');
+    List<Map<String, dynamic>> jsonData =
+        projects.map((e) => e.toJson()).toList();
+    await file.writeAsString(jsonEncode(jsonData));
   }
 
-  // 라벨 불러오기
-  static Future<List<Label>> loadLabels() async {
-    final prefs = await SharedPreferences.getInstance();
-    List<String>? labelsJson = prefs.getStringList(labelsKey);
-    if (labelsJson == null) return [];
-    return labelsJson
-        .map((labelStr) =>
-            Label.fromJson(jsonDecode(labelStr) as Map<String, dynamic>))
-        .toList();
-  }
-
-  // 라벨 Entry 불러오기
+  // 라벨 엔트리 로드 및 저장 메서드 (이미 구현되어 있을 경우 생략 가능)
   static Future<List<LabelEntry>> loadLabelEntries() async {
     final directory = await getApplicationDocumentsDirectory();
     final file = File('${directory.path}/labels.json');
@@ -101,7 +88,6 @@ class StorageHelper {
     }
   }
 
-  // 라벨 Entry 저장하기
   static Future<void> saveLabelEntries(List<LabelEntry> labelEntries) async {
     final directory = await getApplicationDocumentsDirectory();
     final file = File('${directory.path}/labels.json');
