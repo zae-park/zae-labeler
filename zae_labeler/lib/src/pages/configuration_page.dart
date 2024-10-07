@@ -4,8 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/project_model.dart';
 import '../view_models/project_view_model.dart';
 import 'package:uuid/uuid.dart';
-
-import 'package:file_picker/file_picker.dart'; // 파일 선택을 위한 패키지 (필요 시 추가)
+import 'package:file_picker/file_picker.dart'; // 파일 선택을 위한 패키지 추가
 
 class ConfigureProjectPage extends StatefulWidget {
   final Project? project;
@@ -176,6 +175,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
                   IconButton(
                     icon: const Icon(Icons.add),
                     onPressed: _addClass,
+                    tooltip: '클래스 추가',
                   ),
                 ],
               ),
@@ -187,6 +187,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
                   trailing: IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () => _removeClass(index),
+                    tooltip: '클래스 삭제',
                   ),
                 );
               }).toList(),
@@ -213,6 +214,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
                   IconButton(
                     icon: const Icon(Icons.folder_open),
                     onPressed: _pickDataDirectory,
+                    tooltip: '디렉토리 선택',
                   ),
                 ],
               ),
