@@ -48,9 +48,9 @@ class _LabelingPageState extends State<LabelingPage> {
         } else {
           labelingVM.moveNext();
         }
-      } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+      } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
         _changeMode(-1);
-      } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+      } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
         _changeMode(1);
       } else if (LogicalKeyboardKey.digit0.keyId <= event.logicalKey.keyId &&
           event.logicalKey.keyId <= LogicalKeyboardKey.digit9.keyId) {
@@ -171,10 +171,11 @@ class _LabelingPageState extends State<LabelingPage> {
               onKey: (event) => _handleKeyEvent(event, labelingVM),
               child: Column(
                 children: [
-                  // 라벨링 모드 선택 (세로 리스트)
+                  // 라벨링 모드 선택 (가로 리스트)
                   Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Column(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: _modes.map((mode) {
                         String displayText;
                         switch (mode) {
@@ -200,10 +201,9 @@ class _LabelingPageState extends State<LabelingPage> {
                             });
                           },
                           child: Container(
-                            width: double.infinity,
                             padding: const EdgeInsets.symmetric(
                                 vertical: 12.0, horizontal: 16.0),
-                            margin: const EdgeInsets.symmetric(vertical: 4.0),
+                            margin: const EdgeInsets.symmetric(horizontal: 4.0),
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? Colors.blueAccent
