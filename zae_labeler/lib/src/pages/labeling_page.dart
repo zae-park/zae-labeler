@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import '../view_models/labeling_view_model.dart';
 import '../models/project_model.dart';
 import '../models/label_entry.dart';
-import '../charts/time_series_chart.dart';
+import '../viewers/time_series_viewer.dart';
 
 class LabelingPage extends StatefulWidget {
   const LabelingPage({Key? key}) : super(key: key);
