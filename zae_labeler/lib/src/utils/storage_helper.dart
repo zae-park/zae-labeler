@@ -124,28 +124,7 @@ class StorageHelper {
     }
   }
 
-  /// Download label entries as a .zae (JSON) file.
-  Future<void> downloadLabelsAsZae(
-      Project project, List<LabelEntry> labelEntries) async {
-    final jsonString = jsonEncode(labelEntries.map((e) => e.toJson()).toList());
-
-    if (kIsWeb) {
-      final bytes = utf8.encode(jsonString);
-      final blob = html.Blob([bytes]);
-      final url = html.Url.createObjectUrlFromBlob(blob);
-      html.AnchorElement(href: url)
-        ..setAttribute("download", "${project.name}_labels.zae")
-        ..click();
-      html.Url.revokeObjectUrl(url);
-    } else {
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/${project.name}_labels.zae');
-      await file.writeAsString(jsonString);
-    }
-  }
-
-  /// Download label entries and data files as a ZIP.
-  Future<void> downloadLabelsAsZip(Project project,
+  Future<String> downloadLabelsAsZip(Project project,
       List<LabelEntry> labelEntries, List<File> dataFiles) async {
     final archive = Archive();
 
@@ -172,16 +151,20 @@ class StorageHelper {
     }
 
     if (kIsWeb) {
+      // For web, trigger download in the browser
       final blob = html.Blob([zipData]);
       final url = html.Url.createObjectUrlFromBlob(blob);
-      html.AnchorElement(href: url)
+      final anchor = html.AnchorElement(href: url)
         ..setAttribute("download", "${project.name}_labels.zip")
         ..click();
       html.Url.revokeObjectUrl(url);
+      return "${project.name}_labels.zip (web download)"; // Web doesn't have a physical file path
     } else {
+      // For mobile/desktop, save ZIP file to a directory
       final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/${project.name}_labels.zip');
-      await file.writeAsBytes(zipData);
+      final zipFile = File('${directory.path}/${project.name}_labels.zip');
+      await zipFile.writeAsBytes(zipData);
+      return zipFile.path; // Return the file path
     }
   }
 
