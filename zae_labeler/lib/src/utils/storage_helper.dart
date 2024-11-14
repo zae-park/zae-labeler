@@ -1,13 +1,17 @@
 // lib/src/utils/storage_helper.dart
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+import 'package:archive/archive.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:html' as html;
+
 import '../models/project_model.dart';
 import '../models/label_entry.dart';
-import 'package:path_provider/path_provider.dart';
 
 class StorageHelper {
-  // 기존 메서드들...
-
   // 프로젝트 설정 파일 다운로드
   static Future<String> downloadProjectConfig(Project project) async {
     // 플랫폼별로 디렉토리 설정
@@ -50,49 +54,168 @@ class StorageHelper {
     return filePath;
   }
 
-  // 기존 메서드들...
-
-  // 프로젝트 목록 로드 및 저장 메서드 (이미 구현되어 있을 경우 생략 가능)
-  static Future<List<Project>> loadProjects() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/projects.json');
-
-    if (await file.exists()) {
-      String content = await file.readAsString();
-      List<dynamic> jsonData = jsonDecode(content);
-      return jsonData.map((e) => Project.fromJson(e)).toList();
+  /// Load all projects from storage.
+  Future<List<Project>> loadProjects() async {
+    if (kIsWeb) {
+      final projectsJson = html.window.localStorage['projects'];
+      if (projectsJson != null) {
+        List<dynamic> jsonData = jsonDecode(projectsJson);
+        return jsonData.map((e) => Project.fromJson(e)).toList();
+      }
+      return [];
     } else {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/projects.json');
+
+      if (await file.exists()) {
+        String content = await file.readAsString();
+        List<dynamic> jsonData = jsonDecode(content);
+        return jsonData.map((e) => Project.fromJson(e)).toList();
+      }
       return [];
     }
   }
 
-  static Future<void> saveProjects(List<Project> projects) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/projects.json');
-    List<Map<String, dynamic>> jsonData =
-        projects.map((e) => e.toJson()).toList();
-    await file.writeAsString(jsonEncode(jsonData));
+  /// Save all projects to storage.
+  Future<void> saveProjects(List<Project> projects) async {
+    final projectsJson = jsonEncode(projects.map((e) => e.toJson()).toList());
+
+    if (kIsWeb) {
+      html.window.localStorage['projects'] = projectsJson;
+    } else {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/projects.json');
+      await file.writeAsString(projectsJson);
+    }
   }
 
-  // 라벨 엔트리 로드 및 저장 메서드 (이미 구현되어 있을 경우 생략 가능)
-  static Future<List<LabelEntry>> loadLabelEntries() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/labels.json');
-
-    if (await file.exists()) {
-      String content = await file.readAsString();
-      List<dynamic> jsonData = jsonDecode(content);
-      return jsonData.map((e) => LabelEntry.fromJson(e)).toList();
+  /// Load all label entries from storage.
+  Future<List<LabelEntry>> loadLabelEntries() async {
+    if (kIsWeb) {
+      final labelsJson = html.window.localStorage['labels'];
+      if (labelsJson != null) {
+        List<dynamic> jsonData = jsonDecode(labelsJson);
+        return jsonData.map((e) => LabelEntry.fromJson(e)).toList();
+      }
+      return [];
     } else {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/labels.json');
+
+      if (await file.exists()) {
+        String content = await file.readAsString();
+        List<dynamic> jsonData = jsonDecode(content);
+        return jsonData.map((e) => LabelEntry.fromJson(e)).toList();
+      }
       return [];
     }
   }
 
-  static Future<void> saveLabelEntries(List<LabelEntry> labelEntries) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/labels.json');
-    List<Map<String, dynamic>> jsonData =
-        labelEntries.map((e) => e.toJson()).toList();
-    await file.writeAsString(jsonEncode(jsonData));
+  /// Save all label entries to storage.
+  Future<void> saveLabelEntries(List<LabelEntry> labelEntries) async {
+    final labelsJson = jsonEncode(labelEntries.map((e) => e.toJson()).toList());
+
+    if (kIsWeb) {
+      html.window.localStorage['labels'] = labelsJson;
+    } else {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/labels.json');
+      await file.writeAsString(labelsJson);
+    }
+  }
+
+  /// Download label entries as a .zae (JSON) file.
+  Future<void> downloadLabelsAsZae(
+      Project project, List<LabelEntry> labelEntries) async {
+    final jsonString = jsonEncode(labelEntries.map((e) => e.toJson()).toList());
+
+    if (kIsWeb) {
+      final bytes = utf8.encode(jsonString);
+      final blob = html.Blob([bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      html.AnchorElement(href: url)
+        ..setAttribute("download", "${project.name}_labels.zae")
+        ..click();
+      html.Url.revokeObjectUrl(url);
+    } else {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/${project.name}_labels.zae');
+      await file.writeAsString(jsonString);
+    }
+  }
+
+  /// Download label entries and data files as a ZIP.
+  Future<void> downloadLabelsAsZip(Project project,
+      List<LabelEntry> labelEntries, List<File> dataFiles) async {
+    final archive = Archive();
+
+    // Add data files to archive
+    for (var file in dataFiles) {
+      if (await file.exists()) {
+        final fileBytes = await file.readAsBytes();
+        archive.addFile(ArchiveFile(
+          path.basename(file.path),
+          fileBytes.length,
+          fileBytes,
+        ));
+      }
+    }
+
+    // Add labels.json to archive
+    final labelsJson = jsonEncode(labelEntries.map((e) => e.toJson()).toList());
+    archive.addFile(
+        ArchiveFile('labels.json', labelsJson.length, utf8.encode(labelsJson)));
+
+    final zipData = ZipEncoder().encode(archive);
+    if (zipData == null) {
+      throw Exception('Failed to create ZIP archive.');
+    }
+
+    if (kIsWeb) {
+      final blob = html.Blob([zipData]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      html.AnchorElement(href: url)
+        ..setAttribute("download", "${project.name}_labels.zip")
+        ..click();
+      html.Url.revokeObjectUrl(url);
+    } else {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/${project.name}_labels.zip');
+      await file.writeAsBytes(zipData);
+    }
+  }
+
+  /// Import labels from a JSON or ZIP file.
+  Future<List<LabelEntry>> importLabelEntries() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json', 'zip'],
+    );
+
+    if (result != null) {
+      final filePath = result.files.single.path;
+      if (filePath != null) {
+        final file = File(filePath);
+
+        if (path.extension(filePath) == '.json') {
+          final content = await file.readAsString();
+          List<dynamic> jsonData = jsonDecode(content);
+          return jsonData.map((e) => LabelEntry.fromJson(e)).toList();
+        } else if (path.extension(filePath) == '.zip') {
+          final bytes = await file.readAsBytes();
+          final archive = ZipDecoder().decodeBytes(bytes);
+
+          for (final archiveFile in archive) {
+            if (archiveFile.name == 'labels.json') {
+              final jsonString = utf8.decode(archiveFile.content);
+              List<dynamic> jsonData = jsonDecode(jsonString);
+              return jsonData.map((e) => LabelEntry.fromJson(e)).toList();
+            }
+          }
+        }
+      }
+    }
+
+    throw Exception('No valid file selected or failed to import.');
   }
 }
