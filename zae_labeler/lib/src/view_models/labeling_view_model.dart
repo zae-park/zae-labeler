@@ -187,6 +187,20 @@ class LabelingViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  // 현재 라벨이 선택되었는지 확인
+  bool isLabelSelected(String label, String mode) {
+    LabelEntry entry = currentLabelEntry;
+    switch (mode) {
+      case 'single_classification':
+        return entry.singleClassification?.label == label;
+      case 'multi_classification':
+        return entry.multiClassification?.labels.contains(label) ?? false;
+      // Segmentation mode는 UI에서 별도로 관리 필요
+      default:
+        return false;
+    }
+  }
+
   void moveNext() {
     if (_currentIndex < _dataFiles.length - 1) {
       _currentIndex++;
@@ -201,12 +215,8 @@ class LabelingViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> downloadLabelsAsZae() async {
-    return await StorageHelper().downloadLabelsAsZae(project, _labelEntries);
-  }
-
-  Future<void> downloadLabelsAsZip() async {
-    await StorageHelper()
+  Future<String> downloadLabelsAsZip() async {
+    return await StorageHelper()
         .downloadLabelsAsZip(project, _labelEntries, _dataFiles);
   }
 }
