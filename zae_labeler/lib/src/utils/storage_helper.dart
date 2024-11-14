@@ -55,7 +55,7 @@ class StorageHelper {
   }
 
   /// Load all projects from storage.
-  Future<List<Project>> loadProjects() async {
+  static Future<List<Project>> loadProjects() async {
     if (kIsWeb) {
       final projectsJson = html.window.localStorage['projects'];
       if (projectsJson != null) {
@@ -77,7 +77,7 @@ class StorageHelper {
   }
 
   /// Save all projects to storage.
-  Future<void> saveProjects(List<Project> projects) async {
+  static Future<void> saveProjects(List<Project> projects) async {
     final projectsJson = jsonEncode(projects.map((e) => e.toJson()).toList());
 
     if (kIsWeb) {
