@@ -5,7 +5,9 @@ import 'package:provider/provider.dart';
 import '../../view_models/labeling_view_model.dart';
 import '../../models/project_model.dart';
 import '../../models/label_entry.dart';
+import '../viewers/object_viewer.dart';
 import '../viewers/time_series_viewer.dart';
+import '../viewers/image_viewer.dart';
 
 class LabelingPage extends StatefulWidget {
   const LabelingPage({Key? key}) : super(key: key);
@@ -125,6 +127,26 @@ class _LabelingPageState extends State<LabelingPage> {
     }
   }
 
+  Widget _buildViewer(LabelingViewModel labelingVM) {
+    final currentFile = labelingVM.currentFile;
+
+    if (currentFile == null) {
+      return const Center(child: Text('파일이 없습니다.'));
+    }
+
+    final fileExtension = currentFile.path.split('.').last.toLowerCase();
+
+    if (fileExtension == 'json') {
+      return ObjectViewer(jsonFile: currentFile);
+    } else if (fileExtension == 'jpg' || fileExtension == 'png') {
+      return ImageViewer(imageFile: currentFile);
+    } else if (fileExtension == 'csv') {
+      return TimeSeriesChart(data: labelingVM.currentData);
+    } else {
+      return const Center(child: Text('지원되지 않는 파일 형식입니다.'));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // 전달된 프로젝트 객체 받기
@@ -226,13 +248,11 @@ class _LabelingPageState extends State<LabelingPage> {
                     ),
                   ),
                   const Divider(),
-                  // 데이터 시각화 (fl_chart 사용)
+                  // 데이터 시각화
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
-                      child: labelingVM.currentData.isNotEmpty
-                          ? TimeSeriesChart(data: labelingVM.currentData)
-                          : const Center(child: Text('데이터가 없습니다.')),
+                      child: _buildViewer(labelingVM),
                     ),
                   ),
                   // 현재 데이터 인덱스 및 파일명 표시
