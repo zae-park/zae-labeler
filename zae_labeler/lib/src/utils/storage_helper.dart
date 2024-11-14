@@ -202,3 +202,6 @@ class StorageHelper {
     throw Exception('No valid file selected or failed to import.');
   }
 }
+
+// TODO: 플랫폼에 따라 구현체 분리
+// https://chtgupta.medium.com/stop-using-kisweb-the-right-way-to-implement-multi-platform-code-in-your-flutter-project-edcd67970aa3
