@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../models/project_model.dart';
 import '../utils/storage_helper.dart';
+// import '../utils/platform_storage_helper.dart';
 
 class ProjectViewModel extends ChangeNotifier {
   List<Project> _projects = [];
@@ -12,12 +13,34 @@ class ProjectViewModel extends ChangeNotifier {
 
   List<Project> get projects => _projects;
 
+  // Future<void> loadProjects() async {
+  //   _projects = await storageHelper.loadProjects();
+  // }
+
+  // Future<void> saveProject(Project project) async {
+  //   _projects.add(project);
+  //   await storageHelper.saveProjects(_projects);
+  // }
+
+  // Future<void> updateProject(Project project) async {
+  //   final index = _projects.indexWhere((p) => p.id == project.id);
+  //   if (index != -1) {
+  //     _projects[index] = project;
+  //     await storageHelper.saveProjects(_projects);
+  //   }
+  // }
+
+  // Future<void> deleteProject(Project project) async {
+  //   _projects.removeWhere((p) => p.id == project.id);
+  //   await storageHelper.saveProjects(_projects);
+  // }
+
   Future<void> loadProjects() async {
     _projects = await StorageHelper.loadProjects();
     notifyListeners();
   }
 
-  Future<void> addProject(Project project) async {
+  Future<void> saveProject(Project project) async {
     _projects.add(project);
     await StorageHelper.saveProjects(_projects);
     notifyListeners();
