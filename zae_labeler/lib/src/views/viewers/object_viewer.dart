@@ -19,15 +19,15 @@ class ObjectViewer extends StatelessWidget {
       return Center(child: Text('Invalid JSON file: $e'));
     }
 
-    if (jsonData == null) {
+    if (jsonData == null || jsonData.isEmpty) {
       return const Center(child: Text('No data available.'));
     }
 
     return ListView.builder(
       padding: const EdgeInsets.all(8.0),
-      itemCount: jsonData.length,
+      itemCount: jsonData.keys.length,
       itemBuilder: (context, index) {
-        final key = jsonData.keys.elementAt(index);
+        final key = jsonData!.keys.elementAt(index);
         final value = jsonData[key];
 
         return ListTile(
