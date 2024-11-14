@@ -64,7 +64,7 @@ class ProjectListPage extends StatelessWidget {
 
           final projectVM =
               Provider.of<ProjectViewModel>(context, listen: false);
-          await projectVM.addProject(project);
+          await projectVM.saveProject(project);
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('${project.name} 프로젝트가 가져와졌습니다.')),
