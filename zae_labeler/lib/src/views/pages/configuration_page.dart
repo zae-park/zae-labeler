@@ -51,7 +51,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
       );
 
       if (widget.project == null) {
-        projectVM.addProject(project);
+        projectVM.saveProject(project);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${project.name} 프로젝트가 생성되었습니다.')),
         );
