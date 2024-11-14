@@ -1,18 +1,19 @@
 // lib/src/view_models/labeling_view_model.dart
+import 'dart:io';
+import 'dart:convert';
+import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import '../models/label_entry.dart';
 import '../models/project_model.dart';
+import '../models/data_model.dart';
 import '../utils/storage_helper.dart';
-import 'dart:io';
-import 'package:path/path.dart' as path;
-import 'dart:convert';
 
 class LabelingViewModel extends ChangeNotifier {
   final Project project;
   final List<LabelEntry> _labelEntries = [];
   int _currentIndex = 0;
   List<File> _dataFiles = [];
-  List<double> _currentSeriesData = [];
+  final List<double> _currentSeriesData = [];
   Map<String, dynamic>? _currentObjectData;
   File? _currentImageFile;
 
@@ -49,6 +50,10 @@ class LabelingViewModel extends ChangeNotifier {
   final List<String> seriesExtensions = ['.csv'];
   final List<String> objectExtensions = ['.json'];
   final List<String> imageExtensions = ['.png', '.jpg', '.jpeg'];
+
+  UnifiedData? _currentUnifiedData;
+
+  UnifiedData? get currentData => _currentUnifiedData;
 
   Future<void> _initialize() async {
     await _loadLabels();
@@ -89,19 +94,29 @@ class LabelingViewModel extends ChangeNotifier {
     final extension = path.extension(file.path).toLowerCase();
 
     if (seriesExtensions.contains(extension)) {
-      _currentSeriesData = await _loadSeriesData(file);
-      _currentObjectData = null;
-      _currentImageFile = null;
+      final seriesData = await _loadSeriesData(file);
+      _currentUnifiedData = UnifiedData(
+        file: file,
+        seriesData: seriesData,
+        fileType: FileType.series,
+      );
     } else if (objectExtensions.contains(extension)) {
-      _currentObjectData = await _loadObjectData(file);
-      _currentSeriesData = [];
-      _currentImageFile = null;
+      final objectData = await _loadObjectData(file);
+      _currentUnifiedData = UnifiedData(
+        file: file,
+        objectData: objectData,
+        fileType: FileType.object,
+      );
     } else if (imageExtensions.contains(extension)) {
-      _currentImageFile = file;
-      _currentSeriesData = [];
-      _currentObjectData = null;
+      _currentUnifiedData = UnifiedData(
+        file: file,
+        fileType: FileType.image,
+      );
     } else {
-      throw Exception('Unsupported file type: $extension');
+      _currentUnifiedData = UnifiedData(
+        file: file,
+        fileType: FileType.unsupported,
+      );
     }
 
     notifyListeners();
