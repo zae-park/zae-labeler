@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
-import '../view_models/project_view_model.dart';
-import '../models/project_model.dart';
+import '../../view_models/project_view_model.dart';
+import '../../models/project_model.dart';
 import '../pages/configuration_page.dart'; // 프로젝트 설정 수정 페이지
-import '../utils/storage_helper.dart';
+import '../../utils/storage_helper.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart'; // 파일 선택을 위한 패키지 추가

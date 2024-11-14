@@ -1,9 +1,9 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'src/pages/project_list_page.dart';
-import 'src/pages/configuration_page.dart';
-import 'src/pages/labeling_page.dart';
+import 'src/views/pages/project_list_page.dart';
+import 'src/views/pages/configuration_page.dart';
+import 'src/views/pages/labeling_page.dart';
 import 'src/view_models/project_view_model.dart';
 
 void main() {

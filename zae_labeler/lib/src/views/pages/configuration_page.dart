@@ -1,8 +1,8 @@
 // lib/src/pages/configure_project_page.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/project_model.dart';
-import '../view_models/project_view_model.dart';
+import '../../models/project_model.dart';
+import '../../view_models/project_view_model.dart';
 import 'package:uuid/uuid.dart';
 import 'package:file_picker/file_picker.dart'; // 파일 선택을 위한 패키지 추가
 
