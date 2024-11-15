@@ -17,6 +17,12 @@ class LabelingViewModel extends ChangeNotifier {
   Map<String, dynamic>? _currentObjectData;
   File? _currentImageFile;
 
+  bool _isInitialized = false; // 초기화 상태를 관리
+  bool get isInitialized => _isInitialized;
+
+  UnifiedData? _currentUnifiedData;
+  UnifiedData? get currentData => _currentUnifiedData;
+
   LabelingViewModel({required this.project}) {
     _initialize();
   }
@@ -51,14 +57,14 @@ class LabelingViewModel extends ChangeNotifier {
   final List<String> objectExtensions = ['.json'];
   final List<String> imageExtensions = ['.png', '.jpg', '.jpeg'];
 
-  UnifiedData? _currentUnifiedData;
-
-  UnifiedData? get currentData => _currentUnifiedData;
-
   Future<void> _initialize() async {
+    if (_isInitialized) return; // 이미 초기화가 완료되었으면 중단
+    _isInitialized = false; // 초기화 시작
     await _loadLabels();
     await _loadDataFiles();
     await loadCurrentData();
+    _isInitialized = true; // 초기화 완료
+    notifyListeners(); // UI에 초기화 완료 알림
   }
 
   Future<void> _loadLabels() async {
@@ -82,7 +88,7 @@ class LabelingViewModel extends ChangeNotifier {
           .cast<File>()
           .toList();
     }
-    notifyListeners();
+    // notifyListeners();
   }
 
   Future<void> loadCurrentData() async {
@@ -119,7 +125,7 @@ class LabelingViewModel extends ChangeNotifier {
       );
     }
 
-    notifyListeners();
+    // notifyListeners();
   }
 
   Future<List<double>> _loadSeriesData(File file) async {
@@ -220,6 +226,7 @@ class LabelingViewModel extends ChangeNotifier {
     if (_currentIndex < _dataFiles.length - 1) {
       _currentIndex++;
       loadCurrentData();
+      notifyListeners();
     }
   }
 
@@ -227,6 +234,7 @@ class LabelingViewModel extends ChangeNotifier {
     if (_currentIndex > 0) {
       _currentIndex--;
       loadCurrentData();
+      notifyListeners();
     }
   }
 
