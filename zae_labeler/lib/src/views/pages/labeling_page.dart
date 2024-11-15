@@ -143,6 +143,14 @@ class _LabelingPageState extends State<LabelingPage> {
       create: (_) => LabelingViewModel(project: project),
       child: Consumer<LabelingViewModel>(
         builder: (context, labelingVM, child) {
+          if (!labelingVM.isInitialized) {
+            // 초기화 중일 때 프로그래스 바 표시
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
           return Scaffold(
             appBar: AppBar(
               title: Text('${project.name} 라벨링'),
