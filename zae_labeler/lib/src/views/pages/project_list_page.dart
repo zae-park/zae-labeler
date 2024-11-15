@@ -35,7 +35,8 @@ class ProjectListPage extends StatelessWidget {
   Future<void> _downloadProjectConfig(
       BuildContext context, Project project) async {
     try {
-      String filePath = await StorageHelper.downloadProjectConfig(project);
+      String filePath =
+          await StorageHelper.instance.downloadProjectConfig(project);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('프로젝트 설정 파일이 다운로드되었습니다: $filePath')),
       );
