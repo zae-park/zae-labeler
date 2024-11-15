@@ -4,11 +4,11 @@ export 'native_storage_helper.dart'
 
 import 'dart:io';
 
-import 'package:zae_labeler/src/utils/storage_helper.dart';
-
 import '../models/label_entry.dart';
 import '../models/project_model.dart';
 import 'platform_storage_helper.dart';
+import 'native_storage_helper.dart'
+    if (dart.library.html) 'web_storage_helper.dart';
 
 class StorageHelper extends PlatformStorageHelper {
   static final _instance = StorageHelperImpl();
