@@ -36,19 +36,19 @@ class ProjectViewModel extends ChangeNotifier {
   // }
 
   Future<void> loadProjects() async {
-    _projects = await StorageHelper.loadProjects();
+    _projects = await StorageHelper.instance.loadProjects(); // 싱글톤 인스턴스를 통해 접근
     notifyListeners();
   }
 
   Future<void> saveProject(Project project) async {
     _projects.add(project);
-    await StorageHelper.saveProjects(_projects);
+    await StorageHelper.instance.saveProjects(_projects); // 싱글톤 인스턴스를 통해 접근
     notifyListeners();
   }
 
   Future<void> removeProject(String projectId) async {
     _projects.removeWhere((project) => project.id == projectId);
-    await StorageHelper.saveProjects(_projects);
+    await StorageHelper.instance.saveProjects(_projects); // 싱글톤 인스턴스를 통해 접근
     notifyListeners();
   }
 
@@ -57,7 +57,7 @@ class ProjectViewModel extends ChangeNotifier {
         _projects.indexWhere((project) => project.id == updatedProject.id);
     if (index != -1) {
       _projects[index] = updatedProject;
-      await StorageHelper.saveProjects(_projects);
+      await StorageHelper.instance.saveProjects(_projects); // 싱글톤 인스턴스를 통해 접근
       notifyListeners();
     }
   }
