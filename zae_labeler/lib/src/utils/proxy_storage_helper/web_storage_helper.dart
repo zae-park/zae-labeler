@@ -1,11 +1,24 @@
+// lib/src/utils/web_storage_helper.dart
 import 'dart:convert';
 import 'dart:html' as html;
-import 'package:archive/archive.dart';
+import 'dart:io';
 import '../../models/project_model.dart';
 import '../../models/label_entry.dart';
-import 'interface_storage_helper.dart';
+import 'platform_storage_helper.dart';
 
-class WebStorageHelper implements PlatformStorageHelper {
+class StorageHelperImpl implements PlatformStorageHelper {
+  @override
+  Future<String> downloadProjectConfig(Project project) async {
+    final jsonString = jsonEncode(project.toJson());
+    final blob = html.Blob([jsonString]);
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    final anchor = html.AnchorElement(href: url)
+      ..setAttribute("download", "${project.name}_config.json")
+      ..click();
+    html.Url.revokeObjectUrl(url);
+    return "${project.name}_config.json (downloaded in browser)";
+  }
+
   @override
   Future<List<Project>> loadProjects() async {
     final projectsJson = html.window.localStorage['projects'];
@@ -18,8 +31,8 @@ class WebStorageHelper implements PlatformStorageHelper {
 
   @override
   Future<void> saveProjects(List<Project> projects) async {
-    html.window.localStorage['projects'] =
-        jsonEncode(projects.map((e) => e.toJson()).toList());
+    final projectsJson = jsonEncode(projects.map((e) => e.toJson()).toList());
+    html.window.localStorage['projects'] = projectsJson;
   }
 
   @override
@@ -34,35 +47,20 @@ class WebStorageHelper implements PlatformStorageHelper {
 
   @override
   Future<void> saveLabelEntries(List<LabelEntry> labelEntries) async {
-    html.window.localStorage['labels'] =
-        jsonEncode(labelEntries.map((e) => e.toJson()).toList());
+    final labelsJson = jsonEncode(labelEntries.map((e) => e.toJson()).toList());
+    html.window.localStorage['labels'] = labelsJson;
   }
 
   @override
   Future<String> downloadLabelsAsZip(Project project,
-      List<LabelEntry> labelEntries, List<dynamic> dataFiles) async {
-    final archive = Archive();
+      List<LabelEntry> labelEntries, List<File> dataFiles) async {
+    // 웹 환경에서는 File API를 사용할 수 없음
+    throw UnimplementedError("File download not supported in web.");
+  }
 
-    for (var file in dataFiles) {
-      final fileBytes = file as List<int>;
-      archive
-          .addFile(ArchiveFile(file.toString(), fileBytes.length, fileBytes));
-    }
-
-    final labelsJson = jsonEncode(labelEntries.map((e) => e.toJson()).toList());
-    archive.addFile(
-        ArchiveFile('labels.json', labelsJson.length, utf8.encode(labelsJson)));
-
-    final zipData = ZipEncoder().encode(archive);
-    if (zipData == null) throw Exception('Failed to create ZIP archive.');
-
-    final blob = html.Blob([zipData]);
-    final url = html.Url.createObjectUrlFromBlob(blob);
-    final anchor = html.AnchorElement(href: url)
-      ..setAttribute("download", "${project.name}_labels.zip")
-      ..click();
-    html.Url.revokeObjectUrl(url);
-
-    return "${project.name}_labels.zip (web download)";
+  @override
+  Future<List<LabelEntry>> importLabelEntries() async {
+    // 웹 환경에서는 FilePicker를 사용할 수 없음
+    throw UnimplementedError("File import not supported in web.");
   }
 }
