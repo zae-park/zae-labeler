@@ -1,8 +1,8 @@
 // lib/src/utils/platform_storage_helper.dart
 import 'dart:io';
 
-import '../models/project_model.dart';
-import '../models/label_entry.dart';
+import '../../models/project_model.dart';
+import '../../models/label_entry.dart';
 
 abstract class PlatformStorageHelper {
   Future<String> downloadProjectConfig(Project project);

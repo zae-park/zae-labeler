@@ -1,14 +1,14 @@
 // lib/src/utils/storage_helper.dart
-export 'native_storage_helper.dart'
-    if (dart.library.html) 'web_storage_helper.dart';
+// export 'proxy_storage_helper/native_storage_helper.dart'
+//     if (dart.library.html) 'proxy_storage_helper/web_storage_helper.dart';
 
 import 'dart:io';
 
 import '../models/label_entry.dart';
 import '../models/project_model.dart';
-import 'platform_storage_helper.dart';
-import 'native_storage_helper.dart'
-    if (dart.library.html) 'web_storage_helper.dart';
+import 'proxy_storage_helper/platform_storage_helper.dart';
+import 'proxy_storage_helper/native_storage_helper.dart'
+    if (dart.library.html) 'proxy_storage_helper/web_storage_helper.dart';
 
 class StorageHelper extends PlatformStorageHelper {
   static final _instance = StorageHelperImpl();
