@@ -5,6 +5,7 @@ import '../../models/project_model.dart';
 import '../../view_models/project_view_model.dart';
 import 'package:uuid/uuid.dart';
 import 'package:file_picker/file_picker.dart'; // 파일 선택을 위한 패키지 추가
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ConfigureProjectPage extends StatefulWidget {
   final Project? project;
@@ -20,7 +21,8 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
   final _nameController = TextEditingController();
   LabelingMode _selectedMode = LabelingMode.singleClassification;
   final List<String> _classes = [];
-  String _dataDirectory = '';
+  String? _dataDirectory = '';
+  List<String>? _dataPaths = [];
 
   @override
   void initState() {
@@ -30,6 +32,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
       _selectedMode = widget.project!.mode;
       _classes.addAll(widget.project!.classes);
       _dataDirectory = widget.project!.dataDirectory;
+      _dataPaths = widget.project!.dataPaths;
     }
   }
 
@@ -48,6 +51,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
         mode: _selectedMode,
         classes: _classes,
         dataDirectory: _dataDirectory,
+        dataPaths: _dataPaths,
       );
 
       if (widget.project == null) {
@@ -102,11 +106,27 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
   }
 
   Future<void> _pickDataDirectory() async {
-    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
-    if (selectedDirectory != null) {
-      setState(() {
-        _dataDirectory = selectedDirectory;
-      });
+    if (kIsWeb) {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+      );
+
+      if (result != null) {
+        print('Files selected: ${result.files.map((f) => f.name).join(', ')}');
+        setState(() {
+          // 파일 이름 목록 저장
+          _dataDirectory = result.files.map((f) => f.name).join('; ');
+        });
+      } else {
+        print('No files selected');
+      }
+    } else {
+      String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+      if (selectedDirectory != null) {
+        setState(() {
+          _dataDirectory = selectedDirectory;
+        });
+      }
     }
   }
 
@@ -199,22 +219,23 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
                     child: TextFormField(
                       readOnly: true,
                       decoration: const InputDecoration(
-                        labelText: '데이터 디렉토리 경로',
-                        hintText: '디렉토리를 선택하세요',
+                        labelText: kIsWeb ? '업로드된 파일 경로' : '데이터 디렉토리 경로',
+                        hintText: kIsWeb ? '파일을 업로드하세요' : '디렉토리를 선택하세요',
                       ),
                       controller: TextEditingController(text: _dataDirectory),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return '데이터 디렉토리 경로를 선택하세요';
+                          return kIsWeb ? '파일을 업로드하세요' : '데이터 디렉토리 경로를 선택하세요';
                         }
                         return null;
                       },
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.folder_open),
+                    icon: const Icon(
+                        kIsWeb ? Icons.upload_file : Icons.folder_open),
                     onPressed: _pickDataDirectory,
-                    tooltip: '디렉토리 선택',
+                    tooltip: kIsWeb ? '파일 업로드' : '디렉토리 선택',
                   ),
                 ],
               ),
