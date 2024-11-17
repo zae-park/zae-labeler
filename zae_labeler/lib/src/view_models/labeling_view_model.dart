@@ -7,6 +7,7 @@ import '../models/label_entry.dart';
 import '../models/project_model.dart';
 import '../models/data_model.dart';
 import '../utils/storage_helper.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class LabelingViewModel extends ChangeNotifier {
   final Project project;
@@ -73,22 +74,38 @@ class LabelingViewModel extends ChangeNotifier {
   }
 
   Future<void> _loadDataFiles() async {
-    final directory = Directory(project.dataDirectory);
-    if (directory.existsSync()) {
-      _dataFiles = directory
-          .listSync()
-          .where((file) =>
-              file is File &&
-              (seriesExtensions
-                      .contains(path.extension(file.path).toLowerCase()) ||
-                  objectExtensions
-                      .contains(path.extension(file.path).toLowerCase()) ||
-                  imageExtensions
-                      .contains(path.extension(file.path).toLowerCase())))
-          .cast<File>()
-          .toList();
+    if (kIsWeb) {
+      // Web 환경: 개별 파일 경로를 처리
+      if (project.dataPaths != null) {
+        _dataFiles = project.dataPaths!
+            .map((filePath) => File(filePath))
+            .where((file) =>
+                seriesExtensions
+                    .contains(path.extension(file.path).toLowerCase()) ||
+                objectExtensions
+                    .contains(path.extension(file.path).toLowerCase()) ||
+                imageExtensions
+                    .contains(path.extension(file.path).toLowerCase()))
+            .toList();
+      }
+    } else {
+      // Native 환경: 디렉토리 내 파일을 탐색
+      final directory = Directory(project.dataDirectory!);
+      if (directory.existsSync()) {
+        _dataFiles = directory
+            .listSync()
+            .where((file) =>
+                file is File &&
+                (seriesExtensions
+                        .contains(path.extension(file.path).toLowerCase()) ||
+                    objectExtensions
+                        .contains(path.extension(file.path).toLowerCase()) ||
+                    imageExtensions
+                        .contains(path.extension(file.path).toLowerCase())))
+            .cast<File>()
+            .toList();
+      }
     }
-    // notifyListeners();
   }
 
   Future<void> loadCurrentData() async {
