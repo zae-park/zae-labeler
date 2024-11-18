@@ -1,13 +1,17 @@
-// lib/src/pages/configure_project_page.dart
+// This file implements the page for configuring a new project or editing an existing one.
+// Users can specify the project name, labeling mode, classes, and data directory or file uploads.
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart'; // For generating unique project IDs
+import 'package:file_picker/file_picker.dart'; // For picking directories or files
+import 'package:flutter/foundation.dart' show kIsWeb; // To determine the platform (web or native)
+
 import '../../models/project_model.dart';
 import '../../view_models/project_view_model.dart';
-import 'package:uuid/uuid.dart';
-import 'package:file_picker/file_picker.dart'; // 파일 선택을 위한 패키지 추가
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ConfigureProjectPage extends StatefulWidget {
+  // Project to be edited, or null for creating a new one
   final Project? project;
 
   const ConfigureProjectPage({Key? key, this.project}) : super(key: key);
@@ -17,16 +21,24 @@ class ConfigureProjectPage extends StatefulWidget {
 }
 
 class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
+  // Form key for validating input fields
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+
+  final _nameController = TextEditingController(); // project name controller
+
+  // Default lableing mode : Single Classification with 3 class
   LabelingMode _selectedMode = LabelingMode.singleClassification;
-  final List<String> _classes = [];
-  String? _dataDirectory = '';
-  List<String>? _dataPaths = [];
+  final List<String> _classes = ['1', '2', '3']; // List to hold class names
+
+  // Data Hub
+  String? _dataDirectory = ''; // Data directory path (native)
+  List<String>? _dataPaths = []; // Data file paths (web)
 
   @override
   void initState() {
     super.initState();
+
+    // If editing an existing project, initialize fields with its data
     if (widget.project != null) {
       _nameController.text = widget.project!.name;
       _selectedMode = widget.project!.mode;
@@ -38,60 +50,34 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _nameController.dispose(); // Dispose controller to free resources
     super.dispose();
   }
 
-  void _saveProject() {
-    if (_formKey.currentState!.validate()) {
-      final projectVM = Provider.of<ProjectViewModel>(context, listen: false);
-      final project = Project(
-        id: widget.project?.id ?? const Uuid().v4(),
-        name: _nameController.text,
-        mode: _selectedMode,
-        classes: _classes,
-        dataDirectory: _dataDirectory,
-        dataPaths: _dataPaths,
-      );
-
-      if (widget.project == null) {
-        projectVM.saveProject(project);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${project.name} 프로젝트가 생성되었습니다.')),
-        );
-      } else {
-        projectVM.updateProject(project);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${project.name} 프로젝트가 수정되었습니다.')),
-        );
-      }
-
-      Navigator.pop(context);
-    }
-  }
-
+  // Add a new class to the project
   void _addClass() {
     showDialog(
       context: context,
       builder: (context) {
+        // Controller for class name input
         final classController = TextEditingController();
+
         return AlertDialog(
-          title: const Text('클래스 추가'),
+          title: const Text('Add Class'),
           content: TextField(
             controller: classController,
-            decoration: const InputDecoration(labelText: '클래스 이름'),
+            decoration: const InputDecoration(labelText: 'Class Name'),
           ),
           actions: [
             TextButton(
               onPressed: () {
                 if (classController.text.isNotEmpty) {
-                  setState(() {
-                    _classes.add(classController.text);
-                  });
-                  Navigator.pop(context);
+                  // Add new class to the list
+                  setState(() => _classes.add(classController.text));
+                  Navigator.pop(context); // Close the dialog
                 }
               },
-              child: const Text('추가'),
+              child: const Text('Add'),
             ),
           ],
         );
@@ -99,34 +85,55 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
     );
   }
 
-  void _removeClass(int index) {
-    setState(() {
-      _classes.removeAt(index);
-    });
-  }
+  // Remove a class from the project
+  void _removeClass(int index) => setState(() => _classes.removeAt(index));
 
+  // Pick a data directory or files depending on the platform
   Future<void> _pickDataDirectory() async {
     if (kIsWeb) {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        allowMultiple: true,
-      );
+      // Web: Use file picker for file uploads
+      FilePickerResult? result = await FilePicker.platform.pickFiles(allowMultiple: true);
 
       if (result != null) {
-        print('Files selected: ${result.files.map((f) => f.name).join(', ')}');
-        setState(() {
-          // 파일 이름 목록 저장
-          _dataDirectory = result.files.map((f) => f.name).join('; ');
-        });
-      } else {
-        print('No files selected');
+        setState(() => _dataPaths = result.files.map((f) => f.name).toList());
       }
     } else {
+      // Native: Use directory picker
       String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
       if (selectedDirectory != null) {
         setState(() {
-          _dataDirectory = selectedDirectory;
+          _dataDirectory = selectedDirectory; // Store directory path
         });
       }
+    }
+  }
+
+  // Save the project to the ProjectViewModel
+  void _confirmProject() {
+    if (_formKey.currentState!.validate()) {
+      final project = Project(
+        id: widget.project?.id ?? const Uuid().v4(), // If new, generate new ID
+        name: _nameController.text,
+        mode: _selectedMode,
+        classes: _classes,
+        dataDirectory: _dataDirectory,
+        dataPaths: _dataPaths,
+      );
+      final projectVM = Provider.of<ProjectViewModel>(context, listen: false);
+
+      if (widget.project == null) {
+        // If there is no project in parent widget (Project List Page).
+        projectVM.saveProject(project);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${project.name} project has been created.')),
+        );
+      } else {
+        projectVM.updateProject(project);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${project.name} project has been updated.')),
+        );
+      }
+      Navigator.pop(context); // Navigate back after saving
     }
   }
 
@@ -134,7 +141,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.project == null ? '프로젝트 생성' : '프로젝트 수정'),
+        title: Text(widget.project == null ? 'Create Project' : 'Edit Project'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -142,22 +149,22 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
           key: _formKey,
           child: ListView(
             children: [
-              // 프로젝트 이름
+              // Project name input
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: '프로젝트 이름'),
+                decoration: const InputDecoration(labelText: 'Project Name'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return '프로젝트 이름을 입력하세요';
+                    return 'Please enter a project name';
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 16),
-              // 라벨링 모드 선택 (DropdownButtonFormField 수정)
+              // Labeling mode dropdown
               DropdownButtonFormField<LabelingMode>(
                 value: _selectedMode,
-                decoration: const InputDecoration(labelText: '라벨링 모드'),
+                decoration: const InputDecoration(labelText: 'Labeling Mode'),
                 items: LabelingMode.values.map((mode) {
                   String displayText;
                   switch (mode) {
@@ -179,26 +186,26 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
                   );
                 }).toList(),
                 onChanged: (LabelingMode? newMode) {
+                  // Update selected mode
                   if (newMode != null) {
-                    setState(() {
-                      _selectedMode = newMode;
-                    });
+                    setState(() => _selectedMode = newMode);
                   }
                 },
               ),
               const SizedBox(height: 16),
-              // 클래스 목록
+              // Class list section
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('클래스 목록', style: TextStyle(fontSize: 16)),
+                  const Text('Classes', style: TextStyle(fontSize: 16)),
                   IconButton(
                     icon: const Icon(Icons.add),
                     onPressed: _addClass,
-                    tooltip: '클래스 추가',
+                    tooltip: 'Add Class',
                   ),
                 ],
               ),
+              // Display list of classes
               ..._classes.asMap().entries.map((entry) {
                 int index = entry.key;
                 String className = entry.value;
@@ -207,43 +214,42 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
                   trailing: IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () => _removeClass(index),
-                    tooltip: '클래스 삭제',
+                    tooltip: 'Remove Class',
                   ),
                 );
               }).toList(),
               const SizedBox(height: 16),
-              // 데이터 디렉토리 선택
+              // Data directory or file selection
               Row(
                 children: [
                   Expanded(
                     child: TextFormField(
-                      readOnly: true,
+                      readOnly: true, // Make the field read-only
                       decoration: const InputDecoration(
-                        labelText: kIsWeb ? '업로드된 파일 경로' : '데이터 디렉토리 경로',
-                        hintText: kIsWeb ? '파일을 업로드하세요' : '디렉토리를 선택하세요',
+                        labelText: kIsWeb ? 'Uploaded File Names' : 'Data Directory Path',
+                        hintText: kIsWeb ? 'Upload files' : 'Select a directory',
                       ),
-                      controller: TextEditingController(text: _dataDirectory),
+                      controller: TextEditingController(text: kIsWeb ? _dataPaths?.join(', ') : _dataDirectory),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return kIsWeb ? '파일을 업로드하세요' : '데이터 디렉토리 경로를 선택하세요';
+                          return kIsWeb ? 'Please upload files' : 'Please select a directory';
                         }
                         return null;
                       },
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(
-                        kIsWeb ? Icons.upload_file : Icons.folder_open),
-                    onPressed: _pickDataDirectory,
-                    tooltip: kIsWeb ? '파일 업로드' : '디렉토리 선택',
+                    icon: const Icon(kIsWeb ? Icons.upload_file : Icons.folder_open),
+                    onPressed: _pickDataDirectory, // Trigger directory or file picker
+                    tooltip: kIsWeb ? 'Upload Files' : 'Select Directory',
                   ),
                 ],
               ),
               const SizedBox(height: 32),
-              // 저장 버튼
+              // Save button
               ElevatedButton(
-                onPressed: _saveProject,
-                child: Text(widget.project == null ? '프로젝트 생성' : '프로젝트 수정'),
+                onPressed: _confirmProject,
+                child: Text(widget.project == null ? 'Create Project' : 'Save Changes'),
               ),
             ],
           ),
