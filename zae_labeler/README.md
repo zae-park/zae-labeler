@@ -53,8 +53,8 @@ Before setting up the project, ensure you have the following installed on your s
 
 1. **Clone the Repository**
 ```bash
-git clone https://github.com/your-username/flutter-labeling-app.git
-cd flutter-labeling-app
+git clone https://github.com/zae-park/zae-labeler.git
+cd zae-labler/zae_labler
 ```
 
 2. **Install Dependencies**
