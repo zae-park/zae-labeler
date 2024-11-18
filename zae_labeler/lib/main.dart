@@ -13,23 +13,22 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // 앱의 루트 위젯
+  // Root widget of the application
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
+      // Registering providers for state management.
+      //Add other providers here if needed in the future
       providers: [
         ChangeNotifierProvider<ProjectViewModel>(
           create: (_) => ProjectViewModel(),
         ),
-        // 다른 Provider들이 있다면 여기에 추가
       ],
       child: MaterialApp(
-        title: '시계열 데이터 라벨링 앱',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-        ),
-        // 초기 페이지 설정
-        initialRoute: '/',
+        // Application title displayed in task switcher or web browser tab
+        title: 'Data Labeling App for YOU !',
+        theme: ThemeData(primarySwatch: Colors.blue),
+        initialRoute: '/', // Initial route when the app is launched
         routes: {
           '/': (context) => const ProjectListPage(),
           '/configuration': (context) => const ConfigureProjectPage(),
