@@ -1,10 +1,10 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'src/pages/project_list_page.dart';
-import 'src/pages/configuration_page.dart';
-import 'src/pages/labeling_page.dart';
-import 'src/view_models/project_manager_view_model.dart';
+import 'src/views/pages/project_list_page.dart';
+import 'src/views/pages/configuration_page.dart';
+import 'src/views/pages/labeling_page.dart';
+import 'src/view_models/project_view_model.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,26 +13,25 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // 앱의 루트 위젯
+  // Root widget of the application
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
+      // Registering providers for state management.
+      //Add other providers here if needed in the future
       providers: [
-        ChangeNotifierProvider<ProjectManagerViewModel>(
-          create: (_) => ProjectManagerViewModel(),
+        ChangeNotifierProvider<ProjectViewModel>(
+          create: (_) => ProjectViewModel(),
         ),
-        // 다른 Provider들이 있다면 여기에 추가
       ],
       child: MaterialApp(
-        title: '시계열 데이터 라벨링 앱',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-        ),
-        // 초기 페이지 설정
-        initialRoute: '/',
+        // Application title displayed in task switcher or web browser tab
+        title: 'Data Labeling App for YOU !',
+        theme: ThemeData(primarySwatch: Colors.blue),
+        initialRoute: '/', // Initial route when the app is launched
         routes: {
           '/': (context) => const ProjectListPage(),
-          '/configuration': (context) => ConfigurationPage(),
+          '/configuration': (context) => const ConfigureProjectPage(),
           '/labeling': (context) => const LabelingPage(),
         },
       ),

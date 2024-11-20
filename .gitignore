@@ -1,0 +1,10 @@
+.idea/
+
+zae_labeler/android/
+zae_labeler/build/
+zae_labeler/ios/
+zae_labeler/linux/
+zae_labeler/macos/
+zae_labeler/web/
+zae_labeler/windows/
+zae_labeler/pubspec.lock
