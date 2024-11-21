@@ -34,9 +34,7 @@ class LabelingViewModel extends ChangeNotifier {
   List<double> get currentSeriesData => _currentSeriesData;
   Map<String, dynamic>? get currentObjectData => _currentObjectData;
   File? get currentImageFile => _currentImageFile;
-  String get currentFileName => _dataFiles.isNotEmpty
-      ? path.basename(_dataFiles[_currentIndex].path)
-      : '';
+  String get currentFileName => _dataFiles.isNotEmpty ? path.basename(_dataFiles[_currentIndex].path) : '';
 
   LabelEntry get currentLabelEntry {
     if (_currentIndex < 0 || _currentIndex >= _dataFiles.length) {
@@ -80,12 +78,9 @@ class LabelingViewModel extends ChangeNotifier {
         _dataFiles = project.dataPaths!
             .map((filePath) => File(filePath))
             .where((file) =>
-                seriesExtensions
-                    .contains(path.extension(file.path).toLowerCase()) ||
-                objectExtensions
-                    .contains(path.extension(file.path).toLowerCase()) ||
-                imageExtensions
-                    .contains(path.extension(file.path).toLowerCase()))
+                seriesExtensions.contains(path.extension(file.path).toLowerCase()) ||
+                objectExtensions.contains(path.extension(file.path).toLowerCase()) ||
+                imageExtensions.contains(path.extension(file.path).toLowerCase()))
             .toList();
       }
     } else {
@@ -96,12 +91,9 @@ class LabelingViewModel extends ChangeNotifier {
             .listSync()
             .where((file) =>
                 file is File &&
-                (seriesExtensions
-                        .contains(path.extension(file.path).toLowerCase()) ||
-                    objectExtensions
-                        .contains(path.extension(file.path).toLowerCase()) ||
-                    imageExtensions
-                        .contains(path.extension(file.path).toLowerCase())))
+                (seriesExtensions.contains(path.extension(file.path).toLowerCase()) ||
+                    objectExtensions.contains(path.extension(file.path).toLowerCase()) ||
+                    imageExtensions.contains(path.extension(file.path).toLowerCase())))
             .cast<File>()
             .toList();
       }
@@ -118,28 +110,14 @@ class LabelingViewModel extends ChangeNotifier {
 
     if (seriesExtensions.contains(extension)) {
       final seriesData = await _loadSeriesData(file);
-      _currentUnifiedData = UnifiedData(
-        file: file,
-        seriesData: seriesData,
-        fileType: FileType.series,
-      );
+      _currentUnifiedData = UnifiedData(file: file, seriesData: seriesData, fileType: FileType.series);
     } else if (objectExtensions.contains(extension)) {
       final objectData = await _loadObjectData(file);
-      _currentUnifiedData = UnifiedData(
-        file: file,
-        objectData: objectData,
-        fileType: FileType.object,
-      );
+      _currentUnifiedData = UnifiedData(file: file, objectData: objectData, fileType: FileType.object);
     } else if (imageExtensions.contains(extension)) {
-      _currentUnifiedData = UnifiedData(
-        file: file,
-        fileType: FileType.image,
-      );
+      _currentUnifiedData = UnifiedData(file: file, fileType: FileType.image);
     } else {
-      _currentUnifiedData = UnifiedData(
-        file: file,
-        fileType: FileType.unsupported,
-      );
+      _currentUnifiedData = UnifiedData(file: file, fileType: FileType.unsupported);
     }
 
     // notifyListeners();
@@ -147,10 +125,7 @@ class LabelingViewModel extends ChangeNotifier {
 
   Future<List<double>> _loadSeriesData(File file) async {
     final lines = await file.readAsLines();
-    return lines
-        .expand((line) => line.split(','))
-        .map((part) => double.tryParse(part.trim()) ?? 0.0)
-        .toList();
+    return lines.expand((line) => line.split(',')).map((part) => double.tryParse(part.trim()) ?? 0.0).toList();
   }
 
   Future<Map<String, dynamic>> _loadObjectData(File file) async {
@@ -162,8 +137,7 @@ class LabelingViewModel extends ChangeNotifier {
     if (dataIndex < 0 || dataIndex >= _dataFiles.length) return;
     final dataId = _dataFiles[dataIndex].path;
 
-    final existingEntryIndex =
-        _labelEntries.indexWhere((entry) => entry.dataPath == dataId);
+    final existingEntryIndex = _labelEntries.indexWhere((entry) => entry.dataPath == dataId);
 
     if (existingEntryIndex != -1) {
       LabelEntry entry = _labelEntries[existingEntryIndex];
@@ -183,8 +157,7 @@ class LabelingViewModel extends ChangeNotifier {
           } else {
             if (!entry.multiClassification!.labels.contains(label)) {
               entry.multiClassification!.labels.add(label);
-              entry.multiClassification!.labeledAt =
-                  DateTime.now().toIso8601String();
+              entry.multiClassification!.labeledAt = DateTime.now().toIso8601String();
             }
           }
           break;
@@ -256,7 +229,6 @@ class LabelingViewModel extends ChangeNotifier {
   }
 
   Future<String> downloadLabelsAsZip() async {
-    return await StorageHelper()
-        .downloadLabelsAsZip(project, _labelEntries, _dataFiles);
+    return await StorageHelper().downloadLabelsAsZip(project, _labelEntries, _dataFiles);
   }
 }
