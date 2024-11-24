@@ -1,4 +1,4 @@
-name: Deploy Documentation
+name: Test and Deploy Documentation
 
 on:
   push:
@@ -8,9 +8,18 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        dart: ["2.17.0", "2.18.0", "stable"] # 테스트할 Dart SDK 버전
+    runs-on: ${{ matrix.os }}
 
     steps:
+      - name: Set up Dart SDK
+        uses: dart-lang/setup-dart@v2
+        with:
+          sdk: ${{ matrix.dart }}
+
       - name: Clone Flutter repository with stable channel
         uses: subosito/flutter-action@v1.5.0
         with:
@@ -31,6 +40,7 @@ jobs:
         run: flutter build web
 
       - name: Deploy to GitHub Pages
+        if: matrix.os == 'ubuntu-latest' && matrix.dart == 'stable'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.PAT_LABLER }}
