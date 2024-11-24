@@ -9,10 +9,9 @@ on:
 jobs:
   build:
     strategy:
-      fail-fast: false # 하나의 Job 실패가 다른 Job에 영향을 주지 않도록 설정
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        dart: ["stable", "3.2.0"]
 
     runs-on: ${{ matrix.os }}
 
@@ -23,34 +22,25 @@ jobs:
         with:
           channel: stable
 
-      # Step 2: Override Dart SDK
-      # Flutter 내장 Dart SDK 대신, 필요한 버전의 Dart SDK를 명시적으로 설치
-      - name: Set up Dart SDK
-        uses: dart-lang/setup-dart@v1.3.0
-        with:
-          sdk: "3.2.3" # 프로젝트 요구사항에 맞는 Dart SDK 버전 설정
+      # Step 2: Verify Flutter setup
+      - name: Verify Flutter setup
+        run: flutter --version
 
-      # Step 3: Verify Flutter and Dart versions
-      - name: Verify Flutter and Dart setup
-        run: |
-          flutter --version
-          dart --version
-
-      # Step 4: Check out repository
+      # Step 3: Check out repository
       - name: Check out repository
         uses: actions/checkout@v4
 
-      # Step 5: Install dependencies
+      # Step 4: Install dependencies
       - name: Install dependencies
-        working-directory: ./zae_labeler
+      working-directory: ./zae_labeler
         run: flutter pub get
 
-      # Step 6: Build web application
+      # Step 5: Build web application
       - name: Build web
         working-directory: ./zae_labeler
         run: flutter build web
 
-      # Step 7: Deploy to GitHub Pages
+      # Step 6: Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
