@@ -23,19 +23,20 @@ jobs:
         with:
           channel: stable
 
-      # Step 2: Override Dart SDK version
+      # Step 2: Override Dart SDK
+      # Flutter 내장 Dart SDK 대신, 필요한 버전의 Dart SDK를 명시적으로 설치
       - name: Set up Dart SDK
         uses: dart-lang/setup-dart@v1.3.0
         with:
-          sdk: ${{ matrix.dart }}
+          sdk: "3.2.3" # 프로젝트 요구사항에 맞는 Dart SDK 버전 설정
 
-      # Step 3: Check Flutter environment
+      # Step 3: Verify Flutter and Dart versions
       - name: Verify Flutter and Dart setup
         run: |
           flutter --version
           dart --version
 
-      # Step 4: Check out code
+      # Step 4: Check out repository
       - name: Check out repository
         uses: actions/checkout@v4
 
@@ -51,7 +52,6 @@ jobs:
 
       # Step 7: Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
-        if: matrix.os == 'ubuntu-latest' && matrix.dart == 'stable'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.PAT_LABLER }}
