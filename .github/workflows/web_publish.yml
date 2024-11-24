@@ -9,37 +9,47 @@ on:
 jobs:
   build:
     strategy:
-      fail-fast: false # 병렬 작업 실패 시 나머지 작업 취소 방지
+      fail-fast: false # 하나의 Job 실패가 다른 Job에 영향을 주지 않도록 설정
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         dart: ["2.17.0", "2.18.0", "stable"]
+
     runs-on: ${{ matrix.os }}
 
     steps:
+      # Step 1: Set up Flutter
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v1.5.0
+        with:
+          channel: stable
+
+      # Step 2: Override Dart SDK version
       - name: Set up Dart SDK
         uses: dart-lang/setup-dart@v1.3.0
         with:
           sdk: ${{ matrix.dart }}
 
-      - name: Clone Flutter repository with stable channel
-        uses: subosito/flutter-action@v1.5.0
-        with:
-          channel: stable
-      
-      - name: Check Flutter environment
-        run: flutter doctor -v
+      # Step 3: Check Flutter environment
+      - name: Verify Flutter and Dart setup
+        run: |
+          flutter --version
+          dart --version
 
-      - name: Check out code
+      # Step 4: Check out code
+      - name: Check out repository
         uses: actions/checkout@v4
 
+      # Step 5: Install dependencies
       - name: Install dependencies
         working-directory: ./zae_labeler
         run: flutter pub get
 
+      # Step 6: Build web application
       - name: Build web
         working-directory: ./zae_labeler
         run: flutter build web
 
+      # Step 7: Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         if: matrix.os == 'ubuntu-latest' && matrix.dart == 'stable'
         uses: peaceiris/actions-gh-pages@v3
