@@ -19,7 +19,7 @@ jobs:
     steps:
       # Step 1: Set up Flutter
       - name: Set up Flutter
-        uses: subosito/flutter-action@v1.5.0
+        uses: subosito/flutter-action@v2
         with:
           channel: stable
 
