@@ -12,7 +12,7 @@ jobs:
       fail-fast: false # 하나의 Job 실패가 다른 Job에 영향을 주지 않도록 설정
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        dart: ["2.18.0", "stable"]
+        dart: ["stable", "3.2.0"]
 
     runs-on: ${{ matrix.os }}
 
