@@ -11,27 +11,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clone Flutter repository with master channel
+      - name: Clone Flutter repository with stable channel
         uses: subosito/flutter-action@v1.5.0
         with:
           channel: stable
-      - run: flutter doctor -v
+      
+      - name: Check Flutter environment
+        run: flutter doctor -v
 
-      - uses: actions/checkout@v4
-      # - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
+      - name: Check out code
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         working-directory: ./zae_labeler
-      - run: flutter pub get
-      
+        run: flutter pub get
+
       - name: Build web
-        run: |
-          flutter build web
+        working-directory: ./zae_labeler
+        run: flutter build web
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.PAT_LABLER }}
           publish_branch: docs
-          publish_dir: zae_labeler/build/html
-
+          publish_dir: zae_labeler/build/web
