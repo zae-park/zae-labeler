@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
 
     runs-on: ${{ matrix.os }}
 
@@ -20,7 +20,8 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: '3.16.5'
+          # channel: stable
 
       # Step 2: Verify Flutter setup
       - name: Verify Flutter setup
@@ -38,7 +39,7 @@ jobs:
       # Step 5: Build web application
       - name: Build web
         working-directory: ./zae_labeler
-        run: flutter build web
+        run: flutter build web --web-renderer canvaskit
 
       # Step 6: Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
