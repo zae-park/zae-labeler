@@ -25,7 +25,7 @@ jobs:
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{ secrets.PAT_GITHUB }}
+          github_token: ${{ secrets.PAT_LABLER }}
           publish_branch: docs
           publish_dir: zae_labeler/build/html
 
