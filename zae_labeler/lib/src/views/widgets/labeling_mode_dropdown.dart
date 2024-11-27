@@ -38,9 +38,7 @@ class LabelingModeDropdown extends StatelessWidget {
         );
       }).toList(),
       onChanged: (LabelingMode? newMode) {
-        if (newMode != null) {
-          onModeChanged(newMode);
-        }
+        if (newMode != null) =>  onModeChanged(newMode)
       },
     );
   }
