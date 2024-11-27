@@ -1,0 +1,50 @@
+name: Test and Deploy Documentation
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      # Step 1: Set up Flutter
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.16.5'
+          channel: stable
+
+      # Step 2: Verify Flutter setup
+      - name: Verify Flutter setup
+        run: flutter --version
+
+      # Step 3: Check out repository
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # Step 4: Install dependencies
+      - name: Install dependencies
+        working-directory: ./zae_labeler
+        run: flutter pub get
+
+      # Step 5: Build web application with base-href
+      - name: Build web
+        working-directory: ./zae_labeler
+        run: flutter build web --base-href "/${{ github.event.repository.name }}/" --verbose
+
+      # Step 6: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.PAT_LABLER }}
+          publish_branch: docs
+          publish_dir: zae_labeler/build/web
