@@ -38,11 +38,7 @@ class _LabelingPageState extends State<LabelingPage> {
   void _handleKeyEvent(RawKeyEvent event, LabelingViewModel labelingVM) {
     if (event is RawKeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.enter) {
-        if (event.isShiftPressed) {
-          labelingVM.movePrevious();
-        } else {
-          labelingVM.moveNext();
-        }
+        event.isShiftPressed ? labelingVM.movePrevious() : labelingVM.moveNext();
       } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
         _changeMode(-1);
       } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
@@ -66,9 +62,7 @@ class _LabelingPageState extends State<LabelingPage> {
       newIndex = 0;
     }
 
-    setState(() {
-      _selectedMode = _modes[newIndex];
-    });
+    setState(() => _selectedMode = _modes[newIndex]);
   }
 
   Future<void> _downloadLabels(BuildContext context, LabelingViewModel labelingVM) async {
@@ -169,19 +163,13 @@ class _LabelingPageState extends State<LabelingPage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: _modes.map((mode) {
                             String displayText;
-                            switch (mode) {
-                              case 'single_classification':
-                                displayText = 'Single Classification';
-                                break;
-                              case 'multi_classification':
-                                displayText = 'Multi Classification';
-                                break;
-                              case 'segmentation':
-                                displayText = 'Segmentation';
-                                break;
-                              default:
-                                displayText = mode;
-                            }
+
+                            displayText = {
+                                  'single_classification': 'Single Classification',
+                                  'multi_classification': 'Multi Classification',
+                                  'segmentation': 'Segmentation',
+                                }[mode] ??
+                                mode;
 
                             bool isSelected = _selectedMode == mode;
 
