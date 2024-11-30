@@ -24,22 +24,16 @@ class ProjectListPage extends StatelessWidget {
 
       await Share.shareFiles([file.path], text: '${project.name} project configuration');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to share project: $e')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to share project: $e')));
     }
   }
 
   Future<void> _downloadProjectConfig(BuildContext context, Project project) async {
     try {
       String filePath = await StorageHelper.instance.downloadProjectConfig(project);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Project configuration downloaded: $filePath')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Project configuration downloaded: $filePath')));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to download project configuration: $e')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to download project configuration: $e')));
     }
   }
 
@@ -61,21 +55,15 @@ class ProjectListPage extends StatelessWidget {
           final projectVM = Provider.of<ProjectViewModel>(context, listen: false);
           await projectVM.saveProject(project);
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Imported project: ${project.name}')),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Imported project: ${project.name}')));
         } else {
           throw Exception('Selected file does not exist.');
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('File selection cancelled.')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('File selection cancelled.')));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to import project: $e')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to import project: $e')));
     }
   }
 
@@ -86,14 +74,8 @@ class ProjectListPage extends StatelessWidget {
         title: const Text('Delete Project'),
         content: Text('Are you sure you want to delete the project "${project.name}"?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
         ],
       ),
     );
@@ -112,14 +94,10 @@ class ProjectListPage extends StatelessWidget {
       builder: (context, projectVM, localeVM, child) {
         return Scaffold(
           appBar: AppBar(
-            title: Text(
-              localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 목록' : 'Project List',
-            ),
+            title: Text(localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 목록' : 'Project List'),
             actions: [
               PopupMenuButton<String>(
-                onSelected: (value) {
-                  localeVM.changeLocale(value);
-                },
+                onSelected: (value) => localeVM.changeLocale(value),
                 itemBuilder: (context) => [
                   const PopupMenuItem(value: 'en', child: Text('English')),
                   const PopupMenuItem(value: 'ko', child: Text('한국어')),
@@ -128,49 +106,29 @@ class ProjectListPage extends StatelessWidget {
               ),
               IconButton(
                 icon: const Icon(Icons.add),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ConfigureProjectPage()),
-                  );
-                },
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ConfigureProjectPage())),
                 tooltip: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 생성' : 'Create Project',
               ),
               IconButton(
                 icon: const Icon(Icons.file_upload),
-                onPressed: () {
-                  _importProject(context);
-                },
+                onPressed: () => _importProject(context),
                 tooltip: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 가져오기' : 'Import Project',
               ),
             ],
           ),
           body: projectVM.projects.isEmpty
-              ? Center(
-                  child: Text(
-                    localeVM.currentLocale.languageCode == 'ko' ? '등록된 프로젝트가 없습니다.' : 'No projects available.',
-                  ),
-                )
+              ? Center(child: Text(localeVM.currentLocale.languageCode == 'ko' ? '등록된 프로젝트가 없습니다.' : 'No projects available.'))
               : ListView.builder(
                   itemCount: projectVM.projects.length,
                   itemBuilder: (context, index) {
                     final project = projectVM.projects[index];
                     return _ProjectTile(
                       project: project,
-                      onEdit: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ConfigureProjectPage(project: project),
-                          ),
-                        );
-                      },
+                      onEdit: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ConfigureProjectPage(project: project))),
                       onDownload: () => _downloadProjectConfig(context, project),
                       onShare: () => _shareProject(context, project),
                       onDelete: () => _confirmDelete(context, projectVM, project),
-                      onTap: () {
-                        Navigator.pushNamed(context, '/labeling', arguments: project);
-                      },
+                      onTap: () => Navigator.pushNamed(context, '/labeling', arguments: project),
                     );
                   },
                 ),
@@ -206,26 +164,10 @@ class _ProjectTile extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: onEdit,
-            tooltip: 'Edit Project',
-          ),
-          IconButton(
-            icon: const Icon(Icons.download),
-            onPressed: onDownload,
-            tooltip: 'Download Configuration',
-          ),
-          IconButton(
-            icon: const Icon(Icons.share),
-            onPressed: onShare,
-            tooltip: 'Share Project',
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red),
-            onPressed: onDelete,
-            tooltip: 'Delete Project',
-          ),
+          IconButton(icon: const Icon(Icons.edit), onPressed: onEdit, tooltip: 'Edit Project'),
+          IconButton(icon: const Icon(Icons.download), onPressed: onDownload, tooltip: 'Download Configuration'),
+          IconButton(icon: const Icon(Icons.share), onPressed: onShare, tooltip: 'Share Project'),
+          IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: onDelete, tooltip: 'Delete Project'),
         ],
       ),
       onTap: onTap,
