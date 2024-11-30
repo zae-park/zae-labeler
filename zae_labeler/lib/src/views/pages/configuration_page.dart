@@ -101,9 +101,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
       // Native: Use directory picker
       String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
       if (selectedDirectory != null) {
-        setState(() {
-          _dataDirectory = selectedDirectory; // Store directory path
-        });
+        setState(() => _dataDirectory = selectedDirectory);
       }
     }
   }
@@ -140,9 +138,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.project == null ? 'Create Project' : 'Edit Project'),
-      ),
+      appBar: AppBar(title: Text(widget.project == null ? 'Create Project' : 'Edit Project')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -153,12 +149,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Project Name'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a project name';
-                  }
-                  return null;
-                },
+                validator: (value) => (value == null || value.isEmpty) ? "Please enter a project name" : null,
               ),
               const SizedBox(height: 16),
               // Labeling mode dropdown
@@ -198,11 +189,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Classes', style: TextStyle(fontSize: 16)),
-                  IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: _addClass,
-                    tooltip: 'Add Class',
-                  ),
+                  IconButton(icon: const Icon(Icons.add), onPressed: _addClass, tooltip: 'Add Class'),
                 ],
               ),
               // Display list of classes
@@ -231,10 +218,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
                       ),
                       controller: TextEditingController(text: kIsWeb ? _dataPaths?.join(', ') : _dataDirectory),
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return kIsWeb ? 'Please upload files' : 'Please select a directory';
-                        }
-                        return null;
+                        return (value == null || value.isEmpty) ? (kIsWeb ? 'Please upload files' : 'Please select a directory') : null;
                       },
                     ),
                   ),
@@ -246,11 +230,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
                 ],
               ),
               const SizedBox(height: 32),
-              // Save button
-              ElevatedButton(
-                onPressed: _confirmProject,
-                child: Text(widget.project == null ? 'Create Project' : 'Save Changes'),
-              ),
+              ElevatedButton(onPressed: _confirmProject, child: Text(widget.project == null ? 'Create Project' : 'Save Changes')),
             ],
           ),
         ),
