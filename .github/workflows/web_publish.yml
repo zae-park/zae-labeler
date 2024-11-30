@@ -39,7 +39,7 @@ jobs:
       # Step 5: Build web application with base-href
       - name: Build web
         working-directory: ./zae_labeler
-        run: flutter build web --base-href "/${{ github.event.repository.name }}/" --web-renderer canvaskit --verbose
+        run: flutter build web --base-href "/${{ github.event.repository.name }}/" --verbose
 
       # Step 6: Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
