@@ -16,15 +16,14 @@ class DataDirectoryPicker extends StatelessWidget {
   Future<void> _pickDataDirectory(BuildContext context) async {
     if (kIsWeb) {
       final result = await FilePicker.platform.pickFiles(allowMultiple: true);
+
       if (result != null) {
         final selectedFiles = result.files.map((f) => f.name).join('; ');
         onDataDirectoryChanged(selectedFiles);
       }
     } else {
       final directory = await FilePicker.platform.getDirectoryPath();
-      if (directory != null) {
-        onDataDirectoryChanged(directory);
-      }
+      directory != null && onDataDirectoryChanged(directory);
     }
   }
 
@@ -40,18 +39,10 @@ class DataDirectoryPicker extends StatelessWidget {
               hintText: kIsWeb ? '파일을 업로드하세요' : '디렉토리를 선택하세요',
             ),
             controller: TextEditingController(text: dataDirectory),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return kIsWeb ? '파일을 업로드하세요' : '데이터 디렉토리 경로를 선택하세요';
-              }
-              return null;
-            },
+            validator: (value) => (value == null || value.isEmpty) ? (kIsWeb ? '파일을 업로드하세요' : '데이터 디렉토리 경로를 선택하세요') : null,
           ),
         ),
-        IconButton(
-          icon: const Icon(kIsWeb ? Icons.upload_file : Icons.folder_open),
-          onPressed: () => _pickDataDirectory(context),
-        ),
+        IconButton(icon: const Icon(kIsWeb ? Icons.upload_file : Icons.folder_open), onPressed: () => _pickDataDirectory(context)),
       ],
     );
   }
