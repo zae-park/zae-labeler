@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import './app_setting_modal.dart';
-import './buttons.dart';
+import 'core/buttons.dart';
 
 AppBar buildAppBar(BuildContext context) {
   return AppBar(
