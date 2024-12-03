@@ -1,26 +1,17 @@
 import 'package:flutter/material.dart';
 import './app_setting_modal.dart';
+import './buttons.dart';
 
 AppBar buildAppBar(BuildContext context) {
   return AppBar(
     leading: GestureDetector(
-      onTap: () {
-        Navigator.pushNamed(context, '/'); // 로고 클릭 시 메인 페이지로 이동
-      },
-      child: Image.asset('assets/favicon.png'), // 앱 로고 추가
-    ),
+        onTap: () => Navigator.pushNamed(context, '/'),
+        child: Image.asset('assets/favicon.png')),
     title: const Text('Data Labeling App'),
     actions: [
-      IconButton(
-        icon: const Icon(Icons.settings),
-        tooltip: 'Settings',
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => const AppSettingsModal(),
-          );
-        },
-      ),
+      AppButton.settings(
+          onPressed: () => showDialog(
+              context: context, builder: (context) => const AppSettingsModal()))
     ],
   );
 }
