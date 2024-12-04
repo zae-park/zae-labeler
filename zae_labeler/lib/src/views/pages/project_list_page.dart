@@ -82,9 +82,7 @@ class ProjectListPage extends StatelessWidget {
 
     if (confirmed == true) {
       await projectVM.removeProject(project.id);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Deleted project: ${project.name}')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted project: ${project.name}')));
     }
   }
 

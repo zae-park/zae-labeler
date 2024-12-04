@@ -64,10 +64,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
 
         return AlertDialog(
           title: const Text('Add Class'),
-          content: TextField(
-            controller: classController,
-            decoration: const InputDecoration(labelText: 'Class Name'),
-          ),
+          content: TextField(controller: classController, decoration: const InputDecoration(labelText: 'Class Name')),
           actions: [
             TextButton(
               onPressed: () {
@@ -93,16 +90,11 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
     if (kIsWeb) {
       // Web: Use file picker for file uploads
       FilePickerResult? result = await FilePicker.platform.pickFiles(allowMultiple: true);
-
-      if (result != null) {
-        setState(() => _dataPaths = result.files.map((f) => f.name).toList());
-      }
+      (result != null) ? setState(() => _dataPaths = result.files.map((f) => f.name).toList()) : null;
     } else {
       // Native: Use directory picker
       String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
-      if (selectedDirectory != null) {
-        setState(() => _dataDirectory = selectedDirectory);
-      }
+      (selectedDirectory != null) ? setState(() => _dataDirectory = selectedDirectory) : null;
     }
   }
 
@@ -122,14 +114,10 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
       if (widget.project == null) {
         // If there is no project in parent widget (Project List Page).
         projectVM.saveProject(project);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${project.name} project has been created.')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${project.name} project has been created.')));
       } else {
         projectVM.updateProject(project);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${project.name} project has been updated.')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${project.name} project has been updated.')));
       }
       Navigator.pop(context); // Navigate back after saving
     }
@@ -157,31 +145,15 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
                 value: _selectedMode,
                 decoration: const InputDecoration(labelText: 'Labeling Mode'),
                 items: LabelingMode.values.map((mode) {
-                  String displayText;
-                  switch (mode) {
-                    case LabelingMode.singleClassification:
-                      displayText = 'Single Classification';
-                      break;
-                    case LabelingMode.multiClassification:
-                      displayText = 'Multi Classification';
-                      break;
-                    case LabelingMode.segmentation:
-                      displayText = 'Segmentation';
-                      break;
-                    default:
-                      displayText = mode.toString();
-                  }
-                  return DropdownMenuItem<LabelingMode>(
-                    value: mode,
-                    child: Text(displayText),
-                  );
+                  final displayText = {
+                        LabelingMode.singleClassification: 'Single Classification',
+                        LabelingMode.multiClassification: 'Multi Classification',
+                        LabelingMode.segmentation: 'Segmentation',
+                      }[mode] ??
+                      mode.toString();
+                  return DropdownMenuItem<LabelingMode>(value: mode, child: Text(displayText));
                 }).toList(),
-                onChanged: (LabelingMode? newMode) {
-                  // Update selected mode
-                  if (newMode != null) {
-                    setState(() => _selectedMode = newMode);
-                  }
-                },
+                onChanged: (newMode) => newMode != null ? setState(() => _selectedMode = newMode) : null,
               ),
               const SizedBox(height: 16),
               // Class list section
@@ -198,11 +170,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
                 String className = entry.value;
                 return ListTile(
                   title: Text(className),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => _removeClass(index),
-                    tooltip: 'Remove Class',
-                  ),
+                  trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _removeClass(index), tooltip: 'Remove Class'),
                 );
               }).toList(),
               const SizedBox(height: 16),
@@ -217,9 +185,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
                         hintText: kIsWeb ? 'Upload files' : 'Select a directory',
                       ),
                       controller: TextEditingController(text: kIsWeb ? _dataPaths?.join(', ') : _dataDirectory),
-                      validator: (value) {
-                        return (value == null || value.isEmpty) ? (kIsWeb ? 'Please upload files' : 'Please select a directory') : null;
-                      },
+                      validator: (value) => (value == null || value.isEmpty) ? (kIsWeb ? 'Please upload files' : 'Please select a directory') : null,
                     ),
                   ),
                   IconButton(

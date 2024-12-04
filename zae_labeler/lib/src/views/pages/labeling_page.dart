@@ -130,14 +130,8 @@ class _LabelingPageState extends State<LabelingPage> {
               actions: [
                 Builder(
                   builder: (context) => PopupMenuButton<String>(
-                    onSelected: (value) {
-                      if (value == 'zip') {
-                        _downloadLabels(context, labelingVM);
-                      }
-                    },
-                    itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                      const PopupMenuItem<String>(value: 'zip', child: Text('ZIP 압축 후 다운로드')),
-                    ],
+                    onSelected: (value) => (value == 'zip') ? _downloadLabels(context, labelingVM) : null,
+                    itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[const PopupMenuItem<String>(value: 'zip', child: Text('ZIP 압축 후 다운로드'))],
                   ),
                 ),
               ],

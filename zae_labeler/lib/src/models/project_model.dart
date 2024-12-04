@@ -32,14 +32,11 @@ class Project {
   factory Project.fromJson(Map<String, dynamic> json) => Project(
         id: json['id'],
         name: json['name'],
-        mode: LabelingMode.values.firstWhere(
-            (e) => e.toString().split('.').last.toLowerCase() == json['mode'],
-            orElse: () => LabelingMode.singleClassification),
+        mode:
+            LabelingMode.values.firstWhere((e) => e.toString().split('.').last.toLowerCase() == json['mode'], orElse: () => LabelingMode.singleClassification),
         classes: List<String>.from(json['classes']),
         dataDirectory: json['dataDirectory'] ?? '',
-        dataPaths: json['dataPaths'] != null
-            ? List<String>.from(json['dataPaths'])
-            : null,
+        dataPaths: json['dataPaths'] != null ? List<String>.from(json['dataPaths']) : null,
       );
 }
 
