@@ -1,0 +1,13 @@
+{
+    "@@locale": "en",
+    "app_title": "Zae-Labeler: Data Labeling App",
+    "project_create": "Create Project",
+    "project_update": "Update Project",
+    "project_name": "Project Name",
+    "labeling_mode": "Labeling Mode",
+    "add_class": "Add Class",
+    "class_list": "Class List",
+    "save_project": "Save Project",
+    "select_directory": "Select Directory",
+    "upload_file": "Upload File",
+}
