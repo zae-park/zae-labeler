@@ -1,5 +1,6 @@
 // lib/src/views/widgets/class_list.dart
 import 'package:flutter/material.dart';
+import './core/layouts.dart';
 
 class ClassListWidget extends StatelessWidget {
   final List<String> classes;
@@ -18,8 +19,7 @@ class ClassListWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        RRow.spaceBetween(
           children: [
             const Text('클래스 목록', style: TextStyle(fontSize: 16)),
             IconButton(
@@ -30,10 +30,7 @@ class ClassListWidget extends StatelessWidget {
                   context: context,
                   builder: (context) => AlertDialog(
                     title: const Text('클래스 추가'),
-                    content: TextField(
-                      controller: controller,
-                      decoration: const InputDecoration(labelText: '클래스 이름'),
-                    ),
+                    content: TextField(controller: controller, decoration: const InputDecoration(labelText: '클래스 이름')),
                     actions: [
                       TextButton(
                         onPressed: () {
@@ -56,10 +53,7 @@ class ClassListWidget extends StatelessWidget {
           final className = entry.value;
           return ListTile(
             title: Text(className),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () => onRemoveClass(index),
-            ),
+            trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => onRemoveClass(index)),
           );
         }).toList(),
       ],

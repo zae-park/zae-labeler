@@ -18,11 +18,7 @@ class LabelingPage extends StatefulWidget {
 class _LabelingPageState extends State<LabelingPage> {
   late FocusNode _focusNode;
   String _selectedMode = 'single_classification';
-  final List<String> _modes = [
-    'single_classification',
-    'multi_classification',
-    'segmentation'
-  ];
+  final List<String> _modes = ['single_classification', 'multi_classification', 'segmentation'];
 
   @override
   void initState() {
@@ -42,21 +38,15 @@ class _LabelingPageState extends State<LabelingPage> {
   void _handleKeyEvent(RawKeyEvent event, LabelingViewModel labelingVM) {
     if (event is RawKeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.enter) {
-        if (event.isShiftPressed) {
-          labelingVM.movePrevious();
-        } else {
-          labelingVM.moveNext();
-        }
+        event.isShiftPressed ? labelingVM.movePrevious() : labelingVM.moveNext();
       } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
         _changeMode(-1);
       } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
         _changeMode(1);
-      } else if (LogicalKeyboardKey.digit0.keyId <= event.logicalKey.keyId &&
-          event.logicalKey.keyId <= LogicalKeyboardKey.digit9.keyId) {
+      } else if (LogicalKeyboardKey.digit0.keyId <= event.logicalKey.keyId && event.logicalKey.keyId <= LogicalKeyboardKey.digit9.keyId) {
         int index = event.logicalKey.keyId - LogicalKeyboardKey.digit0.keyId;
         if (index < labelingVM.project.classes.length) {
-          labelingVM.addOrUpdateLabel(labelingVM.currentIndex,
-              labelingVM.project.classes[index], _selectedMode);
+          labelingVM.addOrUpdateLabel(labelingVM.currentIndex, labelingVM.project.classes[index], _selectedMode);
         }
       }
     }
@@ -72,13 +62,10 @@ class _LabelingPageState extends State<LabelingPage> {
       newIndex = 0;
     }
 
-    setState(() {
-      _selectedMode = _modes[newIndex];
-    });
+    setState(() => _selectedMode = _modes[newIndex]);
   }
 
-  Future<void> _downloadLabels(
-      BuildContext context, LabelingViewModel labelingVM) async {
+  Future<void> _downloadLabels(BuildContext context, LabelingViewModel labelingVM) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -86,11 +73,7 @@ class _LabelingPageState extends State<LabelingPage> {
         title: Text('다운로드 중'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('라벨링 데이터를 다운로드하고 있습니다...'),
-          ],
+          children: [CircularProgressIndicator(), SizedBox(height: 16), Text('라벨링 데이터를 다운로드하고 있습니다...')],
         ),
       ),
     );
@@ -102,16 +85,12 @@ class _LabelingPageState extends State<LabelingPage> {
 
       Navigator.of(context).pop();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('다운로드 완료: $filePath')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('다운로드 완료: $filePath')));
     } catch (e) {
       if (!mounted) return;
 
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('다운로드 실패: $e')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('다운로드 실패: $e')));
     }
   }
 
@@ -136,20 +115,14 @@ class _LabelingPageState extends State<LabelingPage> {
 
   @override
   Widget build(BuildContext context) {
-    final Project project =
-        ModalRoute.of(context)!.settings.arguments as Project;
+    final Project project = ModalRoute.of(context)!.settings.arguments as Project;
 
     return ChangeNotifierProvider(
       create: (_) => LabelingViewModel(project: project),
       child: Consumer<LabelingViewModel>(
         builder: (context, labelingVM, child) {
           if (!labelingVM.isInitialized) {
-            // 초기화 중일 때 프로그래스 바 표시
-            return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
-            );
+            return const CircularProgressIndicator();
           }
           return Scaffold(
             appBar: AppBar(
@@ -157,18 +130,8 @@ class _LabelingPageState extends State<LabelingPage> {
               actions: [
                 Builder(
                   builder: (context) => PopupMenuButton<String>(
-                    onSelected: (value) {
-                      if (value == 'zip') {
-                        _downloadLabels(context, labelingVM);
-                      }
-                    },
-                    itemBuilder: (BuildContext context) =>
-                        <PopupMenuEntry<String>>[
-                      const PopupMenuItem<String>(
-                        value: 'zip',
-                        child: Text('ZIP 압축 후 다운로드'),
-                      ),
-                    ],
+                    onSelected: (value) => (value == 'zip') ? _downloadLabels(context, labelingVM) : null,
+                    itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[const PopupMenuItem<String>(value: 'zip', child: Text('ZIP 압축 후 다운로드'))],
                   ),
                 ),
               ],
@@ -183,9 +146,7 @@ class _LabelingPageState extends State<LabelingPage> {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
-                    return Center(
-                      child: Text('데이터 로드 중 오류 발생: ${snapshot.error}'),
-                    );
+                    return Center(child: Text('데이터 로드 중 오류 발생: ${snapshot.error}'));
                   }
 
                   return Column(
@@ -196,49 +157,28 @@ class _LabelingPageState extends State<LabelingPage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: _modes.map((mode) {
                             String displayText;
-                            switch (mode) {
-                              case 'single_classification':
-                                displayText = 'Single Classification';
-                                break;
-                              case 'multi_classification':
-                                displayText = 'Multi Classification';
-                                break;
-                              case 'segmentation':
-                                displayText = 'Segmentation';
-                                break;
-                              default:
-                                displayText = mode;
-                            }
+
+                            displayText = {
+                                  'single_classification': 'Single Classification',
+                                  'multi_classification': 'Multi Classification',
+                                  'segmentation': 'Segmentation',
+                                }[mode] ??
+                                mode;
 
                             bool isSelected = _selectedMode == mode;
 
                             return GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _selectedMode = mode;
-                                });
-                              },
+                              onTap: () => setState(() => _selectedMode = mode),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 12.0, horizontal: 16.0),
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 4.0),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? Colors.blueAccent
-                                      : Colors.grey[200],
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                                margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                                decoration: BoxDecoration(color: isSelected ? Colors.blueAccent : Colors.grey[200], borderRadius: BorderRadius.circular(8.0)),
                                 child: Text(
                                   displayText,
                                   style: TextStyle(
-                                    color: isSelected
-                                        ? Colors.white
-                                        : Colors.black,
+                                    color: isSelected ? Colors.white : Colors.black,
                                     fontSize: 16,
-                                    fontWeight: isSelected
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                   ),
                                 ),
                               ),
@@ -247,40 +187,23 @@ class _LabelingPageState extends State<LabelingPage> {
                         ),
                       ),
                       const Divider(),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: _buildViewer(labelingVM),
-                        ),
-                      ),
+                      Expanded(child: Padding(padding: const EdgeInsets.all(16.0), child: _buildViewer(labelingVM))),
                       Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          '데이터 ${labelingVM.currentIndex + 1}/${labelingVM.dataFiles.length} - ${labelingVM.currentFileName}',
-                          style: const TextStyle(fontSize: 16),
-                        ),
+                        child: Text('데이터 ${labelingVM.currentIndex + 1}/${labelingVM.dataFiles.length} - ${labelingVM.currentFileName}',
+                            style: const TextStyle(fontSize: 16)),
                       ),
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Wrap(
                           spacing: 8.0,
-                          children: List.generate(
-                              labelingVM.project.classes.length, (index) {
+                          children: List.generate(labelingVM.project.classes.length, (index) {
                             final label = labelingVM.project.classes[index];
-                            final isSelected = labelingVM.isLabelSelected(
-                                label, _selectedMode);
+                            final isSelected = labelingVM.isLabelSelected(label, _selectedMode);
 
                             return ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    isSelected ? Colors.blueAccent : null,
-                              ),
-                              onPressed: () {
-                                labelingVM.addOrUpdateLabel(
-                                    labelingVM.currentIndex,
-                                    label,
-                                    _selectedMode);
-                              },
+                              style: ElevatedButton.styleFrom(backgroundColor: isSelected ? Colors.blueAccent : null),
+                              onPressed: () => labelingVM.addOrUpdateLabel(labelingVM.currentIndex, label, _selectedMode),
                               child: Text(label),
                             );
                           }),
@@ -299,18 +222,8 @@ class _LabelingPageState extends State<LabelingPage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            ElevatedButton(
-                              onPressed: () {
-                                labelingVM.movePrevious();
-                              },
-                              child: const Text('이전'),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                labelingVM.moveNext();
-                              },
-                              child: const Text('다음'),
-                            ),
+                            ElevatedButton(onPressed: () => labelingVM.movePrevious(), child: const Text('이전')),
+                            ElevatedButton(onPressed: () => labelingVM.moveNext(), child: const Text('다음')),
                           ],
                         ),
                       ),

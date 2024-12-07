@@ -53,8 +53,7 @@ class ProjectViewModel extends ChangeNotifier {
   }
 
   Future<void> updateProject(Project updatedProject) async {
-    int index =
-        _projects.indexWhere((project) => project.id == updatedProject.id);
+    int index = _projects.indexWhere((project) => project.id == updatedProject.id);
     if (index != -1) {
       _projects[index] = updatedProject;
       await StorageHelper.instance.saveProjects(_projects); // 싱글톤 인스턴스를 통해 접근
