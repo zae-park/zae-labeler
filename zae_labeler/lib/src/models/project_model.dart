@@ -1,3 +1,6 @@
+// 라벨링 모드 열거형
+enum LabelingMode { singleClassification, multiClassification, segmentation }
+
 // lib/src/models/project_model.dart
 class Project {
   String id; // 프로젝트 고유 ID
@@ -38,11 +41,4 @@ class Project {
         dataDirectory: json['dataDirectory'] ?? '',
         dataPaths: json['dataPaths'] != null ? List<String>.from(json['dataPaths']) : null,
       );
-}
-
-// 라벨링 모드 열거형
-enum LabelingMode {
-  singleClassification,
-  multiClassification,
-  segmentation,
 }
