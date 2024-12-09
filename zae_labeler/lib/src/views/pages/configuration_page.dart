@@ -1,6 +1,8 @@
 // This file implements the page for configuring a new project or editing an existing one.
 // Users can specify the project name, labeling mode, classes, and data directory or file uploads.
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart'; // For generating unique project IDs
@@ -89,8 +91,21 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
   Future<void> _pickDataDirectory() async {
     if (kIsWeb) {
       // Web: Use file picker for file uploads
-      FilePickerResult? result = await FilePicker.platform.pickFiles(allowMultiple: true);
-      (result != null) ? setState(() => _dataPaths = result.files.map((f) => f.name).toList()) : null;
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        withData: true, // Ensure file data is loaded
+      );
+
+      if (result != null) {
+        setState(() {
+          _dataPaths = result.files.map((file) {
+            // Store both name and data for later use
+            return '${file.name}:${base64Encode(file.bytes ?? [])}';
+          }).toList();
+        });
+      } else {
+        print('No files selected');
+      }
     } else {
       // Native: Use directory picker
       String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
