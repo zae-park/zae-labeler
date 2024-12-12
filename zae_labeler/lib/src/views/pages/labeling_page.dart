@@ -141,7 +141,8 @@ class _LabelingPageState extends State<LabelingPage> {
               autofocus: true,
               onKey: (event) => _handleKeyEvent(event, labelingVM),
               child: FutureBuilder<void>(
-                future: labelingVM.loadCurrentData(),
+                future: labelingVM.loadCurrentFileData(),
+                // future: labelingVM.loadCurrentData(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
