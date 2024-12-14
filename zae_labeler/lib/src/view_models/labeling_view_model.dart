@@ -13,6 +13,7 @@ class LabelingViewModel extends ChangeNotifier {
   final Project project;
   final List<LabelEntry> _labelEntries = [];
   int _currentIndex = 0;
+  final List<FileData> _fileDataList = [];
   List<File> _dataFiles = [];
   final List<double> _currentSeriesData = [];
   Map<String, dynamic>? _currentObjectData;
@@ -35,6 +36,7 @@ class LabelingViewModel extends ChangeNotifier {
   Map<String, dynamic>? get currentObjectData => _currentObjectData;
   File? get currentImageFile => _currentImageFile;
   String get currentFileName => _dataFiles.isNotEmpty ? path.basename(_dataFiles[_currentIndex].path) : '';
+  String get currentDataFileName => _fileDataList.isNotEmpty ? path.basename(_fileDataList[_currentIndex].name) : "";
 
   LabelEntry get currentLabelEntry {
     if (_currentIndex < 0 || _currentIndex >= _dataFiles.length) {
@@ -121,6 +123,33 @@ class LabelingViewModel extends ChangeNotifier {
     }
 
     // notifyListeners();
+  }
+
+  Future<void> loadCurrentFileData() async {
+    if (_currentIndex < 0 || _currentIndex >= _dataFiles.length) {
+      return;
+    }
+
+    final fileData = _fileDataList[_currentIndex];
+    if (fileData.path == null) {
+      // web env
+      final content = fileData.content;
+    } else {
+      // native env
+      final extension = path.extension(fileData.path!).toLowerCase();
+      final currentUnifiedData = fileData.content;
+      // if (seriesExtensions.contains(extension)) {
+
+      //   _currentUnifiedData = UnifiedData(file: file, seriesData: seriesData, fileType: FileType.series);
+      // } else if (objectExtensions.contains(extension)) {
+      //   final objectData = await _loadObjectData(file);
+      //   _currentUnifiedData = UnifiedData(file: file, objectData: objectData, fileType: FileType.object);
+      // } else if (imageExtensions.contains(extension)) {
+      //   _currentUnifiedData = UnifiedData(file: file, fileType: FileType.image);
+      // } else {
+      //   _currentUnifiedData = UnifiedData(file: file, fileType: FileType.unsupported);
+      // }
+    }
   }
 
   Future<List<double>> _loadSeriesData(File file) async {
