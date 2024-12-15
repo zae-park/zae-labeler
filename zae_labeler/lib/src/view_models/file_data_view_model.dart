@@ -22,24 +22,19 @@ class FileDataViewModel extends ChangeNotifier {
   }
 
   Future<void> _pickFiles(BuildContext context) async {
-  FilePickerResult? result = await FilePicker.platform.pickFiles(
-    allowMultiple: true,
-    withData: true, // 파일 데이터를 가져옵니다.
-  );
+    FilePickerResult? result = await FilePicker.platform.pickFiles(allowMultiple: true, withData: true);
 
-  if (result != null) {
-    final fileDataVM = Provider.of<FileDataViewModel>(context, listen: false);
+    if (result != null) {
+      final fileDataVM = Provider.of<FileDataViewModel>(context, listen: false);
 
-    for (var file in result.files) {
-      final fileData = FileData(
-        name: file.name,
-        type: file.extension ?? 'unknown',
-        content: base64Encode(file.bytes ?? []), // 파일 내용을 base64로 저장
-      );
-      fileDataVM.addFileData(fileData); // ViewModel에 추가
+      for (var file in result.files) {
+        final fileData = FileData(
+          name: file.name,
+          type: file.extension ?? 'unknown',
+          content: base64Encode(file.bytes ?? []), // 파일 내용을 base64로 저장
+        );
+        fileDataVM.addFileData(fileData); // ViewModel에 추가
+      }
     }
   }
-}
-
-
 }
