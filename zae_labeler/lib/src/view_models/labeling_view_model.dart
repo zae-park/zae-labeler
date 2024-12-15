@@ -80,9 +80,9 @@ class LabelingViewModel extends ChangeNotifier {
         _dataFiles = project.dataPaths!
             .map((filePath) => File(filePath))
             .where((file) =>
-                seriesExtensions.contains(path.extension(file.path).toLowerCase()) ||
-                objectExtensions.contains(path.extension(file.path).toLowerCase()) ||
-                imageExtensions.contains(path.extension(file.path).toLowerCase()))
+                seriesExtensions.contains(path.extension(file.path.split(':')[0]).toLowerCase()) ||
+                objectExtensions.contains(path.extension(file.path.split(':')[0]).toLowerCase()) ||
+                imageExtensions.contains(path.extension(file.path.split(':')[0]).toLowerCase()))
             .toList();
       }
     } else {
