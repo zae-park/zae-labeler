@@ -130,26 +130,26 @@ class LabelingViewModel extends ChangeNotifier {
       return;
     }
 
-    final fileData = _fileDataList[_currentIndex];
-    if (fileData.path == null) {
-      // web env
-      final content = fileData.content;
+    if (kIsWeb) {
+      final fileData = _dataFiles[_currentIndex];
     } else {
+      final fileData = _fileDataList[_currentIndex];
       // native env
-      final extension = path.extension(fileData.path!).toLowerCase();
+      final extension = path.extension(fileData.path).toLowerCase();
       final currentUnifiedData = fileData.content;
-      // if (seriesExtensions.contains(extension)) {
-
-      //   _currentUnifiedData = UnifiedData(file: file, seriesData: seriesData, fileType: FileType.series);
-      // } else if (objectExtensions.contains(extension)) {
-      //   final objectData = await _loadObjectData(file);
-      //   _currentUnifiedData = UnifiedData(file: file, objectData: objectData, fileType: FileType.object);
-      // } else if (imageExtensions.contains(extension)) {
-      //   _currentUnifiedData = UnifiedData(file: file, fileType: FileType.image);
-      // } else {
-      //   _currentUnifiedData = UnifiedData(file: file, fileType: FileType.unsupported);
-      // }
     }
+
+    // if (seriesExtensions.contains(extension)) {
+
+    //   _currentUnifiedData = UnifiedData(file: file, seriesData: seriesData, fileType: FileType.series);
+    // } else if (objectExtensions.contains(extension)) {
+    //   final objectData = await _loadObjectData(file);
+    //   _currentUnifiedData = UnifiedData(file: file, objectData: objectData, fileType: FileType.object);
+    // } else if (imageExtensions.contains(extension)) {
+    //   _currentUnifiedData = UnifiedData(file: file, fileType: FileType.image);
+    // } else {
+    //   _currentUnifiedData = UnifiedData(file: file, fileType: FileType.unsupported);
+    // }
   }
 
   Future<List<double>> _loadSeriesData(File file) async {
