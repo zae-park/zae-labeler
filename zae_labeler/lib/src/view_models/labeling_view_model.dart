@@ -131,12 +131,34 @@ class LabelingViewModel extends ChangeNotifier {
     }
 
     if (kIsWeb) {
-      final fileData = _dataFiles[_currentIndex];
-    } else {
       final fileData = _fileDataList[_currentIndex];
+
+      if (seriesExtensions.contains(fileData.type)) {
+        final seriesData = await _loadSeriesDataFromString(fileData.content);
+        _currentUnifiedData = UnifiedData(seriesData: seriesData, fileType: FileType.series);
+      } else if (objectExtensions.contains(fileData.type)) {
+        final objectData = await _loadObjectDataFromString(fileData.content);
+        _currentUnifiedData = UnifiedData(objectData: objectData, fileType: FileType.object);
+      } else if (imageExtensions.contains(fileData.type)) {
+        _currentUnifiedData = UnifiedData(fileType: FileType.image);
+      } else {
+        _currentUnifiedData = UnifiedData(fileType: FileType.unsupported);
+      }
+    } else {
       // native env
+      final fileData = _dataFiles[_currentIndex];
       final extension = path.extension(fileData.path).toLowerCase();
-      final currentUnifiedData = fileData.content;
+      if (seriesExtensions.contains(extension)) {
+        final seriesData = await _loadSeriesData(fileData);
+        _currentUnifiedData = UnifiedData(file: fileData, seriesData: seriesData, fileType: FileType.series);
+      } else if (objectExtensions.contains(extension)) {
+        final objectData = await _loadObjectData(fileData);
+        _currentUnifiedData = UnifiedData(file: fileData, objectData: objectData, fileType: FileType.object);
+      } else if (imageExtensions.contains(extension)) {
+        _currentUnifiedData = UnifiedData(file: fileData, fileType: FileType.image);
+      } else {
+        _currentUnifiedData = UnifiedData(file: fileData, fileType: FileType.unsupported);
+      }
     }
 
     // if (seriesExtensions.contains(extension)) {
@@ -157,9 +179,27 @@ class LabelingViewModel extends ChangeNotifier {
     return lines.expand((line) => line.split(',')).map((part) => double.tryParse(part.trim()) ?? 0.0).toList();
   }
 
+  Future<List<double>> _loadSeriesDataFromString(String data) async {
+    // 데이터가 문자열로 제공된 경우 각 줄을 분리
+    final lines = data.split('\n'); // 줄바꿈 기준으로 데이터 나누기
+    return lines
+        .expand((line) => line.split(',')) // 각 줄을 ','로 나누기
+        .map((part) => double.tryParse(part.trim()) ?? 0.0) // 숫자로 변환, 실패 시 0.0 반환
+        .toList();
+  }
+
   Future<Map<String, dynamic>> _loadObjectData(File file) async {
     final content = await file.readAsString();
     return jsonDecode(content);
+  }
+
+  Future<Map<String, dynamic>> _loadObjectDataFromString(String data) async {
+    try {
+      // 문자열 데이터를 JSON 객체로 디코딩
+      return jsonDecode(data) as Map<String, dynamic>;
+    } catch (e) {
+      throw FormatException('Failed to parse JSON data: $e');
+    }
   }
 
   void addOrUpdateLabel(int dataIndex, String label, String mode) {
