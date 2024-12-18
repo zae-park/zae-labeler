@@ -126,13 +126,13 @@ class ProjectListPage extends StatelessWidget {
                     final project = projectVM.projects[index];
                     return _ProjectTile(
                       project: project,
-                      isLoading: !project.isDataLoaded,
-                      onLoadData: () async {
-                        await projectVM.loadProjectData(project);
-                        if (project.isDataLoaded) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Loaded data for: ${project.name}')));
-                        }
-                      },
+                      // isLoading: !project.isDataLoaded,
+                      // onLoadData: () async {
+                      //   await projectVM.loadProjectData(project);
+                      //   if (project.isDataLoaded) {
+                      //     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Loaded data for: ${project.name}')));
+                      //   }
+                      // },
                       onEdit: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ConfigureProjectPage(project: project))),
                       onDownload: () => _downloadProjectConfig(context, project),
                       onShare: () => _shareProject(context, project),
@@ -149,8 +149,8 @@ class ProjectListPage extends StatelessWidget {
 
 class _ProjectTile extends StatelessWidget {
   final Project project;
-  final bool isLoading;
-  final VoidCallback onLoadData;
+  // final bool isLoaded;
+  // final VoidCallback onLoadData;
   final VoidCallback onEdit;
   final VoidCallback onDownload;
   final VoidCallback onShare;
@@ -160,8 +160,8 @@ class _ProjectTile extends StatelessWidget {
   const _ProjectTile({
     Key? key,
     required this.project,
-    required this.isLoading,
-    required this.onLoadData,
+    // required this.isLoaded,
+    // required this.onLoadData,
     required this.onEdit,
     required this.onDownload,
     required this.onShare,
@@ -174,18 +174,28 @@ class _ProjectTile extends StatelessWidget {
     return ListTile(
       title: Text(project.name),
       subtitle: Text('Mode: ${project.mode.toString().split('.').last}'),
-      trailing: isLoading
-          ? ElevatedButton(onPressed: onLoadData, child: const Text('Load Data'))
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(icon: const Icon(Icons.edit), onPressed: onEdit, tooltip: 'Edit Project'),
-                IconButton(icon: const Icon(Icons.download), onPressed: onDownload, tooltip: 'Download Configuration'),
-                IconButton(icon: const Icon(Icons.share), onPressed: onShare, tooltip: 'Share Project'),
-                IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: onDelete, tooltip: 'Delete Project'),
-              ],
-            ),
-      onTap: isLoading ? null : onTap,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(icon: const Icon(Icons.edit), onPressed: onEdit, tooltip: 'Edit Project'),
+          IconButton(icon: const Icon(Icons.download), onPressed: onDownload, tooltip: 'Download Configuration'),
+          IconButton(icon: const Icon(Icons.share), onPressed: onShare, tooltip: 'Share Project'),
+          IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: onDelete, tooltip: 'Delete Project'),
+        ],
+      ),
+      onTap: onTap,
+      // trailing: isLoading
+      //     ? ElevatedButton(onPressed: onLoadData, child: const Text('Load Data'))
+      //     : Row(
+      //         mainAxisSize: MainAxisSize.min,
+      //         children: [
+      //           IconButton(icon: const Icon(Icons.edit), onPressed: onEdit, tooltip: 'Edit Project'),
+      //           IconButton(icon: const Icon(Icons.download), onPressed: onDownload, tooltip: 'Download Configuration'),
+      //           IconButton(icon: const Icon(Icons.share), onPressed: onShare, tooltip: 'Share Project'),
+      //           IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: onDelete, tooltip: 'Delete Project'),
+      //         ],
+      //       ),
+      // onTap: isLoading ? null : onTap,
     );
   }
 }
