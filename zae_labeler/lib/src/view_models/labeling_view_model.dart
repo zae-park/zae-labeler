@@ -13,8 +13,9 @@ class LabelingViewModel extends ChangeNotifier {
   final Project project;
   final List<LabelEntry> _labelEntries = [];
   int _currentIndex = 0;
-  final List<FileData> _fileDataList = [];
+
   List<File> _dataFiles = [];
+  List<FileData> _fileDataList = [];
   final List<double> _currentSeriesData = [];
   Map<String, dynamic>? _currentObjectData;
   File? _currentImageFile;
@@ -63,6 +64,8 @@ class LabelingViewModel extends ChangeNotifier {
     _isInitialized = false; // 초기화 시작
     await _loadLabels();
     await _loadDataFiles();
+    print(dataFiles);
+
     await loadCurrentData();
     _isInitialized = true; // 초기화 완료
     notifyListeners(); // UI에 초기화 완료 알림
@@ -84,6 +87,16 @@ class LabelingViewModel extends ChangeNotifier {
                 objectExtensions.contains(path.extension(file.path.split(':')[0]).toLowerCase()) ||
                 imageExtensions.contains(path.extension(file.path.split(':')[0]).toLowerCase()))
             .toList();
+        _fileDataList = project.dataPaths!.map((filePath) {
+          final fileParts = filePath.split(':'); // 'name.ext:base64content' 구조
+          final fileNameParts = fileParts[0].split('.'); // 'name.ext'에서 분리
+
+          return FileData(
+            name: fileNameParts[0], // 파일 이름 (확장자 제외)
+            type: fileNameParts[1], // 파일 확장자
+            content: fileParts[1], // Base64로 인코딩된 콘텐츠
+          );
+        }).toList();
       }
     } else {
       // Native 환경: 디렉토리 내 파일을 탐색
