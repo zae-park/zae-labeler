@@ -35,14 +35,16 @@ class _LabelingPageState extends State<LabelingPage> {
     super.dispose();
   }
 
-  void _handleKeyEvent(RawKeyEvent event, LabelingViewModel labelingVM) {
-    if (event is RawKeyDownEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.enter) {
-        event.isShiftPressed ? labelingVM.movePrevious() : labelingVM.moveNext();
-      } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-        _changeMode(-1);
+  void _handleKeyEvent(KeyEvent event, LabelingViewModel labelingVM) {
+    if (event is KeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+        labelingVM.movePrevious();
       } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+        labelingVM.moveNext();
+      } else if (event.logicalKey == LogicalKeyboardKey.tab) {
         _changeMode(1);
+      } else if (event.logicalKey == LogicalKeyboardKey.backspace) {
+        _changeMode(-1);
       } else if (LogicalKeyboardKey.digit0.keyId <= event.logicalKey.keyId && event.logicalKey.keyId <= LogicalKeyboardKey.digit9.keyId) {
         int index = event.logicalKey.keyId - LogicalKeyboardKey.digit0.keyId;
         if (index < labelingVM.project.classes.length) {
@@ -136,10 +138,10 @@ class _LabelingPageState extends State<LabelingPage> {
                 ),
               ],
             ),
-            body: RawKeyboardListener(
+            body: KeyboardListener(
               focusNode: _focusNode,
               autofocus: true,
-              onKey: (event) => _handleKeyEvent(event, labelingVM),
+              onKeyEvent: (event) => _handleKeyEvent(event, labelingVM),
               child: FutureBuilder<void>(
                 future: labelingVM.loadCurrentFileData(),
                 // future: labelingVM.loadCurrentData(),
