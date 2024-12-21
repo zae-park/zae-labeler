@@ -64,9 +64,6 @@ class LabelingViewModel extends ChangeNotifier {
     _isInitialized = false; // 초기화 시작
     await _loadLabels();
     await _loadDataFiles();
-    print(dataFiles);
-
-    await loadCurrentData();
     _isInitialized = true; // 초기화 완료
     notifyListeners(); // UI에 초기화 완료 알림
   }
@@ -113,29 +110,6 @@ class LabelingViewModel extends ChangeNotifier {
             .toList();
       }
     }
-  }
-
-  Future<void> loadCurrentData() async {
-    if (_currentIndex < 0 || _currentIndex >= _dataFiles.length) {
-      return;
-    }
-
-    final file = _dataFiles[_currentIndex];
-    final extension = path.extension(file.path).toLowerCase();
-
-    if (seriesExtensions.contains(extension)) {
-      final seriesData = await _loadSeriesData(file);
-      _currentUnifiedData = UnifiedData(file: file, seriesData: seriesData, fileType: FileType.series);
-    } else if (objectExtensions.contains(extension)) {
-      final objectData = await _loadObjectData(file);
-      _currentUnifiedData = UnifiedData(file: file, objectData: objectData, fileType: FileType.object);
-    } else if (imageExtensions.contains(extension)) {
-      _currentUnifiedData = UnifiedData(file: file, fileType: FileType.image);
-    } else {
-      _currentUnifiedData = UnifiedData(file: file, fileType: FileType.unsupported);
-    }
-
-    // notifyListeners();
   }
 
   Future<void> loadCurrentFileData() async {
@@ -297,7 +271,7 @@ class LabelingViewModel extends ChangeNotifier {
   void moveNext() {
     if (_currentIndex < _dataFiles.length - 1) {
       _currentIndex++;
-      loadCurrentData();
+      loadCurrentFileData();
       notifyListeners();
     }
   }
@@ -305,7 +279,7 @@ class LabelingViewModel extends ChangeNotifier {
   void movePrevious() {
     if (_currentIndex > 0) {
       _currentIndex--;
-      loadCurrentData();
+      loadCurrentFileData();
       notifyListeners();
     }
   }
