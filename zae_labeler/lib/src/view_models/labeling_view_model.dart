@@ -90,7 +90,7 @@ class LabelingViewModel extends ChangeNotifier {
 
           return FileData(
             name: fileNameParts[0], // 파일 이름 (확장자 제외)
-            type: fileNameParts[1], // 파일 확장자
+            type: ".${fileNameParts[1]}", // 파일 확장자
             content: fileParts[1], // Base64로 인코딩된 콘텐츠
           );
         }).toList();
