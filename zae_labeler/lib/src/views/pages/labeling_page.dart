@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -102,16 +103,28 @@ class _LabelingPageState extends State<LabelingPage> {
     if (unifiedData == null) {
       return const Center(child: Text('데이터를 로드 중입니다.'));
     }
-
-    switch (unifiedData.fileType) {
-      case FileType.series:
-        return TimeSeriesChart(data: unifiedData.seriesData ?? []);
-      case FileType.object:
-        return ObjectViewer(jsonFile: unifiedData.file!);
-      case FileType.image:
-        return ImageViewer(imageFile: unifiedData.file!);
-      default:
-        return const Center(child: Text('지원되지 않는 파일 형식입니다.'));
+    if (kIsWeb) {
+      switch (unifiedData.fileType) {
+        case FileType.series:
+          return TimeSeriesChart(data: unifiedData.seriesData ?? []);
+        case FileType.object:
+          return ObjectViewer.fromMap(unifiedData.objectData!); // 수정
+        case FileType.image:
+          return ImageViewer(imageFile: unifiedData.file!);
+        default:
+          return const Center(child: Text('지원되지 않는 파일 형식입니다.'));
+      }
+    } else {
+      switch (unifiedData.fileType) {
+        case FileType.series:
+          return TimeSeriesChart(data: unifiedData.seriesData ?? []);
+        case FileType.object:
+          return ObjectViewer.fromFile(unifiedData.file!);
+        case FileType.image:
+          return ImageViewer(imageFile: unifiedData.file!);
+        default:
+          return const Center(child: Text('지원되지 않는 파일 형식입니다.'));
+      }
     }
   }
 
