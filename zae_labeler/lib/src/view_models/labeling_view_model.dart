@@ -125,6 +125,7 @@ class LabelingViewModel extends ChangeNotifier {
         _currentUnifiedData = UnifiedData(seriesData: seriesData, fileType: FileType.series);
       } else if (objectExtensions.contains(fileData.type)) {
         final objectData = await _loadObjectDataFromString(fileData.content);
+        print(objectData);
         _currentUnifiedData = UnifiedData(objectData: objectData, fileType: FileType.object);
       } else if (imageExtensions.contains(fileData.type)) {
         _currentUnifiedData = UnifiedData(fileType: FileType.image);
@@ -176,6 +177,9 @@ class LabelingViewModel extends ChangeNotifier {
   Future<Map<String, dynamic>> _loadObjectDataFromString(String encodedData) async {
     try {
       // Step 1: Base64 디코딩
+      if (encodedData.isEmpty) {
+        throw const FormatException('Input data is empty.');
+      }
       final decodedData = utf8.decode(base64Decode(encodedData));
 
       // Step 2: JSON 디코딩
@@ -188,8 +192,8 @@ class LabelingViewModel extends ChangeNotifier {
         throw const FormatException('Decoded data is not a valid JSON object.');
       }
     } catch (e) {
-      // 오류를 FormatException으로 던짐
-      throw FormatException('Failed to parse JSON data: $e');
+      // 예외를 명확히 하여 사용자에게 메시지를 제공
+      throw FormatException('Failed to parse JSON data. Error: $e');
     }
   }
 
