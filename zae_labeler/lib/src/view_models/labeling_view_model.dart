@@ -147,18 +147,6 @@ class LabelingViewModel extends ChangeNotifier {
         _currentUnifiedData = UnifiedData(file: fileData, fileType: FileType.unsupported);
       }
     }
-
-    // if (seriesExtensions.contains(extension)) {
-
-    //   _currentUnifiedData = UnifiedData(file: file, seriesData: seriesData, fileType: FileType.series);
-    // } else if (objectExtensions.contains(extension)) {
-    //   final objectData = await _loadObjectData(file);
-    //   _currentUnifiedData = UnifiedData(file: file, objectData: objectData, fileType: FileType.object);
-    // } else if (imageExtensions.contains(extension)) {
-    //   _currentUnifiedData = UnifiedData(file: file, fileType: FileType.image);
-    // } else {
-    //   _currentUnifiedData = UnifiedData(file: file, fileType: FileType.unsupported);
-    // }
   }
 
   Future<List<double>> _loadSeriesData(File file) async {
@@ -166,9 +154,14 @@ class LabelingViewModel extends ChangeNotifier {
     return lines.expand((line) => line.split(',')).map((part) => double.tryParse(part.trim()) ?? 0.0).toList();
   }
 
-  Future<List<double>> _loadSeriesDataFromString(String data) async {
-    // 데이터가 문자열로 제공된 경우 각 줄을 분리
-    final lines = data.split('\n'); // 줄바꿈 기준으로 데이터 나누기
+  Future<List<double>> _loadSeriesDataFromString(String base64EncodedData) async {
+    // Step 1: Base64 디코딩
+    final decodedData = utf8.decode(base64Decode(base64EncodedData));
+
+    // Step 2: 문자열 데이터를 줄바꿈('\n')으로 나누기
+    final lines = decodedData.split('\n');
+
+    // Step 3: ','를 기준으로 나누고, 숫자로 변환
     return lines
         .expand((line) => line.split(',')) // 각 줄을 ','로 나누기
         .map((part) => double.tryParse(part.trim()) ?? 0.0) // 숫자로 변환, 실패 시 0.0 반환
@@ -180,11 +173,22 @@ class LabelingViewModel extends ChangeNotifier {
     return jsonDecode(content);
   }
 
-  Future<Map<String, dynamic>> _loadObjectDataFromString(String data) async {
+  Future<Map<String, dynamic>> _loadObjectDataFromString(String encodedData) async {
     try {
-      // 문자열 데이터를 JSON 객체로 디코딩
-      return jsonDecode(data) as Map<String, dynamic>;
+      // Step 1: Base64 디코딩
+      final decodedData = utf8.decode(base64Decode(encodedData));
+
+      // Step 2: JSON 디코딩
+      final jsonData = jsonDecode(decodedData);
+
+      // Step 3: 결과가 Map<String, dynamic>인지 확인
+      if (jsonData is Map<String, dynamic>) {
+        return jsonData;
+      } else {
+        throw const FormatException('Decoded data is not a valid JSON object.');
+      }
     } catch (e) {
+      // 오류를 FormatException으로 던짐
       throw FormatException('Failed to parse JSON data: $e');
     }
   }
