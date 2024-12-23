@@ -110,7 +110,7 @@ class _LabelingPageState extends State<LabelingPage> {
         case FileType.object:
           return ObjectViewer.fromMap(unifiedData.objectData!); // 수정
         case FileType.image:
-          return ImageViewer(imageFile: unifiedData.file!);
+          return ImageViewer.fromBase64(unifiedData.imageData!);
         default:
           return const Center(child: Text('지원되지 않는 파일 형식입니다.'));
       }
@@ -121,7 +121,7 @@ class _LabelingPageState extends State<LabelingPage> {
         case FileType.object:
           return ObjectViewer.fromFile(unifiedData.file!);
         case FileType.image:
-          return ImageViewer(imageFile: unifiedData.file!);
+          return ImageViewer.fromFile(unifiedData.file!);
         default:
           return const Center(child: Text('지원되지 않는 파일 형식입니다.'));
       }
