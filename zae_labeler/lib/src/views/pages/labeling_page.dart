@@ -98,34 +98,27 @@ class _LabelingPageState extends State<LabelingPage> {
   }
 
   Widget _buildViewer(LabelingViewModel labelingVM) {
-    final unifiedData = labelingVM.currentData;
+    final fileData = labelingVM.currentFData;
 
-    if (unifiedData == null) {
+    if (fileData == null) {
       return const Center(child: Text('데이터를 로드 중입니다.'));
     }
-    if (kIsWeb) {
-      switch (unifiedData.fileType) {
-        case FileType.series:
-          return TimeSeriesChart(data: unifiedData.seriesData ?? []);
-        case FileType.object:
-          return ObjectViewer.fromMap(unifiedData.objectData!); // 수정
-        case FileType.image:
-          return ImageViewer.fromBase64(unifiedData.imageData!);
-        default:
-          return const Center(child: Text('지원되지 않는 파일 형식입니다.'));
-      }
-    } else {
-      switch (unifiedData.fileType) {
-        case FileType.series:
-          return TimeSeriesChart(data: unifiedData.seriesData ?? []);
-        case FileType.object:
-          return ObjectViewer.fromFile(unifiedData.file!);
-        case FileType.image:
-          return ImageViewer.fromFile(unifiedData.file!);
-        default:
-          return const Center(child: Text('지원되지 않는 파일 형식입니다.'));
-      }
+
+    switch (fileData.fileType) {
+      case FileType.series:
+        return TimeSeriesChart(data: fileData.seriesData ?? []);
+      case FileType.object:
+        return ObjectViewer.fromMap(fileData.objectData!);
+      case FileType.image:
+        return ImageViewer.fromBase64(fileData.content);
+      default:
+        return const Center(child: Text('지원되지 않는 파일 형식입니다.'));
     }
+  }
+
+  Future<void> _loadData(BuildContext context) async {
+    final labelingVM = Provider.of<LabelingViewModel>(context, listen: false);
+    await labelingVM.loadCurrentFileData();
   }
 
   @override

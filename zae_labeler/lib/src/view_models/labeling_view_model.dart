@@ -25,6 +25,8 @@ class LabelingViewModel extends ChangeNotifier {
 
   UnifiedData? _currentUnifiedData;
   UnifiedData? get currentData => _currentUnifiedData;
+  FileData? _currentFileData;
+  FileData? get currentFData => _currentFileData;
 
   LabelingViewModel({required this.project}) {
     _initialize();
@@ -119,18 +121,14 @@ class LabelingViewModel extends ChangeNotifier {
 
     if (kIsWeb) {
       final fileData = _fileDataList[_currentIndex];
-
-      if (seriesExtensions.contains(fileData.type)) {
-        final seriesData = await _loadSeriesDataFromString(fileData.content);
-        _currentUnifiedData = UnifiedData(seriesData: seriesData, fileType: FileType.series);
-      } else if (objectExtensions.contains(fileData.type)) {
-        final objectData = await _loadObjectDataFromString(fileData.content);
-        print(objectData);
-        _currentUnifiedData = UnifiedData(objectData: objectData, fileType: FileType.object);
-      } else if (imageExtensions.contains(fileData.type)) {
-        _currentUnifiedData = UnifiedData(fileType: FileType.image);
+      fileData.fileType = determineFileType(fileData.type); // 파일 유형 판별
+      _currentFileData = fileData;
+      if (fileData.fileType == FileType.series) {
+        fileData.seriesData = await _loadSeriesDataFromString(fileData.content);
+      } else if (fileData.fileType == FileType.object) {
+        fileData.objectData = await _loadObjectDataFromString(fileData.content);
       } else {
-        _currentUnifiedData = UnifiedData(fileType: FileType.unsupported);
+        // _currentUnifiedData = UnifiedData(fileType: FileType.unsupported);
       }
     } else {
       // native env
@@ -148,6 +146,13 @@ class LabelingViewModel extends ChangeNotifier {
         _currentUnifiedData = UnifiedData(file: fileData, fileType: FileType.unsupported);
       }
     }
+  }
+
+  FileType determineFileType(String extension) {
+    if (['.csv'].contains(extension.toLowerCase())) return FileType.series;
+    if (['.json'].contains(extension.toLowerCase())) return FileType.object;
+    if (['.png', '.jpg', '.jpeg'].contains(extension.toLowerCase())) return FileType.image;
+    return FileType.unsupported;
   }
 
   Future<List<double>> _loadSeriesData(File file) async {
