@@ -14,8 +14,8 @@ class LabelingViewModel extends ChangeNotifier {
   final List<LabelEntry> _labelEntries = [];
   int _currentIndex = 0;
 
-  List<File> _dataFiles = [];
-  List<FileData> _fileDataList = [];
+  final List<File> _dataFiles = [];
+  final List<FileData> _fileDataList = [];
   final List<double> _currentSeriesData = [];
   Map<String, dynamic>? _currentObjectData;
   File? _currentImageFile;
@@ -49,10 +49,7 @@ class LabelingViewModel extends ChangeNotifier {
     final dataId = _dataFiles[_currentIndex].path;
     final entry = _labelEntries.firstWhere(
       (labelEntry) => labelEntry.dataPath == dataId,
-      orElse: () => LabelEntry(
-        dataFilename: path.basename(dataId),
-        dataPath: dataId,
-      ),
+      orElse: () => LabelEntry(dataFilename: path.basename(dataId), dataPath: dataId),
     );
     return entry;
   }
@@ -76,84 +73,105 @@ class LabelingViewModel extends ChangeNotifier {
   }
 
   Future<void> _loadDataFiles() async {
-    if (kIsWeb) {
-      // Web 환경: 개별 파일 경로를 처리
-      if (project.dataPaths != null) {
-        _dataFiles = project.dataPaths!
-            .map((filePath) => File(filePath))
-            .where((file) =>
-                seriesExtensions.contains(path.extension(file.path.split(':')[0]).toLowerCase()) ||
-                objectExtensions.contains(path.extension(file.path.split(':')[0]).toLowerCase()) ||
-                imageExtensions.contains(path.extension(file.path.split(':')[0]).toLowerCase()))
-            .toList();
-        _fileDataList = project.dataPaths!.map((filePath) {
-          final fileParts = filePath.split(':'); // 'name.ext:base64content' 구조
-          final fileNameParts = fileParts[0].split('.'); // 'name.ext'에서 분리
+    _fileDataList.clear();
 
-          return FileData(
-            name: fileNameParts[0], // 파일 이름 (확장자 제외)
-            type: ".${fileNameParts[1]}", // 파일 확장자
-            content: fileParts[1], // Base64로 인코딩된 콘텐츠
-          );
-        }).toList();
+    if (kIsWeb) {
+      // Web 환경: 데이터 경로 처리
+      if (project.dataPaths != null) {
+        for (var filePath in project.dataPaths!) {
+          final fileData = _parseWebFileData(filePath);
+          if (_isValidFileType(fileData.type)) {
+            _fileDataList.add(fileData);
+          }
+        }
       }
     } else {
-      // Native 환경: 디렉토리 내 파일을 탐색
+      // Native 환경: 디렉토리 내 파일 탐색
       final directory = Directory(project.dataDirectory!);
       if (directory.existsSync()) {
-        _dataFiles = directory
-            .listSync()
-            .where((file) =>
-                file is File &&
-                (seriesExtensions.contains(path.extension(file.path).toLowerCase()) ||
-                    objectExtensions.contains(path.extension(file.path).toLowerCase()) ||
-                    imageExtensions.contains(path.extension(file.path).toLowerCase())))
-            .cast<File>()
-            .toList();
+        final files = directory.listSync().whereType<File>();
+        for (var file in files) {
+          final fileData = _parseNativeFileData(file);
+          if (_isValidFileType(fileData.type)) {
+            _fileDataList.add(fileData);
+          }
+        }
       }
     }
+    notifyListeners();
+  }
+
+// 파일 유형 검증
+  bool _isValidFileType(String fileType) {
+    return seriesExtensions.contains(fileType.toLowerCase()) ||
+        objectExtensions.contains(fileType.toLowerCase()) ||
+        imageExtensions.contains(fileType.toLowerCase());
+  }
+
+// Web 환경 파일 파싱
+  FileData _parseWebFileData(String filePath) {
+    final fileParts = filePath.split(':'); // 'name.ext:base64content'
+    final fileNameParts = fileParts[0].split('.'); // 'name.ext'
+
+    return FileData(
+      name: fileNameParts[0], // 파일 이름
+      type: ".${fileNameParts[1]}", // 확장자
+      content: fileParts[1], // Base64 인코딩된 콘텐츠
+    );
+  }
+
+// Native 환경 파일 파싱
+  FileData _parseNativeFileData(File file) {
+    final fileName = path.basename(file.path);
+    final fileType = path.extension(file.path);
+
+    return FileData(
+      name: path.basenameWithoutExtension(fileName), // 파일 이름
+      type: fileType, // 확장자
+      content: base64Encode(file.readAsBytesSync()), // Base64로 인코딩된 콘텐츠
+    );
   }
 
   Future<void> loadCurrentFileData() async {
-    if (_currentIndex < 0 || _currentIndex >= _dataFiles.length) {
+    if (_currentIndex < 0 || _currentIndex >= _fileDataList.length) {
       return;
     }
 
-    if (kIsWeb) {
-      final fileData = _fileDataList[_currentIndex];
-      fileData.fileType = determineFileType(fileData.type); // 파일 유형 판별
-      _currentFileData = fileData;
-      if (fileData.fileType == FileType.series) {
+    final fileData = _fileDataList[_currentIndex];
+    fileData.fileType = determineFileType(fileData.type); // 파일 유형 판별
+    _currentFileData = fileData;
+
+    // 파일 유형에 따라 데이터를 로드
+    switch (fileData.fileType) {
+      case FileType.series:
         fileData.seriesData = await _loadSeriesDataFromString(fileData.content);
-      } else if (fileData.fileType == FileType.object) {
+        break;
+
+      case FileType.object:
         fileData.objectData = await _loadObjectDataFromString(fileData.content);
-      } else {
-        // _currentUnifiedData = UnifiedData(fileType: FileType.unsupported);
-      }
-    } else {
-      // native env
-      final fileData = _dataFiles[_currentIndex];
-      final extension = path.extension(fileData.path).toLowerCase();
-      if (seriesExtensions.contains(extension)) {
-        final seriesData = await _loadSeriesData(fileData);
-        _currentUnifiedData = UnifiedData(file: fileData, seriesData: seriesData, fileType: FileType.series);
-      } else if (objectExtensions.contains(extension)) {
-        final objectData = await _loadObjectData(fileData);
-        _currentUnifiedData = UnifiedData(file: fileData, objectData: objectData, fileType: FileType.object);
-      } else if (imageExtensions.contains(extension)) {
-        _currentUnifiedData = UnifiedData(file: fileData, fileType: FileType.image);
-      } else {
-        _currentUnifiedData = UnifiedData(file: fileData, fileType: FileType.unsupported);
-      }
+        break;
+
+      case FileType.image:
+        // 이미지 데이터는 추가적인 로드 필요 없음 (이미 Base64로 제공됨)
+        break;
+
+      default:
+        // 지원되지 않는 파일 형식 처리
+        break;
     }
+
+    // notifyListeners(); // UI 갱신
   }
 
+// 파일 유형 판별 메서드
   FileType determineFileType(String extension) {
-    if (['.csv'].contains(extension.toLowerCase())) return FileType.series;
-    if (['.json'].contains(extension.toLowerCase())) return FileType.object;
-    if (['.png', '.jpg', '.jpeg'].contains(extension.toLowerCase())) return FileType.image;
+    if (seriesExtensions.contains(extension.toLowerCase())) return FileType.series;
+    if (objectExtensions.contains(extension.toLowerCase())) return FileType.object;
+    if (imageExtensions.contains(extension.toLowerCase())) return FileType.image;
     return FileType.unsupported;
   }
+
+  /////////////////////////////////////////////////////////////////////////////////////////////
 
   Future<List<double>> _loadSeriesData(File file) async {
     final lines = await file.readAsLines();
@@ -282,7 +300,7 @@ class LabelingViewModel extends ChangeNotifier {
   }
 
   void moveNext() {
-    if (_currentIndex < _dataFiles.length - 1) {
+    if (_currentIndex < _fileDataList.length - 1) {
       _currentIndex++;
       loadCurrentFileData();
       notifyListeners();
