@@ -14,7 +14,6 @@ class LabelingViewModel extends ChangeNotifier {
   final List<LabelEntry> _labelEntries = [];
   int _currentIndex = 0;
 
-  final List<File> _dataFiles = [];
   final List<FileData> _fileDataList = [];
   final List<double> _currentSeriesData = [];
   Map<String, dynamic>? _currentObjectData;
@@ -34,19 +33,18 @@ class LabelingViewModel extends ChangeNotifier {
 
   List<LabelEntry> get labelEntries => _labelEntries;
   int get currentIndex => _currentIndex;
-  List<File> get dataFiles => _dataFiles;
+  List<FileData> get fileDataList => _fileDataList;
   List<double> get currentSeriesData => _currentSeriesData;
   Map<String, dynamic>? get currentObjectData => _currentObjectData;
   File? get currentImageFile => _currentImageFile;
-  String get currentFileName => _dataFiles.isNotEmpty ? path.basename(_dataFiles[_currentIndex].path) : '';
   String get currentDataFileName => _fileDataList.isNotEmpty ? path.basename(_fileDataList[_currentIndex].name) : "";
 
   LabelEntry get currentLabelEntry {
-    if (_currentIndex < 0 || _currentIndex >= _dataFiles.length) {
+    if (_currentIndex < 0 || _currentIndex >= _fileDataList.length) {
       return LabelEntry(dataFilename: '', dataPath: '');
     }
 
-    final dataId = _dataFiles[_currentIndex].path;
+    final dataId = _fileDataList[_currentIndex].name;
     final entry = _labelEntries.firstWhere(
       (labelEntry) => labelEntry.dataPath == dataId,
       orElse: () => LabelEntry(dataFilename: path.basename(dataId), dataPath: dataId),
@@ -221,8 +219,8 @@ class LabelingViewModel extends ChangeNotifier {
   }
 
   void addOrUpdateLabel(int dataIndex, String label, String mode) {
-    if (dataIndex < 0 || dataIndex >= _dataFiles.length) return;
-    final dataId = _dataFiles[dataIndex].path;
+    if (dataIndex < 0 || dataIndex >= _fileDataList.length) return;
+    final dataId = _fileDataList[dataIndex].name;
 
     final existingEntryIndex = _labelEntries.indexWhere((entry) => entry.dataPath == dataId);
 
@@ -316,6 +314,6 @@ class LabelingViewModel extends ChangeNotifier {
   }
 
   Future<String> downloadLabelsAsZip() async {
-    return await StorageHelper().downloadLabelsAsZip(project, _labelEntries, _dataFiles);
+    return await StorageHelper().downloadLabelsAsZip(project, _labelEntries, _fileDataList);
   }
 }
