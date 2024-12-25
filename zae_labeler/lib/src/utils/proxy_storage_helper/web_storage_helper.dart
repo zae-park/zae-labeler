@@ -1,7 +1,9 @@
 // lib/src/utils/web_storage_helper.dart
 import 'dart:convert';
 import 'dart:html' as html;
-import 'dart:io';
+// import 'dart:io';
+import 'package:zae_labeler/src/models/data_model.dart';
+
 import '../../models/project_model.dart';
 import '../../models/label_entry.dart';
 import 'platform_storage_helper.dart';
@@ -52,8 +54,7 @@ class StorageHelperImpl implements PlatformStorageHelper {
   }
 
   @override
-  Future<String> downloadLabelsAsZip(Project project,
-      List<LabelEntry> labelEntries, List<File> dataFiles) async {
+  Future<String> downloadLabelsAsZip(Project project, List<LabelEntry> labelEntries, List<FileData> fileDataList) async {
     // 웹 환경에서는 File API를 사용할 수 없음
     throw UnimplementedError("File download not supported in web.");
   }
