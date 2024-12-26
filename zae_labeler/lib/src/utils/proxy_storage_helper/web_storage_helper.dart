@@ -1,8 +1,9 @@
 // lib/src/utils/web_storage_helper.dart
 import 'dart:convert';
 import 'dart:html' as html;
-// import 'dart:io';
+import 'dart:typed_data';
 import 'package:zae_labeler/src/models/data_model.dart';
+import 'package:archive/archive.dart'; // ZIP 압축 라이브러리
 
 import '../../models/project_model.dart';
 import '../../models/label_entry.dart';
@@ -54,9 +55,34 @@ class StorageHelperImpl implements PlatformStorageHelper {
   }
 
   @override
-  Future<String> downloadLabelsAsZip(Project project, List<LabelEntry> labelEntries, List<FileData> fileDataList) async {
-    // 웹 환경에서는 File API를 사용할 수 없음
-    throw UnimplementedError("File download not supported in web.");
+  Future<String> downloadLabelsAsZip(
+    Project project,
+    List<LabelEntry> labelEntries,
+    List<FileData> fileDataList,
+  ) async {
+    final archive = Archive();
+
+    for (var fileData in fileDataList) {
+      final fileBytes = base64Decode(fileData.content);
+      archive.addFile(ArchiveFile(fileData.name, fileBytes.length, fileBytes));
+    }
+
+    // JSON 직렬화한 라벨 데이터 추가
+    final labelsJson = jsonEncode(labelEntries.map((e) => e.toJson()).toList());
+    archive.addFile(ArchiveFile('labels.json', labelsJson.length, utf8.encode(labelsJson)));
+
+    // ZIP 파일 생성
+    final zipData = ZipEncoder().encode(archive);
+
+    // Blob 생성 및 다운로드 링크 구성
+    final blob = html.Blob([Uint8List.fromList(zipData!)]);
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    final anchor = html.AnchorElement(href: url)
+      ..setAttribute("download", "${project.name}_labels.zip")
+      ..click();
+    html.Url.revokeObjectUrl(url);
+
+    return "${project.name}_labels.zip (downloaded in browser)";
   }
 
   @override
