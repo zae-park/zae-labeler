@@ -28,7 +28,7 @@ class Project {
   factory Project.fromJson(Map<String, dynamic> json) => Project(
         id: json['id'],
         name: json['name'],
-        mode: LabelingMode.values.firstWhere((e) => e.toString() == json['mode']),
+        mode: LabelingMode.values.firstWhere((e) => e.toString().contains(json['mode'])),
         classes: List<String>.from(json['classes']),
         dataDirectory: json['dataDirectory'],
         dataPaths: List<String>.from(json['dataPaths'] ?? []),

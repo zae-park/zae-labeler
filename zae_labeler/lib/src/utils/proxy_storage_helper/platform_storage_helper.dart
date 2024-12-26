@@ -2,6 +2,7 @@
 import 'dart:io';
 
 import '../../models/project_model.dart';
+import '../../models/data_model.dart';
 import '../../models/label_entry.dart';
 
 abstract class PlatformStorageHelper {
@@ -10,7 +11,6 @@ abstract class PlatformStorageHelper {
   Future<void> saveProjects(List<Project> projects);
   Future<List<LabelEntry>> loadLabelEntries();
   Future<void> saveLabelEntries(List<LabelEntry> labelEntries);
-  Future<String> downloadLabelsAsZip(
-      Project project, List<LabelEntry> labelEntries, List<File> dataFiles);
+  Future<String> downloadLabelsAsZip(Project project, List<LabelEntry> labelEntries, List<FileData> fileDataList);
   Future<List<LabelEntry>> importLabelEntries();
 }
