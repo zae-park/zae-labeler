@@ -1,6 +1,4 @@
 // lib/src/utils/storage_helper.dart
-import 'dart:io';
-
 import 'package:zae_labeler/src/models/data_model.dart';
 
 import '../models/label_entry.dart';
@@ -29,8 +27,8 @@ class StorageHelper extends PlatformStorageHelper {
   Future<void> saveLabelEntries(List<LabelEntry> labelEntries) => _instance.saveLabelEntries(labelEntries);
 
   @override
-  Future<String> downloadLabelsAsZip(Project project, List<LabelEntry> labelEntries, List<FileData> dataFiles) =>
-      _instance.downloadLabelsAsZip(project, labelEntries, dataFiles);
+  Future<String> downloadLabelsAsZip(Project project, List<LabelEntry> labelEntries, List<FileData> fileDataList) =>
+      _instance.downloadLabelsAsZip(project, labelEntries, fileDataList);
 
   @override
   Future<List<LabelEntry>> importLabelEntries() => _instance.importLabelEntries();
