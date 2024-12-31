@@ -13,10 +13,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Use Flutter instead of Dart
+      # Use the latest Flutter version to ensure compatibility with Dart >=3.2.3
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.0.0' # 원하는 Flutter 버전 지정
+          flutter-version: 'stable' # 'stable' 채널의 최신 버전 사용
+
+      - name: Flutter version 확인
+        run: flutter --version
 
       - name: Install dependencies
         working-directory: ./zae_labeler
