@@ -5,6 +5,7 @@ import 'package:zae_labeler/src/views/widgets/class_list.dart';
 void main() {
   testWidgets('ClassListWidget displays classes and allows addition and removal', (WidgetTester tester) async {
     final List<String> classes = ['Math', 'Science'];
+
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: ClassListWidget(

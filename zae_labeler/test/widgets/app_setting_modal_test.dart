@@ -11,6 +11,8 @@ class MockAppConfiguration extends Mock implements AppConfiguration {}
 void main() {
   testWidgets('AppSettingsModal updates settings', (WidgetTester tester) async {
     final mockConfig = MockAppConfiguration();
+    when(mockConfig.currentLocale).thenReturn('en');
+    when(mockConfig.isDarkMode).thenReturn(false);
 
     await tester.pumpWidget(
       ChangeNotifierProvider<AppConfiguration>.value(
@@ -22,7 +24,6 @@ void main() {
     expect(find.text('App Settings'), findsOneWidget);
 
     // Toggle Dark Mode
-    when(mockConfig.isDarkMode).thenReturn(false);
     await tester.tap(find.byType(Switch));
     await tester.pumpAndSettle();
 
