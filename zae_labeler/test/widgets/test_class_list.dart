@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
-import 'package:your_project/src/views/widgets/class_list.dart';
+import 'package:zae_labeler/src/views/widgets/class_list.dart';
 
 void main() {
   testWidgets('ClassListWidget displays classes and allows addition and removal', (WidgetTester tester) async {
