@@ -7,8 +7,12 @@ on:
     branches: [ "main", "dev" ]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        sdk: [3.1, stable, beta]
 
     steps:
       - uses: actions/checkout@v4
@@ -16,7 +20,7 @@ jobs:
       # Use the latest Flutter version to ensure compatibility with Dart >=3.2.3
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable' # 'stable' 채널의 최신 버전 사용
+          flutter-version: '3.24.3'
 
       - name: Flutter version 확인
         run: flutter --version
