@@ -13,7 +13,8 @@ class LabelingViewModel extends ChangeNotifier {
   final Project project;
   final List<LabelEntry> _labelEntries = [];
   int _currentIndex = 0;
-  List<File> _dataFiles = [];
+
+  final List<FileData> _fileDataList = [];
   final List<double> _currentSeriesData = [];
   Map<String, dynamic>? _currentObjectData;
   File? _currentImageFile;
@@ -23,6 +24,8 @@ class LabelingViewModel extends ChangeNotifier {
 
   UnifiedData? _currentUnifiedData;
   UnifiedData? get currentData => _currentUnifiedData;
+  FileData? _currentFileData;
+  FileData? get currentFData => _currentFileData;
 
   LabelingViewModel({required this.project}) {
     _initialize();
@@ -30,24 +33,21 @@ class LabelingViewModel extends ChangeNotifier {
 
   List<LabelEntry> get labelEntries => _labelEntries;
   int get currentIndex => _currentIndex;
-  List<File> get dataFiles => _dataFiles;
+  List<FileData> get fileDataList => _fileDataList;
   List<double> get currentSeriesData => _currentSeriesData;
   Map<String, dynamic>? get currentObjectData => _currentObjectData;
   File? get currentImageFile => _currentImageFile;
-  String get currentFileName => _dataFiles.isNotEmpty ? path.basename(_dataFiles[_currentIndex].path) : '';
+  String get currentDataFileName => _fileDataList.isNotEmpty ? path.basename(_fileDataList[_currentIndex].name) : "";
 
   LabelEntry get currentLabelEntry {
-    if (_currentIndex < 0 || _currentIndex >= _dataFiles.length) {
+    if (_currentIndex < 0 || _currentIndex >= _fileDataList.length) {
       return LabelEntry(dataFilename: '', dataPath: '');
     }
 
-    final dataId = _dataFiles[_currentIndex].path;
+    final dataId = _fileDataList[_currentIndex].name;
     final entry = _labelEntries.firstWhere(
       (labelEntry) => labelEntry.dataPath == dataId,
-      orElse: () => LabelEntry(
-        dataFilename: path.basename(dataId),
-        dataPath: dataId,
-      ),
+      orElse: () => LabelEntry(dataFilename: path.basename(dataId), dataPath: dataId),
     );
     return entry;
   }
@@ -61,7 +61,6 @@ class LabelingViewModel extends ChangeNotifier {
     _isInitialized = false; // 초기화 시작
     await _loadLabels();
     await _loadDataFiles();
-    await loadCurrentData();
     _isInitialized = true; // 초기화 완료
     notifyListeners(); // UI에 초기화 완료 알림
   }
@@ -72,60 +71,123 @@ class LabelingViewModel extends ChangeNotifier {
   }
 
   Future<void> _loadDataFiles() async {
+    _fileDataList.clear();
+
     if (kIsWeb) {
-      // Web 환경: 개별 파일 경로를 처리
+      // Web 환경: 데이터 경로 처리
       if (project.dataPaths != null) {
-        _dataFiles = project.dataPaths!
-            .map((filePath) => File(filePath))
-            .where((file) =>
-                seriesExtensions.contains(path.extension(file.path).toLowerCase()) ||
-                objectExtensions.contains(path.extension(file.path).toLowerCase()) ||
-                imageExtensions.contains(path.extension(file.path).toLowerCase()))
-            .toList();
+        for (var filePath in project.dataPaths!) {
+          final fileData = _parseWebFileData(filePath);
+          if (_isValidFileType(fileData.type)) {
+            _fileDataList.add(fileData);
+          }
+        }
       }
     } else {
-      // Native 환경: 디렉토리 내 파일을 탐색
+      // Native 환경: 디렉토리 내 파일 탐색
       final directory = Directory(project.dataDirectory!);
       if (directory.existsSync()) {
-        _dataFiles = directory
-            .listSync()
-            .where((file) =>
-                file is File &&
-                (seriesExtensions.contains(path.extension(file.path).toLowerCase()) ||
-                    objectExtensions.contains(path.extension(file.path).toLowerCase()) ||
-                    imageExtensions.contains(path.extension(file.path).toLowerCase())))
-            .cast<File>()
-            .toList();
+        final files = directory.listSync().whereType<File>();
+        for (var file in files) {
+          final fileData = _parseNativeFileData(file);
+          if (_isValidFileType(fileData.type)) {
+            _fileDataList.add(fileData);
+          }
+        }
       }
     }
+    notifyListeners();
   }
 
-  Future<void> loadCurrentData() async {
-    if (_currentIndex < 0 || _currentIndex >= _dataFiles.length) {
+// 파일 유형 검증
+  bool _isValidFileType(String fileType) {
+    return seriesExtensions.contains(fileType.toLowerCase()) ||
+        objectExtensions.contains(fileType.toLowerCase()) ||
+        imageExtensions.contains(fileType.toLowerCase());
+  }
+
+// Web 환경 파일 파싱
+  FileData _parseWebFileData(String filePath) {
+    final fileParts = filePath.split(':'); // 'name.ext:base64content'
+    final fileNameParts = fileParts[0].split('.'); // 'name.ext'
+
+    return FileData(
+      name: fileNameParts[0], // 파일 이름
+      type: ".${fileNameParts[1]}", // 확장자
+      content: fileParts[1], // Base64 인코딩된 콘텐츠
+    );
+  }
+
+// Native 환경 파일 파싱
+  FileData _parseNativeFileData(File file) {
+    final fileName = path.basename(file.path);
+    final fileType = path.extension(file.path);
+
+    return FileData(
+      name: path.basenameWithoutExtension(fileName), // 파일 이름
+      type: fileType, // 확장자
+      content: base64Encode(file.readAsBytesSync()), // Base64로 인코딩된 콘텐츠
+    );
+  }
+
+  Future<void> loadCurrentFileData() async {
+    if (_currentIndex < 0 || _currentIndex >= _fileDataList.length) {
       return;
     }
 
-    final file = _dataFiles[_currentIndex];
-    final extension = path.extension(file.path).toLowerCase();
+    final fileData = _fileDataList[_currentIndex];
+    fileData.fileType = determineFileType(fileData.type); // 파일 유형 판별
+    _currentFileData = fileData;
 
-    if (seriesExtensions.contains(extension)) {
-      final seriesData = await _loadSeriesData(file);
-      _currentUnifiedData = UnifiedData(file: file, seriesData: seriesData, fileType: FileType.series);
-    } else if (objectExtensions.contains(extension)) {
-      final objectData = await _loadObjectData(file);
-      _currentUnifiedData = UnifiedData(file: file, objectData: objectData, fileType: FileType.object);
-    } else if (imageExtensions.contains(extension)) {
-      _currentUnifiedData = UnifiedData(file: file, fileType: FileType.image);
-    } else {
-      _currentUnifiedData = UnifiedData(file: file, fileType: FileType.unsupported);
+    // 파일 유형에 따라 데이터를 로드
+    switch (fileData.fileType) {
+      case FileType.series:
+        fileData.seriesData = await _loadSeriesDataFromString(fileData.content);
+        break;
+
+      case FileType.object:
+        fileData.objectData = await _loadObjectDataFromString(fileData.content);
+        break;
+
+      case FileType.image:
+        // 이미지 데이터는 추가적인 로드 필요 없음 (이미 Base64로 제공됨)
+        break;
+
+      default:
+        // 지원되지 않는 파일 형식 처리
+        break;
     }
 
-    // notifyListeners();
+    // notifyListeners(); // UI 갱신
   }
+
+// 파일 유형 판별 메서드
+  FileType determineFileType(String extension) {
+    if (seriesExtensions.contains(extension.toLowerCase())) return FileType.series;
+    if (objectExtensions.contains(extension.toLowerCase())) return FileType.object;
+    if (imageExtensions.contains(extension.toLowerCase())) return FileType.image;
+    return FileType.unsupported;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////////////////////
 
   Future<List<double>> _loadSeriesData(File file) async {
     final lines = await file.readAsLines();
     return lines.expand((line) => line.split(',')).map((part) => double.tryParse(part.trim()) ?? 0.0).toList();
+  }
+
+  Future<List<double>> _loadSeriesDataFromString(String base64EncodedData) async {
+    // Step 1: Base64 디코딩
+    final decodedData = utf8.decode(base64Decode(base64EncodedData));
+
+    // Step 2: 문자열 데이터를 줄바꿈('\n')으로 나누기
+    final lines = decodedData.split('\n');
+
+    // Step 3: ','를 기준으로 나누고, 숫자로 변환
+    return lines
+        .expand((line) => line.split(',')) // 각 줄을 ','로 나누기
+        .map((part) => double.tryParse(part.trim()) ?? 0.0) // 숫자로 변환, 실패 시 0.0 반환
+        .toList();
   }
 
   Future<Map<String, dynamic>> _loadObjectData(File file) async {
@@ -133,9 +195,32 @@ class LabelingViewModel extends ChangeNotifier {
     return jsonDecode(content);
   }
 
+  Future<Map<String, dynamic>> _loadObjectDataFromString(String encodedData) async {
+    try {
+      // Step 1: Base64 디코딩
+      if (encodedData.isEmpty) {
+        throw const FormatException('Input data is empty.');
+      }
+      final decodedData = utf8.decode(base64Decode(encodedData));
+
+      // Step 2: JSON 디코딩
+      final jsonData = jsonDecode(decodedData);
+
+      // Step 3: 결과가 Map<String, dynamic>인지 확인
+      if (jsonData is Map<String, dynamic>) {
+        return jsonData;
+      } else {
+        throw const FormatException('Decoded data is not a valid JSON object.');
+      }
+    } catch (e) {
+      // 예외를 명확히 하여 사용자에게 메시지를 제공
+      throw FormatException('Failed to parse JSON data. Error: $e');
+    }
+  }
+
   void addOrUpdateLabel(int dataIndex, String label, String mode) {
-    if (dataIndex < 0 || dataIndex >= _dataFiles.length) return;
-    final dataId = _dataFiles[dataIndex].path;
+    if (dataIndex < 0 || dataIndex >= _fileDataList.length) return;
+    final dataId = _fileDataList[dataIndex].name;
 
     final existingEntryIndex = _labelEntries.indexWhere((entry) => entry.dataPath == dataId);
 
@@ -213,9 +298,9 @@ class LabelingViewModel extends ChangeNotifier {
   }
 
   void moveNext() {
-    if (_currentIndex < _dataFiles.length - 1) {
+    if (_currentIndex < _fileDataList.length - 1) {
       _currentIndex++;
-      loadCurrentData();
+      loadCurrentFileData();
       notifyListeners();
     }
   }
@@ -223,12 +308,12 @@ class LabelingViewModel extends ChangeNotifier {
   void movePrevious() {
     if (_currentIndex > 0) {
       _currentIndex--;
-      loadCurrentData();
+      loadCurrentFileData();
       notifyListeners();
     }
   }
 
   Future<String> downloadLabelsAsZip() async {
-    return await StorageHelper().downloadLabelsAsZip(project, _labelEntries, _dataFiles);
+    return await StorageHelper().downloadLabelsAsZip(project, _labelEntries, _fileDataList);
   }
 }

@@ -1,3 +1,6 @@
+// 라벨링 모드 열거형
+enum LabelingMode { singleClassification, multiClassification, segmentation }
+
 // lib/src/models/project_model.dart
 class Project {
   String id; // 프로젝트 고유 ID
@@ -8,6 +11,8 @@ class Project {
   String? dataDirectory; // Native 환경에서 사용
   List<String>? dataPaths; // Web 환경에서 사용
 
+  bool isDataLoaded; // 데이터 로드 상태 플래그
+
   Project({
     required this.id,
     required this.name,
@@ -16,7 +21,19 @@ class Project {
     // required this.dataDirectory,
     this.dataDirectory,
     this.dataPaths,
+    this.isDataLoaded = false, // 기본값은 로드되지 않은 상태
   });
+
+  // JSON 직렬화 및 역직렬화에 isDataLoaded 필드 추가
+  factory Project.fromJson(Map<String, dynamic> json) => Project(
+        id: json['id'],
+        name: json['name'],
+        mode: LabelingMode.values.firstWhere((e) => e.toString().contains(json['mode'])),
+        classes: List<String>.from(json['classes']),
+        dataDirectory: json['dataDirectory'],
+        dataPaths: List<String>.from(json['dataPaths'] ?? []),
+        isDataLoaded: json['isDataLoaded'] ?? false,
+      );
 
   // JSON으로 변환
   Map<String, dynamic> toJson() => {
@@ -27,22 +44,4 @@ class Project {
         'dataDirectory': dataDirectory,
         'dataPaths': dataPaths,
       };
-
-  // JSON에서 객체 생성
-  factory Project.fromJson(Map<String, dynamic> json) => Project(
-        id: json['id'],
-        name: json['name'],
-        mode:
-            LabelingMode.values.firstWhere((e) => e.toString().split('.').last.toLowerCase() == json['mode'], orElse: () => LabelingMode.singleClassification),
-        classes: List<String>.from(json['classes']),
-        dataDirectory: json['dataDirectory'] ?? '',
-        dataPaths: json['dataPaths'] != null ? List<String>.from(json['dataPaths']) : null,
-      );
-}
-
-// 라벨링 모드 열거형
-enum LabelingMode {
-  singleClassification,
-  multiClassification,
-  segmentation,
 }

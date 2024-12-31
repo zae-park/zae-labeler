@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -35,14 +36,16 @@ class _LabelingPageState extends State<LabelingPage> {
     super.dispose();
   }
 
-  void _handleKeyEvent(RawKeyEvent event, LabelingViewModel labelingVM) {
-    if (event is RawKeyDownEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.enter) {
-        event.isShiftPressed ? labelingVM.movePrevious() : labelingVM.moveNext();
-      } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-        _changeMode(-1);
+  void _handleKeyEvent(KeyEvent event, LabelingViewModel labelingVM) {
+    if (event is KeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+        labelingVM.movePrevious();
       } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+        labelingVM.moveNext();
+      } else if (event.logicalKey == LogicalKeyboardKey.tab) {
         _changeMode(1);
+      } else if (event.logicalKey == LogicalKeyboardKey.backspace) {
+        _changeMode(-1);
       } else if (LogicalKeyboardKey.digit0.keyId <= event.logicalKey.keyId && event.logicalKey.keyId <= LogicalKeyboardKey.digit9.keyId) {
         int index = event.logicalKey.keyId - LogicalKeyboardKey.digit0.keyId;
         if (index < labelingVM.project.classes.length) {
@@ -95,22 +98,27 @@ class _LabelingPageState extends State<LabelingPage> {
   }
 
   Widget _buildViewer(LabelingViewModel labelingVM) {
-    final unifiedData = labelingVM.currentData;
+    final fileData = labelingVM.currentFData;
 
-    if (unifiedData == null) {
+    if (fileData == null) {
       return const Center(child: Text('데이터를 로드 중입니다.'));
     }
 
-    switch (unifiedData.fileType) {
+    switch (fileData.fileType) {
       case FileType.series:
-        return TimeSeriesChart(data: unifiedData.seriesData ?? []);
+        return TimeSeriesChart(data: fileData.seriesData ?? []);
       case FileType.object:
-        return ObjectViewer(jsonFile: unifiedData.file!);
+        return ObjectViewer.fromMap(fileData.objectData!);
       case FileType.image:
-        return ImageViewer(imageFile: unifiedData.file!);
+        return ImageViewer.fromBase64(fileData.content);
       default:
         return const Center(child: Text('지원되지 않는 파일 형식입니다.'));
     }
+  }
+
+  Future<void> _loadData(BuildContext context) async {
+    final labelingVM = Provider.of<LabelingViewModel>(context, listen: false);
+    await labelingVM.loadCurrentFileData();
   }
 
   @override
@@ -136,12 +144,13 @@ class _LabelingPageState extends State<LabelingPage> {
                 ),
               ],
             ),
-            body: RawKeyboardListener(
+            body: KeyboardListener(
               focusNode: _focusNode,
               autofocus: true,
-              onKey: (event) => _handleKeyEvent(event, labelingVM),
+              onKeyEvent: (event) => _handleKeyEvent(event, labelingVM),
               child: FutureBuilder<void>(
-                future: labelingVM.loadCurrentData(),
+                future: labelingVM.loadCurrentFileData(),
+                // future: labelingVM.loadCurrentData(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -190,7 +199,7 @@ class _LabelingPageState extends State<LabelingPage> {
                       Expanded(child: Padding(padding: const EdgeInsets.all(16.0), child: _buildViewer(labelingVM))),
                       Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: Text('데이터 ${labelingVM.currentIndex + 1}/${labelingVM.dataFiles.length} - ${labelingVM.currentFileName}',
+                        child: Text('데이터 ${labelingVM.currentIndex + 1}/${labelingVM.fileDataList.length} - ${labelingVM.currentDataFileName}',
                             style: const TextStyle(fontSize: 16)),
                       ),
                       Padding(

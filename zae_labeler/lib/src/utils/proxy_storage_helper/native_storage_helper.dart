@@ -1,11 +1,11 @@
-// lib/src/utils/native_storage_helper.dart
 import 'dart:convert';
 import 'dart:io';
-import 'package:path/path.dart' as path;
+// import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:archive/archive.dart';
 import '../../models/project_model.dart';
 import '../../models/label_entry.dart';
+import '../../models/data_model.dart';
 import 'platform_storage_helper.dart';
 
 class StorageHelperImpl implements PlatformStorageHelper {
@@ -60,16 +60,19 @@ class StorageHelperImpl implements PlatformStorageHelper {
   }
 
   @override
-  Future<String> downloadLabelsAsZip(Project project,
-      List<LabelEntry> labelEntries, List<File> dataFiles) async {
+  Future<String> downloadLabelsAsZip(
+    Project project,
+    List<LabelEntry> labelEntries,
+    List<FileData> fileDataList,
+  ) async {
     final archive = Archive();
-    for (var file in dataFiles) {
-      if (await file.exists()) {
-        final fileBytes = await file.readAsBytes();
-        archive.addFile(
-            ArchiveFile(path.basename(file.path), fileBytes.length, fileBytes));
-      }
+    for (var fileData in fileDataList) {
+      final fileBytes = base64Decode(fileData.content); // Base64로 디코딩
+      archive.addFile(
+        ArchiveFile(fileData.name, fileBytes.length, fileBytes),
+      );
     }
+
     final directory = await getApplicationDocumentsDirectory();
     final zipFile = File('${directory.path}/${project.name}_labels.zip');
     final zipData = ZipEncoder().encode(archive);
