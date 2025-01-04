@@ -1,3 +1,6 @@
+import 'dart:html' as html;
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
@@ -8,7 +11,7 @@ import '../../models/project_model.dart';
 import '../pages/configuration_page.dart';
 import '../../utils/storage_helper.dart';
 import 'dart:convert';
-import 'dart:io';
+import 'dart:io' as io;
 import 'package:file_picker/file_picker.dart';
 
 class ProjectListPage extends StatelessWidget {
@@ -19,7 +22,7 @@ class ProjectListPage extends StatelessWidget {
       final projectJson = project.toJson();
       final jsonString = jsonEncode(projectJson);
       final directory = await getTemporaryDirectory();
-      final file = File('${directory.path}/${project.name}_config.json');
+      final file = io.File('${directory.path}/${project.name}_config.json');
       await file.writeAsString(jsonString);
 
       await Share.shareFiles([file.path], text: '${project.name} project configuration');
@@ -30,8 +33,22 @@ class ProjectListPage extends StatelessWidget {
 
   Future<void> _downloadProjectConfig(BuildContext context, Project project) async {
     try {
-      String filePath = await StorageHelper.instance.downloadProjectConfig(project);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Project configuration downloaded: $filePath')));
+      final projectJson = project.toJson();
+      final jsonString = jsonEncode(projectJson);
+
+      if (kIsWeb) {
+        // Web 환경: 파일을 Blob 형태로 제공
+        final blob = html.Blob([jsonString]);
+        final url = html.Url.createObjectUrlFromBlob(blob);
+        final anchor = html.AnchorElement(href: url)
+          ..setAttribute('download', '${project.name}_config.json')
+          ..click();
+        html.Url.revokeObjectUrl(url); // URL 해제
+      } else {
+        // Native 환경: 파일 시스템에 저장
+        String filePath = await StorageHelper.instance.downloadProjectConfig(project);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Project configuration downloaded: $filePath')));
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to download project configuration: $e')));
     }
@@ -42,23 +59,22 @@ class ProjectListPage extends StatelessWidget {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['json'],
+        withData: true, // Web에서 데이터 로드를 위한 옵션
       );
 
-      if (result != null && result.files.single.path != null) {
-        String filePath = result.files.single.path!;
-        final file = File(filePath);
-        if (await file.exists()) {
-          final content = await file.readAsString();
-          final jsonData = jsonDecode(content);
-          final project = Project.fromJson(jsonData);
+      if (result != null) {
+        final file = result.files.single;
 
-          final projectVM = Provider.of<ProjectViewModel>(context, listen: false);
-          await projectVM.saveProject(project);
+        // Web 환경: bytes에서 읽기
+        final content = file.bytes != null ? utf8.decode(file.bytes!) : await io.File(file.path!).readAsString(); // Native 환경
 
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Imported project: ${project.name}')));
-        } else {
-          throw Exception('Selected file does not exist.');
-        }
+        final jsonData = jsonDecode(content);
+        final project = Project.fromJson(jsonData);
+
+        final projectVM = Provider.of<ProjectViewModel>(context, listen: false);
+        await projectVM.saveProject(project);
+
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Imported project: ${project.name}')));
       } else {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('File selection cancelled.')));
       }

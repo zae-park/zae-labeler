@@ -1,7 +1,9 @@
 // lib/src/view_models/configuration_view_model.dart
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
-import '../models/project_model.dart';
 import 'package:file_picker/file_picker.dart';
+import '../models/project_model.dart';
 
 class ConfigurationViewModel extends ChangeNotifier {
   LabelingMode? _selectedMode;
@@ -40,6 +42,28 @@ class ConfigurationViewModel extends ChangeNotifier {
       _dataDirectory = selectedDirectory;
       notifyListeners();
     }
+  }
+
+  Future<Project?> importProjectConfig() async {
+    try {
+      // 파일 선택
+      final result = await FilePicker.platform.pickFiles(withData: true);
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+
+        // Web 환경: bytes 속성 사용
+        final content = file.bytes != null ? utf8.decode(file.bytes!) : await File(file.path!).readAsString(); // Native 환경
+
+        // JSON 디코딩 및 프로젝트 객체 생성
+        final Map<String, dynamic> projectJson = jsonDecode(content);
+        final project = Project.fromJson(projectJson);
+        return project;
+      }
+    } catch (e) {
+      debugPrint('Failed to import project: $e');
+      return null;
+    }
+    return null;
   }
 
   // 설정 초기화
