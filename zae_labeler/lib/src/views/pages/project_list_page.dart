@@ -13,9 +13,14 @@ import 'dart:convert';
 import 'dart:io' as io;
 import 'package:file_picker/file_picker.dart';
 
-class ProjectListPage extends StatelessWidget {
+class ProjectListPage extends StatefulWidget {
   const ProjectListPage({Key? key}) : super(key: key);
 
+  @override
+  State<ProjectListPage> createState() => _ProjectListPageState();
+}
+
+class _ProjectListPageState extends State<ProjectListPage> {
   Future<void> _shareProject(BuildContext context, Project project) async {
     try {
       final projectJson = project.toJson();
@@ -24,7 +29,7 @@ class ProjectListPage extends StatelessWidget {
       final file = io.File('${directory.path}/${project.name}_config.json');
       await file.writeAsString(jsonString);
 
-      await Share.shareFiles([file.path], text: '${project.name} project configuration');
+      await Share.shareXFiles([XFile(file.path)], text: '${project.name} project configuration');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to share project: $e')));
     }
@@ -58,27 +63,28 @@ class ProjectListPage extends StatelessWidget {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['json'],
-        withData: true, // Web에서 데이터 로드를 위한 옵션
       );
 
       if (result != null) {
         final file = result.files.single;
 
-        // Web 환경: bytes에서 읽기
-        final content = file.bytes != null ? utf8.decode(file.bytes!) : await io.File(file.path!).readAsString(); // Native 환경
+        final content = file.bytes != null ? utf8.decode(file.bytes!) : await io.File(file.path!).readAsString();
 
         final jsonData = jsonDecode(content);
         final project = Project.fromJson(jsonData);
 
+        if (!mounted) return; // `mounted`는 이제 StatefulWidget에서 사용 가능
         final projectVM = Provider.of<ProjectViewModel>(context, listen: false);
         await projectVM.saveProject(project);
 
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Imported project: ${project.name}')));
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('File selection cancelled.')));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Imported project: ${project.name}')));
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to import project: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to import project: $e')));
+      }
     }
   }
 
@@ -141,13 +147,6 @@ class ProjectListPage extends StatelessWidget {
                     final project = projectVM.projects[index];
                     return _ProjectTile(
                       project: project,
-                      // isLoading: !project.isDataLoaded,
-                      // onLoadData: () async {
-                      //   await projectVM.loadProjectData(project);
-                      //   if (project.isDataLoaded) {
-                      //     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Loaded data for: ${project.name}')));
-                      //   }
-                      // },
                       onEdit: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ConfigureProjectPage(project: project))),
                       onDownload: () => _downloadProjectConfig(context, project),
                       onShare: () => _shareProject(context, project),
