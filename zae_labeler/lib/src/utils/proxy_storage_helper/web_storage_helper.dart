@@ -16,7 +16,7 @@ class StorageHelperImpl implements PlatformStorageHelper {
     final jsonString = jsonEncode(project.toJson());
     final blob = html.Blob([jsonString]);
     final url = html.Url.createObjectUrlFromBlob(blob);
-    final anchor = html.AnchorElement(href: url)
+    html.AnchorElement(href: url)
       ..setAttribute("download", "${project.name}_config.json")
       ..click();
     html.Url.revokeObjectUrl(url);
@@ -78,7 +78,7 @@ class StorageHelperImpl implements PlatformStorageHelper {
     // Blob 생성 및 다운로드 링크 구성
     final blob = html.Blob([Uint8List.fromList(zipData!)]);
     final url = html.Url.createObjectUrlFromBlob(blob);
-    final anchor = html.AnchorElement(href: url)
+    html.AnchorElement(href: url)
       ..setAttribute("download", "${project.name}_labels.zip")
       ..click();
     html.Url.revokeObjectUrl(url);
@@ -116,10 +116,7 @@ class StorageHelperImpl implements PlatformStorageHelper {
             completer.completeError(e);
           }
         });
-
-        reader.onError.listen((error) {
-          completer.completeError(error);
-        });
+        reader.onError.listen((error) => completer.completeError(error));
       } else {
         completer.completeError(Exception('No file selected.'));
       }
