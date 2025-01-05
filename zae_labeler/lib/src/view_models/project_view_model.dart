@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import '../models/project_model.dart';
 import '../utils/storage_helper.dart';
 // import '../utils/platform_storage_helper.dart';
@@ -16,28 +15,6 @@ class ProjectViewModel extends ChangeNotifier {
   }
 
   List<Project> get projects => _projects;
-
-  // Future<void> loadProjects() async {
-  //   _projects = await storageHelper.loadProjects();
-  // }
-
-  // Future<void> saveProject(Project project) async {
-  //   _projects.add(project);
-  //   await storageHelper.saveProjects(_projects);
-  // }
-
-  // Future<void> updateProject(Project project) async {
-  //   final index = _projects.indexWhere((p) => p.id == project.id);
-  //   if (index != -1) {
-  //     _projects[index] = project;
-  //     await storageHelper.saveProjects(_projects);
-  //   }
-  // }
-
-  // Future<void> deleteProject(Project project) async {
-  //   _projects.removeWhere((p) => p.id == project.id);
-  //   await storageHelper.saveProjects(_projects);
-  // }
 
   Future<void> loadProjects() async {
     _projects = await StorageHelper.instance.loadProjects(); // 싱글톤 인스턴스를 통해 접근
