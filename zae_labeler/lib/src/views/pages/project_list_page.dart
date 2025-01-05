@@ -40,7 +40,7 @@ class ProjectListPage extends StatelessWidget {
         // Web 환경: 파일을 Blob 형태로 제공
         final blob = html.Blob([jsonString]);
         final url = html.Url.createObjectUrlFromBlob(blob);
-        final anchor = html.AnchorElement(href: url)
+        html.AnchorElement(href: url)
           ..setAttribute('download', '${project.name}_config.json')
           ..click();
         html.Url.revokeObjectUrl(url); // URL 해제
