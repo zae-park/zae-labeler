@@ -48,3 +48,5 @@ jobs:
           github_token: ${{ secrets.PAT_LABLER }}
           publish_branch: docs
           publish_dir: zae_labeler/build/web
+          # 브랜치별로 다른 경로에 배포
+          destination_dir: ${{ github.ref_name == 'dev' && 'dev' || '' }}
