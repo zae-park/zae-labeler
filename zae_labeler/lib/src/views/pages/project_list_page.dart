@@ -27,22 +27,16 @@ class _ProjectListPageState extends State<ProjectListPage> {
       final jsonString = jsonEncode(projectJson);
 
       if (kIsWeb) {
-        // Web 환경: Web Share API 사용
-        if (html.window.navigator.share != null) {
-          await html.window.navigator.share({
-            'title': '${project.name} Project Configuration',
-            'text': 'Check out this project!',
-            'url': 'data:application/json;charset=utf-8,$jsonString',
-          });
-        } else {
-          // Web Share API 미지원 시 대체 동작
-          final blob = html.Blob([jsonString]);
-          final url = html.Url.createObjectUrlFromBlob(blob);
-          html.AnchorElement(href: url)
-            ..setAttribute('download', '${project.name}_config.json')
-            ..click();
-          html.Url.revokeObjectUrl(url);
-        }
+        // Web 환경: Web Share API 사용 또는 다운로드 방식
+        final blob = html.Blob([jsonString], 'application/json');
+        final url = html.Url.createObjectUrlFromBlob(blob);
+
+        // Web Share API로 공유
+        await html.window.navigator.share({
+          'title': '${project.name} Project Configuration',
+          'text': 'Check out this project!',
+          'url': url,
+        });
       } else {
         // Native 환경: 파일 공유
         final directory = await getTemporaryDirectory();
@@ -182,40 +176,39 @@ class _ProjectListPageState extends State<ProjectListPage> {
   }
 }
 
-
 class _ProjectTile extends StatelessWidget {
-   final Project project;
-   final VoidCallback onEdit;
-   final VoidCallback onDownload;
-   final VoidCallback onShare;
-   final VoidCallback onDelete;
-   final VoidCallback onTap;
+  final Project project;
+  final VoidCallback onEdit;
+  final VoidCallback onDownload;
+  final VoidCallback onShare;
+  final VoidCallback onDelete;
+  final VoidCallback onTap;
 
-   const _ProjectTile({
-     Key? key,
-     required this.project,
-     required this.onEdit,
-     required this.onDownload,
-     required this.onShare,
-     required this.onDelete,
-     required this.onTap,
-   }) : super(key: key);
+  const _ProjectTile({
+    Key? key,
+    required this.project,
+    required this.onEdit,
+    required this.onDownload,
+    required this.onShare,
+    required this.onDelete,
+    required this.onTap,
+  }) : super(key: key);
 
-   @override
-   Widget build(BuildContext context) {
-     return ListTile(
-       title: Text(project.name),
-       subtitle: Text('Mode: ${project.mode.toString().split('.').last}'),
-       trailing: Row(
-         mainAxisSize: MainAxisSize.min,
-         children: [
-           IconButton(icon: const Icon(Icons.edit), onPressed: onEdit, tooltip: 'Edit Project'),
-           IconButton(icon: const Icon(Icons.download), onPressed: onDownload, tooltip: 'Download Configuration'),
-           IconButton(icon: const Icon(Icons.share), onPressed: onShare, tooltip: 'Share Project'),
-           IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: onDelete, tooltip: 'Delete Project'),
-         ],
-       ),
-       onTap: onTap,
-     );
-   }
- }
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(project.name),
+      subtitle: Text('Mode: ${project.mode.toString().split('.').last}'),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(icon: const Icon(Icons.edit), onPressed: onEdit, tooltip: 'Edit Project'),
+          IconButton(icon: const Icon(Icons.download), onPressed: onDownload, tooltip: 'Download Configuration'),
+          IconButton(icon: const Icon(Icons.share), onPressed: onShare, tooltip: 'Share Project'),
+          IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: onDelete, tooltip: 'Delete Project'),
+        ],
+      ),
+      onTap: onTap,
+    );
+  }
+}
