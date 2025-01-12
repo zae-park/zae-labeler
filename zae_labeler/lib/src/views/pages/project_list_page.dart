@@ -31,12 +31,13 @@ class _ProjectListPageState extends State<ProjectListPage> {
         final blob = html.Blob([jsonString], 'application/json');
         final url = html.Url.createObjectUrlFromBlob(blob);
 
-        // Web Share API로 공유
+        // Web Share API로 텍스트 공유
         await html.window.navigator.share({
           'title': '${project.name} Project Configuration',
-          'text': 'Check out this project!',
-          'url': url,
+          'text': 'Here is the project configuration:\n$jsonString',
         });
+
+        html.Url.revokeObjectUrl(url); // URL 해제
       } else {
         // Native 환경: 파일 공유
         final directory = await getTemporaryDirectory();
