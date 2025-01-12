@@ -1,4 +1,4 @@
-import 'dart:html' as html;
+import 'dart:html' as html; // 웹 전용 기능 사용
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -25,11 +25,27 @@ class _ProjectListPageState extends State<ProjectListPage> {
     try {
       final projectJson = project.toJson();
       final jsonString = jsonEncode(projectJson);
-      final directory = await getTemporaryDirectory();
-      final file = io.File('${directory.path}/${project.name}_config.json');
-      await file.writeAsString(jsonString);
 
-      await Share.shareXFiles([XFile(file.path)], text: '${project.name} project configuration');
+      if (kIsWeb) {
+        // Web 환경: Web Share API 사용 또는 다운로드 방식
+        final blob = html.Blob([jsonString], 'application/json');
+        final url = html.Url.createObjectUrlFromBlob(blob);
+
+        // Web Share API로 텍스트 공유
+        await html.window.navigator.share({
+          'title': '${project.name} Project Configuration',
+          'text': 'Here is the project configuration:\n$jsonString',
+        });
+
+        html.Url.revokeObjectUrl(url); // URL 해제
+      } else {
+        // Native 환경: 파일 공유
+        final directory = await getTemporaryDirectory();
+        final file = io.File('${directory.path}/${project.name}_config.json');
+        await file.writeAsString(jsonString);
+
+        await Share.shareXFiles([XFile(file.path)], text: '${project.name} project configuration');
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to share project: $e')));
     }
@@ -163,8 +179,6 @@ class _ProjectListPageState extends State<ProjectListPage> {
 
 class _ProjectTile extends StatelessWidget {
   final Project project;
-  // final bool isLoaded;
-  // final VoidCallback onLoadData;
   final VoidCallback onEdit;
   final VoidCallback onDownload;
   final VoidCallback onShare;
@@ -174,8 +188,6 @@ class _ProjectTile extends StatelessWidget {
   const _ProjectTile({
     Key? key,
     required this.project,
-    // required this.isLoaded,
-    // required this.onLoadData,
     required this.onEdit,
     required this.onDownload,
     required this.onShare,
@@ -198,18 +210,6 @@ class _ProjectTile extends StatelessWidget {
         ],
       ),
       onTap: onTap,
-      // trailing: isLoading
-      //     ? ElevatedButton(onPressed: onLoadData, child: const Text('Load Data'))
-      //     : Row(
-      //         mainAxisSize: MainAxisSize.min,
-      //         children: [
-      //           IconButton(icon: const Icon(Icons.edit), onPressed: onEdit, tooltip: 'Edit Project'),
-      //           IconButton(icon: const Icon(Icons.download), onPressed: onDownload, tooltip: 'Download Configuration'),
-      //           IconButton(icon: const Icon(Icons.share), onPressed: onShare, tooltip: 'Share Project'),
-      //           IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: onDelete, tooltip: 'Delete Project'),
-      //         ],
-      //       ),
-      // onTap: isLoading ? null : onTap,
     );
   }
 }
