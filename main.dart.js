@@ -92466,12 +92466,13 @@ l=j
 j=window.navigator
 j.toString
 i=t.z
-h=A.aJc(A.aE(["title",b.b+" Project Configuration","text","Check out this project!","url",l],i,i))
+h=A.aJc(A.aE(["title",b.b+" Project Configuration","text","Here is the project configuration:\n"+A.j(n)],i,i))
 j=j.share(h)
 j.toString
 s=6
 return A.W(A.hw(j,i),$async$xv)
-case 6:q=1
+case 6:(self.URL||self.webkitURL).revokeObjectURL(l)
+q=1
 s=5
 break
 case 3:q=2
