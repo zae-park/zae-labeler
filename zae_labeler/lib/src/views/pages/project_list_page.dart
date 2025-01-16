@@ -1,3 +1,5 @@
+import 'dart:html' as html; // 웹 전용 기능 사용
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
@@ -8,21 +10,42 @@ import '../../models/project_model.dart';
 import '../pages/configuration_page.dart';
 import '../../utils/storage_helper.dart';
 import 'dart:convert';
-import 'dart:io';
+import 'dart:io' as io;
 import 'package:file_picker/file_picker.dart';
 
-class ProjectListPage extends StatelessWidget {
+class ProjectListPage extends StatefulWidget {
   const ProjectListPage({Key? key}) : super(key: key);
 
+  @override
+  State<ProjectListPage> createState() => _ProjectListPageState();
+}
+
+class _ProjectListPageState extends State<ProjectListPage> {
   Future<void> _shareProject(BuildContext context, Project project) async {
     try {
       final projectJson = project.toJson();
       final jsonString = jsonEncode(projectJson);
-      final directory = await getTemporaryDirectory();
-      final file = File('${directory.path}/${project.name}_config.json');
-      await file.writeAsString(jsonString);
 
-      await Share.shareFiles([file.path], text: '${project.name} project configuration');
+      if (kIsWeb) {
+        // Web 환경: Web Share API 사용 또는 다운로드 방식
+        final blob = html.Blob([jsonString], 'application/json');
+        final url = html.Url.createObjectUrlFromBlob(blob);
+
+        // Web Share API로 텍스트 공유
+        await html.window.navigator.share({
+          'title': '${project.name} Project Configuration',
+          'text': 'Here is the project configuration:\n$jsonString',
+        });
+
+        html.Url.revokeObjectUrl(url); // URL 해제
+      } else {
+        // Native 환경: 파일 공유
+        final directory = await getTemporaryDirectory();
+        final file = io.File('${directory.path}/${project.name}_config.json');
+        await file.writeAsString(jsonString);
+
+        await Share.shareXFiles([XFile(file.path)], text: '${project.name} project configuration');
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to share project: $e')));
     }
@@ -30,8 +53,22 @@ class ProjectListPage extends StatelessWidget {
 
   Future<void> _downloadProjectConfig(BuildContext context, Project project) async {
     try {
-      String filePath = await StorageHelper.instance.downloadProjectConfig(project);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Project configuration downloaded: $filePath')));
+      final projectJson = project.toJson();
+      final jsonString = jsonEncode(projectJson);
+
+      if (kIsWeb) {
+        // Web 환경: 파일을 Blob 형태로 제공
+        final blob = html.Blob([jsonString]);
+        final url = html.Url.createObjectUrlFromBlob(blob);
+        html.AnchorElement(href: url)
+          ..setAttribute('download', '${project.name}_config.json')
+          ..click();
+        html.Url.revokeObjectUrl(url); // URL 해제
+      } else {
+        // Native 환경: 파일 시스템에 저장
+        String filePath = await StorageHelper.instance.downloadProjectConfig(project);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Project configuration downloaded: $filePath')));
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to download project configuration: $e')));
     }
@@ -44,26 +81,26 @@ class ProjectListPage extends StatelessWidget {
         allowedExtensions: ['json'],
       );
 
-      if (result != null && result.files.single.path != null) {
-        String filePath = result.files.single.path!;
-        final file = File(filePath);
-        if (await file.exists()) {
-          final content = await file.readAsString();
-          final jsonData = jsonDecode(content);
-          final project = Project.fromJson(jsonData);
+      if (result != null) {
+        final file = result.files.single;
 
-          final projectVM = Provider.of<ProjectViewModel>(context, listen: false);
-          await projectVM.saveProject(project);
+        final content = file.bytes != null ? utf8.decode(file.bytes!) : await io.File(file.path!).readAsString();
 
+        final jsonData = jsonDecode(content);
+        final project = Project.fromJson(jsonData);
+
+        if (!mounted) return; // `mounted`는 이제 StatefulWidget에서 사용 가능
+        final projectVM = Provider.of<ProjectViewModel>(context, listen: false);
+        await projectVM.saveProject(project);
+
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Imported project: ${project.name}')));
-        } else {
-          throw Exception('Selected file does not exist.');
         }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('File selection cancelled.')));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to import project: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to import project: $e')));
+      }
     }
   }
 
@@ -126,13 +163,6 @@ class ProjectListPage extends StatelessWidget {
                     final project = projectVM.projects[index];
                     return _ProjectTile(
                       project: project,
-                      // isLoading: !project.isDataLoaded,
-                      // onLoadData: () async {
-                      //   await projectVM.loadProjectData(project);
-                      //   if (project.isDataLoaded) {
-                      //     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Loaded data for: ${project.name}')));
-                      //   }
-                      // },
                       onEdit: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ConfigureProjectPage(project: project))),
                       onDownload: () => _downloadProjectConfig(context, project),
                       onShare: () => _shareProject(context, project),
@@ -149,8 +179,6 @@ class ProjectListPage extends StatelessWidget {
 
 class _ProjectTile extends StatelessWidget {
   final Project project;
-  // final bool isLoaded;
-  // final VoidCallback onLoadData;
   final VoidCallback onEdit;
   final VoidCallback onDownload;
   final VoidCallback onShare;
@@ -160,8 +188,6 @@ class _ProjectTile extends StatelessWidget {
   const _ProjectTile({
     Key? key,
     required this.project,
-    // required this.isLoaded,
-    // required this.onLoadData,
     required this.onEdit,
     required this.onDownload,
     required this.onShare,
@@ -184,18 +210,6 @@ class _ProjectTile extends StatelessWidget {
         ],
       ),
       onTap: onTap,
-      // trailing: isLoading
-      //     ? ElevatedButton(onPressed: onLoadData, child: const Text('Load Data'))
-      //     : Row(
-      //         mainAxisSize: MainAxisSize.min,
-      //         children: [
-      //           IconButton(icon: const Icon(Icons.edit), onPressed: onEdit, tooltip: 'Edit Project'),
-      //           IconButton(icon: const Icon(Icons.download), onPressed: onDownload, tooltip: 'Download Configuration'),
-      //           IconButton(icon: const Icon(Icons.share), onPressed: onShare, tooltip: 'Share Project'),
-      //           IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: onDelete, tooltip: 'Delete Project'),
-      //         ],
-      //       ),
-      // onTap: isLoading ? null : onTap,
     );
   }
 }
