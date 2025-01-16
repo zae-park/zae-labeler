@@ -24,8 +24,8 @@ const RESOURCES = {"icons/Icon-maskable-192.png": "c457ef57daa1d16f64b27b786ec2e
 "canvaskit/skwasm.wasm": "2fc47c0a0c3c7af8542b601634fe9674",
 "canvaskit/canvaskit.wasm": "73584c1a3367e3eaf757647a8f5c5989",
 "canvaskit/canvaskit.js": "eb8797020acdbdf96a12fb0405582c1b",
-"index.html": "3546519b0f32f60075ce49f803cfc019",
-"/": "3546519b0f32f60075ce49f803cfc019",
+"index.html": "8fc95da1a58fd4da32544f5e43a9741f",
+"/": "8fc95da1a58fd4da32544f5e43a9741f",
 "flutter.js": "7d69e653079438abfbb24b82a655b0a4",
 "zaevicon.ico": "d156ff90081386987c8a1ee489892f09",
 "main.dart.js": "1e8bf8cf65f62af61df5172fe3f907e0"};
