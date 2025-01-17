@@ -22,8 +22,6 @@ class LabelingViewModel extends ChangeNotifier {
   bool _isInitialized = false; // 초기화 상태를 관리
   bool get isInitialized => _isInitialized;
 
-  UnifiedData? _currentUnifiedData;
-  UnifiedData? get currentData => _currentUnifiedData;
   FileData? _currentFileData;
   FileData? get currentFData => _currentFileData;
 

@@ -17,3 +17,28 @@ class FileData {
     this.fileType,
   });
 }
+
+class DataPath {
+  final String fileName; // 파일 이름 (Web, Native 공통)
+  final String? base64Content; // Web: Base64로 인코딩된 데이터
+  final String? filePath; // Native: 파일 경로
+
+  DataPath({required this.fileName, this.base64Content, this.filePath});
+
+  // JSON 직렬화/역직렬화 지원
+  factory DataPath.fromJson(Map<String, dynamic> json) {
+    return DataPath(
+      fileName: json['fileName'],
+      base64Content: json['base64Content'],
+      filePath: json['filePath'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'fileName': fileName,
+      'base64Content': base64Content,
+      'filePath': filePath,
+    };
+  }
+}
