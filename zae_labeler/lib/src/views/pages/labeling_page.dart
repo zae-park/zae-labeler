@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../view_models/labeling_view_model.dart';
 import '../../models/project_model.dart';
-import '../../models/data_model.dart';
 import '../viewers/object_viewer.dart';
 import '../viewers/time_series_viewer.dart';
 import '../viewers/image_viewer.dart';
@@ -47,7 +46,7 @@ class _LabelingPageState extends State<LabelingPage> {
         _changeMode(-1);
       } else if (LogicalKeyboardKey.digit0.keyId <= event.logicalKey.keyId && event.logicalKey.keyId <= LogicalKeyboardKey.digit9.keyId) {
         int index = event.logicalKey.keyId - LogicalKeyboardKey.digit0.keyId;
-        if (index < labelingVM.project.classes.length) {
+        if (index < labelingVM.labelEntries.length) {
           labelingVM.addOrUpdateLabel(labelingVM.currentIndex, labelingVM.project.classes[index], _selectedMode);
         }
       }
@@ -97,27 +96,20 @@ class _LabelingPageState extends State<LabelingPage> {
   }
 
   Widget _buildViewer(LabelingViewModel labelingVM) {
-    final fileData = labelingVM.currentFData;
+    final currentEntry = labelingVM.currentLabelEntry;
 
-    if (fileData == null) {
-      return const Center(child: Text('데이터를 로드 중입니다.'));
-    }
-
-    switch (fileData.fileType) {
-      case FileType.series:
-        return TimeSeriesChart(data: fileData.seriesData ?? []);
-      case FileType.object:
-        return ObjectViewer.fromMap(fileData.objectData!);
-      case FileType.image:
-        return ImageViewer.fromBase64(fileData.content);
+    switch (currentEntry.dataFilename.split('.').last) {
+      case 'csv':
+        return TimeSeriesChart(data: labelingVM.currentSeriesData);
+      case 'json':
+        return ObjectViewer.fromMap(labelingVM.currentObjectData ?? {});
+      case 'png':
+      case 'jpg':
+      case 'jpeg':
+        return ImageViewer.fromBase64(labelingVM.currentFData?.content ?? '');
       default:
         return const Center(child: Text('지원되지 않는 파일 형식입니다.'));
     }
-  }
-
-  Future<void> _loadData(BuildContext context) async {
-    final labelingVM = Provider.of<LabelingViewModel>(context, listen: false);
-    await labelingVM.loadCurrentFileData();
   }
 
   @override
@@ -125,11 +117,11 @@ class _LabelingPageState extends State<LabelingPage> {
     final Project project = ModalRoute.of(context)!.settings.arguments as Project;
 
     return ChangeNotifierProvider(
-      create: (_) => LabelingViewModel(project: project),
+      create: (_) => LabelingViewModel(project: project)..initialize(),
       child: Consumer<LabelingViewModel>(
         builder: (context, labelingVM, child) {
           if (!labelingVM.isInitialized) {
-            return const CircularProgressIndicator();
+            return const Center(child: CircularProgressIndicator());
           }
           return Scaffold(
             appBar: AppBar(
@@ -147,97 +139,77 @@ class _LabelingPageState extends State<LabelingPage> {
               focusNode: _focusNode,
               autofocus: true,
               onKeyEvent: (event) => _handleKeyEvent(event, labelingVM),
-              child: FutureBuilder<void>(
-                future: labelingVM.loadCurrentFileData(),
-                // future: labelingVM.loadCurrentData(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('데이터 로드 중 오류 발생: ${snapshot.error}'));
-                  }
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: _modes.map((mode) {
+                        String displayText;
 
-                  return Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: _modes.map((mode) {
-                            String displayText;
+                        displayText = {
+                              'single_classification': 'Single Classification',
+                              'multi_classification': 'Multi Classification',
+                              'segmentation': 'Segmentation',
+                            }[mode] ??
+                            mode;
 
-                            displayText = {
-                                  'single_classification': 'Single Classification',
-                                  'multi_classification': 'Multi Classification',
-                                  'segmentation': 'Segmentation',
-                                }[mode] ??
-                                mode;
+                        bool isSelected = _selectedMode == mode;
 
-                            bool isSelected = _selectedMode == mode;
-
-                            return GestureDetector(
-                              onTap: () => setState(() => _selectedMode = mode),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-                                margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                                decoration: BoxDecoration(color: isSelected ? Colors.blueAccent : Colors.grey[200], borderRadius: BorderRadius.circular(8.0)),
-                                child: Text(
-                                  displayText,
-                                  style: TextStyle(
-                                    color: isSelected ? Colors.white : Colors.black,
-                                    fontSize: 16,
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                  ),
-                                ),
+                        return GestureDetector(
+                          onTap: () => setState(() => _selectedMode = mode),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                            margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                            decoration: BoxDecoration(color: isSelected ? Colors.blueAccent : Colors.grey[200], borderRadius: BorderRadius.circular(8.0)),
+                            child: Text(
+                              displayText,
+                              style: TextStyle(
+                                color: isSelected ? Colors.white : Colors.black,
+                                fontSize: 16,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                               ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                      const Divider(),
-                      Expanded(child: Padding(padding: const EdgeInsets.all(16.0), child: _buildViewer(labelingVM))),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text('데이터 ${labelingVM.currentIndex + 1}/${labelingVM.fileDataList.length} - ${labelingVM.currentDataFileName}',
-                            style: const TextStyle(fontSize: 16)),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Wrap(
-                          spacing: 8.0,
-                          children: List.generate(labelingVM.project.classes.length, (index) {
-                            final label = labelingVM.project.classes[index];
-                            final isSelected = labelingVM.isLabelSelected(label, _selectedMode);
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const Divider(),
+                  Expanded(child: Padding(padding: const EdgeInsets.all(16.0), child: _buildViewer(labelingVM))),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text('데이터 ${labelingVM.currentIndex + 1}/${labelingVM.labelEntries.length} - ${labelingVM.currentLabelEntry.dataFilename}',
+                        style: const TextStyle(fontSize: 16)),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Wrap(
+                      spacing: 8.0,
+                      children: List.generate(labelingVM.project.classes.length, (index) {
+                        final label = labelingVM.project.classes[index];
+                        final isSelected = labelingVM.isLabelSelected(label, _selectedMode);
 
-                            return ElevatedButton(
-                              style: ElevatedButton.styleFrom(backgroundColor: isSelected ? Colors.blueAccent : null),
-                              onPressed: () => labelingVM.addOrUpdateLabel(labelingVM.currentIndex, label, _selectedMode),
-                              child: Text(label),
-                            );
-                          }),
-                        ),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text(
-                          // '현재 라벨: ${labelingVM.currentLabelEntryToString()}',
-                          '현재 라벨: asd',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            ElevatedButton(onPressed: () => labelingVM.movePrevious(), child: const Text('이전')),
-                            ElevatedButton(onPressed: () => labelingVM.moveNext(), child: const Text('다음')),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
-                },
+                        return ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: isSelected ? Colors.blueAccent : null),
+                          onPressed: () => labelingVM.addOrUpdateLabel(labelingVM.currentIndex, label, _selectedMode),
+                          child: Text(label),
+                        );
+                      }),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        ElevatedButton(onPressed: () => labelingVM.movePrevious(), child: const Text('이전')),
+                        ElevatedButton(onPressed: () => labelingVM.moveNext(), child: const Text('다음')),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           );
