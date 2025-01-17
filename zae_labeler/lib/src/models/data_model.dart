@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 enum FileType { series, object, image, unsupported }
 
 class FileData {
@@ -19,26 +22,37 @@ class FileData {
 }
 
 class DataPath {
-  final String fileName; // 파일 이름 (Web, Native 공통)
-  final String? base64Content; // Web: Base64로 인코딩된 데이터
-  final String? filePath; // Native: 파일 경로
+  final String fileName;
+  final String? base64Content; // Web 환경
+  final String? filePath; // Native 환경
 
   DataPath({required this.fileName, this.base64Content, this.filePath});
 
-  // JSON 직렬화/역직렬화 지원
-  factory DataPath.fromJson(Map<String, dynamic> json) {
-    return DataPath(
-      fileName: json['fileName'],
-      base64Content: json['base64Content'],
-      filePath: json['filePath'],
-    );
+  // 데이터 로드
+  Future<String?> loadData() async {
+    if (base64Content != null) {
+      // Web 환경: Base64 디코딩
+      return utf8.decode(base64Decode(base64Content!));
+    } else if (filePath != null) {
+      // Native 환경: 파일에서 데이터 읽기
+      final file = File(filePath!);
+      if (file.existsSync()) {
+        return await file.readAsString();
+      }
+    }
+    return null; // 데이터가 없는 경우
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'fileName': fileName,
-      'base64Content': base64Content,
-      'filePath': filePath,
-    };
-  }
+  // JSON 직렬화 및 역직렬화
+  factory DataPath.fromJson(Map<String, dynamic> json) => DataPath(
+        fileName: json['fileName'],
+        base64Content: json['base64Content'],
+        filePath: json['filePath'],
+      );
+
+  Map<String, dynamic> toJson() => {
+        'fileName': fileName,
+        'base64Content': base64Content,
+        'filePath': filePath,
+      };
 }
