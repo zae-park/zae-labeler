@@ -1,11 +1,7 @@
 // lib/src/view_models/project_view_model.dart
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import '../models/project_model.dart';
 import '../utils/storage_helper.dart';
-// import '../utils/platform_storage_helper.dart';
 
 class ProjectViewModel extends ChangeNotifier {
   List<Project> _projects = [];
@@ -50,32 +46,14 @@ class ProjectViewModel extends ChangeNotifier {
       project.isDataLoaded = false;
       notifyListeners();
 
-      if (kIsWeb && project.dataPaths != null) {
-        // Web 환경: base64 데이터를 비동기로 디코딩하여 사용
-        for (final data in project.dataPaths!) {
-          final parts = data.split(':');
-          if (parts.length == 2) {
-            final fileName = parts[0];
-            final fileData = base64Decode(parts[1]);
-            // 파일 데이터 처리 로직 추가 (필요시 저장하거나 캐싱)
-            print('Loaded $fileName with ${fileData.length} bytes');
-          }
-        }
-      } else if (project.dataDirectory != null) {
-        // Native 환경: 디렉토리에서 파일을 로드
-        final directory = Directory(project.dataDirectory!);
-        if (directory.existsSync()) {
-          final files = directory.listSync();
-          for (final file in files.whereType<File>()) {
-            // 파일 데이터 처리 로직 추가
-            print('Loaded file: ${file.path}');
-          }
-        }
-      }
+      // Project의 데이터 로드 기능 호출
+      final labelEntries = await project.loadLabelEntries();
 
-      // 데이터 로드 완료
+      // 로드 완료 플래그 설정
       project.isDataLoaded = true;
       notifyListeners();
+
+      print('Project data loaded with ${labelEntries.length} entries.');
     } catch (e) {
       print('Error loading project data: $e');
     }
