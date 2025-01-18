@@ -70,15 +70,12 @@ class LabelingViewModel extends ChangeNotifier {
     final fileName = entry.dataFilename;
 
     if (fileName.endsWith('.csv')) {
-      // 시계열 데이터 로드
       final seriesData = await _loadSeriesData(dataPath);
       return UnifiedData(seriesData: seriesData, fileType: FileType.series);
     } else if (fileName.endsWith('.json')) {
-      // 오브젝트 데이터 로드
       final objectData = await _loadObjectData(dataPath);
       return UnifiedData(objectData: objectData, fileType: FileType.object);
     } else if (['.png', '.jpg', '.jpeg'].any((ext) => fileName.endsWith(ext))) {
-      // 이미지 데이터 로드
       final file = File(dataPath);
       return UnifiedData(file: file, fileType: FileType.image);
     }
@@ -133,22 +130,13 @@ class LabelingViewModel extends ChangeNotifier {
           break;
       }
     } else {
-      LabelEntry newEntry = LabelEntry(
-        dataFilename: path.basename(dataId),
-        dataPath: dataId,
-      );
+      LabelEntry newEntry = LabelEntry(dataFilename: path.basename(dataId), dataPath: dataId);
       switch (mode) {
         case 'single_classification':
-          newEntry.singleClassification = SingleClassificationLabel(
-            labeledAt: DateTime.now().toIso8601String(),
-            label: label,
-          );
+          newEntry.singleClassification = SingleClassificationLabel(labeledAt: DateTime.now().toIso8601String(), label: label);
           break;
         case 'multi_classification':
-          newEntry.multiClassification = MultiClassificationLabel(
-            labeledAt: DateTime.now().toIso8601String(),
-            labels: [label],
-          );
+          newEntry.multiClassification = MultiClassificationLabel(labeledAt: DateTime.now().toIso8601String(), labels: [label]);
           break;
         case 'segmentation':
           // Segmentation 라벨 추가 로직 필요
