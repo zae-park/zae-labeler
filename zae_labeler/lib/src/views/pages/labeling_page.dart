@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../models/data_model.dart';
 import '../../view_models/labeling_view_model.dart';
 import '../../models/project_model.dart';
 import '../viewers/object_viewer.dart';
@@ -96,17 +97,19 @@ class _LabelingPageState extends State<LabelingPage> {
   }
 
   Widget _buildViewer(LabelingViewModel labelingVM) {
-    final currentEntry = labelingVM.currentLabelEntry;
+    final unifiedData = labelingVM.currentUnifiedData;
 
-    switch (currentEntry.dataFilename.split('.').last) {
-      case 'csv':
-        return TimeSeriesChart(data: labelingVM.currentSeriesData);
-      case 'json':
-        return ObjectViewer.fromMap(labelingVM.currentObjectData ?? {});
-      case 'png':
-      case 'jpg':
-      case 'jpeg':
-        return ImageViewer.fromBase64(labelingVM.currentFData?.content ?? '');
+    if (unifiedData == null) {
+      return const Center(child: Text('데이터를 로드 중입니다.'));
+    }
+
+    switch (unifiedData.fileType) {
+      case FileType.series:
+        return TimeSeriesChart(data: unifiedData.seriesData ?? []);
+      case FileType.object:
+        return ObjectViewer.fromMap(unifiedData.objectData ?? {});
+      case FileType.image:
+        return ImageViewer.fromFile(unifiedData.file!);
       default:
         return const Center(child: Text('지원되지 않는 파일 형식입니다.'));
     }
