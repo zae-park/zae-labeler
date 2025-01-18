@@ -43,7 +43,7 @@ class LabelingViewModel extends ChangeNotifier {
     try {
       // 프로젝트를 통해 라벨 엔트리 로드
       _labelEntries.clear();
-      _labelEntries.addAll(await project.loadLabelEntries());
+      _labelEntries.addAll(await StorageHelper().loadLabelEntries());
       _isInitialized = true;
 
       // 초기 데이터 로드
