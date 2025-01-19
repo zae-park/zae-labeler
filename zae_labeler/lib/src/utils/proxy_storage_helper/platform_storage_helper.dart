@@ -9,6 +9,6 @@ abstract class PlatformStorageHelper {
   Future<void> saveProjects(List<Project> projects);
   Future<List<LabelEntry>> loadLabelEntries();
   Future<void> saveLabelEntries(List<LabelEntry> labelEntries);
-  Future<String> downloadLabelsAsZip(Project project, List<LabelEntry> labelEntries, List<FileData> fileDataList);
+  Future<String> downloadLabelsAsZip(Project project, List<LabelEntry> labelEntries, List<DataPath> fileDataList);
   Future<List<LabelEntry>> importLabelEntries();
 }
