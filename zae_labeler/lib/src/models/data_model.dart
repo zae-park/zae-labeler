@@ -1,9 +1,16 @@
 // lib/src/models/data_model.dart
+
+/*
+이 파일은 데이터 모델을 정의하며, 다양한 데이터 유형(시계열, JSON 오브젝트, 이미지 등)을 다루기 위한 클래스들을 포함합니다.
+FileData, DataPath, UnifiedData 클래스를 사용하여 데이터를 로드, 변환, 직렬화 및 관리할 수 있습니다.
+*/
+
 import 'dart:convert';
 import 'dart:io';
 
 enum FileType { series, object, image, unsupported }
 
+/// Represents file data and its associated content and metadata.
 class FileData {
   final String name; // 파일 이름
   final String type; // 파일 타입
@@ -22,14 +29,15 @@ class FileData {
   });
 }
 
+/// Represents a data path that can be used to load file content.
 class DataPath {
-  final String fileName;
-  final String? base64Content; // Web 환경
-  final String? filePath; // Native 환경
+  final String fileName; // 파일 이름
+  final String? base64Content; // Base64 인코딩된 파일 내용 (Web 환경)
+  final String? filePath; // 파일 경로 (Native 환경)
 
   DataPath({required this.fileName, this.base64Content, this.filePath});
 
-  // 데이터 로드
+  /// Loads the content of the file based on its environment (Web or Native).
   Future<String?> loadData() async {
     if (base64Content != null) {
       // Web 환경: Base64 디코딩
@@ -44,13 +52,14 @@ class DataPath {
     return null; // 데이터가 없는 경우
   }
 
-  // JSON 직렬화 및 역직렬화
+  /// Creates a DataPath instance from a JSON-compatible map.
   factory DataPath.fromJson(Map<String, dynamic> json) => DataPath(
         fileName: json['fileName'],
         base64Content: json['base64Content'],
         filePath: json['filePath'],
       );
 
+  /// Converts the DataPath instance into a JSON-compatible map.
   Map<String, dynamic> toJson() => {
         'fileName': fileName,
         'base64Content': base64Content,
@@ -58,6 +67,7 @@ class DataPath {
       };
 }
 
+/// Represents unified data that encapsulates various types of content.
 class UnifiedData {
   final File? file; // Native 환경의 파일 객체
   final List<double>? seriesData; // 시계열 데이터
@@ -71,7 +81,7 @@ class UnifiedData {
     required this.fileType,
   });
 
-  // 데이터 로드 메서드
+  /// Creates a UnifiedData instance from a DataPath by determining the file type.
   static Future<UnifiedData> fromDataPath(DataPath dataPath) async {
     final fileName = dataPath.fileName;
     if (fileName.endsWith('.csv')) {
@@ -94,13 +104,13 @@ class UnifiedData {
     return UnifiedData(fileType: FileType.unsupported);
   }
 
-  // 시계열 데이터 파싱
+  /// Parses series data (CSV format) into a list of doubles.
   static List<double> _parseSeriesData(String content) {
     final lines = content.split('\n');
     return lines.expand((line) => line.split(',')).map((value) => double.tryParse(value.trim()) ?? 0.0).toList();
   }
 
-  // JSON 오브젝트 데이터 파싱
+  /// Parses JSON object data from a string into a Map.
   static Map<String, dynamic> _parseObjectData(String content) {
     try {
       return jsonDecode(content) as Map<String, dynamic>;
