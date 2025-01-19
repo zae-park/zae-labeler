@@ -1,4 +1,11 @@
 // lib/src/models/project_model.dart
+
+/*
+이 파일은 프로젝트 모델을 정의하며, 프로젝트의 주요 정보와 라벨 엔트리 관리를 위한 메서드를 제공합니다.
+Project 클래스는 프로젝트 ID, 이름, 라벨링 모드, 클래스 목록, 데이터 경로 등을 포함합니다.
+라벨 엔트리를 로드하고 JSON 형식으로 변환하거나 역직렬화할 수 있는 기능도 포함되어 있습니다.
+*/
+
 import 'dart:convert';
 
 import './data_model.dart';
@@ -7,7 +14,7 @@ import './label_entry.dart';
 // 라벨링 모드 열거형
 enum LabelingMode { singleClassification, multiClassification, segmentation }
 
-// Project 모델 정의
+/// Represents a project with its metadata and data paths.
 class Project {
   String id; // 프로젝트 고유 ID
   String name; // 프로젝트 이름
@@ -26,7 +33,7 @@ class Project {
     this.isDataLoaded = false,
   });
 
-  // 라벨 엔트리 로드
+  /// Loads label entries from the associated data paths.
   Future<List<LabelEntry>> loadLabelEntries() async {
     final List<LabelEntry> labelEntries = [];
     for (final dataPath in dataPaths) {
@@ -39,13 +46,13 @@ class Project {
     return labelEntries;
   }
 
-  // JSON 데이터를 라벨 엔트리로 변환
+  /// Parses label entries from a JSON string.
   List<LabelEntry> _parseLabelEntriesFromJson(String jsonContent) {
     final jsonData = jsonDecode(jsonContent) as List<dynamic>;
     return jsonData.map((e) => LabelEntry.fromJson(e as Map<String, dynamic>)).toList();
   }
 
-  // JSON 직렬화 및 역직렬화
+  /// Creates a Project instance from a JSON-compatible map.
   factory Project.fromJson(Map<String, dynamic> json) => Project(
         id: json['id'],
         name: json['name'],
@@ -55,6 +62,7 @@ class Project {
         isDataLoaded: json['isDataLoaded'] ?? false,
       );
 
+  /// Converts the Project instance into a JSON-compatible map.
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
