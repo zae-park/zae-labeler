@@ -23,6 +23,7 @@ class LabelingViewModel extends ChangeNotifier {
   LabelingViewModel({required this.project});
 
   List<LabelEntry> get labelEntries => _labelEntries;
+  List<UnifiedData> get unifiedDataList => _unifiedDataList;
   int get currentIndex => _currentIndex;
   String get currentDataFileName => _labelEntries.isNotEmpty ? path.basename(_labelEntries[_currentIndex].dataFilename) : "";
 
@@ -39,7 +40,9 @@ class LabelingViewModel extends ChangeNotifier {
       // 프로젝트를 통해 라벨 엔트리 로드
       _labelEntries.clear();
       _labelEntries.addAll(await StorageHelper().loadLabelEntries());
-
+      _unifiedDataList.clear();
+      _unifiedDataList.addAll(await Future.wait(project.dataPaths.map((dpath) => UnifiedData.fromDataPath(dpath))));
+      _currentUnifiedData = _unifiedDataList.isNotEmpty ? _unifiedDataList.first : null;
       // 초기 데이터 로드
       if (_labelEntries.isNotEmpty) {
         await updateLabelState();
