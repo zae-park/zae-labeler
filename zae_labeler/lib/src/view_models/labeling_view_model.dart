@@ -39,13 +39,12 @@ class LabelingViewModel extends ChangeNotifier {
       // 프로젝트를 통해 라벨 엔트리 로드
       _labelEntries.clear();
       _labelEntries.addAll(await StorageHelper().loadLabelEntries());
-      _isInitialized = true;
 
       // 초기 데이터 로드
       if (_labelEntries.isNotEmpty) {
-        await loadCurrentFileData();
+        await updateLabelState();
       }
-
+      _isInitialized = true;
       notifyListeners();
     } catch (e) {
       print('Error during initialization: $e');
@@ -59,43 +58,27 @@ class LabelingViewModel extends ChangeNotifier {
     return _labelEntries[_currentIndex];
   }
 
-  Future<void> loadCurrentFileData() async {
-    if (_currentIndex < 0 || _currentIndex >= _labelEntries.length) return;
+  Future<void> updateLabelState() async {
+    if (_currentIndex < 0 || _currentIndex >= project.dataPaths.length) return;
 
     final currentEntry = _labelEntries[_currentIndex];
-    _currentUnifiedData = await _loadDataFromEntry(currentEntry);
+    _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths[_currentIndex]);
     notifyListeners();
   }
 
-  Future<UnifiedData> _loadDataFromEntry(LabelEntry entry) async {
-    final dataPath = entry.dataPath;
-    final fileName = entry.dataFilename;
+  // Future<UnifiedData> _loadUnifiedDataFromDataPath(DataPath dpath) async => UnifiedData.fromDataPath(dpath);
 
-    if (fileName.endsWith('.csv')) {
-      final seriesData = await _loadSeriesData(dataPath);
-      return UnifiedData(seriesData: seriesData, fileType: FileType.series);
-    } else if (fileName.endsWith('.json')) {
-      final objectData = await _loadObjectData(dataPath);
-      return UnifiedData(objectData: objectData, fileType: FileType.object);
-    } else if (['.png', '.jpg', '.jpeg'].any((ext) => fileName.endsWith(ext))) {
-      final file = File(dataPath);
-      return UnifiedData(file: file, fileType: FileType.image);
-    }
+  // Future<List<double>> _loadSeriesData(String path) async {
+  //   final file = File(path);
+  //   final lines = await file.readAsLines();
+  //   return lines.expand((line) => line.split(',')).map((part) => double.tryParse(part.trim()) ?? 0.0).toList();
+  // }
 
-    return UnifiedData(fileType: FileType.unsupported);
-  }
-
-  Future<List<double>> _loadSeriesData(String path) async {
-    final file = File(path);
-    final lines = await file.readAsLines();
-    return lines.expand((line) => line.split(',')).map((part) => double.tryParse(part.trim()) ?? 0.0).toList();
-  }
-
-  Future<Map<String, dynamic>> _loadObjectData(String path) async {
-    final file = File(path);
-    final content = await file.readAsString();
-    return jsonDecode(content);
-  }
+  // Future<Map<String, dynamic>> _loadObjectData(String path) async {
+  //   final file = File(path);
+  //   final content = await file.readAsString();
+  //   return jsonDecode(content);
+  // }
 
   void addOrUpdateLabel(int dataIndex, String label, String mode) {
     if (dataIndex < 0 || dataIndex >= _labelEntries.length) return;
@@ -169,7 +152,7 @@ class LabelingViewModel extends ChangeNotifier {
   void moveNext() {
     if (_currentIndex < _labelEntries.length - 1) {
       _currentIndex++;
-      loadCurrentFileData();
+      updateLabelState();
       notifyListeners();
     }
   }
@@ -177,7 +160,7 @@ class LabelingViewModel extends ChangeNotifier {
   void movePrevious() {
     if (_currentIndex > 0) {
       _currentIndex--;
-      loadCurrentFileData();
+      updateLabelState();
       notifyListeners();
     }
   }
