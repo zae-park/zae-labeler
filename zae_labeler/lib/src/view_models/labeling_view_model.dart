@@ -13,6 +13,7 @@ class LabelingViewModel extends ChangeNotifier {
   final List<LabelEntry> _labelEntries = [];
   int _currentIndex = 0;
 
+  final List<UnifiedData> _unifiedDataList = [];
   UnifiedData? _currentUnifiedData; // 현재 데이터 상태
   UnifiedData? get currentUnifiedData => _currentUnifiedData;
 
@@ -30,16 +31,10 @@ class LabelingViewModel extends ChangeNotifier {
   Map<String, dynamic>? get currentObjectData => _currentUnifiedData?.objectData;
   File? get currentImageFile => _currentUnifiedData?.file;
 
-  LabelEntry get currentLabelEntry {
-    if (_currentIndex < 0 || _currentIndex >= _labelEntries.length) {
-      return LabelEntry(dataFilename: '', dataPath: '');
-    }
-    return _labelEntries[_currentIndex];
-  }
-
   Future<void> initialize() async {
     if (_isInitialized) return;
 
+    _isInitialized = false; // 초기화 시작
     try {
       // 프로젝트를 통해 라벨 엔트리 로드
       _labelEntries.clear();
@@ -55,6 +50,13 @@ class LabelingViewModel extends ChangeNotifier {
     } catch (e) {
       print('Error during initialization: $e');
     }
+  }
+
+  LabelEntry get currentLabelEntry {
+    if (_currentIndex < 0 || _currentIndex >= _labelEntries.length) {
+      return LabelEntry(dataFilename: '', dataPath: '');
+    }
+    return _labelEntries[_currentIndex];
   }
 
   Future<void> loadCurrentFileData() async {
