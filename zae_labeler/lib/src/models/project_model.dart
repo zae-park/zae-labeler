@@ -21,7 +21,7 @@ class Project {
   LabelingMode mode; // 라벨링 모드
   List<String> classes; // 설정된 클래스 목록
   List<DataPath> dataPaths; // Web과 Native 모두 지원하는 데이터 경로
-
+  List<LabelEntry> labelEntries; // 라벨 엔트리 관리
   bool isDataLoaded; // 데이터 로드 상태 플래그
 
   Project({
@@ -30,6 +30,7 @@ class Project {
     required this.mode,
     required this.classes,
     this.dataPaths = const [],
+    this.labelEntries = const [],
     this.isDataLoaded = false,
   });
 
@@ -59,6 +60,7 @@ class Project {
         mode: LabelingMode.values.firstWhere((e) => e.toString().contains(json['mode'])),
         classes: List<String>.from(json['classes']),
         dataPaths: (json['dataPaths'] as List).map((e) => DataPath.fromJson(e)).toList(),
+        labelEntries: (json['labelEntries'] as List).map((e) => LabelEntry.fromJson(e)).toList(),
         isDataLoaded: json['isDataLoaded'] ?? false,
       );
 
@@ -69,6 +71,7 @@ class Project {
         'mode': mode.toString().split('.').last,
         'classes': classes,
         'dataPaths': dataPaths.map((e) => e.toJson()).toList(),
+        'labelEntries': labelEntries.map((e) => e.toJson()).toList(),
         'isDataLoaded': isDataLoaded,
       };
 }
