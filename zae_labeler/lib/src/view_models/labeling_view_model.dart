@@ -39,7 +39,8 @@ class LabelingViewModel extends ChangeNotifier {
     try {
       // 프로젝트를 통해 라벨 엔트리 로드
       _labelEntries.clear();
-      _labelEntries.addAll(await StorageHelper().loadLabelEntries());
+      final loadedLabelEntries = await StorageHelper().loadLabelEntries();
+      _labelEntries.addAll(loadedLabelEntries);
       _unifiedDataList.clear();
       _unifiedDataList.addAll(await Future.wait(project.dataPaths.map((dpath) => UnifiedData.fromDataPath(dpath))));
       _currentUnifiedData = _unifiedDataList.isNotEmpty ? _unifiedDataList.first : null;
@@ -68,20 +69,6 @@ class LabelingViewModel extends ChangeNotifier {
     _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths[_currentIndex]);
     notifyListeners();
   }
-
-  // Future<UnifiedData> _loadUnifiedDataFromDataPath(DataPath dpath) async => UnifiedData.fromDataPath(dpath);
-
-  // Future<List<double>> _loadSeriesData(String path) async {
-  //   final file = File(path);
-  //   final lines = await file.readAsLines();
-  //   return lines.expand((line) => line.split(',')).map((part) => double.tryParse(part.trim()) ?? 0.0).toList();
-  // }
-
-  // Future<Map<String, dynamic>> _loadObjectData(String path) async {
-  //   final file = File(path);
-  //   final content = await file.readAsString();
-  //   return jsonDecode(content);
-  // }
 
   void addOrUpdateLabel(int dataIndex, String label, String mode) {
     if (dataIndex < 0 || dataIndex >= _labelEntries.length) return;
@@ -153,7 +140,7 @@ class LabelingViewModel extends ChangeNotifier {
   }
 
   void moveNext() {
-    if (_currentIndex < _labelEntries.length - 1) {
+    if (_currentIndex < project.dataPaths.length - 1) {
       _currentIndex++;
       updateLabelState();
       notifyListeners();
