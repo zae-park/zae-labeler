@@ -24,6 +24,12 @@ class StorageHelperImpl implements PlatformStorageHelper {
   }
 
   @override
+  Future<void> saveProjects(List<Project> projects) async {
+    final projectsJson = jsonEncode(projects.map((e) => e.toJson()).toList());
+    html.window.localStorage['projects'] = projectsJson;
+  }
+
+  @override
   Future<List<Project>> loadProjects() async {
     final projectsJson = html.window.localStorage['projects'];
     if (projectsJson != null) {
@@ -31,12 +37,6 @@ class StorageHelperImpl implements PlatformStorageHelper {
       return (jsonData as List).map((e) => Project.fromJson(e)).toList();
     }
     return [];
-  }
-
-  @override
-  Future<void> saveProjects(List<Project> projects) async {
-    final projectsJson = jsonEncode(projects.map((e) => e.toJson()).toList());
-    html.window.localStorage['projects'] = projectsJson;
   }
 
   @override
