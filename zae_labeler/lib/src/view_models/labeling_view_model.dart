@@ -72,12 +72,12 @@ class LabelingViewModel extends ChangeNotifier {
 
   void addOrUpdateLabel(int dataIndex, String label, String mode) {
     if (dataIndex < 0 || dataIndex >= _labelEntries.length) return;
-    final dataId = _labelEntries[dataIndex].dataPath;
 
-    final existingEntryIndex = _labelEntries.indexWhere((entry) => entry.dataPath == dataId);
+    final dataId = project.dataPaths[dataIndex].fileName;
+    final existingEntryIndex = project.labelEntries.indexWhere((entry) => entry.dataPath == dataId);
 
     if (existingEntryIndex != -1) {
-      LabelEntry entry = _labelEntries[existingEntryIndex];
+      LabelEntry entry = project.labelEntries[existingEntryIndex];
       switch (mode) {
         case 'single_classification':
           entry.singleClassification = SingleClassificationLabel(
@@ -105,25 +105,19 @@ class LabelingViewModel extends ChangeNotifier {
           break;
       }
     } else {
-      LabelEntry newEntry = LabelEntry(dataFilename: path.basename(dataId), dataPath: dataId);
-      switch (mode) {
-        case 'single_classification':
-          newEntry.singleClassification = SingleClassificationLabel(labeledAt: DateTime.now().toIso8601String(), label: label);
-          break;
-        case 'multi_classification':
-          newEntry.multiClassification = MultiClassificationLabel(labeledAt: DateTime.now().toIso8601String(), labels: [label]);
-          break;
-        case 'segmentation':
-          // Segmentation 라벨 추가 로직 필요
-          break;
-        default:
-          break;
-      }
-      _labelEntries.add(newEntry);
-    }
+      project.labelEntries.add(LabelEntry(
+        dataFilename: dataId,
+        dataPath: dataId,
+        singleClassification: SingleClassificationLabel(
+          labeledAt: DateTime.now().toIso8601String(),
+          label: label,
+        ),
+      ));
 
-    StorageHelper().saveLabelEntries(_labelEntries);
-    notifyListeners();
+      // Save updated project
+      StorageHelper.instance.saveProjects([project]);
+      notifyListeners();
+    }
   }
 
   bool isLabelSelected(String label, String mode) {
