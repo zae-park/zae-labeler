@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:zae_labeler/src/views/widgets/core/buttons.dart';
 import '../../models/data_model.dart';
 import '../../view_models/labeling_view_model.dart';
 import '../../models/project_model.dart';
@@ -192,13 +193,10 @@ class _LabelingPageState extends State<LabelingPage> {
                       spacing: 8.0,
                       children: List.generate(labelingVM.project.classes.length, (index) {
                         final label = labelingVM.project.classes[index];
-                        final isSelected = labelingVM.isLabelSelected(label, _selectedMode);
-
-                        return ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: isSelected ? Colors.blueAccent : null),
-                          onPressed: () => labelingVM.addOrUpdateLabel(labelingVM.currentIndex, label, _selectedMode),
-                          child: Text(label),
-                        );
+                        return LabelButton(
+                            isSelected: labelingVM.isLabelSelected(label, _selectedMode),
+                            onPressedFunc: () => labelingVM.addOrUpdateLabel(labelingVM.currentIndex, label, _selectedMode),
+                            label: label);
                       }),
                     ),
                   ),
