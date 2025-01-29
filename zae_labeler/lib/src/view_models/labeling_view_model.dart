@@ -10,70 +10,44 @@ import '../utils/storage_helper.dart';
 
 class LabelingViewModel extends ChangeNotifier {
   final Project project;
-  final List<LabelEntry> _labelEntries = [];
   int _currentIndex = 0;
-
-  final List<UnifiedData> _unifiedDataList = [];
-  UnifiedData? _currentUnifiedData; // 현재 데이터 상태
-  UnifiedData? get currentUnifiedData => _currentUnifiedData;
-
-  bool _isInitialized = false;
-  bool get isInitialized => _isInitialized;
+  UnifiedData? _currentUnifiedData;
 
   LabelingViewModel({required this.project});
 
-  List<LabelEntry> get labelEntries => _labelEntries;
-  List<UnifiedData> get unifiedDataList => _unifiedDataList;
+  List<LabelEntry> get labelEntries => project.labelEntries;
   int get currentIndex => _currentIndex;
-  String get currentDataFileName => _labelEntries.isNotEmpty ? path.basename(_labelEntries[_currentIndex].dataFilename) : "";
+  UnifiedData? get currentUnifiedData => _currentUnifiedData;
 
-  // 현재 데이터의 시계열, 오브젝트, 이미지 데이터 반환
+  String get currentDataFileName => labelEntries.isNotEmpty ? path.basename(labelEntries[_currentIndex].dataFilename) : "";
+
   List<double>? get currentSeriesData => _currentUnifiedData?.seriesData;
   Map<String, dynamic>? get currentObjectData => _currentUnifiedData?.objectData;
   File? get currentImageFile => _currentUnifiedData?.file;
 
   Future<void> initialize() async {
-    if (_isInitialized) return;
-
-    _isInitialized = false; // 초기화 시작
-    try {
-      // 프로젝트를 통해 라벨 엔트리 로드
-      _labelEntries.clear();
-      final loadedLabelEntries = await StorageHelper().loadLabelEntries();
-      _labelEntries.addAll(loadedLabelEntries);
-      _unifiedDataList.clear();
-      _unifiedDataList.addAll(await Future.wait(project.dataPaths.map((dpath) => UnifiedData.fromDataPath(dpath))));
-      _currentUnifiedData = _unifiedDataList.isNotEmpty ? _unifiedDataList.first : null;
-      // 초기 데이터 로드
-      if (_labelEntries.isNotEmpty) {
-        await updateLabelState();
-      }
-      _isInitialized = true;
-      notifyListeners();
-    } catch (e) {
-      print('Error during initialization: $e');
+    if (project.labelEntries.isEmpty) {
+      project.labelEntries = []; // 프로젝트 내에서 직접 관리
     }
+    await updateLabelState();
+    notifyListeners();
   }
 
   LabelEntry get currentLabelEntry {
-    if (_currentIndex < 0 || _currentIndex >= _labelEntries.length) {
+    if (_currentIndex < 0 || _currentIndex >= project.labelEntries.length) {
       return LabelEntry(dataFilename: '', dataPath: '');
     }
-    return _labelEntries[_currentIndex];
+    return project.labelEntries[_currentIndex];
   }
 
   Future<void> updateLabelState() async {
     if (_currentIndex < 0 || _currentIndex >= project.dataPaths.length) return;
-
-    final currentEntry = _labelEntries[_currentIndex];
     _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths[_currentIndex]);
     notifyListeners();
   }
 
-  void addOrUpdateLabel(int dataIndex, String label, String mode) {
-    if (dataIndex < 0 || dataIndex >= _labelEntries.length) return;
-
-    final dataId = project.dataPaths[dataIndex].fileName;
+  void addOrUpdateLabel(String label, String mode) {
+    final dataId = project.dataPaths[_currentIndex].fileName;
     final existingEntryIndex = project.labelEntries.indexWhere((entry) => entry.dataPath == dataId);
 
     if (existingEntryIndex != -1) {
@@ -113,11 +87,11 @@ class LabelingViewModel extends ChangeNotifier {
           label: label,
         ),
       ));
-
-      // Save updated project
-      StorageHelper.instance.saveProjects([project]);
-      notifyListeners();
     }
+
+    // Save updated project
+    StorageHelper.instance.saveProjects([project]);
+    notifyListeners();
   }
 
   bool isLabelSelected(String label, String mode) {
@@ -127,7 +101,6 @@ class LabelingViewModel extends ChangeNotifier {
         return entry.singleClassification?.label == label;
       case 'multi_classification':
         return entry.multiClassification?.labels.contains(label) ?? false;
-      // Segmentation mode는 UI에서 별도로 관리 필요
       default:
         return false;
     }
@@ -150,6 +123,6 @@ class LabelingViewModel extends ChangeNotifier {
   }
 
   Future<String> downloadLabelsAsZip() async {
-    return await StorageHelper().downloadLabelsAsZip(project, _labelEntries, []);
+    return await StorageHelper().downloadLabelsAsZip(project, project.labelEntries, []);
   }
 }
