@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:zae_labeler/src/utils/storage_helper.dart';
 import 'package:zae_labeler/src/views/widgets/core/buttons.dart';
 import '../../models/data_model.dart';
 import '../../view_models/labeling_view_model.dart';
@@ -25,9 +26,7 @@ class _LabelingPageState extends State<LabelingPage> {
   void initState() {
     super.initState();
     _focusNode = FocusNode();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      FocusScope.of(context).requestFocus(_focusNode);
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => FocusScope.of(context).requestFocus(_focusNode));
   }
 
   @override
@@ -48,8 +47,8 @@ class _LabelingPageState extends State<LabelingPage> {
         _changeMode(-1);
       } else if (LogicalKeyboardKey.digit0.keyId <= event.logicalKey.keyId && event.logicalKey.keyId <= LogicalKeyboardKey.digit9.keyId) {
         int index = event.logicalKey.keyId - LogicalKeyboardKey.digit0.keyId;
-        if (index < labelingVM.labelEntries.length) {
-          labelingVM.addOrUpdateLabel(labelingVM.currentIndex, labelingVM.project.classes[index], _selectedMode);
+        if (index < labelingVM.project.classes.length) {
+          labelingVM.addOrUpdateLabel(labelingVM.project.classes[index], _selectedMode);
         }
       }
     }
@@ -58,13 +57,7 @@ class _LabelingPageState extends State<LabelingPage> {
   void _changeMode(int delta) {
     int currentIndex = _modes.indexOf(_selectedMode);
     int newIndex = currentIndex + delta;
-
-    if (newIndex < 0) {
-      newIndex = _modes.length - 1;
-    } else if (newIndex >= _modes.length) {
-      newIndex = 0;
-    }
-
+    newIndex = (newIndex < 0) ? _modes.length - 1 : 0;
     setState(() => _selectedMode = _modes[newIndex]);
   }
 
@@ -85,7 +78,6 @@ class _LabelingPageState extends State<LabelingPage> {
       String filePath = await labelingVM.downloadLabelsAsZip();
 
       if (!mounted) return;
-
       Navigator.of(context).pop();
 
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('다운로드 완료: $filePath')));
@@ -121,99 +113,99 @@ class _LabelingPageState extends State<LabelingPage> {
     final Project project = ModalRoute.of(context)!.settings.arguments as Project;
 
     return ChangeNotifierProvider(
-      create: (_) => LabelingViewModel(project: project)..initialize(),
+      create: (_) => LabelingViewModel(project: project, storageHelper: StorageHelper.instance)..initialize(),
       child: Consumer<LabelingViewModel>(
         builder: (context, labelingVM, child) {
-          if (!labelingVM.isInitialized) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          return Scaffold(
-            appBar: AppBar(
-              title: Text('${project.name} 라벨링'),
-              actions: [
-                Builder(
-                  builder: (context) => PopupMenuButton<String>(
-                    onSelected: (value) => (value == 'zip') ? _downloadLabels(context, labelingVM) : null,
-                    itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[const PopupMenuItem<String>(value: 'zip', child: Text('ZIP 압축 후 다운로드'))],
+          return (!labelingVM.isInitialized)
+              ? const Center(child: CircularProgressIndicator())
+              : Scaffold(
+                  appBar: AppBar(
+                    title: Text('${project.name} 라벨링'),
+                    actions: [
+                      Builder(
+                        builder: (context) => PopupMenuButton<String>(
+                          onSelected: (value) => (value == 'zip') ? _downloadLabels(context, labelingVM) : null,
+                          itemBuilder: (BuildContext context) =>
+                              <PopupMenuEntry<String>>[const PopupMenuItem<String>(value: 'zip', child: Text('ZIP 압축 후 다운로드'))],
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-            body: KeyboardListener(
-              focusNode: _focusNode,
-              autofocus: true,
-              onKeyEvent: (event) => _handleKeyEvent(event, labelingVM),
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: _modes.map((mode) {
-                        String displayText;
-
-                        displayText = {
-                              'single_classification': 'Single Classification',
-                              'multi_classification': 'Multi Classification',
-                              'segmentation': 'Segmentation',
-                            }[mode] ??
-                            mode;
-
-                        bool isSelected = _selectedMode == mode;
-
-                        return GestureDetector(
-                          onTap: () => setState(() => _selectedMode = mode),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-                            margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                            decoration: BoxDecoration(color: isSelected ? Colors.blueAccent : Colors.grey[200], borderRadius: BorderRadius.circular(8.0)),
-                            child: Text(
-                              displayText,
-                              style: TextStyle(
-                                color: isSelected ? Colors.white : Colors.black,
-                                fontSize: 16,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  const Divider(),
-                  Expanded(child: Padding(padding: const EdgeInsets.all(16.0), child: _buildViewer(labelingVM))),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text('데이터 ${labelingVM.currentIndex + 1}/${labelingVM.unifiedDataList.length} - ${labelingVM.currentDataFileName}',
-                        style: const TextStyle(fontSize: 16)),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Wrap(
-                      spacing: 8.0,
-                      children: List.generate(labelingVM.project.classes.length, (index) {
-                        final label = labelingVM.project.classes[index];
-                        return LabelButton(
-                            isSelected: labelingVM.isLabelSelected(label, _selectedMode),
-                            onPressedFunc: () => labelingVM.addOrUpdateLabel(labelingVM.currentIndex, label, _selectedMode),
-                            label: label);
-                      }),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  body: KeyboardListener(
+                    focusNode: _focusNode,
+                    autofocus: true,
+                    onKeyEvent: (event) => _handleKeyEvent(event, labelingVM),
+                    child: Column(
                       children: [
-                        ElevatedButton(onPressed: () => labelingVM.movePrevious(), child: const Text('이전')),
-                        ElevatedButton(onPressed: () => labelingVM.moveNext(), child: const Text('다음')),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: _modes.map((mode) {
+                              String displayText;
+
+                              displayText = {
+                                    'single_classification': 'Single Classification',
+                                    'multi_classification': 'Multi Classification',
+                                    'segmentation': 'Segmentation',
+                                  }[mode] ??
+                                  mode;
+
+                              bool isSelected = _selectedMode == mode;
+
+                              return GestureDetector(
+                                onTap: () => setState(() => _selectedMode = mode),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                                  margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                                  decoration: BoxDecoration(color: isSelected ? Colors.blueAccent : Colors.grey[200], borderRadius: BorderRadius.circular(8.0)),
+                                  child: Text(
+                                    displayText,
+                                    style: TextStyle(
+                                      color: isSelected ? Colors.white : Colors.black,
+                                      fontSize: 16,
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                        const Divider(),
+                        Expanded(child: Padding(padding: const EdgeInsets.all(16.0), child: _buildViewer(labelingVM))),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text('데이터 ${labelingVM.currentIndex + 1}/${labelingVM.project.length} - ${labelingVM.currentDataFileName}',
+                              style: const TextStyle(fontSize: 16)),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Wrap(
+                            spacing: 8.0,
+                            children: List.generate(labelingVM.project.classes.length, (index) {
+                              final label = labelingVM.project.classes[index];
+                              return LabelButton(
+                                  isSelected: labelingVM.isLabelSelected(label, _selectedMode),
+                                  onPressedFunc: () => labelingVM.addOrUpdateLabel(label, _selectedMode),
+                                  label: label);
+                            }),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              ElevatedButton(onPressed: () => labelingVM.movePrevious(), child: const Text('이전')),
+                              ElevatedButton(onPressed: () => labelingVM.moveNext(), child: const Text('다음')),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-          );
+                );
         },
       ),
     );
