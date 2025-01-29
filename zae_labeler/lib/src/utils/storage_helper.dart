@@ -3,13 +3,13 @@ import 'package:zae_labeler/src/models/data_model.dart';
 
 import '../models/label_entry.dart';
 import '../models/project_model.dart';
-import 'proxy_storage_helper/platform_storage_helper.dart';
+import 'proxy_storage_helper/interface_storage_helper.dart';
 import 'proxy_storage_helper/native_storage_helper.dart' if (dart.library.html) 'proxy_storage_helper/web_storage_helper.dart';
 
-class StorageHelper extends PlatformStorageHelper {
+class StorageHelper extends StorageHelperInterface {
   static final _instance = StorageHelperImpl();
 
-  static PlatformStorageHelper get instance => _instance;
+  static StorageHelperInterface get instance => _instance;
 
   @override
   Future<String> downloadProjectConfig(Project project) => _instance.downloadProjectConfig(project);

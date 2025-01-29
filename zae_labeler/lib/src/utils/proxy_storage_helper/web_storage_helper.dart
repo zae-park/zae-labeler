@@ -8,9 +8,9 @@ import 'package:archive/archive.dart'; // ZIP 압축 라이브러리
 
 import '../../models/project_model.dart';
 import '../../models/label_entry.dart';
-import 'platform_storage_helper.dart';
+import 'interface_storage_helper.dart';
 
-class StorageHelperImpl implements PlatformStorageHelper {
+class StorageHelperImpl implements StorageHelperInterface {
   @override
   Future<String> downloadProjectConfig(Project project) async {
     final jsonString = jsonEncode(project.toJson());
