@@ -37,25 +37,4 @@ class ProjectListViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
-
-  Future<void> loadProjectData(Project project) async {
-    if (project.isDataLoaded) return; // 이미 로드된 경우 무시
-
-    try {
-      // 데이터 로드 시작
-      project.isDataLoaded = false;
-      notifyListeners();
-
-      // Project의 데이터 로드 기능 호출
-      final labelEntries = await project.loadLabelEntries();
-
-      // 로드 완료 플래그 설정
-      project.isDataLoaded = true;
-      notifyListeners();
-
-      print('Project data loaded with ${labelEntries.length} entries.');
-    } catch (e) {
-      print('Error loading project data: $e');
-    }
-  }
 }
