@@ -14,10 +14,10 @@ class LabelingPage extends StatefulWidget {
   const LabelingPage({Key? key}) : super(key: key);
 
   @override
-  _LabelingPageState createState() => _LabelingPageState();
+  LabelingPageState createState() => LabelingPageState();
 }
 
-class _LabelingPageState extends State<LabelingPage> {
+class LabelingPageState extends State<LabelingPage> {
   late FocusNode _focusNode;
   String _selectedMode = 'single_classification';
   final List<String> _modes = ['single_classification', 'multi_classification', 'segmentation'];
