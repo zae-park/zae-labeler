@@ -8,9 +8,9 @@ import 'package:archive/archive.dart'; // ZIP 압축 라이브러리
 
 import '../../models/project_model.dart';
 import '../../models/label_entry.dart';
-import 'platform_storage_helper.dart';
+import 'interface_storage_helper.dart';
 
-class StorageHelperImpl implements PlatformStorageHelper {
+class StorageHelperImpl implements StorageHelperInterface {
   @override
   Future<String> downloadProjectConfig(Project project) async {
     final jsonString = jsonEncode(project.toJson());
@@ -24,27 +24,27 @@ class StorageHelperImpl implements PlatformStorageHelper {
   }
 
   @override
-  Future<List<Project>> loadProjects() async {
-    final projectsJson = html.window.localStorage['projects'];
-    if (projectsJson != null) {
-      List<dynamic> jsonData = jsonDecode(projectsJson);
-      return jsonData.map((e) => Project.fromJson(e)).toList();
-    }
-    return [];
-  }
-
-  @override
   Future<void> saveProjects(List<Project> projects) async {
     final projectsJson = jsonEncode(projects.map((e) => e.toJson()).toList());
     html.window.localStorage['projects'] = projectsJson;
   }
 
   @override
+  Future<List<Project>> loadProjects() async {
+    final projectsJson = html.window.localStorage['projects'];
+    if (projectsJson != null) {
+      final jsonData = jsonDecode(projectsJson);
+      return (jsonData as List).map((e) => Project.fromJson(e)).toList();
+    }
+    return [];
+  }
+
+  @override
   Future<List<LabelEntry>> loadLabelEntries() async {
     final labelsJson = html.window.localStorage['labels'];
     if (labelsJson != null) {
-      List<dynamic> jsonData = jsonDecode(labelsJson);
-      return jsonData.map((e) => LabelEntry.fromJson(e)).toList();
+      final jsonData = jsonDecode(labelsJson);
+      return (jsonData as List).map((e) => LabelEntry.fromJson(e as Map<String, dynamic>)).toList();
     }
     return [];
   }
@@ -59,13 +59,16 @@ class StorageHelperImpl implements PlatformStorageHelper {
   Future<String> downloadLabelsAsZip(
     Project project,
     List<LabelEntry> labelEntries,
-    List<FileData> fileDataList,
+    List<DataPath> dataPaths, // 수정된 파라미터
   ) async {
     final archive = Archive();
 
-    for (var fileData in fileDataList) {
-      final fileBytes = base64Decode(fileData.content);
-      archive.addFile(ArchiveFile(fileData.name, fileBytes.length, fileBytes));
+    for (var dataPath in dataPaths) {
+      final content = await dataPath.loadData(); // DataPath에서 데이터 로드
+      if (content != null) {
+        final fileBytes = utf8.encode(content);
+        archive.addFile(ArchiveFile(dataPath.fileName, fileBytes.length, fileBytes));
+      }
     }
 
     // JSON 직렬화한 라벨 데이터 추가
@@ -90,25 +93,22 @@ class StorageHelperImpl implements PlatformStorageHelper {
   Future<List<LabelEntry>> importLabelEntries() async {
     final completer = Completer<List<LabelEntry>>();
 
-    // 파일 입력 생성
     final input = html.FileUploadInputElement();
-    input.accept = '.json'; // JSON 파일만 허용
-    input.multiple = false; // 한 번에 하나의 파일만 선택
+    input.accept = '.json';
+    input.multiple = false;
 
-    // 파일이 선택된 경우
     input.onChange.listen((event) async {
       final files = input.files;
       if (files != null && files.isNotEmpty) {
         final reader = html.FileReader();
         reader.readAsText(files[0]);
 
-        // 파일 읽기가 완료되면 JSON 파싱
         reader.onLoadEnd.listen((event) {
           try {
             final jsonData = jsonDecode(reader.result as String);
             if (jsonData is List) {
-              final entries = jsonData.map((e) => LabelEntry.fromJson(e)).toList();
-              completer.complete(entries); // 결과 반환
+              final entries = jsonData.map((e) => LabelEntry.fromJson(e as Map<String, dynamic>)).toList();
+              completer.complete(entries);
             } else {
               throw const FormatException('Invalid JSON format. Expected a list.');
             }
@@ -122,8 +122,7 @@ class StorageHelperImpl implements PlatformStorageHelper {
       }
     });
 
-    input.click(); // 파일 선택 창 열기
-
+    input.click();
     return completer.future;
   }
 }

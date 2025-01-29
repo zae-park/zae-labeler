@@ -2,6 +2,7 @@
 // Users can specify the project name, labeling mode, classes, and data directory or file uploads.
 
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -10,7 +11,8 @@ import 'package:file_picker/file_picker.dart'; // For picking directories or fil
 import 'package:flutter/foundation.dart' show kIsWeb; // To determine the platform (web or native)
 
 import '../../models/project_model.dart';
-import '../../view_models/project_view_model.dart';
+import '../../models/data_model.dart';
+import '../../view_models/project_list_view_model.dart';
 
 class ConfigureProjectPage extends StatefulWidget {
   // Project to be edited, or null for creating a new one
@@ -28,13 +30,14 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
 
   final _nameController = TextEditingController(); // project name controller
 
-  // Default lableing mode : Single Classification with 3 class
+  // Default labeling mode : Single Classification with 3 classes
   LabelingMode _selectedMode = LabelingMode.singleClassification;
   final List<String> _classes = ['1', '2', '3']; // List to hold class names
 
-  // Data Hub
-  String? _dataDirectory = ''; // Data directory path (native)
-  List<String>? _dataPaths = []; // Data file paths (web)
+  // Data paths (both Web and Native)
+  final List<DataPath> _dataPaths = [];
+
+  get path => null;
 
   @override
   void initState() {
@@ -45,8 +48,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
       _nameController.text = widget.project!.name;
       _selectedMode = widget.project!.mode;
       _classes.addAll(widget.project!.classes);
-      _dataDirectory = widget.project!.dataDirectory;
-      _dataPaths = widget.project!.dataPaths;
+      _dataPaths.addAll(widget.project!.dataPaths);
     }
   }
 
@@ -88,7 +90,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
   void _removeClass(int index) => setState(() => _classes.removeAt(index));
 
   // Pick a data directory or files depending on the platform
-  Future<void> _pickDataDirectory() async {
+  Future<void> _pickData() async {
     if (kIsWeb) {
       // Web: Use file picker for file uploads
       FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -98,10 +100,9 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
 
       if (result != null) {
         setState(() {
-          _dataPaths = result.files.map((file) {
-            // Store both name and data for later use
-            return '${file.name}:${base64Encode(file.bytes ?? [])}';
-          }).toList();
+          for (var file in result.files) {
+            _dataPaths.add(DataPath(fileName: file.name, base64Content: base64Encode(file.bytes ?? [])));
+          }
         });
       } else {
         print('No files selected');
@@ -109,7 +110,15 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
     } else {
       // Native: Use directory picker
       String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
-      (selectedDirectory != null) ? setState(() => _dataDirectory = selectedDirectory) : null;
+      if (selectedDirectory != null) {
+        setState(() {
+          final directory = Directory(selectedDirectory);
+          final files = directory.listSync().whereType<File>();
+          for (var file in files) {
+            _dataPaths.add(DataPath(fileName: path.basename(file.path), filePath: file.path));
+          }
+        });
+      }
     }
   }
 
@@ -121,10 +130,9 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
         name: _nameController.text,
         mode: _selectedMode,
         classes: _classes,
-        dataDirectory: _dataDirectory,
         dataPaths: _dataPaths,
       );
-      final projectVM = Provider.of<ProjectViewModel>(context, listen: false);
+      final projectVM = Provider.of<ProjectListViewModel>(context, listen: false);
 
       if (widget.project == null) {
         // If there is no project in parent widget (Project List Page).
@@ -199,13 +207,15 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
                         labelText: kIsWeb ? 'Uploaded File Names' : 'Data Directory Path',
                         hintText: kIsWeb ? 'Upload files' : 'Select a directory',
                       ),
-                      controller: TextEditingController(text: kIsWeb ? _dataPaths?.join(', ') : _dataDirectory),
+                      controller: TextEditingController(
+                        text: _dataPaths.map((dp) => dp.fileName).join(', '),
+                      ),
                       validator: (value) => (value == null || value.isEmpty) ? (kIsWeb ? 'Please upload files' : 'Please select a directory') : null,
                     ),
                   ),
                   IconButton(
                     icon: const Icon(kIsWeb ? Icons.upload_file : Icons.folder_open),
-                    onPressed: _pickDataDirectory, // Trigger directory or file picker
+                    onPressed: _pickData, // Trigger directory or file picker
                     tooltip: kIsWeb ? 'Upload Files' : 'Select Directory',
                   ),
                 ],

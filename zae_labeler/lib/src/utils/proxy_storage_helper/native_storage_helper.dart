@@ -6,9 +6,9 @@ import 'package:archive/archive.dart';
 import '../../models/project_model.dart';
 import '../../models/label_entry.dart';
 import '../../models/data_model.dart';
-import 'platform_storage_helper.dart';
+import 'interface_storage_helper.dart';
 
-class StorageHelperImpl implements PlatformStorageHelper {
+class StorageHelperImpl implements StorageHelperInterface {
   @override
   Future<String> downloadProjectConfig(Project project) async {
     final directory = await getApplicationDocumentsDirectory();
@@ -63,16 +63,28 @@ class StorageHelperImpl implements PlatformStorageHelper {
   Future<String> downloadLabelsAsZip(
     Project project,
     List<LabelEntry> labelEntries,
-    List<FileData> fileDataList,
+    List<DataPath> dataPaths, // DataPath를 사용하도록 수정
   ) async {
     final archive = Archive();
-    for (var fileData in fileDataList) {
-      final fileBytes = base64Decode(fileData.content); // Base64로 디코딩
-      archive.addFile(
-        ArchiveFile(fileData.name, fileBytes.length, fileBytes),
-      );
+
+    // DataPath에서 데이터 로드 및 ZIP 추가
+    for (var dataPath in dataPaths) {
+      final content = await dataPath.loadData();
+      if (content != null) {
+        final fileBytes = utf8.encode(content);
+        archive.addFile(
+          ArchiveFile(dataPath.fileName, fileBytes.length, fileBytes),
+        );
+      }
     }
 
+    // JSON 직렬화된 라벨 데이터 추가
+    final labelsJson = jsonEncode(labelEntries.map((e) => e.toJson()).toList());
+    archive.addFile(
+      ArchiveFile('labels.json', labelsJson.length, utf8.encode(labelsJson)),
+    );
+
+    // ZIP 파일 생성
     final directory = await getApplicationDocumentsDirectory();
     final zipFile = File('${directory.path}/${project.name}_labels.zip');
     final zipData = ZipEncoder().encode(archive);
