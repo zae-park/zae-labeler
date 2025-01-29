@@ -10,10 +10,12 @@ import '../utils/storage_helper.dart';
 
 class LabelingViewModel extends ChangeNotifier {
   final Project project;
+  final StorageHelper storageHelper; // ✅ Dependency Injection 허용
+
   int _currentIndex = 0;
   UnifiedData? _currentUnifiedData;
 
-  LabelingViewModel({required this.project});
+  LabelingViewModel({required this.project, required this.storageHelper});
 
   List<LabelEntry> get labelEntries => project.labelEntries;
   int get currentIndex => _currentIndex;
@@ -90,7 +92,7 @@ class LabelingViewModel extends ChangeNotifier {
     }
 
     // Save updated project
-    StorageHelper.instance.saveProjects([project]);
+    storageHelper.saveProjects([project]); // ✅ Mock 가능하도록 수정
     notifyListeners();
   }
 
