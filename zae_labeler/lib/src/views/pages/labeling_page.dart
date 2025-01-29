@@ -176,7 +176,7 @@ class _LabelingPageState extends State<LabelingPage> {
                         Expanded(child: Padding(padding: const EdgeInsets.all(16.0), child: _buildViewer(labelingVM))),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: Text('데이터 ${labelingVM.currentIndex + 1}/${labelingVM.project.length} - ${labelingVM.currentDataFileName}',
+                          child: Text('데이터 ${labelingVM.currentIndex + 1}/${labelingVM.project.dataPaths.length} - ${labelingVM.currentDataFileName}',
                               style: const TextStyle(fontSize: 16)),
                         ),
                         Padding(
