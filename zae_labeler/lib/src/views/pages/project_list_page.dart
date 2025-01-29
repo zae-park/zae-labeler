@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../view_models/project_view_model.dart';
+import '../../view_models/project_list_view_model.dart';
 import '../../view_models/locale_view_model.dart';
 import '../../models/project_model.dart';
 import '../pages/configuration_page.dart';
@@ -90,7 +90,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
         final project = Project.fromJson(jsonData);
 
         if (!mounted) return; // `mounted`는 이제 StatefulWidget에서 사용 가능
-        final projectVM = Provider.of<ProjectViewModel>(context, listen: false);
+        final projectVM = Provider.of<ProjectListViewModel>(context, listen: false);
         await projectVM.saveProject(project);
 
         if (mounted) {
@@ -104,7 +104,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
     }
   }
 
-  Future<void> _confirmDelete(BuildContext context, ProjectViewModel projectVM, Project project) async {
+  Future<void> _confirmDelete(BuildContext context, ProjectListViewModel projectVM, Project project) async {
     bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -125,7 +125,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<ProjectViewModel, LocaleViewModel>(
+    return Consumer2<ProjectListViewModel, LocaleViewModel>(
       builder: (context, projectVM, localeVM, child) {
         return Scaffold(
           appBar: AppBar(

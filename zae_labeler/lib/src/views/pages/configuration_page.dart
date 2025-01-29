@@ -12,7 +12,7 @@ import 'package:flutter/foundation.dart' show kIsWeb; // To determine the platfo
 
 import '../../models/project_model.dart';
 import '../../models/data_model.dart';
-import '../../view_models/project_view_model.dart';
+import '../../view_models/project_list_view_model.dart';
 
 class ConfigureProjectPage extends StatefulWidget {
   // Project to be edited, or null for creating a new one
@@ -132,7 +132,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
         classes: _classes,
         dataPaths: _dataPaths,
       );
-      final projectVM = Provider.of<ProjectViewModel>(context, listen: false);
+      final projectVM = Provider.of<ProjectListViewModel>(context, listen: false);
 
       if (widget.project == null) {
         // If there is no project in parent widget (Project List Page).
