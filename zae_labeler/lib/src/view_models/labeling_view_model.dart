@@ -12,6 +12,9 @@ class LabelingViewModel extends ChangeNotifier {
   final Project project;
   final StorageHelperInterface storageHelper; // ✅ Dependency Injection 허용
 
+  bool _isInitialized = false; // ✅ 추가
+  bool get isInitialized => _isInitialized; // ✅ 추가
+
   int _currentIndex = 0;
   UnifiedData? _currentUnifiedData;
 
@@ -32,6 +35,7 @@ class LabelingViewModel extends ChangeNotifier {
       project.labelEntries = []; // 프로젝트 내에서 직접 관리
     }
     await updateLabelState();
+    _isInitialized = true; // ✅ 초기화 완료 설정
     notifyListeners();
   }
 
