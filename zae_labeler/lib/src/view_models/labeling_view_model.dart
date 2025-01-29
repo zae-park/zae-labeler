@@ -6,11 +6,11 @@ import 'package:flutter/material.dart';
 import '../models/label_entry.dart';
 import '../models/project_model.dart';
 import '../models/data_model.dart';
-import '../utils/storage_helper.dart';
+import '../utils/proxy_storage_helper/interface_storage_helper.dart';
 
 class LabelingViewModel extends ChangeNotifier {
   final Project project;
-  final StorageHelper storageHelper; // ✅ Dependency Injection 허용
+  final StorageHelperInterface storageHelper; // ✅ Dependency Injection 허용
 
   int _currentIndex = 0;
   UnifiedData? _currentUnifiedData;
@@ -125,6 +125,6 @@ class LabelingViewModel extends ChangeNotifier {
   }
 
   Future<String> downloadLabelsAsZip() async {
-    return await StorageHelper().downloadLabelsAsZip(project, project.labelEntries, []);
+    return await storageHelper.downloadLabelsAsZip(project, project.labelEntries, []);
   }
 }
