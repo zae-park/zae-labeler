@@ -8,6 +8,8 @@ Project 클래스는 프로젝트 ID, 이름, 라벨링 모드, 클래스 목록
 
 import 'dart:convert';
 
+import 'package:zae_labeler/src/utils/storage_helper.dart';
+
 import './data_model.dart';
 import './label_entry.dart';
 
@@ -54,39 +56,55 @@ class Project {
 
   /// Loads label entries from the associated data paths.
   Future<List<LabelEntry>> loadLabelEntries() async {
-    final List<LabelEntry> labelEntries = [];
-    for (final dataPath in dataPaths) {
-      final content = await dataPath.loadData();
-      if (content != null) {
-        final entries = _parseLabelEntriesFromJson(content);
-        labelEntries.addAll(entries);
-      }
-    }
-    return labelEntries;
+    return await StorageHelper.instance.loadLabelEntries();
+    // final List<LabelEntry> labelEntries = [];
+    // for (final dataPath in dataPaths) {
+    //   final content = await dataPath.loadData();
+    //   if (content != null) {
+    //     final entries = _parseLabelEntriesFromJson(content);
+    //     labelEntries.addAll(entries);
+    //   }
+    // }
+    // return labelEntries;
   }
 
   /// Parses label entries from a JSON string.
   List<LabelEntry> _parseLabelEntriesFromJson(String jsonContent) {
     try {
       final decoded = jsonDecode(jsonContent);
+
+      List<dynamic> entriesList = [];
+
       if (decoded is List) {
-        return decoded
-            .map((e) {
-              if (e['data_filename'] == null || e['data_path'] == null) {
-                print("⚠️ 잘못된 데이터 발견: $e");
-                return null; // ❌ 데이터가 유효하지 않으면 무시
-              }
-              return LabelEntry.fromJson(e);
-            })
-            .where((entry) => entry != null)
-            .cast<LabelEntry>()
-            .toList();
+        entriesList = decoded;
+      } else if (decoded is Map && decoded.containsKey('label_entries')) {
+        entriesList = decoded['label_entries'] ?? []; // ✅ `null` 방지
       } else {
-        print("⚠️ JSON이 배열이 아님: $jsonContent");
+        print("⚠️ JSON 데이터 형식이 올바르지 않음: $jsonContent");
+        return []; // ❌ 잘못된 형식이면 빈 리스트 반환
       }
+
+      return entriesList
+          .map((e) {
+            if (e is! Map<String, dynamic>) {
+              // ✅ `Map<String, dynamic>`인지 확인
+              print("⚠️ 잘못된 데이터 발견 (올바른 Map 타입이 아님): $e");
+              return null; // ❌ 잘못된 데이터 무시
+            }
+
+            if (e['data_filename'] == null || e['data_path'] == null) {
+              print("⚠️ 필수 필드 누락된 데이터 발견: $e");
+              return null;
+            }
+
+            return LabelEntry.fromJson(e);
+          })
+          .where((entry) => entry != null)
+          .cast<LabelEntry>()
+          .toList();
     } catch (e) {
       print("⚠️ JSON 파싱 실패: $e");
+      return []; // ❌ 예외 발생 시 빈 리스트 반환
     }
-    return []; // ❌ 예외 발생 시 빈 리스트 반환
   }
 }
