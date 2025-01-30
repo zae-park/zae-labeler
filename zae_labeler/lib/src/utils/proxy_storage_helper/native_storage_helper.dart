@@ -157,7 +157,7 @@ class StorageHelperImpl implements StorageHelperInterface {
   }
 
   @override
-  Future<LabelEntry?> loadLabelEntry(String dataPath) async {
+  Future<LabelEntry> loadLabelEntry(String dataPath) async {
     final directory = await getApplicationDocumentsDirectory();
     final file = File('${directory.path}/labels.json');
     if (await file.exists()) {
@@ -166,7 +166,7 @@ class StorageHelperImpl implements StorageHelperInterface {
       final entries = (jsonData as List).map((e) => LabelEntry.fromJson(e)).toList();
       return entries.firstWhere((entry) => entry.dataPath == dataPath, orElse: () => LabelEntry.empty());
     }
-    return null;
+    return LabelEntry.empty();
   }
   // LabelEntry IO //
 }
