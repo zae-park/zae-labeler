@@ -68,8 +68,8 @@ class LabelingViewModel extends ChangeNotifier {
   // }
 
   LabelEntry get currentLabelEntry {
-    if (_currentIndex < 0 || _currentIndex >= project.labelEntries.length) {
-      return LabelEntry(dataFilename: '', dataPath: '');
+    if (_currentIndex < 0 || _currentIndex >= project.labelEntries.length || project.labelEntries.isEmpty) {
+      return LabelEntry.empty(); // ✅ 빈 리스트인 경우 기본값 반환
     }
     return project.labelEntries[_currentIndex];
   }
@@ -129,6 +129,9 @@ class LabelingViewModel extends ChangeNotifier {
     // ✅ 특정 데이터만 저장
     await storageHelper.saveLabelEntry(existingEntry);
 
+    // ✅ 라벨 저장 후 다시 로드하여 상태 업데이트
+    project.labelEntries = await storageHelper.loadLabelEntries();
+
     notifyListeners();
   }
 
@@ -144,7 +147,7 @@ class LabelingViewModel extends ChangeNotifier {
     }
   }
 
-  void moveNext() async {
+  Future<void> moveNext() async {
     if (_currentIndex < project.dataPaths.length - 1) {
       _currentIndex++;
       await loadCurrentData();
@@ -152,7 +155,7 @@ class LabelingViewModel extends ChangeNotifier {
     }
   }
 
-  void movePrevious() async {
+  Future<void> movePrevious() async {
     if (_currentIndex > 0) {
       _currentIndex--;
       await loadCurrentData();
