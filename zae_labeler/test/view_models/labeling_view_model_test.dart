@@ -59,8 +59,8 @@ void main() {
       // verify(mockStorageHelper.saveLabelEntry(any)).called(1);
     });
 
-    test('✅ 라벨 선택 확인 테스트', () {
-      labelingVM.addOrUpdateLabel('A', 'single_classification');
+    test('✅ 라벨 선택 확인 테스트', () async {
+      await labelingVM.addOrUpdateLabel('A', 'single_classification');
       expect(labelingVM.isLabelSelected('A', 'single_classification'), isTrue);
       expect(labelingVM.isLabelSelected('B', 'single_classification'), isFalse);
     });
@@ -68,18 +68,18 @@ void main() {
     test('✅ moveNext() 및 movePrevious()가 비동기적으로 실행되는지 확인', () async {
       await labelingVM.initialize();
 
-      labelingVM.moveNext(); // ✅ `await`을 추가하여 비동기 실행 대기
+      await labelingVM.moveNext(); // ✅ `await`을 추가하여 비동기 실행 대기
       expect(labelingVM.currentIndex, 1);
       expect(labelingVM.currentUnifiedData, isNotNull);
 
-      labelingVM.movePrevious(); // ✅ `await`을 추가하여 비동기 실행 대기
+      await labelingVM.movePrevious(); // ✅ `await`을 추가하여 비동기 실행 대기
       expect(labelingVM.currentIndex, 0);
       expect(labelingVM.currentUnifiedData, isNotNull);
     });
 
     test('✅ moveNext() 실행 후 loadCurrentData()가 호출되는지 확인', () async {
       await labelingVM.initialize();
-      labelingVM.moveNext();
+      await labelingVM.moveNext();
 
       expect(labelingVM.currentUnifiedData, isNotNull);
       expect(labelingVM.currentIndex, 1);
