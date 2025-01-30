@@ -28,8 +28,8 @@ class LabelEntry {
 
   /// Creates a label entry from a JSON-compatible map.
   factory LabelEntry.fromJson(Map<String, dynamic> json) => LabelEntry(
-        dataFilename: json['data_filename'],
-        dataPath: json['data_path'],
+        dataFilename: json['data_filename'] ?? 'unknown.json', // ✅ 기본값 설정
+        dataPath: json['data_path'] ?? 'unknown_path', // ✅ 기본값 설정
         singleClassification: json['single_classification'] != null ? SingleClassificationLabel.fromJson(json['single_classification']) : null,
         multiClassification: json['multi_classification'] != null ? MultiClassificationLabel.fromJson(json['multi_classification']) : null,
         segmentation: json['segmentation'] != null ? SegmentationLabel.fromJson(json['segmentation']) : null,
