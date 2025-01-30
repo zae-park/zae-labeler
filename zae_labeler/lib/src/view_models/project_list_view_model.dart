@@ -6,6 +6,9 @@ import '../utils/storage_helper.dart';
 class ProjectListViewModel extends ChangeNotifier {
   List<Project> _projects = [];
 
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+
   ProjectListViewModel() {
     loadProjects();
   }
@@ -13,8 +16,13 @@ class ProjectListViewModel extends ChangeNotifier {
   List<Project> get projects => _projects;
 
   Future<void> loadProjects() async {
-    _projects = await StorageHelper.instance.loadProjects(); // 싱글톤 인스턴스를 통해 접근
-    notifyListeners();
+    _isLoading = true;
+    notifyListeners(); // ✅ UI 업데이트
+
+    _projects = await StorageHelper.instance.loadProjects();
+
+    _isLoading = false;
+    notifyListeners(); // ✅ 로딩 완료 후 UI 업데이트
   }
 
   Future<void> saveProject(Project project) async {
