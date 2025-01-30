@@ -26,6 +26,37 @@ void main() {
       labelingVM = LabelingViewModel(project: project, storageHelper: mockStorageHelper);
     });
 
+    test('✅ 초기화 테스트 - labelEntries가 프로젝트와 동일해야 함', () async {
+      await labelingVM.initialize();
+      expect(labelingVM.labelEntries, equals(project.labelEntries));
+    });
+
+    test('✅ 데이터 상태 업데이트 테스트', () async {
+      await labelingVM.updateLabelState();
+      expect(labelingVM.currentUnifiedData, isNotNull);
+    });
+
+    test('✅ 라벨 추가 테스트', () {
+      labelingVM.addOrUpdateLabel('A', 'single_classification');
+      expect(labelingVM.labelEntries[0].singleClassification?.label, 'A');
+    });
+
+    test('✅ 라벨 선택 확인 테스트', () {
+      labelingVM.addOrUpdateLabel('A', 'single_classification');
+      expect(labelingVM.isLabelSelected('A', 'single_classification'), isTrue);
+      expect(labelingVM.isLabelSelected('B', 'single_classification'), isFalse);
+    });
+
+    test('✅ 이전/다음 데이터 이동 테스트', () {
+      expect(labelingVM.currentIndex, 0);
+
+      labelingVM.moveNext();
+      expect(labelingVM.currentIndex, 1);
+
+      labelingVM.movePrevious();
+      expect(labelingVM.currentIndex, 0);
+    });
+
     test('✅ 라벨 다운로드 테스트', () async {
       labelingVM.addOrUpdateLabel('A', 'single_classification');
       String zipPath = await labelingVM.downloadLabelsAsZip();
