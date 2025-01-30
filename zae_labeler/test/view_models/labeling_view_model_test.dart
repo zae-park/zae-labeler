@@ -42,7 +42,7 @@ void main() {
     });
 
     test('✅ 데이터 상태 업데이트 테스트', () async {
-      await labelingVM.updateLabelState();
+      await labelingVM.loadCurrentData();
       expect(labelingVM.currentUnifiedData, isNotNull);
     });
 
