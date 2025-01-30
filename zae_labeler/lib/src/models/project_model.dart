@@ -22,7 +22,6 @@ class Project {
   List<String> classes; // 설정된 클래스 목록
   List<DataPath> dataPaths; // Web과 Native 모두 지원하는 데이터 경로
   List<LabelEntry> labelEntries; // 라벨 엔트리 관리
-  bool isDataLoaded; // 데이터 로드 상태 플래그
 
   Project({
     required this.id,
@@ -31,8 +30,27 @@ class Project {
     required this.classes,
     this.dataPaths = const [],
     this.labelEntries = const [],
-    this.isDataLoaded = false,
   });
+
+  /// Creates a Project instance from a JSON-compatible map.
+  factory Project.fromJson(Map<String, dynamic> json) => Project(
+        id: json['id'],
+        name: json['name'],
+        mode: LabelingMode.values.firstWhere((e) => e.toString().contains(json['mode'])),
+        classes: List<String>.from(json['classes']),
+        dataPaths: (json['dataPaths'] as List).map((e) => DataPath.fromJson(e)).toList(),
+        labelEntries: (json['labelEntries'] as List).map((e) => LabelEntry.fromJson(e)).toList(),
+      );
+
+  /// Converts the Project instance into a JSON-compatible map.
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'mode': mode.toString().split('.').last,
+        'classes': classes,
+        'dataPaths': dataPaths.map((e) => e.toJson()).toList(),
+        'labelEntries': labelEntries.map((e) => e.toJson()).toList(),
+      };
 
   /// Loads label entries from the associated data paths.
   Future<List<LabelEntry>> loadLabelEntries() async {
@@ -71,26 +89,4 @@ class Project {
     }
     return []; // ❌ 예외 발생 시 빈 리스트 반환
   }
-
-  /// Creates a Project instance from a JSON-compatible map.
-  factory Project.fromJson(Map<String, dynamic> json) => Project(
-        id: json['id'],
-        name: json['name'],
-        mode: LabelingMode.values.firstWhere((e) => e.toString().contains(json['mode'])),
-        classes: List<String>.from(json['classes']),
-        dataPaths: (json['dataPaths'] as List).map((e) => DataPath.fromJson(e)).toList(),
-        labelEntries: (json['labelEntries'] as List).map((e) => LabelEntry.fromJson(e)).toList(),
-        isDataLoaded: json['isDataLoaded'] ?? false,
-      );
-
-  /// Converts the Project instance into a JSON-compatible map.
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'mode': mode.toString().split('.').last,
-        'classes': classes,
-        'dataPaths': dataPaths.map((e) => e.toJson()).toList(),
-        'labelEntries': labelEntries.map((e) => e.toJson()).toList(),
-        'isDataLoaded': isDataLoaded,
-      };
 }
