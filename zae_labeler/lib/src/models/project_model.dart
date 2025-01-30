@@ -49,8 +49,27 @@ class Project {
 
   /// Parses label entries from a JSON string.
   List<LabelEntry> _parseLabelEntriesFromJson(String jsonContent) {
-    final jsonData = jsonDecode(jsonContent) as List<dynamic>;
-    return jsonData.map((e) => LabelEntry.fromJson(e as Map<String, dynamic>)).toList();
+    try {
+      final decoded = jsonDecode(jsonContent);
+      if (decoded is List) {
+        return decoded
+            .map((e) {
+              if (e['data_filename'] == null || e['data_path'] == null) {
+                print("⚠️ 잘못된 데이터 발견: $e");
+                return null; // ❌ 데이터가 유효하지 않으면 무시
+              }
+              return LabelEntry.fromJson(e);
+            })
+            .where((entry) => entry != null)
+            .cast<LabelEntry>()
+            .toList();
+      } else {
+        print("⚠️ JSON이 배열이 아님: $jsonContent");
+      }
+    } catch (e) {
+      print("⚠️ JSON 파싱 실패: $e");
+    }
+    return []; // ❌ 예외 발생 시 빈 리스트 반환
   }
 
   /// Creates a Project instance from a JSON-compatible map.
