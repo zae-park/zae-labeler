@@ -36,5 +36,5 @@ class StorageHelper extends StorageHelperInterface {
   Future<void> saveLabelEntry(LabelEntry newEntry) => _instance.saveLabelEntry(newEntry);
 
   @override
-  Future<LabelEntry?> loadLabelEntry(String dataPath) => _instance.loadLabelEntry(dataPath);
+  Future<LabelEntry> loadLabelEntry(String dataPath) => _instance.loadLabelEntry(dataPath);
 }
