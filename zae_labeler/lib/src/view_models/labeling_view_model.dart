@@ -75,9 +75,28 @@ class LabelingViewModel extends ChangeNotifier {
     return project.labelEntries[_currentIndex];
   }
 
-  Future<void> updateLabelState() async {
+  Future<void> loadCurrentData() async {
+    // ✅ 이름 변경
     if (_currentIndex < 0 || _currentIndex >= project.dataPaths.length) return;
-    _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths[_currentIndex]);
+
+    if (!memoryOptimized) {
+      // ✅ 현재, 이전, 다음 데이터를 로드
+      List<int> indicesToLoad = [
+        if (_currentIndex > 0) _currentIndex - 1, // 이전
+        _currentIndex, // 현재
+        if (_currentIndex < project.dataPaths.length - 1) _currentIndex + 1, // 다음
+      ];
+
+      _unifiedDataList = await Future.wait(indicesToLoad.map((index) => UnifiedData.fromDataPath(project.dataPaths[index])));
+      _currentUnifiedData = _unifiedDataList.firstWhere(
+        (data) => data.file == project.dataPaths[_currentIndex].filePath,
+        orElse: () => UnifiedData.empty(),
+      );
+    } else {
+      // ✅ 메모리 최적화 모드에서는 하나씩 로드
+      _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths[_currentIndex]);
+    }
+
     notifyListeners();
   }
 
@@ -144,7 +163,7 @@ class LabelingViewModel extends ChangeNotifier {
   void moveNext() async {
     if (_currentIndex < project.dataPaths.length - 1) {
       _currentIndex++;
-      await updateLabelState();
+      await loadCurrentData();
       notifyListeners();
     }
   }
@@ -152,7 +171,7 @@ class LabelingViewModel extends ChangeNotifier {
   void movePrevious() async {
     if (_currentIndex > 0) {
       _currentIndex--;
-      await updateLabelState();
+      await loadCurrentData();
       notifyListeners();
     }
   }
