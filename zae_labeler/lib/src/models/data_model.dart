@@ -81,6 +81,8 @@ class UnifiedData {
     required this.fileType,
   });
 
+  factory UnifiedData.empty() => UnifiedData(fileType: FileType.unsupported);
+
   /// Creates a UnifiedData instance from a DataPath by determining the file type.
   static Future<UnifiedData> fromDataPath(DataPath dataPath) async {
     final fileName = dataPath.fileName;
