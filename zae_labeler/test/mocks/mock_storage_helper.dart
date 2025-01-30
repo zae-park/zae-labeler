@@ -39,4 +39,14 @@ class MockStorageHelper extends StorageHelperInterface {
   Future<List<LabelEntry>> importLabelEntries() async {
     return [];
   }
+
+  @override
+  Future<LabelEntry> loadLabelEntry(String dataPath) async {
+    return LabelEntry.empty();
+  }
+
+  @override
+  Future<void> saveLabelEntry(LabelEntry newEntry) async {
+    // ✅ 수행하지 않음
+  }
 }
