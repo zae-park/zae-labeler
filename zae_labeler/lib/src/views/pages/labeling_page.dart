@@ -197,8 +197,8 @@ class LabelingPageState extends State<LabelingPage> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              ElevatedButton(onPressed: () => labelingVM.movePrevious(), child: const Text('이전')),
-                              ElevatedButton(onPressed: () => labelingVM.moveNext(), child: const Text('다음')),
+                              ElevatedButton(onPressed: () async => labelingVM.movePrevious(), child: const Text('이전')),
+                              ElevatedButton(onPressed: () async => labelingVM.moveNext(), child: const Text('다음')),
                             ],
                           ),
                         ),
