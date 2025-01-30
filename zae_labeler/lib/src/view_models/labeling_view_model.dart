@@ -12,17 +12,23 @@ class LabelingViewModel extends ChangeNotifier {
   final Project project;
   final StorageHelperInterface storageHelper; // ✅ Dependency Injection 허용
 
-  bool _isInitialized = false; // ✅ 추가
+  bool _isInitialized = false;
   bool get isInitialized => _isInitialized; // ✅ 추가
 
+  // ✅ 메모리 최적화 여부 (기본값: true).
+  // false로 설정하면 모든 UnifiedData를 로드하고 메모리에 유지함.
+  // true로 설정하면 빈 UnifiedDataList를 생성 후 하나씩 로드함.
+  bool memoryOptimized = true;
+
   int _currentIndex = 0;
-  UnifiedData? _currentUnifiedData;
-
-  LabelingViewModel({required this.project, required this.storageHelper});
-
-  List<LabelEntry> get labelEntries => project.labelEntries;
   int get currentIndex => _currentIndex;
+
+  UnifiedData? _currentUnifiedData;
   UnifiedData? get currentUnifiedData => _currentUnifiedData;
+
+  List<UnifiedData> _unifiedDataList = [];
+  List<UnifiedData> get unifiedDataList => _unifiedDataList;
+  List<LabelEntry> get labelEntries => project.labelEntries;
 
   String get currentDataFileName => labelEntries.isNotEmpty ? path.basename(labelEntries[_currentIndex].dataFilename) : "";
 
@@ -30,14 +36,37 @@ class LabelingViewModel extends ChangeNotifier {
   Map<String, dynamic>? get currentObjectData => _currentUnifiedData?.objectData;
   File? get currentImageFile => _currentUnifiedData?.file;
 
+  LabelingViewModel({required this.project, required this.storageHelper});
+
   Future<void> initialize() async {
     if (project.labelEntries.isEmpty) {
-      project.labelEntries = []; // 프로젝트 내에서 직접 관리
+      project.labelEntries = await project.loadLabelEntries();
     }
-    await updateLabelState();
-    _isInitialized = true; // ✅ 초기화 완료 설정
+
+    _unifiedDataList = []; // ✅ 하나씩 로드하는 방식으로 변경
+
+    // ✅ 첫 번째 데이터만 로드
+    if (project.dataPaths.isNotEmpty) {
+      _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths.first);
+    }
+    _isInitialized = true; // ✅ 초기화 완료
     notifyListeners();
   }
+
+  // Future<void> loadAllData() async {
+  //   try {
+  //     if (memoryOptimized) {
+  //       _unifiedDataList = [];
+  //     } else {
+  //       List<Future<UnifiedData>> loadingTasks = project.dataPaths.map((dpath) => UnifiedData.fromDataPath(dpath)).toList();
+  //       _unifiedDataList = await Future.wait(loadingTasks);
+  //     }
+
+  //     print("✅ loadAllData 완료: unifiedDataList 길이 = ${_unifiedDataList.length}");
+  //   } catch (e) {
+  //     print("❌ loadAllData에서 오류 발생: $e");
+  //   }
+  // }
 
   LabelEntry get currentLabelEntry {
     if (_currentIndex < 0 || _currentIndex >= project.labelEntries.length) {
