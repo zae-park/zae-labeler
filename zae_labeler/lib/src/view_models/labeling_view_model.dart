@@ -141,18 +141,18 @@ class LabelingViewModel extends ChangeNotifier {
     }
   }
 
-  void moveNext() {
+  void moveNext() async {
     if (_currentIndex < project.dataPaths.length - 1) {
       _currentIndex++;
-      updateLabelState();
+      await updateLabelState();
       notifyListeners();
     }
   }
 
-  void movePrevious() {
+  void movePrevious() async {
     if (_currentIndex > 0) {
       _currentIndex--;
-      updateLabelState();
+      await updateLabelState();
       notifyListeners();
     }
   }
