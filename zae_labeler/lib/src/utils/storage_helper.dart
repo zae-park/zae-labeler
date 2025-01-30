@@ -1,6 +1,5 @@
 // lib/src/utils/storage_helper.dart
-import 'package:zae_labeler/src/models/data_model.dart';
-
+import '../models/data_model.dart';
 import '../models/label_entry.dart';
 import '../models/project_model.dart';
 import 'proxy_storage_helper/interface_storage_helper.dart';
@@ -32,4 +31,10 @@ class StorageHelper extends StorageHelperInterface {
 
   @override
   Future<List<LabelEntry>> importLabelEntries() => _instance.importLabelEntries();
+
+  @override
+  Future<void> saveLabelEntry(LabelEntry newEntry) => _instance.saveLabelEntry(newEntry);
+
+  @override
+  Future<LabelEntry?> loadLabelEntry(String dataPath) => _instance.loadLabelEntry(dataPath);
 }

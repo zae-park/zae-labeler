@@ -11,18 +11,7 @@ import '../../models/label_entry.dart';
 import 'interface_storage_helper.dart';
 
 class StorageHelperImpl implements StorageHelperInterface {
-  @override
-  Future<String> downloadProjectConfig(Project project) async {
-    final jsonString = jsonEncode(project.toJson());
-    final blob = html.Blob([jsonString]);
-    final url = html.Url.createObjectUrlFromBlob(blob);
-    html.AnchorElement(href: url)
-      ..setAttribute("download", "${project.name}_config.json")
-      ..click();
-    html.Url.revokeObjectUrl(url);
-    return "${project.name}_config.json (downloaded in browser)";
-  }
-
+  // Project IO
   @override
   Future<void> saveProjects(List<Project> projects) async {
     final projectsJson = jsonEncode(projects.map((e) => e.toJson()).toList());
@@ -40,6 +29,53 @@ class StorageHelperImpl implements StorageHelperInterface {
   }
 
   @override
+  Future<String> downloadProjectConfig(Project project) async {
+    final jsonString = jsonEncode(project.toJson());
+    final blob = html.Blob([jsonString]);
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    html.AnchorElement(href: url)
+      ..setAttribute("download", "${project.name}_config.json")
+      ..click();
+    html.Url.revokeObjectUrl(url);
+    return "${project.name}_config.json (downloaded in browser)";
+  }
+  // Project IO //
+
+  // LabelEntries IO
+
+  // @override
+  // Future<void> saveLabelEntries(List<LabelEntry> labelEntries) async {
+  //   final labelsJson = jsonEncode(labelEntries.map((e) => e.toJson()).toList());
+  //   html.window.localStorage['labels'] = labelsJson;
+  // }
+
+  @override
+  Future<void> saveLabelEntries(List<LabelEntry> newEntries) async {
+    // 새 LabelEntries 만 저장
+    final labelsJson = html.window.localStorage['labels'];
+
+    List<LabelEntry> existingEntries = [];
+    if (labelsJson != null) {
+      final jsonData = jsonDecode(labelsJson);
+      existingEntries = (jsonData as List).map((e) => LabelEntry.fromJson(e)).toList();
+    }
+
+    // ✅ 기존 라벨 데이터 중 동일한 dataPath를 가진 항목을 새로운 데이터로 업데이트
+    for (var newEntry in newEntries) {
+      int index = existingEntries.indexWhere((entry) => entry.dataPath == newEntry.dataPath);
+      if (index != -1) {
+        existingEntries[index] = newEntry;
+      } else {
+        existingEntries.add(newEntry);
+      }
+    }
+
+    // ✅ 변경된 데이터만 저장
+    final updatedLabelsJson = jsonEncode(existingEntries.map((e) => e.toJson()).toList());
+    html.window.localStorage['labels'] = updatedLabelsJson;
+  }
+
+  @override
   Future<List<LabelEntry>> loadLabelEntries() async {
     final labelsJson = html.window.localStorage['labels'];
     if (labelsJson != null) {
@@ -47,12 +83,6 @@ class StorageHelperImpl implements StorageHelperInterface {
       return (jsonData as List).map((e) => LabelEntry.fromJson(e as Map<String, dynamic>)).toList();
     }
     return [];
-  }
-
-  @override
-  Future<void> saveLabelEntries(List<LabelEntry> labelEntries) async {
-    final labelsJson = jsonEncode(labelEntries.map((e) => e.toJson()).toList());
-    html.window.localStorage['labels'] = labelsJson;
   }
 
   @override
@@ -125,4 +155,41 @@ class StorageHelperImpl implements StorageHelperInterface {
     input.click();
     return completer.future;
   }
+
+  // LabelEntries IO //
+
+  // LabelEntry IO
+
+  @override
+  Future<void> saveLabelEntry(LabelEntry newEntry) async {
+    final labelsJson = html.window.localStorage['labels'];
+    List<LabelEntry> existingEntries = [];
+
+    if (labelsJson != null) {
+      final jsonData = jsonDecode(labelsJson);
+      existingEntries = (jsonData as List).map((e) => LabelEntry.fromJson(e)).toList();
+    }
+
+    int index = existingEntries.indexWhere((entry) => entry.dataPath == newEntry.dataPath);
+    if (index != -1) {
+      existingEntries[index] = newEntry;
+    } else {
+      existingEntries.add(newEntry);
+    }
+
+    html.window.localStorage['labels'] = jsonEncode(existingEntries.map((e) => e.toJson()).toList());
+  }
+
+  @override
+  Future<LabelEntry?> loadLabelEntry(String dataPath) async {
+    final labelsJson = html.window.localStorage['labels'];
+    if (labelsJson != null) {
+      final jsonData = jsonDecode(labelsJson);
+      final entries = (jsonData as List).map((e) => LabelEntry.fromJson(e)).toList();
+      return entries.firstWhere((entry) => entry.dataPath == dataPath, orElse: () => LabelEntry.empty());
+    }
+    return null;
+  }
+
+  // LabelEntry IO //
 }
