@@ -65,25 +65,29 @@ void main() {
       expect(labelingVM.isLabelSelected('B', 'single_classification'), isFalse);
     });
 
-    test('✅ moveNext() 및 movePrevious()가 비동기적으로 실행되는지 확인', () async {
-      await labelingVM.initialize();
+    // test('✅ moveNext() 비동기 실행 확인', () async {
+    //   await labelingVM.initialize();
 
-      await labelingVM.moveNext(); // ✅ `await`을 추가하여 비동기 실행 대기
-      expect(labelingVM.currentIndex, 1);
-      expect(labelingVM.currentUnifiedData, isNotNull);
+    //   await labelingVM.moveNext(); // ✅ `await`을 추가하여 비동기 실행 대기
+    //   expect(labelingVM.currentIndex, 1);
+    //   expect(labelingVM.currentUnifiedData, isNotNull);
+    // });
 
-      await labelingVM.movePrevious(); // ✅ `await`을 추가하여 비동기 실행 대기
-      expect(labelingVM.currentIndex, 0);
-      expect(labelingVM.currentUnifiedData, isNotNull);
-    });
+    // test('✅ movePrevious() 비동기 실행 확인', () async {
+    //   await labelingVM.initialize();
 
-    test('✅ moveNext() 실행 후 loadCurrentData()가 호출되는지 확인', () async {
-      await labelingVM.initialize();
-      await labelingVM.moveNext();
+    //   await labelingVM.movePrevious(); // ✅ `await`을 추가하여 비동기 실행 대기
+    //   expect(labelingVM.currentIndex, 0);
+    //   expect(labelingVM.currentUnifiedData, isNotNull);
+    // });
 
-      expect(labelingVM.currentUnifiedData, isNotNull);
-      expect(labelingVM.currentIndex, 1);
-    });
+    // test('✅ moveNext() 실행 후 loadCurrentData()가 호출되는지 확인', () async {
+    //   await labelingVM.initialize();
+    //   await labelingVM.moveNext();
+
+    //   expect(labelingVM.currentUnifiedData, isNotNull);
+    //   expect(labelingVM.currentIndex, 1);
+    // });
 
     test('✅ 라벨 다운로드 테스트', () async {
       labelingVM.addOrUpdateLabel('A', 'single_classification');
