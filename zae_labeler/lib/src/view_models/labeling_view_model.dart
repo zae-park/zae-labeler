@@ -129,8 +129,13 @@ class LabelingViewModel extends ChangeNotifier {
     // ✅ 특정 데이터만 저장
     await storageHelper.saveLabelEntry(existingEntry);
 
-    // ✅ 라벨 저장 후 다시 로드하여 상태 업데이트
-    project.labelEntries = await storageHelper.loadLabelEntries();
+    // ✅ `labelEntries` 전체를 다시 로드하는 대신, 변경된 항목만 업데이트
+    final index = project.labelEntries.indexWhere((entry) => entry.dataPath == dataId);
+    if (index != -1) {
+      project.labelEntries[index] = existingEntry;
+    } else {
+      project.labelEntries.add(existingEntry);
+    }
 
     notifyListeners();
   }
