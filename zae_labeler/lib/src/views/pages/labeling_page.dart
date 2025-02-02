@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:zae_labeler/src/utils/storage_helper.dart';
-import 'package:zae_labeler/src/views/widgets/core/buttons.dart';
+import 'package:shimmer/shimmer.dart';
+import '../../utils/storage_helper.dart';
+import '../../views/widgets/core/buttons.dart';
 import '../../models/data_model.dart';
 import '../../view_models/labeling_view_model.dart';
 import '../../models/project_model.dart';
@@ -93,7 +94,8 @@ class LabelingPageState extends State<LabelingPage> {
     final unifiedData = labelingVM.currentUnifiedData;
 
     if (unifiedData == null) {
-      return const Center(child: Text('데이터를 로드 중입니다.'));
+      return Shimmer.fromColors(
+          baseColor: Colors.grey[300]!, highlightColor: Colors.grey[100]!, child: Container(width: double.infinity, height: 200, color: Colors.white));
     }
 
     switch (unifiedData.fileType) {
@@ -197,8 +199,18 @@ class LabelingPageState extends State<LabelingPage> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              ElevatedButton(onPressed: () async => labelingVM.movePrevious(), child: const Text('이전')),
-                              ElevatedButton(onPressed: () async => labelingVM.moveNext(), child: const Text('다음')),
+                              ElevatedButton(
+                                  onPressed: () async {
+                                    await labelingVM.movePrevious();
+                                    setState(() {}); // ✅ UI 즉시 반영
+                                  },
+                                  child: const Text('이전')),
+                              ElevatedButton(
+                                  onPressed: () async {
+                                    await labelingVM.moveNext();
+                                    setState(() {}); // ✅ UI 즉시 반영
+                                  },
+                                  child: const Text('다음')),
                             ],
                           ),
                         ),
