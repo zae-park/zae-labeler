@@ -72,12 +72,14 @@ class UnifiedData {
   final File? file; // Native 환경의 파일 객체
   final List<double>? seriesData; // 시계열 데이터
   final Map<String, dynamic>? objectData; // JSON 오브젝트 데이터
+  final String? content; // ✅ Base64 인코딩된 이미지 데이터 추가 (Web 지원)
   final FileType fileType; // 파일 유형
 
   UnifiedData({
     this.file,
     this.seriesData,
     this.objectData,
+    this.content,
     required this.fileType,
   });
 
@@ -98,8 +100,8 @@ class UnifiedData {
       return UnifiedData(objectData: objectData, fileType: FileType.object);
     } else if (['.png', '.jpg', '.jpeg'].any((ext) => fileName.endsWith(ext))) {
       // 이미지 파일 로드
-      final file = dataPath.filePath != null ? File(dataPath.filePath!) : null;
-      return UnifiedData(file: file, fileType: FileType.image);
+      final content = await dataPath.loadData();
+      return UnifiedData(file: dataPath.filePath != null ? File(dataPath.filePath!) : null, content: content, fileType: FileType.image);
     }
 
     // 지원되지 않는 파일 형식
