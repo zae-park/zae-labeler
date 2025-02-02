@@ -27,7 +27,16 @@ class LabelingPageState extends State<LabelingPage> {
   void initState() {
     super.initState();
     _focusNode = FocusNode();
+
     WidgetsBinding.instance.addPostFrameCallback((_) => FocusScope.of(context).requestFocus(_focusNode));
+
+    // ✅ 프로젝트의 모드를 초기 값으로 설정
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final project = ModalRoute.of(context)!.settings.arguments as Project;
+      setState(() {
+        _selectedMode = project.mode.toString().split('.').last;
+      });
+    });
   }
 
   @override
@@ -189,7 +198,10 @@ class LabelingPageState extends State<LabelingPage> {
                               final label = labelingVM.project.classes[index];
                               return LabelButton(
                                   isSelected: labelingVM.isLabelSelected(label, _selectedMode),
-                                  onPressedFunc: () => labelingVM.addOrUpdateLabel(label, _selectedMode),
+                                  onPressedFunc: () {
+                                    labelingVM.addOrUpdateLabel(label, _selectedMode);
+                                    setState(() {}); // ✅ UI 즉시 반영
+                                  },
                                   label: label);
                             }),
                           ),
