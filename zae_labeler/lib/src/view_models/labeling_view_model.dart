@@ -42,12 +42,16 @@ class LabelingViewModel extends ChangeNotifier {
       project.labelEntries = await project.loadLabelEntries();
     }
 
-    _unifiedDataList = []; // ✅ 하나씩 로드하는 방식으로 변경
-
-    // ✅ 첫 번째 데이터만 로드
-    if (project.dataPaths.isNotEmpty) {
-      _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths.first);
+    if (memoryOptimized) {
+      _unifiedDataList = [];
+      if (project.dataPaths.isNotEmpty) {
+        _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths.first);
+      }
+    } else {
+      _unifiedDataList = await Future.wait(project.dataPaths.map((dpath) => UnifiedData.fromDataPath(dpath)));
+      _currentUnifiedData = _unifiedDataList.isNotEmpty ? _unifiedDataList.first : null;
     }
+
     _isInitialized = true; // ✅ 초기화 완료
     notifyListeners();
   }
