@@ -44,32 +44,20 @@ class ImageViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (imageFile != null) {
-      // ✅ Handle file input (Native 환경)
-      if (!imageFile!.existsSync()) {
-        return const Center(child: Text('Image file does not exist.'));
-      }
+    if (imageFile != null && imageFile!.existsSync()) {
       return Padding(
         padding: const EdgeInsets.all(8.0),
         child: Image.file(imageFile!, fit: BoxFit.contain),
       );
-    } else if (imageData != null) {
-      // ✅ Handle Uint8List input (Web 환경)
+    } else if (imageData != null || base64Content != null) {
+      // ✅ Base64 이미지 지원 추가
       return Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Image.memory(imageData!, fit: BoxFit.contain),
+        child: Image.memory(
+          base64Decode(base64Content ?? ''),
+          fit: BoxFit.contain,
+        ),
       );
-    } else if (base64Content != null && base64Content!.isNotEmpty) {
-      // ✅ Handle Base64 input
-      try {
-        final decodedData = base64Decode(base64Content!);
-        return Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Image.memory(decodedData, fit: BoxFit.contain),
-        );
-      } catch (e) {
-        return Center(child: Text('Invalid base64 image data: $e'));
-      }
     } else {
       return const Center(child: Text('No image data available.'));
     }
