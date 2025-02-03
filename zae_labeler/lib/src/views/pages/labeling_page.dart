@@ -113,7 +113,8 @@ class LabelingPageState extends State<LabelingPage> {
       case FileType.object:
         return ObjectViewer.fromMap(unifiedData.objectData ?? {});
       case FileType.image:
-        return ImageViewer.fromFile(unifiedData.file!);
+        return ImageViewer.fromUnifiedData(unifiedData); // ✅ UnifiedData에서 자동 로드
+      // return ImageViewer.fromFile(unifiedData.file!);
       default:
         return const Center(child: Text('지원되지 않는 파일 형식입니다.'));
     }
