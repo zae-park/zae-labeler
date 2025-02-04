@@ -20,6 +20,13 @@ class ProjectListViewModel extends ChangeNotifier {
     notifyListeners(); // ✅ UI 업데이트
 
     _projects = await StorageHelper.instance.loadProjects();
+    List<Project> loadedProjects = await StorageHelper.instance.loadProjects(); // 비교를 위한 임시 변수 할당
+
+    // ✅ 프로젝트 목록이 변경된 경우에만 UI 업데이트
+    if (_projects.length != loadedProjects.length || !_listEquals(_projects, loadedProjects)) {
+      _projects = loadedProjects;
+      notifyListeners();
+    }
 
     _isLoading = false;
     notifyListeners(); // ✅ 로딩 완료 후 UI 업데이트
