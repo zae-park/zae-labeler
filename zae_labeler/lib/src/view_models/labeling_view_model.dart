@@ -56,21 +56,6 @@ class LabelingViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Future<void> loadAllData() async {
-  //   try {
-  //     if (memoryOptimized) {
-  //       _unifiedDataList = [];
-  //     } else {
-  //       List<Future<UnifiedData>> loadingTasks = project.dataPaths.map((dpath) => UnifiedData.fromDataPath(dpath)).toList();
-  //       _unifiedDataList = await Future.wait(loadingTasks);
-  //     }
-
-  //     print("✅ loadAllData 완료: unifiedDataList 길이 = ${_unifiedDataList.length}");
-  //   } catch (e) {
-  //     print("❌ loadAllData에서 오류 발생: $e");
-  //   }
-  // }
-
   LabelEntry get currentLabelEntry {
     if (_currentIndex < 0 || _currentIndex >= project.labelEntries.length || project.labelEntries.isEmpty) {
       return LabelEntry.empty(); // ✅ 빈 리스트인 경우 기본값 반환
@@ -83,18 +68,10 @@ class LabelingViewModel extends ChangeNotifier {
     if (_currentIndex < 0 || _currentIndex >= project.dataPaths.length) return;
 
     if (!memoryOptimized) {
-      // ✅ 현재, 이전, 다음 데이터를 로드
-      List<int> indicesToLoad = [
-        if (_currentIndex > 0) _currentIndex - 1, // 이전
-        _currentIndex, // 현재
-        if (_currentIndex < project.dataPaths.length - 1) _currentIndex + 1, // 다음
-      ];
-
-      _unifiedDataList = await Future.wait(indicesToLoad.map((index) => UnifiedData.fromDataPath(project.dataPaths[index])));
-      _currentUnifiedData = _unifiedDataList.firstWhere(
-        (data) => data.file == project.dataPaths[_currentIndex].filePath,
-        orElse: () => UnifiedData.empty(),
+      _unifiedDataList = await Future.wait(
+        [_currentIndex].map((index) => UnifiedData.fromDataPath(project.dataPaths[index])),
       );
+      _currentUnifiedData = _unifiedDataList.first;
     } else {
       // ✅ 메모리 최적화 모드에서는 하나씩 로드
       _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths[_currentIndex]);
