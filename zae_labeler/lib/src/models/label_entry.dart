@@ -17,6 +17,17 @@ class LabelEntry {
 
   LabelEntry({required this.dataFilename, required this.dataPath, this.singleClassification, this.multiClassification, this.segmentation});
 
+  // ✅ 기본값을 반환하는 empty() 메서드 추가
+  factory LabelEntry.empty() {
+    return LabelEntry(
+      dataFilename: '',
+      dataPath: '',
+      singleClassification: null,
+      multiClassification: null,
+      segmentation: null,
+    );
+  }
+
   /// Converts the label entry into a JSON-compatible map.
   Map<String, dynamic> toJson() => {
         'data_filename': dataFilename,
@@ -35,6 +46,8 @@ class LabelEntry {
         segmentation: json['segmentation'] != null ? SegmentationLabel.fromJson(json['segmentation']) : null,
       );
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Represents a label for a single classification task.
 class SingleClassificationLabel {

@@ -32,10 +32,8 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
 
   // Default labeling mode : Single Classification with 3 classes
   LabelingMode _selectedMode = LabelingMode.singleClassification;
-  final List<String> _classes = ['1', '2', '3']; // List to hold class names
-
-  // Data paths (both Web and Native)
-  final List<DataPath> _dataPaths = [];
+  List<String> _classes = ['1', '2', '3']; // List to hold class names
+  List<DataPath> _dataPaths = [];
 
   get path => null;
 
@@ -47,8 +45,12 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
     if (widget.project != null) {
       _nameController.text = widget.project!.name;
       _selectedMode = widget.project!.mode;
-      _classes.addAll(widget.project!.classes);
-      _dataPaths.addAll(widget.project!.dataPaths);
+      if (widget.project!.classes.isNotEmpty) {
+        _classes = widget.project!.classes;
+      }
+      if (widget.project!.dataPaths.isNotEmpty) {
+        _dataPaths = widget.project!.dataPaths;
+      }
     }
   }
 

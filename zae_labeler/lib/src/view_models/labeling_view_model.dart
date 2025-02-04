@@ -1,5 +1,4 @@
 // lib/src/view_models/labeling_view_model.dart
-import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
@@ -43,12 +42,16 @@ class LabelingViewModel extends ChangeNotifier {
       project.labelEntries = await project.loadLabelEntries();
     }
 
-    _unifiedDataList = []; // ✅ 하나씩 로드하는 방식으로 변경
-
-    // ✅ 첫 번째 데이터만 로드
-    if (project.dataPaths.isNotEmpty) {
-      _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths.first);
+    if (memoryOptimized) {
+      _unifiedDataList = [];
+      if (project.dataPaths.isNotEmpty) {
+        _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths.first);
+      }
+    } else {
+      _unifiedDataList = await Future.wait(project.dataPaths.map((dpath) => UnifiedData.fromDataPath(dpath)));
+      _currentUnifiedData = _unifiedDataList.isNotEmpty ? _unifiedDataList.first : null;
     }
+
     _isInitialized = true; // ✅ 초기화 완료
     notifyListeners();
   }
@@ -69,8 +72,8 @@ class LabelingViewModel extends ChangeNotifier {
   // }
 
   LabelEntry get currentLabelEntry {
-    if (_currentIndex < 0 || _currentIndex >= project.labelEntries.length) {
-      return LabelEntry(dataFilename: '', dataPath: '');
+    if (_currentIndex < 0 || _currentIndex >= project.labelEntries.length || project.labelEntries.isEmpty) {
+      return LabelEntry.empty(); // ✅ 빈 리스트인 경우 기본값 반환
     }
     return project.labelEntries[_currentIndex];
   }
@@ -100,51 +103,44 @@ class LabelingViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addOrUpdateLabel(String label, String mode) {
+  Future<void> addOrUpdateLabel(String label, String mode) async {
     final dataId = project.dataPaths[_currentIndex].fileName;
-    final existingEntryIndex = project.labelEntries.indexWhere((entry) => entry.dataPath == dataId);
 
-    if (existingEntryIndex != -1) {
-      LabelEntry entry = project.labelEntries[existingEntryIndex];
-      switch (mode) {
-        case 'single_classification':
-          entry.singleClassification = SingleClassificationLabel(
-            labeledAt: DateTime.now().toIso8601String(),
-            label: label,
-          );
-          break;
-        case 'multi_classification':
-          if (entry.multiClassification == null) {
-            entry.multiClassification = MultiClassificationLabel(
-              labeledAt: DateTime.now().toIso8601String(),
-              labels: [label],
-            );
-          } else {
-            if (!entry.multiClassification!.labels.contains(label)) {
-              entry.multiClassification!.labels.add(label);
-              entry.multiClassification!.labeledAt = DateTime.now().toIso8601String();
-            }
-          }
-          break;
-        case 'segmentation':
-          // Segmentation 라벨 추가 로직 필요
-          break;
-        default:
-          break;
-      }
-    } else {
-      project.labelEntries.add(LabelEntry(
-        dataFilename: dataId,
-        dataPath: dataId,
-        singleClassification: SingleClassificationLabel(
+    // ✅ 특정 `dataPath`만 불러오기
+    LabelEntry existingEntry = await storageHelper.loadLabelEntry(dataId);
+
+    switch (mode) {
+      case 'single_classification':
+        existingEntry.singleClassification = SingleClassificationLabel(
           labeledAt: DateTime.now().toIso8601String(),
           label: label,
-        ),
-      ));
+        );
+        break;
+      case 'multi_classification':
+        existingEntry.multiClassification ??= MultiClassificationLabel(labeledAt: DateTime.now().toIso8601String(), labels: []);
+        if (!existingEntry.multiClassification!.labels.contains(label)) {
+          existingEntry.multiClassification!.labels.add(label);
+          existingEntry.multiClassification!.labeledAt = DateTime.now().toIso8601String();
+        }
+        break;
+      case 'segmentation':
+        // TODO: Segmentation 라벨 추가 로직 필요
+        break;
+      default:
+        break;
     }
 
-    // Save updated project
-    storageHelper.saveProjects([project]); // ✅ Mock 가능하도록 수정
+    // ✅ 특정 데이터만 저장
+    await storageHelper.saveLabelEntry(existingEntry);
+
+    // ✅ `labelEntries` 전체를 다시 로드하는 대신, 변경된 항목만 업데이트
+    final index = project.labelEntries.indexWhere((entry) => entry.dataPath == dataId);
+    if (index != -1) {
+      project.labelEntries[index] = existingEntry;
+    } else {
+      project.labelEntries.add(existingEntry);
+    }
+
     notifyListeners();
   }
 
@@ -160,7 +156,7 @@ class LabelingViewModel extends ChangeNotifier {
     }
   }
 
-  void moveNext() async {
+  Future<void> moveNext() async {
     if (_currentIndex < project.dataPaths.length - 1) {
       _currentIndex++;
       await loadCurrentData();
@@ -168,7 +164,7 @@ class LabelingViewModel extends ChangeNotifier {
     }
   }
 
-  void movePrevious() async {
+  Future<void> movePrevious() async {
     if (_currentIndex > 0) {
       _currentIndex--;
       await loadCurrentData();

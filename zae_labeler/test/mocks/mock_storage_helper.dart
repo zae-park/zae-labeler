@@ -1,38 +1,69 @@
-// test/mocks/mock_storage_helper.dart
+import 'dart:convert';
 import 'package:zae_labeler/src/utils/proxy_storage_helper/interface_storage_helper.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
 import 'package:zae_labeler/src/models/label_entry.dart';
 import 'package:zae_labeler/src/models/data_model.dart';
 
-class MockStorageHelper extends StorageHelperInterface {
+class MockStorageHelper implements StorageHelperInterface {
+  final Map<String, String> _mockDatabase = {}; // ✅ 인메모리 데이터 저장
+
   @override
-  Future<String> downloadLabelsAsZip(Project project, List<LabelEntry> labelEntries, List<DataPath> fileDataList) async {
-    return 'mock_zip_path.zip'; // ✅ Mock 응답 반환
+  Future<List<Project>> loadProjects() async {
+    if (_mockDatabase.containsKey('projects')) {
+      final jsonData = jsonDecode(_mockDatabase['projects']!);
+      return (jsonData as List).map((e) => Project.fromJson(e)).toList();
+    }
+    return [];
   }
 
   @override
   Future<void> saveProjects(List<Project> projects) async {
-    // ✅ 파일 저장을 수행하지 않음 (테스트용)
-  }
-
-  @override
-  Future<List<Project>> loadProjects() async {
-    return []; // ✅ 빈 리스트 반환
+    _mockDatabase['projects'] = jsonEncode(projects.map((e) => e.toJson()).toList());
   }
 
   @override
   Future<List<LabelEntry>> loadLabelEntries() async {
-    return []; // ✅ 빈 리스트 반환
+    if (_mockDatabase.containsKey('labels')) {
+      final jsonData = jsonDecode(_mockDatabase['labels']!);
+      return (jsonData as List).map((e) => LabelEntry.fromJson(e)).toList();
+    }
+    return [];
   }
 
   @override
   Future<void> saveLabelEntries(List<LabelEntry> labelEntries) async {
-    // ✅ 수행하지 않음
+    _mockDatabase['labels'] = jsonEncode(labelEntries.map((e) => e.toJson()).toList());
+  }
+
+  @override
+  Future<void> saveLabelEntry(LabelEntry labelEntry) async {
+    List<LabelEntry> existingEntries = await loadLabelEntries();
+    int index = existingEntries.indexWhere((entry) => entry.dataPath == labelEntry.dataPath);
+    if (index != -1) {
+      existingEntries[index] = labelEntry;
+    } else {
+      existingEntries.add(labelEntry);
+    }
+    _mockDatabase['labels'] = jsonEncode(existingEntries.map((e) => e.toJson()).toList());
+  }
+
+  @override
+  Future<LabelEntry> loadLabelEntry(String dataPath) async {
+    List<LabelEntry> existingEntries = await loadLabelEntries();
+    return existingEntries.firstWhere(
+      (entry) => entry.dataPath == dataPath,
+      orElse: () => LabelEntry.empty(), // ✅ null 대신 기본값 반환
+    );
+  }
+
+  @override
+  Future<String> downloadLabelsAsZip(Project project, List<LabelEntry> labelEntries, List<DataPath> fileDataList) async {
+    return 'mock_zip_path.zip';
   }
 
   @override
   Future<String> downloadProjectConfig(Project project) async {
-    return 'mock_config.json';
+    return 'mock_project_config.json';
   }
 
   @override
