@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
-import 'package:zae_labeler/src/views/widgets/labeling_mode_dropdown.dart';
+import 'package:zae_labeler/src/views/widgets/labeling_mode.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
 
 void main() {
@@ -9,10 +9,7 @@ void main() {
 
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
-        body: LabelingModeDropdown(
-          selectedMode: selectedMode,
-          onModeChanged: (newMode) => selectedMode = newMode,
-        ),
+        body: LabelingModeSelector.dropdown(selectedMode: selectedMode, onModeChanged: (newMode) => selectedMode = newMode),
       ),
     ));
 
