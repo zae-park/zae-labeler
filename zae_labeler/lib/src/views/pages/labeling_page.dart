@@ -23,6 +23,9 @@ class LabelingPageState extends State<LabelingPage> {
   String _selectedMode = 'single_classification';
   final List<String> _modes = ['single_classification', 'multi_classification', 'segmentation'];
 
+  // ✅ 선택된 라벨들을 저장하는 Set
+  final Set<String> _selectedLabels = {};
+
   @override
   void initState() {
     super.initState();
@@ -58,7 +61,7 @@ class LabelingPageState extends State<LabelingPage> {
       } else if (LogicalKeyboardKey.digit0.keyId <= event.logicalKey.keyId && event.logicalKey.keyId <= LogicalKeyboardKey.digit9.keyId) {
         int index = event.logicalKey.keyId - LogicalKeyboardKey.digit0.keyId;
         if (index < labelingVM.project.classes.length) {
-          labelingVM.addOrUpdateLabel(labelingVM.project.classes[index], _selectedMode);
+          _toggleLabel(labelingVM, labelingVM.project.classes[index]);
         }
       }
     }
@@ -69,6 +72,18 @@ class LabelingPageState extends State<LabelingPage> {
     int newIndex = currentIndex + delta;
     newIndex = (newIndex < 0) ? _modes.length - 1 : 0;
     setState(() => _selectedMode = _modes[newIndex]);
+  }
+
+  void _toggleLabel(LabelingViewModel labelingVM, String label) {
+    setState(() {
+      if (_selectedLabels.contains(label)) {
+        _selectedLabels.remove(label);
+      } else {
+        _selectedLabels.add(label);
+      }
+    });
+
+    labelingVM.addOrUpdateLabel(label, _selectedMode);
   }
 
   Future<void> _downloadLabels(BuildContext context, LabelingViewModel labelingVM) async {
@@ -113,8 +128,7 @@ class LabelingPageState extends State<LabelingPage> {
       case FileType.object:
         return ObjectViewer.fromMap(unifiedData.objectData ?? {});
       case FileType.image:
-        return ImageViewer.fromUnifiedData(unifiedData); // ✅ UnifiedData에서 자동 로드
-      // return ImageViewer.fromFile(unifiedData.file!);
+        return ImageViewer.fromUnifiedData(unifiedData);
       default:
         return const Center(child: Text('지원되지 않는 파일 형식입니다.'));
     }
@@ -198,12 +212,10 @@ class LabelingPageState extends State<LabelingPage> {
                             children: List.generate(labelingVM.project.classes.length, (index) {
                               final label = labelingVM.project.classes[index];
                               return LabelButton(
-                                  isSelected: labelingVM.isLabelSelected(label, _selectedMode),
-                                  onPressedFunc: () {
-                                    labelingVM.addOrUpdateLabel(label, _selectedMode);
-                                    setState(() {}); // ✅ UI 즉시 반영
-                                  },
-                                  label: label);
+                                isSelected: _selectedLabels.contains(label),
+                                onPressedFunc: () => _toggleLabel(labelingVM, label),
+                                label: label,
+                              );
                             }),
                           ),
                         ),
@@ -215,13 +227,13 @@ class LabelingPageState extends State<LabelingPage> {
                               ElevatedButton(
                                   onPressed: () async {
                                     await labelingVM.movePrevious();
-                                    setState(() {}); // ✅ UI 즉시 반영
+                                    setState(() {});
                                   },
                                   child: const Text('이전')),
                               ElevatedButton(
                                   onPressed: () async {
                                     await labelingVM.moveNext();
-                                    setState(() {}); // ✅ UI 즉시 반영
+                                    setState(() {});
                                   },
                                   child: const Text('다음')),
                             ],
