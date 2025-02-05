@@ -11,6 +11,7 @@ import '../viewers/object_viewer.dart';
 import '../viewers/time_series_viewer.dart';
 import '../viewers/image_viewer.dart';
 import '../widgets/labeling_mode.dart';
+import '../widgets/navigator.dart';
 
 class LabelingPage extends StatefulWidget {
   const LabelingPage({Key? key}) : super(key: key);
@@ -186,26 +187,7 @@ class LabelingPageState extends State<LabelingPage> {
                             }),
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              ElevatedButton(
-                                  onPressed: () async {
-                                    await labelingVM.movePrevious();
-                                    setState(() {});
-                                  },
-                                  child: const Text('이전')),
-                              ElevatedButton(
-                                  onPressed: () async {
-                                    await labelingVM.moveNext();
-                                    setState(() {});
-                                  },
-                                  child: const Text('다음')),
-                            ],
-                          ),
-                        ),
+                        NavigationButtons(onPrevious: labelingVM.movePrevious, onNext: labelingVM.moveNext),
                       ],
                     ),
                   ),
