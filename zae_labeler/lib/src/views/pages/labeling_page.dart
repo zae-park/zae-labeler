@@ -10,6 +10,7 @@ import '../../models/project_model.dart';
 import '../viewers/object_viewer.dart';
 import '../viewers/time_series_viewer.dart';
 import '../viewers/image_viewer.dart';
+import '../widgets/labeling_mode.dart';
 
 class LabelingPage extends StatefulWidget {
   const LabelingPage({Key? key}) : super(key: key);
@@ -163,41 +164,7 @@ class LabelingPageState extends State<LabelingPage> {
                     onKeyEvent: (event) => _handleKeyEvent(event, labelingVM),
                     child: Column(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: _modes.map((mode) {
-                              String displayText;
-
-                              displayText = {
-                                    'single_classification': 'Single Classification',
-                                    'multi_classification': 'Multi Classification',
-                                    'segmentation': 'Segmentation',
-                                  }[mode] ??
-                                  mode;
-
-                              bool isSelected = _selectedMode == mode;
-
-                              return GestureDetector(
-                                onTap: () => setState(() => _selectedMode = mode),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-                                  margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                                  decoration: BoxDecoration(color: isSelected ? Colors.blueAccent : Colors.grey[200], borderRadius: BorderRadius.circular(8.0)),
-                                  child: Text(
-                                    displayText,
-                                    style: TextStyle(
-                                      color: isSelected ? Colors.white : Colors.black,
-                                      fontSize: 16,
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
+                        LabelModeSelector(selectedMode: _selectedMode, onModeSelected: (newMode) => setState(() => _selectedMode = newMode)),
                         const Divider(),
                         Expanded(child: Padding(padding: const EdgeInsets.all(16.0), child: _buildViewer(labelingVM))),
                         Padding(
