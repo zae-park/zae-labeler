@@ -22,8 +22,7 @@ class LabelingPage extends StatefulWidget {
 
 class LabelingPageState extends State<LabelingPage> {
   late FocusNode _focusNode;
-  String _selectedMode = 'single_classification';
-  final List<String> _modes = ['single_classification', 'multi_classification', 'segmentation'];
+  LabelingMode _selectedMode = LabelingMode.singleClassification;
 
   // ✅ 선택된 라벨들을 저장하는 Set
   final Set<String> _selectedLabels = {};
@@ -38,9 +37,7 @@ class LabelingPageState extends State<LabelingPage> {
     // ✅ 프로젝트의 모드를 초기 값으로 설정
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final project = ModalRoute.of(context)!.settings.arguments as Project;
-      setState(() {
-        _selectedMode = project.mode.toString().split('.').last;
-      });
+      setState(() => _selectedMode = project.mode);
     });
   }
 
@@ -70,22 +67,15 @@ class LabelingPageState extends State<LabelingPage> {
   }
 
   void _changeMode(int delta) {
-    int currentIndex = _modes.indexOf(_selectedMode);
-    int newIndex = currentIndex + delta;
-    newIndex = (newIndex < 0) ? _modes.length - 1 : 0;
-    setState(() => _selectedMode = _modes[newIndex]);
+    const modeValues = LabelingMode.values;
+    int currentIndex = modeValues.indexOf(_selectedMode);
+    int newIndex = (currentIndex + delta) % modeValues.length;
+    setState(() => _selectedMode = modeValues[newIndex]);
   }
 
   void _toggleLabel(LabelingViewModel labelingVM, String label) {
-    setState(() {
-      if (_selectedLabels.contains(label)) {
-        _selectedLabels.remove(label);
-      } else {
-        _selectedLabels.add(label);
-      }
-    });
-
-    labelingVM.addOrUpdateLabel(label, _selectedMode);
+    setState(() => (_selectedLabels.contains(label)) ? _selectedLabels.remove(label) : _selectedLabels.add(label));
+    labelingVM.addOrUpdateLabel(label, _selectedMode.name);
   }
 
   Future<void> _downloadLabels(BuildContext context, LabelingViewModel labelingVM) async {
@@ -165,7 +155,7 @@ class LabelingPageState extends State<LabelingPage> {
                     onKeyEvent: (event) => _handleKeyEvent(event, labelingVM),
                     child: Column(
                       children: [
-                        LabelModeSelector(selectedMode: _selectedMode, onModeSelected: (newMode) => setState(() => _selectedMode = newMode)),
+                        LabelingModeSelector.button(selectedMode: _selectedMode, onModeChanged: (newMode) => setState(() => _selectedMode = newMode)),
                         const Divider(),
                         Expanded(child: Padding(padding: const EdgeInsets.all(16.0), child: _buildViewer(labelingVM))),
                         Padding(
@@ -180,10 +170,7 @@ class LabelingPageState extends State<LabelingPage> {
                             children: List.generate(labelingVM.project.classes.length, (index) {
                               final label = labelingVM.project.classes[index];
                               return LabelButton(
-                                isSelected: _selectedLabels.contains(label),
-                                onPressedFunc: () => _toggleLabel(labelingVM, label),
-                                label: label,
-                              );
+                                  isSelected: _selectedLabels.contains(label), onPressedFunc: () => _toggleLabel(labelingVM, label), label: label);
                             }),
                           ),
                         ),
