@@ -73,9 +73,9 @@ class LabelingPageState extends State<LabelingPage> {
     setState(() => _selectedMode = modeValues[newIndex]);
   }
 
-  void _toggleLabel(LabelingViewModel labelingVM, String label) {
+  Future<void> _toggleLabel(LabelingViewModel labelingVM, String label) async {
+    await labelingVM.addOrUpdateLabel(label, _selectedMode.name);
     setState(() => (_selectedLabels.contains(label)) ? _selectedLabels.remove(label) : _selectedLabels.add(label));
-    labelingVM.addOrUpdateLabel(label, _selectedMode.name);
   }
 
   Future<void> _downloadLabels(BuildContext context, LabelingViewModel labelingVM) async {
@@ -169,8 +169,18 @@ class LabelingPageState extends State<LabelingPage> {
                             spacing: 8.0,
                             children: List.generate(labelingVM.project.classes.length, (index) {
                               final label = labelingVM.project.classes[index];
-                              return LabelButton(
-                                  isSelected: _selectedLabels.contains(label), onPressedFunc: () => _toggleLabel(labelingVM, label), label: label);
+                              return ElevatedButton(
+                                style:
+                                    ElevatedButton.styleFrom(backgroundColor: labelingVM.isLabelSelected(label, _selectedMode.name) ? Colors.blueAccent : null),
+                                onPressed: () => _toggleLabel(labelingVM, label),
+                                child: Text(label),
+                              );
+
+                              // return LabelButton(
+                              //   isSelected: labelingVM.isLabelSelected(label, _selectedMode.name), // ✅ ViewModel에서 상태 가져오기
+                              //   onPressedFunc: () => _toggleLabel(labelingVM, label),
+                              //   label: label,
+                              // );
                             }),
                           ),
                         ),
