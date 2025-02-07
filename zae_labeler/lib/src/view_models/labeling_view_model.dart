@@ -80,27 +80,27 @@ class LabelingViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addOrUpdateLabel(String label, String mode) async {
+  Future<void> addOrUpdateLabel(String label, LabelingMode mode) async {
     final dataId = project.dataPaths[_currentIndex].fileName;
 
     // ✅ 특정 `dataPath`만 불러오기
     LabelEntry existingEntry = await storageHelper.loadLabelEntry(dataId);
 
     switch (mode) {
-      case 'single_classification':
+      case LabelingMode.singleClassification:
         existingEntry.singleClassification = SingleClassificationLabel(
           labeledAt: DateTime.now().toIso8601String(),
           label: label,
         );
         break;
-      case 'multi_classification':
+      case LabelingMode.multiClassification:
         existingEntry.multiClassification ??= MultiClassificationLabel(labeledAt: DateTime.now().toIso8601String(), labels: []);
         if (!existingEntry.multiClassification!.labels.contains(label)) {
           existingEntry.multiClassification!.labels.add(label);
           existingEntry.multiClassification!.labeledAt = DateTime.now().toIso8601String();
         }
         break;
-      case 'segmentation':
+      case LabelingMode.segmentation:
         // TODO: Segmentation 라벨 추가 로직 필요
         break;
       default:

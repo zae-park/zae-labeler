@@ -74,7 +74,7 @@ class LabelingPageState extends State<LabelingPage> {
   }
 
   Future<void> _toggleLabel(LabelingViewModel labelingVM, String label) async {
-    await labelingVM.addOrUpdateLabel(label, _selectedMode.name);
+    await labelingVM.addOrUpdateLabel(label, _selectedMode);
     setState(() => (_selectedLabels.contains(label)) ? _selectedLabels.remove(label) : _selectedLabels.add(label));
   }
 
