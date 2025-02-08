@@ -78,6 +78,8 @@ class UnifiedData {
   final String? content; // ✅ Base64 인코딩된 이미지 데이터 추가 (Web 지원)
   final FileType fileType; // 파일 유형
 
+  String fileName = "";
+
   UnifiedData({
     this.file,
     this.seriesData,
