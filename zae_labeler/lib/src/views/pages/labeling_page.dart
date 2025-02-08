@@ -30,15 +30,14 @@ class LabelingPageState extends State<LabelingPage> {
   @override
   void initState() {
     super.initState();
-    _focusNode = FocusNode();
 
+    // 키보드 입력 포커싱
+    _focusNode = FocusNode();
     WidgetsBinding.instance.addPostFrameCallback((_) => FocusScope.of(context).requestFocus(_focusNode));
 
-    // ✅ 프로젝트의 모드를 초기 값으로 설정
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final project = ModalRoute.of(context)!.settings.arguments as Project;
-      setState(() => _selectedMode = project.mode);
-    });
+    // Navigator가 전달한 argument(project) 수신 및 초기값 설정
+    final project = ModalRoute.of(context)!.settings.arguments as Project;
+    WidgetsBinding.instance.addPostFrameCallback((_) => setState(() => _selectedMode = project.mode));
   }
 
   @override
@@ -54,9 +53,9 @@ class LabelingPageState extends State<LabelingPage> {
       } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
         labelingVM.moveNext();
       } else if (event.logicalKey == LogicalKeyboardKey.tab) {
-        _changeMode(1);
+        _changeLabelingMode(1);
       } else if (event.logicalKey == LogicalKeyboardKey.backspace) {
-        _changeMode(-1);
+        _changeLabelingMode(-1);
       } else if (LogicalKeyboardKey.digit0.keyId <= event.logicalKey.keyId && event.logicalKey.keyId <= LogicalKeyboardKey.digit9.keyId) {
         int index = event.logicalKey.keyId - LogicalKeyboardKey.digit0.keyId;
         if (index < labelingVM.project.classes.length) {
@@ -66,13 +65,13 @@ class LabelingPageState extends State<LabelingPage> {
     }
   }
 
-  void _changeMode(int delta) {
-    const modeValues = LabelingMode.values;
-    int currentIndex = modeValues.indexOf(_selectedMode);
-    int newIndex = (currentIndex + delta) % modeValues.length;
-    setState(() => _selectedMode = modeValues[newIndex]);
+  void _changeLabelingMode(int delta) {
+    const modeList = LabelingMode.values;
+    int modeIdx = (modeList.indexOf(_selectedMode) + delta) % modeList.length;
+    setState(() => _selectedMode = modeList[modeIdx]);
   }
 
+  // TODO: Label Button에 클릭 효과 추가
   Future<void> _toggleLabel(LabelingViewModel labelingVM, String label) async {
     await labelingVM.addOrUpdateLabel(label, _selectedMode);
     setState(() => (_selectedLabels.contains(label)) ? _selectedLabels.remove(label) : _selectedLabels.add(label));
