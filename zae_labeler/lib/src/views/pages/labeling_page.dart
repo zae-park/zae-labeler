@@ -108,10 +108,10 @@ class LabelingPageState extends State<LabelingPage> {
   Widget _buildViewer(LabelingViewModel labelingVM) {
     final unifiedData = labelingVM.currentUnifiedData;
 
-    if (unifiedData == null) {
-      return Shimmer.fromColors(
-          baseColor: Colors.grey[300]!, highlightColor: Colors.grey[100]!, child: Container(width: double.infinity, height: 200, color: Colors.white));
-    }
+    // if (unifiedData == null) {
+    //   return Shimmer.fromColors(
+    //       baseColor: Colors.grey[300]!, highlightColor: Colors.grey[100]!, child: Container(width: double.infinity, height: 200, color: Colors.white));
+    // }
 
     switch (unifiedData.fileType) {
       case FileType.series:
@@ -159,7 +159,7 @@ class LabelingPageState extends State<LabelingPage> {
                         Expanded(child: Padding(padding: const EdgeInsets.all(16.0), child: _buildViewer(labelingVM))),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: Text('데이터 ${labelingVM.currentIndex + 1}/${labelingVM.project.dataPaths.length} - ${labelingVM.currentDataFileName}',
+                          child: Text('데이터 ${labelingVM.currentIndex + 1}/${labelingVM.project.dataPaths.length} - ${labelingVM.currentUnifiedData}',
                               style: const TextStyle(fontSize: 16)),
                         ),
                         Padding(
@@ -169,8 +169,7 @@ class LabelingPageState extends State<LabelingPage> {
                             children: List.generate(labelingVM.project.classes.length, (index) {
                               final label = labelingVM.project.classes[index];
                               return ElevatedButton(
-                                style:
-                                    ElevatedButton.styleFrom(backgroundColor: labelingVM.isLabelSelected(label, _selectedMode.name) ? Colors.blueAccent : null),
+                                style: ElevatedButton.styleFrom(backgroundColor: labelingVM.isLabelSelected(label, _selectedMode) ? Colors.blueAccent : null),
                                 onPressed: () => _toggleLabel(labelingVM, label),
                                 child: Text(label),
                               );
