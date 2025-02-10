@@ -22,18 +22,21 @@ class LabelingViewModel extends ChangeNotifier {
   int _currentIndex = 0;
   int get currentIndex => _currentIndex;
 
-  UnifiedData? _currentUnifiedData;
-  UnifiedData? get currentUnifiedData => _currentUnifiedData;
+  UnifiedData _currentUnifiedData = UnifiedData.empty();
+  UnifiedData get currentUnifiedData => _currentUnifiedData;
 
   List<UnifiedData> _unifiedDataList = [];
   List<UnifiedData> get unifiedDataList => _unifiedDataList;
   List<LabelEntry> get labelEntries => project.labelEntries;
 
-  String get currentDataFileName => labelEntries.isNotEmpty ? path.basename(labelEntries[_currentIndex].dataFilename) : "";
+  String get currentDataFileName => currentUnifiedData.fileName;
 
-  List<double>? get currentSeriesData => _currentUnifiedData?.seriesData;
-  Map<String, dynamic>? get currentObjectData => _currentUnifiedData?.objectData;
-  File? get currentImageFile => _currentUnifiedData?.file;
+  List<double>? get currentSeriesData => _currentUnifiedData.seriesData;
+  Map<String, dynamic>? get currentObjectData => _currentUnifiedData.objectData;
+  File? get currentImageFile => _currentUnifiedData.file;
+
+  Future<void> moveNext() async => _move(1);
+  Future<void> movePrevious() async => _move(-1);
 
   LabelingViewModel({required this.project, required this.storageHelper});
 
@@ -42,30 +45,18 @@ class LabelingViewModel extends ChangeNotifier {
       project.labelEntries = await project.loadLabelEntries();
     }
 
-    _unifiedDataList = []; // ✅ 하나씩 로드하는 방식으로 변경
-
-    // ✅ 첫 번째 데이터만 로드
-    if (project.dataPaths.isNotEmpty) {
-      _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths.first);
+    // ✅ 데이터 로딩 최적화
+    if (memoryOptimized) {
+      _unifiedDataList.clear();
+      _currentUnifiedData = project.dataPaths.isNotEmpty ? await UnifiedData.fromDataPath(project.dataPaths.first) : UnifiedData.empty();
+    } else {
+      _unifiedDataList = await Future.wait(project.dataPaths.map((dpath) => UnifiedData.fromDataPath(dpath)));
+      _currentUnifiedData = _unifiedDataList.isNotEmpty ? _unifiedDataList.first : UnifiedData.empty();
     }
+
     _isInitialized = true; // ✅ 초기화 완료
     notifyListeners();
   }
-
-  // Future<void> loadAllData() async {
-  //   try {
-  //     if (memoryOptimized) {
-  //       _unifiedDataList = [];
-  //     } else {
-  //       List<Future<UnifiedData>> loadingTasks = project.dataPaths.map((dpath) => UnifiedData.fromDataPath(dpath)).toList();
-  //       _unifiedDataList = await Future.wait(loadingTasks);
-  //     }
-
-  //     print("✅ loadAllData 완료: unifiedDataList 길이 = ${_unifiedDataList.length}");
-  //   } catch (e) {
-  //     print("❌ loadAllData에서 오류 발생: $e");
-  //   }
-  // }
 
   LabelEntry get currentLabelEntry {
     if (_currentIndex < 0 || _currentIndex >= project.labelEntries.length || project.labelEntries.isEmpty) {
@@ -78,48 +69,32 @@ class LabelingViewModel extends ChangeNotifier {
     // ✅ 이름 변경
     if (_currentIndex < 0 || _currentIndex >= project.dataPaths.length) return;
 
-    if (!memoryOptimized) {
-      // ✅ 현재, 이전, 다음 데이터를 로드
-      List<int> indicesToLoad = [
-        if (_currentIndex > 0) _currentIndex - 1, // 이전
-        _currentIndex, // 현재
-        if (_currentIndex < project.dataPaths.length - 1) _currentIndex + 1, // 다음
-      ];
-
-      _unifiedDataList = await Future.wait(indicesToLoad.map((index) => UnifiedData.fromDataPath(project.dataPaths[index])));
-      _currentUnifiedData = _unifiedDataList.firstWhere(
-        (data) => data.file == project.dataPaths[_currentIndex].filePath,
-        orElse: () => UnifiedData.empty(),
-      );
-    } else {
-      // ✅ 메모리 최적화 모드에서는 하나씩 로드
-      _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths[_currentIndex]);
-    }
+    _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths[_currentIndex]);
 
     notifyListeners();
   }
 
-  Future<void> addOrUpdateLabel(String label, String mode) async {
+  Future<void> addOrUpdateLabel(String label, LabelingMode mode) async {
     final dataId = project.dataPaths[_currentIndex].fileName;
 
     // ✅ 특정 `dataPath`만 불러오기
     LabelEntry existingEntry = await storageHelper.loadLabelEntry(dataId);
 
     switch (mode) {
-      case 'single_classification':
+      case LabelingMode.singleClassification:
         existingEntry.singleClassification = SingleClassificationLabel(
           labeledAt: DateTime.now().toIso8601String(),
           label: label,
         );
         break;
-      case 'multi_classification':
+      case LabelingMode.multiClassification:
         existingEntry.multiClassification ??= MultiClassificationLabel(labeledAt: DateTime.now().toIso8601String(), labels: []);
         if (!existingEntry.multiClassification!.labels.contains(label)) {
           existingEntry.multiClassification!.labels.add(label);
           existingEntry.multiClassification!.labeledAt = DateTime.now().toIso8601String();
         }
         break;
-      case 'segmentation':
+      case LabelingMode.segmentation:
         // TODO: Segmentation 라벨 추가 로직 필요
         break;
       default:
@@ -129,37 +104,35 @@ class LabelingViewModel extends ChangeNotifier {
     // ✅ 특정 데이터만 저장
     await storageHelper.saveLabelEntry(existingEntry);
 
-    // ✅ 라벨 저장 후 다시 로드하여 상태 업데이트
-    project.labelEntries = await storageHelper.loadLabelEntries();
-
+    // ✅ `labelEntries` 전체를 다시 로드하는 대신, 변경된 항목만 업데이트
+    // ✅ 기존 데이터 업데이트 (index가 없을 경우 추가)
+    int index = project.labelEntries.indexWhere((entry) => entry.dataPath == dataId);
+    if (index != -1) {
+      project.labelEntries[index] = existingEntry;
+    } else {
+      project.labelEntries.add(existingEntry);
+    }
     notifyListeners();
   }
 
-  bool isLabelSelected(String label, String mode) {
+  bool isLabelSelected(String label, LabelingMode mode) {
     LabelEntry entry = currentLabelEntry;
     switch (mode) {
-      case 'single_classification':
+      case LabelingMode.singleClassification:
         return entry.singleClassification?.label == label;
-      case 'multi_classification':
+      case LabelingMode.multiClassification:
         return entry.multiClassification?.labels.contains(label) ?? false;
       default:
         return false;
     }
   }
 
-  Future<void> moveNext() async {
-    if (_currentIndex < project.dataPaths.length - 1) {
-      _currentIndex++;
-      await loadCurrentData();
+  Future<void> _move(int delta) async {
+    int newIndex = _currentIndex + delta;
+    if (newIndex >= 0 && newIndex < project.dataPaths.length) {
+      _currentIndex = newIndex;
       notifyListeners();
-    }
-  }
-
-  Future<void> movePrevious() async {
-    if (_currentIndex > 0) {
-      _currentIndex--;
       await loadCurrentData();
-      notifyListeners();
     }
   }
 

@@ -9,17 +9,24 @@ class ProjectListViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  List<Project> get projects => _projects;
+
   ProjectListViewModel() {
     loadProjects();
   }
-
-  List<Project> get projects => _projects;
 
   Future<void> loadProjects() async {
     _isLoading = true;
     notifyListeners(); // ✅ UI 업데이트
 
     _projects = await StorageHelper.instance.loadProjects();
+    List<Project> loadedProjects = await StorageHelper.instance.loadProjects(); // 비교를 위한 임시 변수 할당
+
+    // ✅ 프로젝트 목록이 변경된 경우에만 UI 업데이트
+    if (_projects.length != loadedProjects.length || !_listEquals(_projects, loadedProjects)) {
+      _projects = loadedProjects;
+      notifyListeners();
+    }
 
     _isLoading = false;
     notifyListeners(); // ✅ 로딩 완료 후 UI 업데이트
@@ -44,5 +51,14 @@ class ProjectListViewModel extends ChangeNotifier {
       await StorageHelper.instance.saveProjects(_projects); // 싱글톤 인스턴스를 통해 접근
       notifyListeners();
     }
+  }
+
+  /// ✅ 리스트 비교 함수 추가 (ID 기반 비교)
+  bool _listEquals(List<Project> list1, List<Project> list2) {
+    if (list1.length != list2.length) return false;
+    for (int i = 0; i < list1.length; i++) {
+      if (list1[i].id != list2[i].id) return false;
+    }
+    return true;
   }
 }

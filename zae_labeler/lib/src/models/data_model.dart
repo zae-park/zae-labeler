@@ -40,8 +40,11 @@ class DataPath {
   /// Loads the content of the file based on its environment (Web or Native).
   Future<String?> loadData() async {
     if (base64Content != null) {
-      // Web 환경: Base64 디코딩
-      return utf8.decode(base64Decode(base64Content!));
+      // ✅ 이미지 데이터는 UTF-8 디코딩 없이 그대로 반환
+      if (['.png', '.jpg', '.jpeg'].any((ext) => fileName.endsWith(ext))) {
+        return base64Content;
+      }
+      return utf8.decode(base64Decode(base64Content!)); // ✅ JSON, CSV 파일만 UTF-8 디코딩
     } else if (filePath != null) {
       // Native 환경: 파일에서 데이터 읽기
       final file = File(filePath!);
@@ -72,12 +75,16 @@ class UnifiedData {
   final File? file; // Native 환경의 파일 객체
   final List<double>? seriesData; // 시계열 데이터
   final Map<String, dynamic>? objectData; // JSON 오브젝트 데이터
+  final String? content; // ✅ Base64 인코딩된 이미지 데이터 추가 (Web 지원)
   final FileType fileType; // 파일 유형
+
+  String fileName = "";
 
   UnifiedData({
     this.file,
     this.seriesData,
     this.objectData,
+    this.content,
     required this.fileType,
   });
 
@@ -97,9 +104,13 @@ class UnifiedData {
       final objectData = _parseObjectData(content ?? '');
       return UnifiedData(objectData: objectData, fileType: FileType.object);
     } else if (['.png', '.jpg', '.jpeg'].any((ext) => fileName.endsWith(ext))) {
-      // 이미지 파일 로드
-      final file = dataPath.filePath != null ? File(dataPath.filePath!) : null;
-      return UnifiedData(file: file, fileType: FileType.image);
+      // ✅ 이미지 파일 로드 (UTF-8 디코딩 없이 처리)
+      final content = await dataPath.loadData();
+      return UnifiedData(
+        file: dataPath.filePath != null ? File(dataPath.filePath!) : null,
+        content: content, // ✅ Base64 데이터 그대로 저장
+        fileType: FileType.image,
+      );
     }
 
     // 지원되지 않는 파일 형식

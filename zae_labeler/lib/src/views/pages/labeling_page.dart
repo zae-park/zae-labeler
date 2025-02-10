@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:zae_labeler/src/utils/storage_helper.dart';
-import 'package:zae_labeler/src/views/widgets/core/buttons.dart';
+import 'package:shimmer/shimmer.dart';
+import '../../utils/storage_helper.dart';
+import '../../views/widgets/core/buttons.dart';
 import '../../models/data_model.dart';
 import '../../view_models/labeling_view_model.dart';
 import '../../models/project_model.dart';
 import '../viewers/object_viewer.dart';
 import '../viewers/time_series_viewer.dart';
 import '../viewers/image_viewer.dart';
+import '../widgets/labeling_mode.dart';
+import '../widgets/navigator.dart';
 
 class LabelingPage extends StatefulWidget {
   const LabelingPage({Key? key}) : super(key: key);
@@ -19,14 +22,22 @@ class LabelingPage extends StatefulWidget {
 
 class LabelingPageState extends State<LabelingPage> {
   late FocusNode _focusNode;
-  String _selectedMode = 'single_classification';
-  final List<String> _modes = ['single_classification', 'multi_classification', 'segmentation'];
+  LabelingMode _selectedMode = LabelingMode.singleClassification;
+
+  // ✅ 선택된 라벨들을 저장하는 Set
+  final Set<String> _selectedLabels = {};
 
   @override
   void initState() {
     super.initState();
+
+    // 키보드 입력 포커싱
     _focusNode = FocusNode();
     WidgetsBinding.instance.addPostFrameCallback((_) => FocusScope.of(context).requestFocus(_focusNode));
+
+    // Navigator가 전달한 argument(project) 수신 및 초기값 설정
+    final project = ModalRoute.of(context)!.settings.arguments as Project;
+    WidgetsBinding.instance.addPostFrameCallback((_) => setState(() => _selectedMode = project.mode));
   }
 
   @override
@@ -42,23 +53,28 @@ class LabelingPageState extends State<LabelingPage> {
       } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
         labelingVM.moveNext();
       } else if (event.logicalKey == LogicalKeyboardKey.tab) {
-        _changeMode(1);
+        _changeLabelingMode(1);
       } else if (event.logicalKey == LogicalKeyboardKey.backspace) {
-        _changeMode(-1);
+        _changeLabelingMode(-1);
       } else if (LogicalKeyboardKey.digit0.keyId <= event.logicalKey.keyId && event.logicalKey.keyId <= LogicalKeyboardKey.digit9.keyId) {
         int index = event.logicalKey.keyId - LogicalKeyboardKey.digit0.keyId;
         if (index < labelingVM.project.classes.length) {
-          labelingVM.addOrUpdateLabel(labelingVM.project.classes[index], _selectedMode);
+          _toggleLabel(labelingVM, labelingVM.project.classes[index]);
         }
       }
     }
   }
 
-  void _changeMode(int delta) {
-    int currentIndex = _modes.indexOf(_selectedMode);
-    int newIndex = currentIndex + delta;
-    newIndex = (newIndex < 0) ? _modes.length - 1 : 0;
-    setState(() => _selectedMode = _modes[newIndex]);
+  void _changeLabelingMode(int delta) {
+    const modeList = LabelingMode.values;
+    int modeIdx = (modeList.indexOf(_selectedMode) + delta) % modeList.length;
+    setState(() => _selectedMode = modeList[modeIdx]);
+  }
+
+  // TODO: Label Button에 클릭 효과 추가
+  Future<void> _toggleLabel(LabelingViewModel labelingVM, String label) async {
+    await labelingVM.addOrUpdateLabel(label, _selectedMode);
+    setState(() => (_selectedLabels.contains(label)) ? _selectedLabels.remove(label) : _selectedLabels.add(label));
   }
 
   Future<void> _downloadLabels(BuildContext context, LabelingViewModel labelingVM) async {
@@ -92,9 +108,10 @@ class LabelingPageState extends State<LabelingPage> {
   Widget _buildViewer(LabelingViewModel labelingVM) {
     final unifiedData = labelingVM.currentUnifiedData;
 
-    if (unifiedData == null) {
-      return const Center(child: Text('데이터를 로드 중입니다.'));
-    }
+    // if (unifiedData == null) {
+    //   return Shimmer.fromColors(
+    //       baseColor: Colors.grey[300]!, highlightColor: Colors.grey[100]!, child: Container(width: double.infinity, height: 200, color: Colors.white));
+    // }
 
     switch (unifiedData.fileType) {
       case FileType.series:
@@ -102,7 +119,7 @@ class LabelingPageState extends State<LabelingPage> {
       case FileType.object:
         return ObjectViewer.fromMap(unifiedData.objectData ?? {});
       case FileType.image:
-        return ImageViewer.fromFile(unifiedData.file!);
+        return ImageViewer.fromUnifiedData(unifiedData);
       default:
         return const Center(child: Text('지원되지 않는 파일 형식입니다.'));
     }
@@ -137,46 +154,12 @@ class LabelingPageState extends State<LabelingPage> {
                     onKeyEvent: (event) => _handleKeyEvent(event, labelingVM),
                     child: Column(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: _modes.map((mode) {
-                              String displayText;
-
-                              displayText = {
-                                    'single_classification': 'Single Classification',
-                                    'multi_classification': 'Multi Classification',
-                                    'segmentation': 'Segmentation',
-                                  }[mode] ??
-                                  mode;
-
-                              bool isSelected = _selectedMode == mode;
-
-                              return GestureDetector(
-                                onTap: () => setState(() => _selectedMode = mode),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-                                  margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                                  decoration: BoxDecoration(color: isSelected ? Colors.blueAccent : Colors.grey[200], borderRadius: BorderRadius.circular(8.0)),
-                                  child: Text(
-                                    displayText,
-                                    style: TextStyle(
-                                      color: isSelected ? Colors.white : Colors.black,
-                                      fontSize: 16,
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
+                        LabelingModeSelector.button(selectedMode: _selectedMode, onModeChanged: (newMode) => setState(() => _selectedMode = newMode)),
                         const Divider(),
                         Expanded(child: Padding(padding: const EdgeInsets.all(16.0), child: _buildViewer(labelingVM))),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: Text('데이터 ${labelingVM.currentIndex + 1}/${labelingVM.project.dataPaths.length} - ${labelingVM.currentDataFileName}',
+                          child: Text('데이터 ${labelingVM.currentIndex + 1}/${labelingVM.project.dataPaths.length} - ${labelingVM.currentUnifiedData}',
                               style: const TextStyle(fontSize: 16)),
                         ),
                         Padding(
@@ -185,23 +168,21 @@ class LabelingPageState extends State<LabelingPage> {
                             spacing: 8.0,
                             children: List.generate(labelingVM.project.classes.length, (index) {
                               final label = labelingVM.project.classes[index];
-                              return LabelButton(
-                                  isSelected: labelingVM.isLabelSelected(label, _selectedMode),
-                                  onPressedFunc: () => labelingVM.addOrUpdateLabel(label, _selectedMode),
-                                  label: label);
+                              return ElevatedButton(
+                                style: ElevatedButton.styleFrom(backgroundColor: labelingVM.isLabelSelected(label, _selectedMode) ? Colors.blueAccent : null),
+                                onPressed: () => _toggleLabel(labelingVM, label),
+                                child: Text(label),
+                              );
+
+                              // return LabelButton(
+                              //   isSelected: labelingVM.isLabelSelected(label, _selectedMode.name), // ✅ ViewModel에서 상태 가져오기
+                              //   onPressedFunc: () => _toggleLabel(labelingVM, label),
+                              //   label: label,
+                              // );
                             }),
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              ElevatedButton(onPressed: () async => labelingVM.movePrevious(), child: const Text('이전')),
-                              ElevatedButton(onPressed: () async => labelingVM.moveNext(), child: const Text('다음')),
-                            ],
-                          ),
-                        ),
+                        NavigationButtons(onPrevious: labelingVM.movePrevious, onNext: labelingVM.moveNext),
                       ],
                     ),
                   ),

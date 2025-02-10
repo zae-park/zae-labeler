@@ -1,17 +1,18 @@
 import 'dart:html' as html; // 웹 전용 기능 사용
+import 'dart:convert';
+import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../view_models/project_list_view_model.dart';
 import '../../view_models/locale_view_model.dart';
 import '../../models/project_model.dart';
 import '../pages/configuration_page.dart';
 import '../../utils/storage_helper.dart';
-import 'dart:convert';
-import 'dart:io' as io;
-import 'package:file_picker/file_picker.dart';
+import '../widgets/project_tile.dart';
 
 class ProjectListPage extends StatefulWidget {
   const ProjectListPage({Key? key}) : super(key: key);
@@ -161,7 +162,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
                   itemCount: projectVM.projects.length,
                   itemBuilder: (context, index) {
                     final project = projectVM.projects[index];
-                    return _ProjectTile(
+                    return ProjectTile(
                       project: project,
                       onEdit: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ConfigureProjectPage(project: project))),
                       onDownload: () => _downloadProjectConfig(context, project),
@@ -173,43 +174,6 @@ class _ProjectListPageState extends State<ProjectListPage> {
                 ),
         );
       },
-    );
-  }
-}
-
-class _ProjectTile extends StatelessWidget {
-  final Project project;
-  final VoidCallback onEdit;
-  final VoidCallback onDownload;
-  final VoidCallback onShare;
-  final VoidCallback onDelete;
-  final VoidCallback onTap;
-
-  const _ProjectTile({
-    Key? key,
-    required this.project,
-    required this.onEdit,
-    required this.onDownload,
-    required this.onShare,
-    required this.onDelete,
-    required this.onTap,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(project.name),
-      subtitle: Text('Mode: ${project.mode.toString().split('.').last}'),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(icon: const Icon(Icons.edit), onPressed: onEdit, tooltip: 'Edit Project'),
-          IconButton(icon: const Icon(Icons.download), onPressed: onDownload, tooltip: 'Download Configuration'),
-          IconButton(icon: const Icon(Icons.share), onPressed: onShare, tooltip: 'Share Project'),
-          IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: onDelete, tooltip: 'Delete Project'),
-        ],
-      ),
-      onTap: onTap,
     );
   }
 }
