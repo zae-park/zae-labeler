@@ -1,47 +1,110 @@
+// lib/src/models/project_model.dart
+
+/*
+이 파일은 프로젝트 모델을 정의하며, 프로젝트의 주요 정보와 라벨 엔트리 관리를 위한 메서드를 제공합니다.
+Project 클래스는 프로젝트 ID, 이름, 라벨링 모드, 클래스 목록, 데이터 경로 등을 포함합니다.
+라벨 엔트리를 로드하고 JSON 형식으로 변환하거나 역직렬화할 수 있는 기능도 포함되어 있습니다.
+*/
+
+import 'dart:convert';
+
+import 'package:zae_labeler/src/utils/storage_helper.dart';
+
+import './data_model.dart';
+import './label_entry.dart';
+
 // 라벨링 모드 열거형
 enum LabelingMode { singleClassification, multiClassification, segmentation }
 
-// lib/src/models/project_model.dart
+/// Represents a project with its metadata and data paths.
 class Project {
   String id; // 프로젝트 고유 ID
   String name; // 프로젝트 이름
   LabelingMode mode; // 라벨링 모드
   List<String> classes; // 설정된 클래스 목록
-  // String dataDirectory; // 데이터가 저장된 디렉토리 경로
-  String? dataDirectory; // Native 환경에서 사용
-  List<String>? dataPaths; // Web 환경에서 사용
-
-  bool isDataLoaded; // 데이터 로드 상태 플래그
+  List<DataPath> dataPaths; // Web과 Native 모두 지원하는 데이터 경로
+  List<LabelEntry> labelEntries; // 라벨 엔트리 관리
 
   Project({
     required this.id,
     required this.name,
     required this.mode,
     required this.classes,
-    // required this.dataDirectory,
-    this.dataDirectory,
-    this.dataPaths,
-    this.isDataLoaded = false, // 기본값은 로드되지 않은 상태
+    this.dataPaths = const [],
+    this.labelEntries = const [],
   });
 
-  // JSON 직렬화 및 역직렬화에 isDataLoaded 필드 추가
+  /// Creates a Project instance from a JSON-compatible map.
   factory Project.fromJson(Map<String, dynamic> json) => Project(
         id: json['id'],
         name: json['name'],
         mode: LabelingMode.values.firstWhere((e) => e.toString().contains(json['mode'])),
         classes: List<String>.from(json['classes']),
-        dataDirectory: json['dataDirectory'],
-        dataPaths: List<String>.from(json['dataPaths'] ?? []),
-        isDataLoaded: json['isDataLoaded'] ?? false,
+        dataPaths: (json['dataPaths'] as List).map((e) => DataPath.fromJson(e)).toList(),
+        labelEntries: (json['labelEntries'] as List).map((e) => LabelEntry.fromJson(e)).toList(),
       );
 
-  // JSON으로 변환
+  /// Converts the Project instance into a JSON-compatible map.
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
         'mode': mode.toString().split('.').last,
         'classes': classes,
-        'dataDirectory': dataDirectory,
-        'dataPaths': dataPaths,
+        'dataPaths': dataPaths.map((e) => e.toJson()).toList(),
+        'labelEntries': labelEntries.map((e) => e.toJson()).toList(),
       };
+
+  /// Loads label entries from the associated data paths.
+  Future<List<LabelEntry>> loadLabelEntries() async {
+    return await StorageHelper.instance.loadLabelEntries();
+    // final List<LabelEntry> labelEntries = [];
+    // for (final dataPath in dataPaths) {
+    //   final content = await dataPath.loadData();
+    //   if (content != null) {
+    //     final entries = _parseLabelEntriesFromJson(content);
+    //     labelEntries.addAll(entries);
+    //   }
+    // }
+    // return labelEntries;
+  }
+
+  /// Parses label entries from a JSON string.
+  List<LabelEntry> _parseLabelEntriesFromJson(String jsonContent) {
+    try {
+      final decoded = jsonDecode(jsonContent);
+
+      List<dynamic> entriesList = [];
+
+      if (decoded is List) {
+        entriesList = decoded;
+      } else if (decoded is Map && decoded.containsKey('label_entries')) {
+        entriesList = decoded['label_entries'] ?? []; // ✅ `null` 방지
+      } else {
+        print("⚠️ JSON 데이터 형식이 올바르지 않음: $jsonContent");
+        return []; // ❌ 잘못된 형식이면 빈 리스트 반환
+      }
+
+      return entriesList
+          .map((e) {
+            if (e is! Map<String, dynamic>) {
+              // ✅ `Map<String, dynamic>`인지 확인
+              print("⚠️ 잘못된 데이터 발견 (올바른 Map 타입이 아님): $e");
+              return null; // ❌ 잘못된 데이터 무시
+            }
+
+            if (e['data_filename'] == null || e['data_path'] == null) {
+              print("⚠️ 필수 필드 누락된 데이터 발견: $e");
+              return null;
+            }
+
+            return LabelEntry.fromJson(e);
+          })
+          .where((entry) => entry != null)
+          .cast<LabelEntry>()
+          .toList();
+    } catch (e) {
+      print("⚠️ JSON 파싱 실패: $e");
+      return []; // ❌ 예외 발생 시 빈 리스트 반환
+    }
+  }
 }
