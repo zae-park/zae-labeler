@@ -50,9 +50,9 @@ class StorageHelperImpl implements StorageHelperInterface {
   // }
 
   @override
-  Future<void> saveLabelEntries(List<LabelEntry> newEntries) async {
-    // 새 LabelEntries 만 저장
-    final labelsJson = html.window.localStorage['labels'];
+  Future<void> saveLabelEntries(String projectId, List<LabelEntry> newEntries) async {
+    final storageKey = 'labels_project_$projectId'; // ✅ 프로젝트별 키 생성
+    final labelsJson = html.window.localStorage[storageKey];
 
     List<LabelEntry> existingEntries = [];
     if (labelsJson != null) {
@@ -72,7 +72,7 @@ class StorageHelperImpl implements StorageHelperInterface {
 
     // ✅ 변경된 데이터만 저장
     final updatedLabelsJson = jsonEncode(existingEntries.map((e) => e.toJson()).toList());
-    html.window.localStorage['labels'] = updatedLabelsJson;
+    html.window.localStorage[storageKey] = updatedLabelsJson;
   }
 
   @override

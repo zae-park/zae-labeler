@@ -53,7 +53,7 @@ class StorageHelperImpl implements StorageHelperInterface {
   // }
 
   @override
-  Future<void> saveLabelEntries(List<LabelEntry> newEntries) async {
+  Future<void> saveLabelEntries(String projectId, List<LabelEntry> newEntries) async {
     final directory = await getApplicationDocumentsDirectory();
     final file = File('${directory.path}/labels.json');
 

@@ -23,7 +23,7 @@ class StorageHelper extends StorageHelperInterface {
   Future<List<LabelEntry>> loadLabelEntries() => _instance.loadLabelEntries();
 
   @override
-  Future<void> saveLabelEntries(List<LabelEntry> labelEntries) => _instance.saveLabelEntries(labelEntries);
+  Future<void> saveLabelEntries(String projectId, List<LabelEntry> labelEntries) => _instance.saveLabelEntries(projectId, labelEntries);
 
   @override
   Future<String> downloadLabelsAsZip(Project project, List<LabelEntry> labelEntries, List<DataPath> fileDataList) =>

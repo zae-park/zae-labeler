@@ -8,7 +8,7 @@ abstract class StorageHelperInterface {
   Future<List<Project>> loadProjects();
   Future<void> saveProjects(List<Project> projects);
   Future<List<LabelEntry>> loadLabelEntries();
-  Future<void> saveLabelEntries(List<LabelEntry> labelEntries);
+  Future<void> saveLabelEntries(String projectId, List<LabelEntry> labelEntries);
   Future<String> downloadLabelsAsZip(Project project, List<LabelEntry> labelEntries, List<DataPath> fileDataList);
   Future<List<LabelEntry>> importLabelEntries();
   Future<void> saveLabelEntry(LabelEntry newEntry);
