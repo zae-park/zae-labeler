@@ -8,36 +8,33 @@ import '../models/data_model.dart';
 import '../utils/proxy_storage_helper/interface_storage_helper.dart';
 
 class LabelingViewModel extends ChangeNotifier {
+  // 멤버 변수 선언
   final Project project;
   final StorageHelperInterface storageHelper; // ✅ Dependency Injection 허용
-
   bool _isInitialized = false;
-  bool get isInitialized => _isInitialized; // ✅ 추가
-
-  // ✅ 메모리 최적화 여부 (기본값: true).
-  // false로 설정하면 모든 UnifiedData를 로드하고 메모리에 유지함.
-  // true로 설정하면 빈 UnifiedDataList를 생성 후 하나씩 로드함.
   bool memoryOptimized = true;
 
   int _currentIndex = 0;
+  UnifiedData _currentUnifiedData = UnifiedData.empty();
+  List<UnifiedData> _unifiedDataList = [];
+
+  // Getter & Setter
+  bool get isInitialized => _isInitialized;
   int get currentIndex => _currentIndex;
 
-  UnifiedData _currentUnifiedData = UnifiedData.empty();
   UnifiedData get currentUnifiedData => _currentUnifiedData;
-
-  List<UnifiedData> _unifiedDataList = [];
   List<UnifiedData> get unifiedDataList => _unifiedDataList;
   List<LabelEntry> get labelEntries => project.labelEntries;
-
   String get currentDataFileName => currentUnifiedData.fileName;
-
   List<double>? get currentSeriesData => _currentUnifiedData.seriesData;
   Map<String, dynamic>? get currentObjectData => _currentUnifiedData.objectData;
   File? get currentImageFile => _currentUnifiedData.file;
 
+  // Factory 생성자
   Future<void> moveNext() async => _move(1);
   Future<void> movePrevious() async => _move(-1);
 
+  // 인스턴스 생성
   LabelingViewModel({required this.project, required this.storageHelper});
 
   Future<void> initialize() async {
