@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:shimmer/shimmer.dart';
 import '../../utils/storage_helper.dart';
 import '../../views/widgets/core/buttons.dart';
 import '../../models/data_model.dart';
@@ -175,17 +174,12 @@ class LabelingPageState extends State<LabelingPage> {
                             spacing: 8.0,
                             children: List.generate(labelingVM.project.classes.length, (index) {
                               final label = labelingVM.project.classes[index];
-                              return ElevatedButton(
-                                style: ElevatedButton.styleFrom(backgroundColor: labelingVM.isLabelSelected(label, _selectedMode) ? Colors.blueAccent : null),
-                                onPressed: () => _toggleLabel(labelingVM, label),
-                                child: Text(label),
-                              );
 
-                              // return LabelButton(
-                              //   isSelected: labelingVM.isLabelSelected(label, _selectedMode.name), // ✅ ViewModel에서 상태 가져오기
-                              //   onPressedFunc: () => _toggleLabel(labelingVM, label),
-                              //   label: label,
-                              // );
+                              return LabelButton(
+                                isSelected: labelingVM.isLabelSelected(label, _selectedMode), // ✅ ViewModel에서 상태 가져오기
+                                onPressedFunc: () => _toggleLabel(labelingVM, label),
+                                label: label,
+                              );
                             }),
                           ),
                         ),
