@@ -24,6 +24,8 @@ class LabelingPageState extends State<LabelingPage> {
   late FocusNode _focusNode;
   LabelingMode _selectedMode = LabelingMode.singleClassification;
 
+  late Project project;
+
   // ✅ 선택된 라벨들을 저장하는 Set
   final Set<String> _selectedLabels = {};
 
@@ -34,10 +36,15 @@ class LabelingPageState extends State<LabelingPage> {
     // 키보드 입력 포커싱
     _focusNode = FocusNode();
     WidgetsBinding.instance.addPostFrameCallback((_) => FocusScope.of(context).requestFocus(_focusNode));
+  }
 
-    // Navigator가 전달한 argument(project) 수신 및 초기값 설정
-    final project = ModalRoute.of(context)!.settings.arguments as Project;
-    WidgetsBinding.instance.addPostFrameCallback((_) => setState(() => _selectedMode = project.mode));
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // ✅ `context`에 안전하게 접근할 수 있는 시점
+    project = ModalRoute.of(context)!.settings.arguments as Project;
+    setState(() => _selectedMode = project.mode);
   }
 
   @override
