@@ -1,6 +1,5 @@
 // lib/src/view_models/labeling_view_model.dart
 import 'dart:io';
-import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import '../models/label_entry.dart';
 import '../models/project_model.dart';
@@ -11,24 +10,27 @@ class LabelingViewModel extends ChangeNotifier {
   // 멤버 변수 선언
   final Project project;
   final StorageHelperInterface storageHelper; // ✅ Dependency Injection 허용
+
   bool _isInitialized = false;
-  bool memoryOptimized = true;
+  final bool _memoryOptimized = true;
 
   int _currentIndex = 0;
-  UnifiedData _currentUnifiedData = UnifiedData.empty();
   List<UnifiedData> _unifiedDataList = [];
+  UnifiedData _currentUnifiedData = UnifiedData.empty();
 
   // Getter & Setter
   bool get isInitialized => _isInitialized;
-  int get currentIndex => _currentIndex;
 
-  UnifiedData get currentUnifiedData => _currentUnifiedData;
+  int get currentIndex => _currentIndex;
   List<UnifiedData> get unifiedDataList => _unifiedDataList;
-  List<LabelEntry> get labelEntries => project.labelEntries;
+  UnifiedData get currentUnifiedData => _currentUnifiedData;
+
   String get currentDataFileName => currentUnifiedData.fileName;
   List<double>? get currentSeriesData => _currentUnifiedData.seriesData;
   Map<String, dynamic>? get currentObjectData => _currentUnifiedData.objectData;
   File? get currentImageFile => _currentUnifiedData.file;
+
+  List<LabelEntry> get labelEntries => project.labelEntries;
 
   // Factory 생성자
   Future<void> moveNext() async => _move(1);
@@ -43,7 +45,7 @@ class LabelingViewModel extends ChangeNotifier {
     }
 
     // ✅ 데이터 로딩 최적화
-    if (memoryOptimized) {
+    if (_memoryOptimized) {
       _unifiedDataList.clear();
       _currentUnifiedData = project.dataPaths.isNotEmpty ? await UnifiedData.fromDataPath(project.dataPaths.first) : UnifiedData.empty();
     } else {
