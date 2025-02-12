@@ -47,7 +47,7 @@ class StorageHelperImpl implements StorageHelperInterface {
   @override
   Future<void> saveLabelEntries(String projectId, List<LabelEntry> newEntries) async {
     final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/labels.json');
+    final file = File('${directory.path}/labels_project_$projectId.json');
 
     List<LabelEntry> existingEntries = [];
     if (await file.exists()) {
@@ -74,7 +74,8 @@ class StorageHelperImpl implements StorageHelperInterface {
   @override
   Future<List<LabelEntry>> loadLabelEntries(String projectId) async {
     final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/labels.json');
+    final file = File('${directory.path}/labels_project_$projectId.json');
+
     if (await file.exists()) {
       final content = await file.readAsString();
       List<dynamic> jsonData = jsonDecode(content);
@@ -84,11 +85,7 @@ class StorageHelperImpl implements StorageHelperInterface {
   }
 
   @override
-  Future<String> downloadLabelsAsZip(
-    Project project,
-    List<LabelEntry> labelEntries,
-    List<DataPath> dataPaths, // DataPath를 사용하도록 수정
-  ) async {
+  Future<String> downloadLabelsAsZip(Project project, List<LabelEntry> labelEntries, List<DataPath> dataPaths) async {
     final archive = Archive();
 
     // DataPath에서 데이터 로드 및 ZIP 추가
@@ -129,7 +126,7 @@ class StorageHelperImpl implements StorageHelperInterface {
   @override
   Future<void> saveLabelEntry(String projectId, LabelEntry newEntry) async {
     final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/labels.json');
+    final file = File('${directory.path}/labels_project_$projectId.json');
 
     List<LabelEntry> existingEntries = [];
     if (await file.exists()) {
@@ -151,7 +148,8 @@ class StorageHelperImpl implements StorageHelperInterface {
   @override
   Future<LabelEntry> loadLabelEntry(String projectId, String dataPath) async {
     final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/labels.json');
+    final file = File('${directory.path}/labels_project_$projectId.json');
+
     if (await file.exists()) {
       final content = await file.readAsString();
       final jsonData = jsonDecode(content);
