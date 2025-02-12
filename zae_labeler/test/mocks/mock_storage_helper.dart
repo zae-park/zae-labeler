@@ -22,7 +22,7 @@ class MockStorageHelper implements StorageHelperInterface {
   }
 
   @override
-  Future<List<LabelEntry>> loadLabelEntries() async {
+  Future<List<LabelEntry>> loadLabelEntries(String projectId) async {
     if (_mockDatabase.containsKey('labels')) {
       final jsonData = jsonDecode(_mockDatabase['labels']!);
       return (jsonData as List).map((e) => LabelEntry.fromJson(e)).toList();
@@ -31,13 +31,13 @@ class MockStorageHelper implements StorageHelperInterface {
   }
 
   @override
-  Future<void> saveLabelEntries(List<LabelEntry> labelEntries) async {
+  Future<void> saveLabelEntries(String projectId, List<LabelEntry> labelEntries) async {
     _mockDatabase['labels'] = jsonEncode(labelEntries.map((e) => e.toJson()).toList());
   }
 
   @override
-  Future<void> saveLabelEntry(LabelEntry labelEntry) async {
-    List<LabelEntry> existingEntries = await loadLabelEntries();
+  Future<void> saveLabelEntry(String projectId, LabelEntry labelEntry) async {
+    List<LabelEntry> existingEntries = await loadLabelEntries(projectId);
     int index = existingEntries.indexWhere((entry) => entry.dataPath == labelEntry.dataPath);
     if (index != -1) {
       existingEntries[index] = labelEntry;
@@ -48,8 +48,8 @@ class MockStorageHelper implements StorageHelperInterface {
   }
 
   @override
-  Future<LabelEntry> loadLabelEntry(String dataPath) async {
-    List<LabelEntry> existingEntries = await loadLabelEntries();
+  Future<LabelEntry> loadLabelEntry(String projectId, String dataPath) async {
+    List<LabelEntry> existingEntries = await loadLabelEntries(projectId);
     return existingEntries.firstWhere(
       (entry) => entry.dataPath == dataPath,
       orElse: () => LabelEntry.empty(), // ✅ null 대신 기본값 반환

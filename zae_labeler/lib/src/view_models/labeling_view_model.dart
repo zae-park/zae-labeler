@@ -77,7 +77,7 @@ class LabelingViewModel extends ChangeNotifier {
     final dataId = project.dataPaths[_currentIndex].fileName;
 
     // ✅ 특정 `dataPath`만 불러오기
-    LabelEntry existingEntry = await storageHelper.loadLabelEntry(dataId);
+    LabelEntry existingEntry = await storageHelper.loadLabelEntry(project.id, dataId);
 
     switch (mode) {
       case LabelingMode.singleClassification:
@@ -101,7 +101,7 @@ class LabelingViewModel extends ChangeNotifier {
     }
 
     // ✅ 특정 데이터만 저장
-    await storageHelper.saveLabelEntry(existingEntry);
+    await storageHelper.saveLabelEntry(project.id, existingEntry);
 
     // ✅ `labelEntries` 전체를 다시 로드하는 대신, 변경된 항목만 업데이트
     // ✅ 기존 데이터 업데이트 (index가 없을 경우 추가)
