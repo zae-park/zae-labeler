@@ -43,12 +43,6 @@ class StorageHelperImpl implements StorageHelperInterface {
 
   // LabelEntries IO
 
-  // @override
-  // Future<void> saveLabelEntries(List<LabelEntry> labelEntries) async {
-  //   final labelsJson = jsonEncode(labelEntries.map((e) => e.toJson()).toList());
-  //   html.window.localStorage['labels'] = labelsJson;
-  // }
-
   @override
   Future<void> saveLabelEntries(String projectId, List<LabelEntry> newEntries) async {
     final storageKey = 'labels_project_$projectId'; // ✅ 프로젝트별 키 생성
@@ -76,8 +70,10 @@ class StorageHelperImpl implements StorageHelperInterface {
   }
 
   @override
-  Future<List<LabelEntry>> loadLabelEntries() async {
-    final labelsJson = html.window.localStorage['labels'];
+  Future<List<LabelEntry>> loadLabelEntries(String projectId) async {
+    final storageKey = 'labels_project_$projectId'; // ✅ 프로젝트별 키 사용
+    final labelsJson = html.window.localStorage[storageKey];
+
     if (labelsJson != null) {
       final jsonData = jsonDecode(labelsJson);
       return (jsonData as List).map((e) => LabelEntry.fromJson(e as Map<String, dynamic>)).toList();

@@ -6,8 +6,6 @@ Project 클래스는 프로젝트 ID, 이름, 라벨링 모드, 클래스 목록
 라벨 엔트리를 로드하고 JSON 형식으로 변환하거나 역직렬화할 수 있는 기능도 포함되어 있습니다.
 */
 
-import 'dart:convert';
-
 import 'package:zae_labeler/src/utils/storage_helper.dart';
 
 import './data_model.dart';
@@ -56,6 +54,6 @@ class Project {
 
   /// Loads label entries from the associated data paths.
   Future<List<LabelEntry>> loadLabelEntries() async {
-    return await StorageHelper.instance.loadLabelEntries();
+    return await StorageHelper.instance.loadLabelEntries(id);
   }
 }
