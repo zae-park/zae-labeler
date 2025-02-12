@@ -25,9 +25,6 @@ class LabelingPageState extends State<LabelingPage> {
 
   late Project project;
 
-  // ✅ 선택된 라벨들을 저장하는 Set
-  final Set<String> _selectedLabels = {};
-
   @override
   void initState() {
     super.initState();
@@ -77,10 +74,9 @@ class LabelingPageState extends State<LabelingPage> {
     setState(() => _selectedMode = modeList[modeIdx]);
   }
 
-  // TODO: Label Button에 클릭 효과 추가
   Future<void> _toggleLabel(LabelingViewModel labelingVM, String label) async {
     await labelingVM.addOrUpdateLabel(label, _selectedMode);
-    setState(() => (_selectedLabels.contains(label)) ? _selectedLabels.remove(label) : _selectedLabels.add(label));
+    labelingVM.toggleLabel(label, _selectedMode); // ✅ ViewModel에서 상태 변경 관리
   }
 
   Future<void> _downloadLabels(BuildContext context, LabelingViewModel labelingVM) async {
@@ -176,8 +172,8 @@ class LabelingPageState extends State<LabelingPage> {
                               final label = labelingVM.project.classes[index];
 
                               return LabelButton(
-                                isSelected: labelingVM.isLabelSelected(label, _selectedMode), // ✅ ViewModel에서 상태 가져오기
-                                onPressedFunc: () => _toggleLabel(labelingVM, label),
+                                isSelected: labelingVM.isLabelSelected(label, _selectedMode),
+                                onPressedFunc: () async => await _toggleLabel(labelingVM, label),
                                 label: label,
                               );
                             }),
