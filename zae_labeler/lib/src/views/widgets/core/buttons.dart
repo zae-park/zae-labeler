@@ -16,3 +16,19 @@ class AppButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => IconButton(icon: Icon(icon), tooltip: label, onPressed: onPressed);
 }
+
+class LabelButton extends StatelessWidget {
+  final bool isSelected;
+  final VoidCallback onPressedFunc;
+  final String label;
+  const LabelButton({super.key, required this.isSelected, required this.onPressedFunc, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(backgroundColor: isSelected ? Colors.blueAccent : null),
+      onPressed: onPressedFunc,
+      child: Text(label),
+    );
+  }
+}

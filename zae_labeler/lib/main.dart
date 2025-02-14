@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'src/views/pages/project_list_page.dart';
 import 'src/views/pages/configuration_page.dart';
 import 'src/views/pages/labeling_page.dart';
-import 'src/view_models/project_view_model.dart';
+import 'src/view_models/project_list_view_model.dart';
 import 'src/view_models/locale_view_model.dart';
 
 void main() {
@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       // Registering providers for state management
       providers: [
-        ChangeNotifierProvider<ProjectViewModel>(create: (_) => ProjectViewModel()),
+        ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel()),
         ChangeNotifierProvider<LocaleViewModel>(create: (_) => LocaleViewModel()),
       ],
       child: Consumer<LocaleViewModel>(
