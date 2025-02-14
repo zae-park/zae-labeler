@@ -10,31 +10,28 @@ class StorageHelper extends StorageHelperInterface {
 
   static StorageHelperInterface get instance => _instance;
 
+  // Project IO
+  @override
+  Future<void> saveProjects(List<Project> projects) => _instance.saveProjects(projects);
+  @override
+  Future<List<Project>> loadProjects() => _instance.loadProjects();
   @override
   Future<String> downloadProjectConfig(Project project) => _instance.downloadProjectConfig(project);
 
+  // LabelEntries IO
   @override
-  Future<List<Project>> loadProjects() => _instance.loadProjects();
-
+  Future<void> saveLabelEntries(String projectId, List<LabelEntry> labelEntries) => _instance.saveLabelEntries(projectId, labelEntries);
   @override
-  Future<void> saveProjects(List<Project> projects) => _instance.saveProjects(projects);
-
+  Future<List<LabelEntry>> loadLabelEntries(String projectId) => _instance.loadLabelEntries(projectId);
   @override
-  Future<List<LabelEntry>> loadLabelEntries() => _instance.loadLabelEntries();
-
-  @override
-  Future<void> saveLabelEntries(List<LabelEntry> labelEntries) => _instance.saveLabelEntries(labelEntries);
-
+  Future<List<LabelEntry>> importLabelEntries() => _instance.importLabelEntries();
   @override
   Future<String> downloadLabelsAsZip(Project project, List<LabelEntry> labelEntries, List<DataPath> fileDataList) =>
       _instance.downloadLabelsAsZip(project, labelEntries, fileDataList);
 
+  // LabelEntry IO
   @override
-  Future<List<LabelEntry>> importLabelEntries() => _instance.importLabelEntries();
-
+  Future<void> saveLabelEntry(String projectId, LabelEntry newEntry) => _instance.saveLabelEntry(projectId, newEntry);
   @override
-  Future<void> saveLabelEntry(LabelEntry newEntry) => _instance.saveLabelEntry(newEntry);
-
-  @override
-  Future<LabelEntry> loadLabelEntry(String dataPath) => _instance.loadLabelEntry(dataPath);
+  Future<LabelEntry> loadLabelEntry(String projectId, String dataPath) => _instance.loadLabelEntry(projectId, dataPath);
 }

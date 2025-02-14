@@ -78,13 +78,14 @@ class UnifiedData {
   final String? content; // ✅ Base64 인코딩된 이미지 데이터 추가 (Web 지원)
   final FileType fileType; // 파일 유형
 
-  String fileName = "";
+  String fileName;
 
   UnifiedData({
     this.file,
     this.seriesData,
     this.objectData,
     this.content,
+    this.fileName = "asd",
     required this.fileType,
   });
 
@@ -97,16 +98,17 @@ class UnifiedData {
       // 시계열 데이터 로드
       final content = await dataPath.loadData();
       final seriesData = _parseSeriesData(content ?? '');
-      return UnifiedData(seriesData: seriesData, fileType: FileType.series);
+      return UnifiedData(fileName: fileName, seriesData: seriesData, fileType: FileType.series);
     } else if (fileName.endsWith('.json')) {
       // JSON 오브젝트 데이터 로드
       final content = await dataPath.loadData();
       final objectData = _parseObjectData(content ?? '');
-      return UnifiedData(objectData: objectData, fileType: FileType.object);
+      return UnifiedData(fileName: fileName, objectData: objectData, fileType: FileType.object);
     } else if (['.png', '.jpg', '.jpeg'].any((ext) => fileName.endsWith(ext))) {
       // ✅ 이미지 파일 로드 (UTF-8 디코딩 없이 처리)
       final content = await dataPath.loadData();
       return UnifiedData(
+        fileName: fileName,
         file: dataPath.filePath != null ? File(dataPath.filePath!) : null,
         content: content, // ✅ Base64 데이터 그대로 저장
         fileType: FileType.image,

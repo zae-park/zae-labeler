@@ -4,13 +4,15 @@ import '../../models/data_model.dart';
 import '../../models/label_entry.dart';
 
 abstract class StorageHelperInterface {
-  Future<String> downloadProjectConfig(Project project);
-  Future<List<Project>> loadProjects();
   Future<void> saveProjects(List<Project> projects);
-  Future<List<LabelEntry>> loadLabelEntries();
-  Future<void> saveLabelEntries(List<LabelEntry> labelEntries);
-  Future<String> downloadLabelsAsZip(Project project, List<LabelEntry> labelEntries, List<DataPath> fileDataList);
+  Future<List<Project>> loadProjects();
+  Future<String> downloadProjectConfig(Project project);
+
+  Future<void> saveLabelEntries(String projectId, List<LabelEntry> labelEntries);
+  Future<List<LabelEntry>> loadLabelEntries(String projectId);
   Future<List<LabelEntry>> importLabelEntries();
-  Future<void> saveLabelEntry(LabelEntry newEntry);
-  Future<LabelEntry> loadLabelEntry(String dataPath);
+  Future<String> downloadLabelsAsZip(Project project, List<LabelEntry> labelEntries, List<DataPath> fileDataList);
+
+  Future<void> saveLabelEntry(String projectId, LabelEntry newEntry);
+  Future<LabelEntry> loadLabelEntry(String projectId, String dataPath);
 }

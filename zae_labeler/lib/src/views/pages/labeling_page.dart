@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:shimmer/shimmer.dart';
 import '../../utils/storage_helper.dart';
 import '../../views/widgets/core/buttons.dart';
 import '../../models/data_model.dart';
@@ -24,8 +23,7 @@ class LabelingPageState extends State<LabelingPage> {
   late FocusNode _focusNode;
   LabelingMode _selectedMode = LabelingMode.singleClassification;
 
-  // ✅ 선택된 라벨들을 저장하는 Set
-  final Set<String> _selectedLabels = {};
+  late Project project;
 
   @override
   void initState() {
@@ -34,10 +32,15 @@ class LabelingPageState extends State<LabelingPage> {
     // 키보드 입력 포커싱
     _focusNode = FocusNode();
     WidgetsBinding.instance.addPostFrameCallback((_) => FocusScope.of(context).requestFocus(_focusNode));
+  }
 
-    // Navigator가 전달한 argument(project) 수신 및 초기값 설정
-    final project = ModalRoute.of(context)!.settings.arguments as Project;
-    WidgetsBinding.instance.addPostFrameCallback((_) => setState(() => _selectedMode = project.mode));
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // ✅ `context`에 안전하게 접근할 수 있는 시점
+    project = ModalRoute.of(context)!.settings.arguments as Project;
+    setState(() => _selectedMode = project.mode);
   }
 
   @override
@@ -71,10 +74,9 @@ class LabelingPageState extends State<LabelingPage> {
     setState(() => _selectedMode = modeList[modeIdx]);
   }
 
-  // TODO: Label Button에 클릭 효과 추가
   Future<void> _toggleLabel(LabelingViewModel labelingVM, String label) async {
     await labelingVM.addOrUpdateLabel(label, _selectedMode);
-    setState(() => (_selectedLabels.contains(label)) ? _selectedLabels.remove(label) : _selectedLabels.add(label));
+    labelingVM.toggleLabel(label, _selectedMode); // ✅ ViewModel에서 상태 변경 관리
   }
 
   Future<void> _downloadLabels(BuildContext context, LabelingViewModel labelingVM) async {
@@ -159,7 +161,7 @@ class LabelingPageState extends State<LabelingPage> {
                         Expanded(child: Padding(padding: const EdgeInsets.all(16.0), child: _buildViewer(labelingVM))),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: Text('데이터 ${labelingVM.currentIndex + 1}/${labelingVM.project.dataPaths.length} - ${labelingVM.currentUnifiedData}',
+                          child: Text('데이터 ${labelingVM.currentIndex + 1}/${labelingVM.project.dataPaths.length} - ${labelingVM.currentDataFileName}',
                               style: const TextStyle(fontSize: 16)),
                         ),
                         Padding(
@@ -168,17 +170,12 @@ class LabelingPageState extends State<LabelingPage> {
                             spacing: 8.0,
                             children: List.generate(labelingVM.project.classes.length, (index) {
                               final label = labelingVM.project.classes[index];
-                              return ElevatedButton(
-                                style: ElevatedButton.styleFrom(backgroundColor: labelingVM.isLabelSelected(label, _selectedMode) ? Colors.blueAccent : null),
-                                onPressed: () => _toggleLabel(labelingVM, label),
-                                child: Text(label),
-                              );
 
-                              // return LabelButton(
-                              //   isSelected: labelingVM.isLabelSelected(label, _selectedMode.name), // ✅ ViewModel에서 상태 가져오기
-                              //   onPressedFunc: () => _toggleLabel(labelingVM, label),
-                              //   label: label,
-                              // );
+                              return LabelButton(
+                                isSelected: labelingVM.isLabelSelected(label, _selectedMode),
+                                onPressedFunc: () async => await _toggleLabel(labelingVM, label),
+                                label: label,
+                              );
                             }),
                           ),
                         ),

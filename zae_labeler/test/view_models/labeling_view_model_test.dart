@@ -52,7 +52,7 @@ void main() {
     });
 
     test('✅ 라벨 추가 테스트 (saveLabelEntry가 호출되는지 확인)', () async {
-      await labelingVM.addOrUpdateLabel('A', 'single_classification');
+      await labelingVM.addOrUpdateLabel('A', LabelingMode.singleClassification);
       expect(labelingVM.labelEntries[0].singleClassification?.label, 'A');
 
       // ✅ Mock StorageHelper가 saveLabelEntry를 호출했는지 검증 가능하다면 추가
@@ -60,9 +60,9 @@ void main() {
     });
 
     test('✅ 라벨 선택 확인 테스트', () async {
-      await labelingVM.addOrUpdateLabel('A', 'single_classification');
-      expect(labelingVM.isLabelSelected('A', 'single_classification'), isTrue);
-      expect(labelingVM.isLabelSelected('B', 'single_classification'), isFalse);
+      await labelingVM.addOrUpdateLabel('A', LabelingMode.singleClassification);
+      expect(labelingVM.isLabelSelected('A', LabelingMode.singleClassification), isTrue);
+      expect(labelingVM.isLabelSelected('B', LabelingMode.singleClassification), isFalse);
     });
 
     // test('✅ moveNext() 비동기 실행 확인', () async {
@@ -90,7 +90,7 @@ void main() {
     // });
 
     test('✅ 라벨 다운로드 테스트', () async {
-      labelingVM.addOrUpdateLabel('A', 'single_classification');
+      labelingVM.addOrUpdateLabel('A', LabelingMode.singleClassification);
       String zipPath = await labelingVM.downloadLabelsAsZip();
       expect(zipPath, 'mock_zip_path.zip');
     });

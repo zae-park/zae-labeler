@@ -19,7 +19,7 @@ class AppButton extends StatelessWidget {
 
 class LabelButton extends StatelessWidget {
   final bool isSelected;
-  final void Function() onPressedFunc;
+  final VoidCallback onPressedFunc;
   final String label;
   const LabelButton({super.key, required this.isSelected, required this.onPressedFunc, required this.label});
 
@@ -27,7 +27,7 @@ class LabelButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(backgroundColor: isSelected ? Colors.blueAccent : null),
-      onPressed: () => onPressedFunc,
+      onPressed: onPressedFunc,
       child: Text(label),
     );
   }

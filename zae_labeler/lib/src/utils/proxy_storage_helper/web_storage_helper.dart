@@ -43,16 +43,10 @@ class StorageHelperImpl implements StorageHelperInterface {
 
   // LabelEntries IO
 
-  // @override
-  // Future<void> saveLabelEntries(List<LabelEntry> labelEntries) async {
-  //   final labelsJson = jsonEncode(labelEntries.map((e) => e.toJson()).toList());
-  //   html.window.localStorage['labels'] = labelsJson;
-  // }
-
   @override
-  Future<void> saveLabelEntries(List<LabelEntry> newEntries) async {
-    // 새 LabelEntries 만 저장
-    final labelsJson = html.window.localStorage['labels'];
+  Future<void> saveLabelEntries(String projectId, List<LabelEntry> newEntries) async {
+    final storageKey = 'labels_project_$projectId'; // ✅ 프로젝트별 키 생성
+    final labelsJson = html.window.localStorage[storageKey];
 
     List<LabelEntry> existingEntries = [];
     if (labelsJson != null) {
@@ -72,12 +66,14 @@ class StorageHelperImpl implements StorageHelperInterface {
 
     // ✅ 변경된 데이터만 저장
     final updatedLabelsJson = jsonEncode(existingEntries.map((e) => e.toJson()).toList());
-    html.window.localStorage['labels'] = updatedLabelsJson;
+    html.window.localStorage[storageKey] = updatedLabelsJson;
   }
 
   @override
-  Future<List<LabelEntry>> loadLabelEntries() async {
-    final labelsJson = html.window.localStorage['labels'];
+  Future<List<LabelEntry>> loadLabelEntries(String projectId) async {
+    final storageKey = 'labels_project_$projectId'; // ✅ 프로젝트별 키 사용
+    final labelsJson = html.window.localStorage[storageKey];
+
     if (labelsJson != null) {
       final jsonData = jsonDecode(labelsJson);
       return (jsonData as List).map((e) => LabelEntry.fromJson(e as Map<String, dynamic>)).toList();
@@ -161,10 +157,11 @@ class StorageHelperImpl implements StorageHelperInterface {
   // LabelEntry IO
 
   @override
-  Future<void> saveLabelEntry(LabelEntry newEntry) async {
-    final labelsJson = html.window.localStorage['labels'];
-    List<LabelEntry> existingEntries = [];
+  Future<void> saveLabelEntry(String projectId, LabelEntry newEntry) async {
+    final storageKey = 'labels_project_$projectId'; // ✅ 프로젝트별 저장 키 사용
+    final labelsJson = html.window.localStorage[storageKey];
 
+    List<LabelEntry> existingEntries = [];
     if (labelsJson != null) {
       final jsonData = jsonDecode(labelsJson);
       existingEntries = (jsonData as List).map((e) => LabelEntry.fromJson(e)).toList();
@@ -181,8 +178,10 @@ class StorageHelperImpl implements StorageHelperInterface {
   }
 
   @override
-  Future<LabelEntry> loadLabelEntry(String dataPath) async {
-    final labelsJson = html.window.localStorage['labels'];
+  Future<LabelEntry> loadLabelEntry(String projectId, String dataPath) async {
+    final storageKey = 'labels_project_$projectId'; // ✅ 프로젝트별 키 적용
+    final labelsJson = html.window.localStorage[storageKey];
+
     if (labelsJson != null) {
       final jsonData = jsonDecode(labelsJson);
       final entries = (jsonData as List).map((e) => LabelEntry.fromJson(e)).toList();

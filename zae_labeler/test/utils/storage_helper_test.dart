@@ -46,10 +46,10 @@ void main() {
       );
 
       // Save the label entry
-      await storageHelper.saveLabelEntries([labelEntry]);
+      await storageHelper.saveLabelEntries('test_project', [labelEntry]);
 
       // Load the label entry
-      final loadedLabelEntries = await storageHelper.loadLabelEntries();
+      final loadedLabelEntries = await storageHelper.loadLabelEntries('test_project');
 
       expect(loadedLabelEntries.length, 1);
       expect(loadedLabelEntries[0].dataFilename, labelEntry.dataFilename);
