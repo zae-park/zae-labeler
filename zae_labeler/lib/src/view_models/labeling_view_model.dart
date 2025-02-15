@@ -138,6 +138,7 @@ class LabelingViewModel extends ChangeNotifier {
       case LabelingMode.singleClassification:
         return entry.singleClassification?.label == label;
       case LabelingMode.multiClassification:
+        if (entry.multiClassification == null) return false;
         return entry.multiClassification?.labels.contains(label) ?? false;
       default:
         return false;
