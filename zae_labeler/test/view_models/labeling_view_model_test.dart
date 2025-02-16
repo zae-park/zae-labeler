@@ -1,13 +1,37 @@
+// test/view_models/labeling_view_model_test.dart
+
 import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:zae_labeler/src/view_models/labeling_view_model.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
 import 'package:zae_labeler/src/models/data_model.dart';
+
 import '../mocks/mock_storage_helper.dart';
-import '../mocks/mock_path_provider.dart';
+
+// ✅ Mock을 위한 메서드 채널 설정
+void mockPathProvider() {
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+    const MethodChannel('plugins.flutter.io/path_provider'),
+    (MethodCall methodCall) async {
+      if (methodCall.method == 'getApplicationDocumentsDirectory') {
+        return Directory.systemTemp.path; // ✅ 가짜 임시 경로 반환
+      }
+      return null;
+    },
+  );
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  // ✅ 테스트 실행 전에 `path_provider` Mock 적용
+  setUpAll(() {
+    mockPathProvider();
+  });
 
   group('LabelingViewModel Tests', () {
     late Project project;
