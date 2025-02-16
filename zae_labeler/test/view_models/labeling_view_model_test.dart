@@ -1,10 +1,10 @@
-// test/view_models/labeling_view_model_test.dart
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zae_labeler/src/view_models/labeling_view_model.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
 import 'package:zae_labeler/src/models/data_model.dart';
-import '../mocks/mock_storage_helper.dart'; // ✅ Mock 클래스를 별도 파일에서 가져오기
+import '../mocks/mock_storage_helper.dart';
+import '../mocks/mock_path_provider.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -24,7 +24,7 @@ void main() {
         dataPaths: [
           DataPath(
             fileName: 'file1.json',
-            base64Content: base64Encode(utf8.encode('[{"dataFilename": "file1.json", "dataPath": "file1.json"}]')), // ✅ JSON 데이터로 변경
+            base64Content: base64Encode(utf8.encode('[{"dataFilename": "file1.json", "dataPath": "file1.json"}]')),
           ),
           DataPath(fileName: 'file2.csv', base64Content: 'MTAwLDIwMCwzMDA=')
         ],
@@ -47,50 +47,51 @@ void main() {
     });
 
     test('✅ loadCurrentData()가 올바르게 실행되는지 확인', () async {
+      await labelingVM.initialize();
       await labelingVM.loadCurrentData();
       expect(labelingVM.currentUnifiedData, isNotNull);
     });
 
     test('✅ 라벨 추가 테스트 (saveLabelEntry가 호출되는지 확인)', () async {
+      await labelingVM.initialize();
       await labelingVM.addOrUpdateLabel('A', LabelingMode.singleClassification);
-      expect(labelingVM.labelEntries[0].singleClassification?.label, 'A');
 
-      // ✅ Mock StorageHelper가 saveLabelEntry를 호출했는지 검증 가능하다면 추가
-      // verify(mockStorageHelper.saveLabelEntry(any)).called(1);
+      expect(labelingVM.labelEntries.any((entry) => entry.dataFilename == labelingVM.currentDataFileName && entry.singleClassification?.label == 'A'), isTrue);
     });
 
     test('✅ 라벨 선택 확인 테스트', () async {
+      await labelingVM.initialize();
       await labelingVM.addOrUpdateLabel('A', LabelingMode.singleClassification);
+
       expect(labelingVM.isLabelSelected('A', LabelingMode.singleClassification), isTrue);
       expect(labelingVM.isLabelSelected('B', LabelingMode.singleClassification), isFalse);
     });
 
-    // test('✅ moveNext() 비동기 실행 확인', () async {
-    //   await labelingVM.initialize();
+    test('✅ 라벨이 없는 경우 기본값 반환 확인', () async {
+      await labelingVM.initialize();
+      expect(labelingVM.isLabelSelected('X', LabelingMode.singleClassification), isFalse);
+    });
 
-    //   await labelingVM.moveNext(); // ✅ `await`을 추가하여 비동기 실행 대기
-    //   expect(labelingVM.currentIndex, 1);
-    //   expect(labelingVM.currentUnifiedData, isNotNull);
-    // });
+    test('✅ moveNext() 실행 후 loadCurrentData()가 호출되는지 확인', () async {
+      await labelingVM.initialize();
+      await labelingVM.moveNext();
 
-    // test('✅ movePrevious() 비동기 실행 확인', () async {
-    //   await labelingVM.initialize();
+      expect(labelingVM.currentUnifiedData, isNotNull);
+      expect(labelingVM.currentIndex, 1);
+    });
 
-    //   await labelingVM.movePrevious(); // ✅ `await`을 추가하여 비동기 실행 대기
-    //   expect(labelingVM.currentIndex, 0);
-    //   expect(labelingVM.currentUnifiedData, isNotNull);
-    // });
+    test('✅ movePrevious() 실행 후 loadCurrentData()가 호출되는지 확인', () async {
+      await labelingVM.initialize();
+      await labelingVM.movePrevious();
 
-    // test('✅ moveNext() 실행 후 loadCurrentData()가 호출되는지 확인', () async {
-    //   await labelingVM.initialize();
-    //   await labelingVM.moveNext();
-
-    //   expect(labelingVM.currentUnifiedData, isNotNull);
-    //   expect(labelingVM.currentIndex, 1);
-    // });
+      expect(labelingVM.currentUnifiedData, isNotNull);
+      expect(labelingVM.currentIndex, 0);
+    });
 
     test('✅ 라벨 다운로드 테스트', () async {
-      labelingVM.addOrUpdateLabel('A', LabelingMode.singleClassification);
+      await labelingVM.initialize();
+      await labelingVM.addOrUpdateLabel('A', LabelingMode.singleClassification);
+
       String zipPath = await labelingVM.downloadLabelsAsZip();
       expect(zipPath, 'mock_zip_path.zip');
     });
