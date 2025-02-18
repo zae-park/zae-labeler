@@ -9,26 +9,11 @@ void main() {
 
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
-        body: LabelingModeSelector.dropdown(
-          selectedMode: selectedMode,
-          onModeChanged: (newMode) {
-            selectedMode = newMode;
-          },
-        ),
+        body: LabelingModeSelector.dropdown(selectedMode: selectedMode, onModeChanged: (newMode) => selectedMode = newMode),
       ),
     ));
 
-    await tester.pumpAndSettle(); // ✅ UI가 완전히 로드될 때까지 기다림
-
-    // ✅ DropdownButtonFormField가 없을 경우, DropdownButton을 찾음
-    Finder dropdownFinder = find.byType(DropdownButtonFormField<LabelingMode>);
-    if (dropdownFinder.evaluate().isEmpty) {
-      dropdownFinder = find.byType(DropdownButton<LabelingMode>);
-    }
-
-    expect(dropdownFinder, findsOneWidget); // ✅ 드롭다운이 존재하는지 확인
-
-    await tester.tap(dropdownFinder);
+    await tester.tap(find.byType(DropdownButtonFormField));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Multi Classification').last);
