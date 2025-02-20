@@ -14,19 +14,19 @@ void main() {
     when(mockConfig.currentLocale).thenReturn('en');
     when(mockConfig.isDarkMode).thenReturn(false);
 
-    // await tester.pumpWidget(
-    //   ChangeNotifierProvider<AppConfiguration>.value(
-    //     value: mockConfig,
-    //     child: const MaterialApp(home: AppSettingsModal()),
-    //   ),
-    // );
+    await tester.pumpWidget(
+      ChangeNotifierProvider<AppConfiguration>.value(
+        value: mockConfig,
+        child: const MaterialApp(home: AppSettingsModal()),
+      ),
+    );
 
-    // expect(find.text('App Settings'), findsOneWidget);
+    expect(find.text('App Settings'), findsOneWidget);
 
-    // // Toggle Dark Mode
-    // await tester.tap(find.byType(Switch));
-    // await tester.pumpAndSettle();
+    // Toggle Dark Mode
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
 
-    // verify(mockConfig.toggleDarkMode()).called(1);
-  });
+    verify(mockConfig.toggleDarkMode()).called(1);
+  }, skip: true);
 }
