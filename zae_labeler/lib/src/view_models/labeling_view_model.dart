@@ -114,10 +114,12 @@ class LabelingViewModel extends ChangeNotifier {
         }
         break;
       case LabelingMode.segmentation:
-        existingEntry.segmentation = SegmentationLabel(
-          labeledAt: DateTime.now().toIso8601String(),
-          label: SegmentationData(indice: [label], classes: [label]),
-        );
+        existingEntry.segmentation ??= SegmentationLabel(labeledAt: DateTime.now().toIso8601String(), label: SegmentationData(segments: []));
+
+        final List<int> sampleIndices = [10, 20, 30];
+        existingEntry.segmentation!.label.segments.add(Segment(indices: sampleIndices, classLabel: label));
+
+        existingEntry.segmentation!.labeledAt = DateTime.now().toIso8601String();
         break;
     }
 
