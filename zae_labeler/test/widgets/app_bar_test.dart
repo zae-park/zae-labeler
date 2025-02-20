@@ -6,10 +6,13 @@ void main() {
   testWidgets('AppBar renders with settings button', (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(appBar: buildAppBar(tester.element(find.byType(MaterialApp)))),
+        home: Builder(
+          builder: (context) => Scaffold(appBar: buildAppBar(context)), // ✅ Builder 사용
+        ),
       ),
     );
 
-    expect(find.byIcon(Icons.settings), findsOneWidget);
+    await tester.pumpAndSettle(); // ✅ 이미지 로딩 대기
+    expect(find.byIcon(Icons.settings), findsOneWidget); // ✅ 설정 버튼이 렌더링되는지 확인
   });
 }

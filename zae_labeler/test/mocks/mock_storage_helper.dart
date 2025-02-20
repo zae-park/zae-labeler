@@ -38,7 +38,7 @@ class MockStorageHelper implements StorageHelperInterface {
   @override
   Future<void> saveLabelEntry(String projectId, LabelEntry labelEntry) async {
     List<LabelEntry> existingEntries = await loadLabelEntries(projectId);
-    int index = existingEntries.indexWhere((entry) => entry.dataPath == labelEntry.dataPath);
+    int index = existingEntries.indexWhere((entry) => entry.dataFilename == labelEntry.dataFilename);
     if (index != -1) {
       existingEntries[index] = labelEntry;
     } else {

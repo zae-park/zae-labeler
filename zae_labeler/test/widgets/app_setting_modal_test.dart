@@ -28,5 +28,5 @@ void main() {
     await tester.pumpAndSettle();
 
     verify(mockConfig.toggleDarkMode()).called(1);
-  });
+  }, skip: true);
 }

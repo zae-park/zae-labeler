@@ -25,7 +25,7 @@ class LabelingModeSelector extends StatelessWidget {
         final displayText = _getModeDisplayText(mode);
         return DropdownMenuItem<LabelingMode>(value: mode, child: Text(displayText));
       }).toList(),
-      onChanged: (LabelingMode? newMode) => newMode != null && onModeChanged(newMode),
+      onChanged: (LabelingMode? newMode) => newMode != null ? onModeChanged(newMode) : null,
     );
   }
 

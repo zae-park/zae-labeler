@@ -60,10 +60,12 @@ class LabelingViewModel extends ChangeNotifier {
   }
 
   LabelEntry get currentLabelEntry {
-    if (_currentIndex < 0 || _currentIndex >= project.labelEntries.length || project.labelEntries.isEmpty) {
-      return LabelEntry.empty(); // ✅ 빈 리스트인 경우 기본값 반환
-    }
-    return project.labelEntries[_currentIndex];
+    final dataFilename = currentUnifiedData.fileName; // ✅ 현재 파일 기반으로 검색
+
+    return project.labelEntries.firstWhere(
+      (entry) => entry.dataFilename == dataFilename,
+      orElse: () => LabelEntry.empty(),
+    );
   }
 
   Future<void> loadCurrentData() async {
@@ -76,23 +78,23 @@ class LabelingViewModel extends ChangeNotifier {
   }
 
   Future<void> addOrUpdateLabel(String label, LabelingMode mode) async {
-    final dataId = project.dataPaths[_currentIndex].fileName;
+    final dataFilename = currentUnifiedData.fileName; // ✅ 현재 파일 이름 기반으로 관리
 
-    // ✅ 기존 데이터 가져오기 (비동기 로드를 제거하고 즉시 참조)
     LabelEntry? existingEntry = project.labelEntries.firstWhere(
-      (entry) => entry.dataFilename == dataId,
+      (entry) => entry.dataFilename == dataFilename,
       orElse: () => LabelEntry.empty(),
     );
 
     if (existingEntry.dataFilename.isEmpty) {
       existingEntry = LabelEntry(
-        dataFilename: dataId,
-        dataPath: project.dataPaths[_currentIndex].filePath ?? '',
+        dataFilename: dataFilename,
+        dataPath: project.dataPaths.firstWhere((dp) => dp.fileName == dataFilename).filePath ?? '',
       );
       project.labelEntries.add(existingEntry);
     }
 
-    // ✅ 선택한 Label 반영
+    print("Saving label for data: $dataFilename, Mode: $mode, Label: $label");
+
     switch (mode) {
       case LabelingMode.singleClassification:
         existingEntry.singleClassification = SingleClassificationLabel(
@@ -109,25 +111,17 @@ class LabelingViewModel extends ChangeNotifier {
           existingEntry.multiClassification!.labels.remove(label);
         } else {
           existingEntry.multiClassification!.labels.add(label);
-          existingEntry.multiClassification!.labeledAt = DateTime.now().toIso8601String();
         }
         break;
       case LabelingMode.segmentation:
-        // TODO: Segmentation 라벨 추가 로직 필요
+        existingEntry.segmentation = SegmentationLabel(
+          labeledAt: DateTime.now().toIso8601String(),
+          label: SegmentationData(indice: [label], classes: [label]),
+        );
         break;
     }
 
-    // ✅ 변경된 데이터를 즉시 `labelEntries`에 반영
-    int index = project.labelEntries.indexWhere((entry) => entry.dataFilename == dataId);
-    if (index != -1) {
-      project.labelEntries[index] = existingEntry;
-    } else {
-      project.labelEntries.add(existingEntry);
-    }
-
-    notifyListeners(); // ✅ UI 즉시 업데이트
-
-    // ✅ 저장소에 비동기 저장 (UI 갱신을 늦추지 않도록 함)
+    notifyListeners();
     await storageHelper.saveLabelEntry(project.id, existingEntry);
   }
 
@@ -138,6 +132,7 @@ class LabelingViewModel extends ChangeNotifier {
       case LabelingMode.singleClassification:
         return entry.singleClassification?.label == label;
       case LabelingMode.multiClassification:
+        if (entry.multiClassification == null) return false;
         return entry.multiClassification?.labels.contains(label) ?? false;
       default:
         return false;
