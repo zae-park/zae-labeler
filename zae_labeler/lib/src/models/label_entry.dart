@@ -9,18 +9,16 @@ LabelEntry 클래스는 단일 분류, 다중 분류, 세그멘테이션과 같�
 /// Represents a label entry for a specific data file.
 /// Contains information about the file and its associated labels.
 class LabelEntry {
-  String dataFilename; // Name of the data file
-  String dataPath; // Path to the data file
-  SingleClassificationLabel? singleClassification; // Label for single classification tasks
-  MultiClassificationLabel? multiClassification; // Labels for multi-classification tasks
-  SegmentationLabel? segmentation; // Label for segmentation tasks
+  String dataFilename;
+  String dataPath;
+  SingleClassificationLabel? singleClassification;
+  MultiClassificationLabel? multiClassification;
+  SegmentationLabel? segmentation;
 
   LabelEntry({required this.dataFilename, required this.dataPath, this.singleClassification, this.multiClassification, this.segmentation});
 
-  // ✅ 기본값을 반환하는 empty() 메서드 추가
   factory LabelEntry.empty() => LabelEntry(dataFilename: '', dataPath: '', singleClassification: null, multiClassification: null, segmentation: null);
 
-  /// Converts the label entry into a JSON-compatible map.
   Map<String, dynamic> toJson() => {
         'data_filename': dataFilename,
         'data_path': dataPath,
@@ -29,10 +27,9 @@ class LabelEntry {
         'segmentation': segmentation?.toJson(),
       };
 
-  /// Creates a label entry from a JSON-compatible map.
   factory LabelEntry.fromJson(Map<String, dynamic> json) => LabelEntry(
-        dataFilename: json['data_filename'] ?? 'unknown.json', // ✅ 기본값 설정
-        dataPath: json['data_path'] ?? 'unknown_path', // ✅ 기본값 설정
+        dataFilename: json['data_filename'] ?? 'unknown.json',
+        dataPath: json['data_path'] ?? 'unknown_path',
         singleClassification: json['single_classification'] != null ? SingleClassificationLabel.fromJson(json['single_classification']) : null,
         multiClassification: json['multi_classification'] != null ? MultiClassificationLabel.fromJson(json['multi_classification']) : null,
         segmentation: json['segmentation'] != null ? SegmentationLabel.fromJson(json['segmentation']) : null,
@@ -89,19 +86,29 @@ class SegmentationLabel {
       );
 }
 
-/// Represents segmentation data, including indices and classes.
 class SegmentationData {
-  List<String> indice; // List of indices for segmentation
-  List<String> classes; // List of class labels for segmentation
+  List<Segment> segments; // Segmented regions and associated metadata
 
-  SegmentationData({required this.indice, required this.classes});
+  SegmentationData({required this.segments});
 
-  /// Converts the segmentation data into a JSON-compatible map.
-  Map<String, dynamic> toJson() => {'indice': indice, 'classes': classes};
+  Map<String, dynamic> toJson() => {'segments': segments.map((s) => s.toJson()).toList()};
 
-  /// Creates segmentation data from a JSON-compatible map.
   factory SegmentationData.fromJson(Map<String, dynamic> json) => SegmentationData(
-        indice: List<String>.from(json['indice']),
-        classes: List<String>.from(json['classes']),
+        segments: (json['segments'] as List).map((s) => Segment.fromJson(s)).toList(),
+      );
+}
+
+/// Represents a single segmented region with label information.
+class Segment {
+  List<int> indices; // Pixel or region indices for segmentation
+  String classLabel; // The class label assigned to this segment
+
+  Segment({required this.indices, required this.classLabel});
+
+  Map<String, dynamic> toJson() => {'indices': indices, 'class_label': classLabel};
+
+  factory Segment.fromJson(Map<String, dynamic> json) => Segment(
+        indices: List<int>.from(json['indices']),
+        classLabel: json['class_label'],
       );
 }
