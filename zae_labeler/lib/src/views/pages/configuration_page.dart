@@ -141,7 +141,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
         projectVM.saveProject(project);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${project.name} project has been created.')));
       } else {
-        projectVM.updateProject(project);
+        projectVM.updateProject(context, project);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${project.name} project has been updated.')));
       }
       Navigator.pop(context); // Navigate back after saving
