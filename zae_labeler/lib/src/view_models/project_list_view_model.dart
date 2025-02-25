@@ -55,6 +55,7 @@ class ProjectListViewModel extends ChangeNotifier {
 
         // 기존 라벨링 데이터 삭제 경고 후 작업 진행
         print("Labeling Mode 변경으로 이전 작업 내용이 삭제됩니다.");
+        _clearLabelingData(updatedProject.mode); // 새로운 모드에 맞게 데이터 초기화
       }
 
       _projects[index] = updatedProject;
@@ -88,5 +89,20 @@ class ProjectListViewModel extends ChangeNotifier {
           },
         ) ??
         false;
+  }
+
+  void _clearLabelingData(LabelingMode newMode) {
+    // 새 모드에 맞게 기존 라벨링 데이터를 초기화
+    if (newMode == LabelingMode.singleClassification || newMode == LabelingMode.multiClassification) {
+      // classification 모드로 변경 시 기존 데이터 초기화
+      for (var entry in _projects) {
+        entry.labelEntries.clear(); // 라벨 엔트리 초기화
+      }
+    } else if (newMode == LabelingMode.segmentation) {
+      // segmentation 모드로 변경 시 기존 데이터 초기화
+      for (var entry in _projects) {
+        entry.labelEntries.clear(); // 라벨 엔트리 초기화
+      }
+    }
   }
 }
