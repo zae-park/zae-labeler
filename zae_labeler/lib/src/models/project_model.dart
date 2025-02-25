@@ -18,10 +18,12 @@ enum LabelingMode { singleClassification, multiClassification, segmentation }
 class Project {
   String id; // 프로젝트 고유 ID
   String name; // 프로젝트 이름
-  LabelingMode mode; // 라벨링 모드
+
   List<String> classes; // 설정된 클래스 목록
   List<DataPath> dataPaths; // Web과 Native 모두 지원하는 데이터 경로
   List<LabelEntry> labelEntries; // 라벨 엔트리 관리
+
+  final LabelingMode mode; // 라벨링 모드
 
   Project({
     required this.id,
