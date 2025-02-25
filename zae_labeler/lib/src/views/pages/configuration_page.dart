@@ -178,7 +178,14 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
                       mode.toString();
                   return DropdownMenuItem<LabelingMode>(value: mode, child: Text(displayText));
                 }).toList(),
-                onChanged: (newMode) => newMode != null ? setState(() => _selectedMode = newMode) : null,
+                onChanged: (newMode) {
+                  if (widget.project == null) {
+                    setState(() => _selectedMode = newMode!);
+                  } else {
+                    // 기존 프로젝트에서 LabelingMode는 변경 불가
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Labeling Mode는 변경할 수 없습니다.')));
+                  }
+                },
               ),
               const SizedBox(height: 16),
               // Class list section
