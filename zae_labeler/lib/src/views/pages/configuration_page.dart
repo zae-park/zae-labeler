@@ -148,6 +148,33 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
     }
   }
 
+  Future<bool> _showLabelingModeChangeDialog(BuildContext context) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Labeling Mode 변경 경고'),
+              content: const Text('Labeling Mode를 변경하면 기존 작업 내용이 삭제될 수 있습니다. 변경하시겠습니까?'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context, false); // 변경 취소
+                  },
+                  child: const Text('취소'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context, true); // 변경 확인
+                  },
+                  child: const Text('확인'),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -178,13 +205,18 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
                       mode.toString();
                   return DropdownMenuItem<LabelingMode>(value: mode, child: Text(displayText));
                 }).toList(),
-                onChanged: (newMode) {
-                  if (widget.project == null) {
-                    setState(() => _selectedMode = newMode!);
-                  } else {
-                    // 기존 프로젝트에서 LabelingMode는 변경 불가
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Labeling Mode는 변경할 수 없습니다.')));
+                onChanged: (newMode) async {
+                  if (newMode == null) return;
+
+                  // ✅ 기존 프로젝트 수정 시에만 경고창 표시
+                  if (widget.project != null && _selectedMode != newMode) {
+                    bool confirmChange = await _showLabelingModeChangeDialog(context);
+                    if (!confirmChange) {
+                      return; // 사용자가 취소를 선택한 경우 변경하지 않음
+                    }
                   }
+
+                  setState(() => _selectedMode = newMode);
                 },
               ),
               const SizedBox(height: 16),
