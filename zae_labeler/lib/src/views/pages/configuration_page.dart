@@ -143,6 +143,7 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
       } else {
         projectVM.updateProject(context, project);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${project.name} project has been updated.')));
+        Navigator.pop(context); // Navigate back after saving
       }
       Navigator.pop(context); // Navigate back after saving
     }
@@ -156,18 +157,8 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
               title: const Text('Labeling Mode 변경 경고'),
               content: const Text('Labeling Mode를 변경하면 기존 작업 내용이 삭제될 수 있습니다. 변경하시겠습니까?'),
               actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context, false); // 변경 취소
-                  },
-                  child: const Text('취소'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context, true); // 변경 확인
-                  },
-                  child: const Text('확인'),
-                ),
+                TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('취소')),
+                TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('확인')),
               ],
             );
           },
