@@ -48,19 +48,32 @@ class ProjectListViewModel extends ChangeNotifier {
   Future<void> updateProject(BuildContext context, Project updatedProject) async {
     int index = _projects.indexWhere((project) => project.id == updatedProject.id);
     if (index != -1) {
+      Project existingProject = _projects[index];
+
       // ✅ LabelingMode 변경 시 경고창 표시
-      if (_projects[index].mode != updatedProject.mode) {
+      if (existingProject.mode != updatedProject.mode) {
         bool confirmChange = await _showLabelingModeChangeDialog(context);
-        if (!confirmChange) return; // 사용자가 취소를 선택하면 종료
+        if (!confirmChange) return; // 사용자가 취소하면 종료
 
         // 기존 라벨링 데이터 삭제 경고 후 작업 진행
-        print("Labeling Mode 변경으로 이전 작업 내용이 삭제됩니다.");
-        _clearLabelingData(updatedProject.mode); // 새로운 모드에 맞게 데이터 초기화
+        print("🛠 Labeling Mode 변경으로 이전 작업 내용이 삭제됩니다.");
+        _clearLabelingData(updatedProject.mode);
       }
 
-      _projects[index] = updatedProject;
-      await StorageHelper.instance.saveProjects(_projects); // 싱글톤 인스턴스를 통해 접근
-      notifyListeners();
+      // ✅ 새로운 Project 인스턴스를 생성하여 변경 적용
+      _projects[index] = Project(
+        id: updatedProject.id,
+        name: updatedProject.name,
+        mode: updatedProject.mode,
+        classes: updatedProject.classes,
+        dataPaths: updatedProject.dataPaths,
+        labelEntries: updatedProject.labelEntries,
+      );
+
+      await StorageHelper.instance.saveProjects(_projects);
+
+      print("📢 notifyListeners() 호출됨 - 프로젝트 변경 반영");
+      notifyListeners(); // ✅ UI 즉시 업데이트
     }
   }
 
@@ -92,16 +105,15 @@ class ProjectListViewModel extends ChangeNotifier {
   }
 
   void _clearLabelingData(LabelingMode newMode) {
+    print("🗑 기존 라벨링 데이터 초기화: $newMode");
     // 새 모드에 맞게 기존 라벨링 데이터를 초기화
     if (newMode == LabelingMode.singleClassification || newMode == LabelingMode.multiClassification) {
-      // classification 모드로 변경 시 기존 데이터 초기화
       for (var entry in _projects) {
-        entry.labelEntries.clear(); // 라벨 엔트리 초기화
+        entry.labelEntries.clear();
       }
     } else if (newMode == LabelingMode.segmentation) {
-      // segmentation 모드로 변경 시 기존 데이터 초기화
       for (var entry in _projects) {
-        entry.labelEntries.clear(); // 라벨 엔트리 초기화
+        entry.labelEntries.clear();
       }
     }
   }
