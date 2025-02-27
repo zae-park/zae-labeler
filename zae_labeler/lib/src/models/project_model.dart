@@ -6,13 +6,9 @@ Project 클래스는 프로젝트 ID, 이름, 라벨링 모드, 클래스 목록
 라벨 엔트리를 로드하고 JSON 형식으로 변환하거나 역직렬화할 수 있는 기능도 포함되어 있습니다.
 */
 
-import 'package:zae_labeler/src/utils/storage_helper.dart';
-
 import './data_model.dart';
 import './label_entry.dart';
-
-// 라벨링 모드 열거형
-enum LabelingMode { singleClassification, multiClassification, segmentation }
+import '../utils/storage_helper.dart';
 
 /// Represents a project with its metadata and data paths.
 class Project {
