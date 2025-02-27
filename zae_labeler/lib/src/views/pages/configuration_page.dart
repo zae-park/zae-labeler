@@ -124,27 +124,38 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
     }
   }
 
-  // Save the project to the ProjectViewModel
-  void _confirmProject() {
+  void _confirmProject() async {
     if (_formKey.currentState!.validate()) {
-      final project = Project(
-        id: widget.project?.id ?? const Uuid().v4(), // If new, generate new ID
+      final projectVM = Provider.of<ProjectListViewModel>(context, listen: false);
+
+      // 기존 프로젝트인지 확인
+      final isNewProject = widget.project == null;
+
+      final updatedProject = Project(
+        id: widget.project?.id ?? const Uuid().v4(),
         name: _nameController.text,
-        mode: _selectedMode,
+        mode: _selectedMode, // ✅ 변경된 LabelingMode 반영
         classes: _classes,
         dataPaths: _dataPaths,
       );
-      final projectVM = Provider.of<ProjectListViewModel>(context, listen: false);
 
-      if (widget.project == null) {
-        // If there is no project in parent widget (Project List Page).
-        projectVM.saveProject(project);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${project.name} project has been created.')));
-      } else {
-        projectVM.updateProject(context, project);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${project.name} project has been updated.')));
+      // ✅ 기존 프로젝트 수정 시 LabelingMode 변경 감지
+      if (!isNewProject && widget.project!.mode != _selectedMode) {
+        bool confirmChange = await _showLabelingModeChangeDialog(context);
+        if (!confirmChange) {}
       }
-      Navigator.pop(context); // Navigate back after saving
+
+      // ✅ ViewModel을 통해 프로젝트 저장
+      if (isNewProject) {
+        projectVM.saveProject(updatedProject);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${updatedProject.name} project has been created.')));
+      } else {
+        await projectVM.updateProject(context, updatedProject);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${updatedProject.name} project has been updated.')));
+      }
+
+      print("🔙 Navigator.pop 실행!");
+      Navigator.pop(context); // ✅ LabelingMode 변경 후 화면 닫기
     }
   }
 
@@ -197,15 +208,6 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
                 }).toList(),
                 onChanged: (newMode) async {
                   if (newMode == null) return;
-
-                  // ✅ 기존 프로젝트 수정 시에만 경고창 표시
-                  if (widget.project != null && _selectedMode != newMode) {
-                    bool confirmChange = await _showLabelingModeChangeDialog(context);
-                    if (!confirmChange) {
-                      return; // 사용자가 취소를 선택한 경우 변경하지 않음
-                    }
-                  }
-
                   setState(() => _selectedMode = newMode);
                 },
               ),
