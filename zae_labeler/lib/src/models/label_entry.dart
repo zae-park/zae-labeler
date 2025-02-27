@@ -1,5 +1,5 @@
 // lib/src/models/label_entry.dart
-
+import 'label_models/label_model.dart';
 import 'label_models/classification_label_model.dart';
 import 'label_models/segmentation_label_model.dart';
 
@@ -26,23 +26,26 @@ import 'label_models/segmentation_label_model.dart';
 /// print(mode.toString());  // "LabelingMode.singleClassification"
 /// ```
 enum LabelingMode {
-  /// ✅ 단일 분류 (Single Classification)
-  /// - 하나의 데이터 포인트에 대해 하나의 클래스를 지정.
-  singleClassification,
+  singleClassification, // 단일 분류 (Single Classification) : 하나의 데이터에 대해 하나의 클래스를 지정
+  multiClassification, // 다중 분류 (Multi Classification) : 하나의 데이터에 대해 여러 개의 클래스를 지정
+  singleClassSegmentation, // 단일 클래스 세그멘테이션 (Single Class Segmentation) : 이미지 또는 시계열 데이터 내 특정 역역에 대해 단일 클래스를 지정
+  multiClassSegmentation, // 다중 클래스 세그멘테이션 (Multi Class Segmentation) : 이미지 또는 시계열 데이터 내 특정 역역에 대해 다중 클래스를 지정
+}
 
-  /// ✅ 다중 분류 (Multi Classification)
-  /// - 하나의 데이터 포인트에 대해 여러 개의 클래스를 지정 가능.
-  multiClassification,
+/// ✅ `LabelingMode`와 JSON 변환 클래스를 매핑하는 맵.
+/// - 새로운 `LabelingMode`가 추가될 경우 이 맵에만 추가하면 됨.
+final Map<LabelingMode, Function(Map<String, dynamic>)> labelFactory = {
+  LabelingMode.singleClassification: (json) => SingleClassificationLabel.fromJson(json),
+  LabelingMode.multiClassification: (json) => MultiClassificationLabel.fromJson(json),
+  LabelingMode.singleClassSegmentation: (json) => SingleClassSegmentationLabel.fromJson(json),
+  LabelingMode.multiClassSegmentation: (json) => MultiClassSegmentationLabel.fromJson(json),
+};
 
-  /// ✅ 단일 클래스 세그멘테이션 (Single Class Segmentation)
-  /// - 이미지 또는 시계열 데이터에서 특정 영역을 분할하여 라벨링.
-  /// - 단일 클래스에 대한 세그멘테이션 정보만 저장.
-  singleClassSegmentation,
-
-  /// ✅ 다중 클래스 세그멘테이션 (Multi Class Segmentation)
-  /// - 이미지 또는 시계열 데이터에서 특정 영역을 분할하여 라벨링.
-  /// - 하나의 pixel, grid 등에 다중 클래스에 대한 세그멘테이션 정보만 저장.
-  multiClassSegmentation,
+/// ✅ `labelData`를 자동으로 생성하는 함수.
+/// - `LabelingMode`에 따라 올바른 라벨 클래스 인스턴스를 생성함.
+T? _createLabelData<T>(LabelingMode mode, Map<String, dynamic>? json) {
+  if (json == null) return null;
+  return labelFactory[mode]?.call(json) as T?;
 }
 
 /// ✅ 특정 데이터 파일에 대한 라벨 정보를 저장하는 클래스.
@@ -60,7 +63,7 @@ enum LabelingMode {
 ///
 /// print(entry.toJson());
 /// ```
-class LabelEntry<T> {
+class LabelEntry<T extends LabelModel> {
   final String dataFilename; // **데이터 파일 이름**
   final String dataPath; // **데이터 파일 경로**
   final LabelingMode labelingMode; // **해당 Entry가 속한 Labeling Mode**
@@ -81,32 +84,21 @@ class LabelEntry<T> {
         'data_filename': dataFilename,
         'data_path': dataPath,
         'labeling_mode': labelingMode.toString().split('.').last,
-        'label_data': labelData is SingleClassificationLabel
-            ? (labelData as SingleClassificationLabel).toJson()
-            : labelData is MultiClassificationLabel
-                ? (labelData as MultiClassificationLabel).toJson()
-                : labelData is SegmentationLabel
-                    ? (labelData as SegmentationLabel).toJson()
-                    : null,
+        'label_data': labelData?.toJson(),
       };
 
   /// **JSON 데이터를 기반으로 LabelEntry 객체를 생성하는 팩토리 메서드.**
   factory LabelEntry.fromJson(Map<String, dynamic> json) {
-    LabelingMode mode =
-        LabelingMode.values.firstWhere((e) => e.toString().split('.').last == json['labeling_mode'], orElse: () => LabelingMode.singleClassification);
-
-    dynamic labelData;
-    if (mode == LabelingMode.singleClassification) {
-      labelData = json['label_data'] != null ? SingleClassificationLabel.fromJson(json['label_data']) : null;
-    } else if (mode == LabelingMode.multiClassification) {
-      labelData = json['label_data'] != null ? MultiClassificationLabel.fromJson(json['label_data']) : null;
-    } else if (mode == LabelingMode.singleClassSegmentation) {
-      labelData = json['label_data'] != null ? SingleClassSegmentationLabel.fromJson(json['label_data']) : null;
-    } else if (mode == LabelingMode.multiClassSegmentation) {
-      labelData = json['label_data'] != null ? MultiClassSegmentationLabel.fromJson(json['label_data']) : null;
-    }
+    LabelingMode mode = LabelingMode.values.firstWhere(
+      (e) => e.toString().split('.').last == json['labeling_mode'],
+      orElse: () => LabelingMode.singleClassification,
+    );
 
     return LabelEntry(
-        dataFilename: json['data_filename'] ?? 'unknown.json', dataPath: json['data_path'] ?? 'unknown_path', labelingMode: mode, labelData: labelData);
+      dataFilename: json['data_filename'] ?? 'unknown.json',
+      dataPath: json['data_path'] ?? 'unknown_path',
+      labelingMode: mode,
+      labelData: _createLabelData(mode, json['label_data']),
+    );
   }
 }
