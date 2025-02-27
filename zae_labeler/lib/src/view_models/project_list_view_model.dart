@@ -50,24 +50,19 @@ class ProjectListViewModel extends ChangeNotifier {
     if (index != -1) {
       Project existingProject = _projects[index];
 
-      // ✅ LabelingMode 변경 시 경고창 표시
+      // ✅ LabelingMode 변경 감지
       if (existingProject.mode != updatedProject.mode) {
-        bool confirmChange = await _showLabelingModeChangeDialog(context);
-        if (!confirmChange) return; // 사용자가 취소하면 종료
-
-        // 기존 라벨링 데이터 삭제 경고 후 작업 진행
-        print("🛠 Labeling Mode 변경으로 이전 작업 내용이 삭제됩니다.");
-        _clearLabelingData(updatedProject.mode);
+        existingProject.labelEntries.clear();
       }
 
-      // ✅ 새로운 Project 인스턴스를 생성하여 변경 적용
+      // ✅ 기존 객체를 수정하지 않고, 새로운 `Project` 객체를 생성하여 저장
       _projects[index] = Project(
-        id: updatedProject.id,
+        id: existingProject.id,
         name: updatedProject.name,
         mode: updatedProject.mode,
         classes: updatedProject.classes,
         dataPaths: updatedProject.dataPaths,
-        labelEntries: updatedProject.labelEntries,
+        labelEntries: existingProject.labelEntries, // ✅ 초기화된 데이터 반영
       );
 
       await StorageHelper.instance.saveProjects(_projects);
@@ -84,24 +79,6 @@ class ProjectListViewModel extends ChangeNotifier {
       if (list1[i].id != list2[i].id) return false;
     }
     return true;
-  }
-
-  // 알림창 띄우는 메소드
-  Future<bool> _showLabelingModeChangeDialog(BuildContext context) async {
-    return await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Labeling Mode 변경 경고'),
-              content: const Text('Labeling Mode를 변경하면 기존 작업 내용이 삭제됩니다. 변경하시겠습니까?'),
-              actions: [
-                TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('취소')),
-                TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('확인')),
-              ],
-            );
-          },
-        ) ??
-        false;
   }
 
   void _clearLabelingData(LabelingMode newMode) {
