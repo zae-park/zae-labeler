@@ -1,118 +1,122 @@
 // lib/src/models/label_entry.dart
 
+import 'label_models/classification_label_model.dart';
+import 'label_models/segmentation_label_model.dart';
+
 /*
-이 파일은 데이터 파일에 대한 라벨 정보를 정의합니다.
-LabelEntry 클래스는 단일 분류, 다중 분류, 세그멘테이션과 같은 다양한 라벨링 작업을 지원합니다.
-라벨 엔트리와 관련된 JSON 직렬화 및 역직렬화를 포함합니다.
+이 파일은 라벨링 모드를 정의하는 열거형과 데이터 파일에 대한 라벨 정보의 정의를 포함합니다.
+  - LabelingMode는 프로젝트 설정 및 라벨링 작업에서 사용됩니다.
+  - LabelEntry 클래스는 단일 분류(Single Classification), 다중 분류(Multi Classification), 세그멘테이션(Segmentation) 등의 작업을 지원하며,
+    현재 프로젝트의 LabelingMode에 따라 단일 라벨 정보만 저장합니다.
 */
 
-/// 특정 데이터 파일에 대한 라벨 정보를 나타내는 클래스.
-/// - 단일 분류(Single Classification), 다중 분류(Multi Classification), 세그멘테이션(Segmentation) 등의 라벨을 저장할 수 있음.
+/// ✅ 라벨링 모드 열거형 (Labeling Mode Enum)
+/// - 프로젝트와 라벨링 작업에서 사용되는 주요 모드를 정의함.
+///
+/// 📌 **LabelingMode 종류**
+/// ```dart
+/// LabelingMode.singleClassification  // 단일 분류
+/// LabelingMode.multiClassification   // 다중 분류
+/// LabelingMode.segmentation          // 세그멘테이션
+/// ```
+///
+/// 📌 **예제 코드**
+/// ```dart
+/// LabelingMode mode = LabelingMode.singleClassification;
+/// print(mode.toString());  // "LabelingMode.singleClassification"
+/// ```
+enum LabelingMode {
+  /// ✅ 단일 분류 (Single Classification)
+  /// - 하나의 데이터 포인트에 대해 하나의 클래스를 지정.
+  singleClassification,
+
+  /// ✅ 다중 분류 (Multi Classification)
+  /// - 하나의 데이터 포인트에 대해 여러 개의 클래스를 지정 가능.
+  multiClassification,
+
+  /// ✅ 세그멘테이션 (Segmentation)
+  /// - 이미지 또는 시계열 데이터에서 특정 영역을 분할하여 라벨링.
+  segmentation,
+}
+
+/// ✅ 특정 데이터 파일에 대한 라벨 정보를 저장하는 클래스.
+/// - 프로젝트의 `LabelingMode`에 따라 하나의 라벨만 포함.
+/// - 단일 분류, 다중 분류 또는 세그멘테이션 중 하나만 저장됨.
+///
+/// 📌 **예제 코드**
+/// ```dart
+/// LabelEntry entry = LabelEntry(
+///   dataFilename: "image1.png",
+///   dataPath: "/dataset/images/image1.png",
+///   labelingMode: LabelingMode.singleClassification,
+///   label: SingleClassificationLabel(labeledAt: "2024-06-10T12:00:00Z", label: "cat"),
+/// );
+///
+/// print(entry.toJson());
+/// ```
 class LabelEntry {
-  String dataFilename; // 데이터 파일 이름
-  String dataPath; // 데이터 파일 경로
-  SingleClassificationLabel? singleClassification; // 단일 분류 라벨
-  MultiClassificationLabel? multiClassification; // 다중 분류 라벨
-  SegmentationLabel? segmentation; // 세그멘테이션 라벨
+  /// **데이터 파일 이름**
+  /// - 라벨이 적용된 데이터 파일의 이름.
+  final String dataFilename;
 
-  LabelEntry({required this.dataFilename, required this.dataPath, this.singleClassification, this.multiClassification, this.segmentation});
+  /// **데이터 파일 경로**
+  /// - 해당 데이터 파일이 저장된 경로.
+  final String dataPath;
 
-  /// 빈 LabelEntry 객체를 생성하는 팩토리 메서드.
-  factory LabelEntry.empty() => LabelEntry(dataFilename: '', dataPath: '', singleClassification: null, multiClassification: null, segmentation: null);
+  /// **해당 Entry가 속한 Labeling Mode**
+  /// - 프로젝트 생성 시 설정된 LabelingMode를 기반으로 동작.
+  final LabelingMode labelingMode;
 
-  /// LabelEntry 객체를 JSON 형식으로 변환.
+  /// **단일 라벨 데이터 (LabelingMode에 따라 타입이 달라짐)**
+  /// - `labelingMode`가 `singleClassification`이면 `SingleClassificationLabel` 저장.
+  /// - `labelingMode`가 `multiClassification`이면 `MultiClassificationLabel` 저장.
+  /// - `labelingMode`가 `segmentation`이면 `SegmentationLabel` 저장.
+  final dynamic label;
+
+  LabelEntry({
+    required this.dataFilename,
+    required this.dataPath,
+    required this.labelingMode,
+    required this.label,
+  });
+
+  /// **빈 LabelEntry 객체를 생성하는 팩토리 메서드.**
+  factory LabelEntry.empty() => LabelEntry(
+        dataFilename: '',
+        dataPath: '',
+        labelingMode: LabelingMode.singleClassification,
+        label: null,
+      );
+
+  /// **LabelEntry 객체를 JSON 형식으로 변환.**
   Map<String, dynamic> toJson() => {
         'data_filename': dataFilename,
         'data_path': dataPath,
-        'single_classification': singleClassification?.toJson(),
-        'multi_classification': multiClassification?.toJson(),
-        'segmentation': segmentation?.toJson(),
+        'labeling_mode': labelingMode.toString().split('.').last,
+        'label': label?.toJson(),
       };
 
-  /// JSON 데이터를 기반으로 LabelEntry 객체를 생성하는 팩토리 메서드.
-  factory LabelEntry.fromJson(Map<String, dynamic> json) => LabelEntry(
-        dataFilename: json['data_filename'] ?? 'unknown.json',
-        dataPath: json['data_path'] ?? 'unknown_path',
-        singleClassification: json['single_classification'] != null ? SingleClassificationLabel.fromJson(json['single_classification']) : null,
-        multiClassification: json['multi_classification'] != null ? MultiClassificationLabel.fromJson(json['multi_classification']) : null,
-        segmentation: json['segmentation'] != null ? SegmentationLabel.fromJson(json['segmentation']) : null,
-      );
-}
+  /// **JSON 데이터를 기반으로 LabelEntry 객체를 생성하는 팩토리 메서드.**
+  factory LabelEntry.fromJson(Map<String, dynamic> json) {
+    LabelingMode mode = LabelingMode.values.firstWhere(
+      (e) => e.toString().split('.').last == json['labeling_mode'],
+      orElse: () => LabelingMode.singleClassification, // 기본값 설정
+    );
 
-/// ✅ 단일 분류(Single Classification) 라벨을 나타내는 클래스.
-/// - 특정 시간에 하나의 클래스 라벨이 부여됨.
-class SingleClassificationLabel {
-  String labeledAt; // 라벨이 부여된 시간 (ISO 8601 형식)
-  String label; // 선택된 라벨 (클래스)
+    dynamic labelData;
+    if (mode == LabelingMode.singleClassification) {
+      labelData = json['label'] != null ? SingleClassificationLabel.fromJson(json['label']) : null;
+    } else if (mode == LabelingMode.multiClassification) {
+      labelData = json['label'] != null ? MultiClassificationLabel.fromJson(json['label']) : null;
+    } else if (mode == LabelingMode.segmentation) {
+      labelData = json['label'] != null ? SingleClassSegmentationLabel.fromJson(json['label']) : null;
+    }
 
-  SingleClassificationLabel({required this.labeledAt, required this.label});
-
-  /// SingleClassificationLabel 객체를 JSON 형식으로 변환.
-  Map<String, dynamic> toJson() => {'labeled_at': labeledAt, 'label': label};
-
-  /// JSON 데이터를 기반으로 SingleClassificationLabel 객체를 생성하는 팩토리 메서드.
-  factory SingleClassificationLabel.fromJson(Map<String, dynamic> json) => SingleClassificationLabel(labeledAt: json['labeled_at'], label: json['label']);
-}
-
-/// ✅ 다중 분류(Multi Classification) 라벨을 나타내는 클래스.
-/// - 특정 시간에 여러 개의 클래스 라벨이 부여될 수 있음.
-class MultiClassificationLabel {
-  String labeledAt; // 라벨이 부여된 시간 (ISO 8601 형식)
-  List<String> labels; // 선택된 다중 라벨 리스트
-
-  MultiClassificationLabel({required this.labeledAt, required this.labels});
-
-  /// MultiClassificationLabel 객체를 JSON 형식으로 변환.
-  Map<String, dynamic> toJson() => {'labeled_at': labeledAt, 'labels': labels};
-
-  /// JSON 데이터를 기반으로 MultiClassificationLabel 객체를 생성하는 팩토리 메서드.
-  factory MultiClassificationLabel.fromJson(Map<String, dynamic> json) =>
-      MultiClassificationLabel(labeledAt: json['labeled_at'], labels: List<String>.from(json['labels']));
-}
-
-/// ✅ 세그멘테이션(Segmentation) 라벨을 나타내는 클래스.
-/// - 이미지나 시퀀스 데이터에서 특정 영역(픽셀 또는 바운딩 박스 등)을 분할하여 라벨링.
-class SegmentationLabel {
-  String labeledAt; // 라벨이 부여된 시간 (ISO 8601 형식)
-  SegmentationData label; // 세그멘테이션 데이터
-
-  SegmentationLabel({required this.labeledAt, required this.label});
-
-  /// SegmentationLabel 객체를 JSON 형식으로 변환.
-  Map<String, dynamic> toJson() => {'labeled_at': labeledAt, 'label': label.toJson()};
-
-  /// JSON 데이터를 기반으로 SegmentationLabel 객체를 생성하는 팩토리 메서드.
-  factory SegmentationLabel.fromJson(Map<String, dynamic> json) =>
-      SegmentationLabel(labeledAt: json['labeled_at'], label: SegmentationData.fromJson(json['label']));
-}
-
-/// ✅ 세그멘테이션(Segmentation) 데이터를 저장하는 클래스.
-/// - 여러 개의 세그먼트(Segment)를 포함하여 이미지 또는 데이터의 특정 영역을 저장함.
-class SegmentationData {
-  List<Segment> segments; // 개별 세그먼트 목록
-
-  SegmentationData({required this.segments});
-
-  /// SegmentationData 객체를 JSON 형식으로 변환.
-  Map<String, dynamic> toJson() => {'segments': segments.map((s) => s.toJson()).toList()};
-
-  /// JSON 데이터를 기반으로 SegmentationData 객체를 생성하는 팩토리 메서드.
-  factory SegmentationData.fromJson(Map<String, dynamic> json) => SegmentationData(
-        segments: (json['segments'] as List).map((s) => Segment.fromJson(s)).toList(),
-      );
-}
-
-/// ✅ 개별 세그먼트(Segment)를 나타내는 클래스.
-/// - 특정 영역(픽셀 또는 바운딩 박스)과 해당 영역에 대한 클래스 정보를 저장함.
-class Segment {
-  List<int> indices; // 픽셀 또는 영역 인덱스 (예: 이미지의 픽셀 좌표)
-  String classLabel; // 이 세그먼트에 할당된 클래스 라벨
-
-  Segment({required this.indices, required this.classLabel});
-
-  /// Segment 객체를 JSON 형식으로 변환.
-  Map<String, dynamic> toJson() => {'indices': indices, 'class_label': classLabel};
-
-  /// JSON 데이터를 기반으로 Segment 객체를 생성하는 팩토리 메서드.
-  factory Segment.fromJson(Map<String, dynamic> json) => Segment(indices: List<int>.from(json['indices']), classLabel: json['class_label']);
+    return LabelEntry(
+      dataFilename: json['data_filename'] ?? 'unknown.json',
+      dataPath: json['data_path'] ?? 'unknown_path',
+      labelingMode: mode,
+      label: labelData,
+    );
+  }
 }
