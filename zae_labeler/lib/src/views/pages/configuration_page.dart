@@ -21,10 +21,10 @@ class ConfigureProjectPage extends StatefulWidget {
   const ConfigureProjectPage({Key? key, this.project}) : super(key: key);
 
   @override
-  _ConfigureProjectPageState createState() => _ConfigureProjectPageState();
+  ConfigureProjectPageState createState() => ConfigureProjectPageState();
 }
 
-class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
+class ConfigureProjectPageState extends State<ConfigureProjectPage> {
   // Form key for validating input fields
   final _formKey = GlobalKey<FormState>();
 
@@ -106,8 +106,6 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
             _dataPaths.add(DataPath(fileName: file.name, base64Content: base64Encode(file.bytes ?? [])));
           }
         });
-      } else {
-        print('No files selected');
       }
     } else {
       // Native: Use directory picker
@@ -127,35 +125,41 @@ class _ConfigureProjectPageState extends State<ConfigureProjectPage> {
   void _confirmProject() async {
     if (_formKey.currentState!.validate()) {
       final projectVM = Provider.of<ProjectListViewModel>(context, listen: false);
-
-      // 기존 프로젝트인지 확인
       final isNewProject = widget.project == null;
 
       final updatedProject = Project(
         id: widget.project?.id ?? const Uuid().v4(),
         name: _nameController.text,
-        mode: _selectedMode, // ✅ 변경된 LabelingMode 반영
+        mode: _selectedMode,
         classes: _classes,
         dataPaths: _dataPaths,
       );
 
-      // ✅ 기존 프로젝트 수정 시 LabelingMode 변경 감지
       if (!isNewProject && widget.project!.mode != _selectedMode) {
         bool confirmChange = await _showLabelingModeChangeDialog(context);
-        if (!confirmChange) {}
+        if (!confirmChange || !mounted) return;
       }
 
-      // ✅ ViewModel을 통해 프로젝트 저장
       if (isNewProject) {
         projectVM.saveProject(updatedProject);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${updatedProject.name} project has been created.')));
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${updatedProject.name} project has been created.')),
+        );
       } else {
+        debugPrint("📝 프로젝트 업데이트 시도: ${updatedProject.name}");
         await projectVM.updateProject(context, updatedProject);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${updatedProject.name} project has been updated.')));
+        debugPrint("✅ 프로젝트 업데이트 완료");
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${updatedProject.name} project has been updated.')),
+        );
       }
 
-      print("🔙 Navigator.pop 실행!");
-      Navigator.pop(context); // ✅ LabelingMode 변경 후 화면 닫기
+      if (!mounted) return;
+      debugPrint("🔙 Navigator.pop 실행!");
+      Navigator.pop(context);
     }
   }
 
