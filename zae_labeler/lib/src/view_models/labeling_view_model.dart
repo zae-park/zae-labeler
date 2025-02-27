@@ -2,6 +2,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/label_entry.dart';
+import '../models/label_models/classification_label_model.dart';
+import '../models/label_models/label_model.dart';
+import '../models/label_models/segmentation_label_model.dart';
 import '../models/project_model.dart';
 import '../models/data_model.dart';
 import '../utils/proxy_storage_helper/interface_storage_helper.dart';
@@ -19,6 +22,7 @@ class LabelingViewModel extends ChangeNotifier {
   UnifiedData _currentUnifiedData = UnifiedData.empty();
 
   final Set<String> selectedLabels = {};
+  Map<String, LabelEntry> _labelEntryCache = {}; // ✅ 캐싱 추가
 
   // Getter & Setter
   bool get isInitialized => _isInitialized;
@@ -46,6 +50,9 @@ class LabelingViewModel extends ChangeNotifier {
       project.labelEntries = await project.loadLabelEntries();
     }
 
+    // ✅ 캐싱 초기화
+    _labelEntryCache = {for (var entry in project.labelEntries) entry.dataFilename: entry};
+
     // ✅ 데이터 로딩 최적화
     if (_memoryOptimized) {
       _unifiedDataList.clear();
@@ -61,11 +68,22 @@ class LabelingViewModel extends ChangeNotifier {
 
   LabelEntry get currentLabelEntry {
     final dataFilename = currentUnifiedData.fileName; // ✅ 현재 파일 기반으로 검색
+    return project.labelEntries.firstWhere((entry) => entry.dataFilename == dataFilename, orElse: () => LabelEntry.empty(project.mode));
+  }
 
-    return project.labelEntries.firstWhere(
-      (entry) => entry.dataFilename == dataFilename,
-      orElse: () => LabelEntry.empty(),
-    );
+  /// ✅ 현재 파일의 `LabelEntry`를 가져오거나 생성
+  LabelEntry getOrCreateLabelEntry() {
+    final dataFilename = currentUnifiedData.fileName;
+
+    if (_labelEntryCache.containsKey(dataFilename)) {
+      return _labelEntryCache[dataFilename]!;
+    }
+
+    final dataPath = project.dataPaths.firstWhere((dp) => dp.fileName == dataFilename).filePath ?? '';
+    LabelEntry<LabelModel> newEntry = LabelEntry<LabelModel>(dataFilename: dataFilename, dataPath: dataPath, labelingMode: project.mode, labelData: null);
+    project.labelEntries.add(newEntry);
+    _labelEntryCache[dataFilename] = newEntry;
+    return newEntry;
   }
 
   Future<void> loadCurrentData() async {
@@ -78,75 +96,61 @@ class LabelingViewModel extends ChangeNotifier {
   }
 
   Future<void> addOrUpdateLabel(String label, LabelingMode mode) async {
-    final dataFilename = currentUnifiedData.fileName; // ✅ 현재 파일 이름 기반으로 관리
+    final entry = getOrCreateLabelEntry();
 
-    LabelEntry? existingEntry = project.labelEntries.firstWhere(
-      (entry) => entry.dataFilename == dataFilename,
-      orElse: () => LabelEntry.empty(),
-    );
-
-    if (existingEntry.dataFilename.isEmpty) {
-      existingEntry = LabelEntry(
-        dataFilename: dataFilename,
-        dataPath: project.dataPaths.firstWhere((dp) => dp.fileName == dataFilename).filePath ?? '',
-      );
-      project.labelEntries.add(existingEntry);
+    // ✅ Label 업데이트 로직 간결화
+    final updatedLabel = _updateLabel(entry, mode, label);
+    if (updatedLabel) {
+      notifyListeners();
+      await storageHelper.saveLabelEntry(project.id, entry);
     }
-
-    print("Saving label for data: $dataFilename, Mode: $mode, Label: $label");
-
-    switch (mode) {
-      case LabelingMode.singleClassification:
-        existingEntry.singleClassification = SingleClassificationLabel(
-          labeledAt: DateTime.now().toIso8601String(),
-          label: label,
-        );
-        break;
-      case LabelingMode.multiClassification:
-        existingEntry.multiClassification ??= MultiClassificationLabel(
-          labeledAt: DateTime.now().toIso8601String(),
-          labels: [],
-        );
-        if (existingEntry.multiClassification!.labels.contains(label)) {
-          existingEntry.multiClassification!.labels.remove(label);
-        } else {
-          existingEntry.multiClassification!.labels.add(label);
-        }
-        break;
-      case LabelingMode.segmentation:
-        existingEntry.segmentation ??= SegmentationLabel(labeledAt: DateTime.now().toIso8601String(), label: SegmentationData(segments: []));
-
-        final List<int> sampleIndices = [10, 20, 30];
-        existingEntry.segmentation!.label.segments.add(Segment(indices: sampleIndices, classLabel: label));
-
-        existingEntry.segmentation!.labeledAt = DateTime.now().toIso8601String();
-        break;
-    }
-
-    notifyListeners();
-    await storageHelper.saveLabelEntry(project.id, existingEntry);
   }
 
-  bool isLabelSelected(String label, LabelingMode mode) {
-    LabelEntry entry = currentLabelEntry; // ✅ 최신 LabelEntry 가져오기
-
+  /// ✅ `LabelingMode`에 따라 `labelData`를 업데이트하는 함수
+  bool _updateLabel(LabelEntry entry, LabelingMode mode, String label) {
     switch (mode) {
       case LabelingMode.singleClassification:
-        return entry.singleClassification?.label == label;
+        entry.labelData = SingleClassificationLabel(labeledAt: DateTime.now().toIso8601String(), label: label);
+        return true;
+
       case LabelingMode.multiClassification:
-        if (entry.multiClassification == null) return false;
-        return entry.multiClassification?.labels.contains(label) ?? false;
-      default:
-        return false;
+        entry.labelData ??= MultiClassificationLabel(labeledAt: DateTime.now().toIso8601String(), labels: []);
+        final labelList = (entry.labelData as MultiClassificationLabel).labels;
+        labelList.contains(label) ? labelList.remove(label) : labelList.add(label);
+        return true;
+
+      case LabelingMode.singleClassSegmentation:
+      case LabelingMode.multiClassSegmentation:
+        entry.labelData ??= SingleClassSegmentationLabel(
+          labeledAt: DateTime.now().toIso8601String(),
+          labelData: SegmentationData(segments: []),
+        );
+
+        final List<int> sampleIndices = [10, 20, 30]; // ✅ 예제 인덱스
+        final segmentationLabel = entry.labelData as SingleClassSegmentationLabel;
+
+        // ✅ 중복 방지
+        if (!segmentationLabel.labelData.segments.any((s) => s.indices == sampleIndices)) {
+          segmentationLabel.labelData.segments.add(Segment(indices: sampleIndices, classLabel: label));
+        }
+        return true;
     }
+  }
+
+  /// ✅ `LabelingMode`에 따라 라벨이 선택되었는지 확인하는 함수
+  bool isLabelSelected(String label, LabelingMode mode) {
+    final entry = getOrCreateLabelEntry();
+
+    final labelCheckers = {
+      LabelingMode.singleClassification: () => (entry.labelData as SingleClassificationLabel?)?.label == label,
+      LabelingMode.multiClassification: () => (entry.labelData as MultiClassificationLabel?)?.labels.contains(label) ?? false,
+    };
+
+    return labelCheckers[mode]?.call() ?? false;
   }
 
   void toggleLabel(String label, LabelingMode mode) {
-    if (isLabelSelected(label, mode)) {
-      selectedLabels.remove(label);
-    } else {
-      selectedLabels.add(label);
-    }
+    isLabelSelected(label, mode) ? selectedLabels.remove(label) : selectedLabels.add(label);
     notifyListeners();
   }
 
