@@ -13,9 +13,9 @@ class SingleClassSegmentationLabel extends SegmentationLabel {
 
   @override
   Map<String, dynamic> toJson() => {'labeled_at': labeledAt, 'label_data': labelData.toJson()};
-
   factory SingleClassSegmentationLabel.fromJson(Map<String, dynamic> json) =>
       SingleClassSegmentationLabel(labeledAt: json['labeled_at'], labelData: SegmentationData.fromJson(json['label_data']));
+  factory SingleClassSegmentationLabel.empty() => SingleClassSegmentationLabel(labeledAt: '', labelData: SegmentationData(segments: []));
 }
 
 /// ✅ 다중 클래스 세그멘테이션 (Multi-Class Segmentation) - 추후 업데이트
@@ -24,9 +24,9 @@ class MultiClassSegmentationLabel extends SegmentationLabel {
 
   @override
   Map<String, dynamic> toJson() => {'labeled_at': labeledAt, 'label_data': labelData.toJson()};
-
   factory MultiClassSegmentationLabel.fromJson(Map<String, dynamic> json) =>
       MultiClassSegmentationLabel(labeledAt: json['labeled_at'], labelData: SegmentationData.fromJson(json['label_data']));
+  factory MultiClassSegmentationLabel.empty() => MultiClassSegmentationLabel(labeledAt: '', labelData: SegmentationData(segments: []));
 }
 
 /// ✅ 세그멘테이션 데이터 구조를 저장하는 클래스.

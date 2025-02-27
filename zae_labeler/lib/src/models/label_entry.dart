@@ -67,16 +67,27 @@ class LabelEntry<T extends LabelModel> {
   final String dataFilename; // **데이터 파일 이름**
   final String dataPath; // **데이터 파일 경로**
   final LabelingMode labelingMode; // **해당 Entry가 속한 Labeling Mode**
-
-  /// **라벨 데이터 (T 타입)**
-  /// - `LabelingMode`에 따라 `T`는 `SingleClassificationLabel`, `MultiClassificationLabel`, `SegmentationLabel` 중 하나.
-  final T? labelData;
+  final T labelData; // **라벨 데이터 (T 타입)**
 
   LabelEntry({required this.dataFilename, required this.dataPath, required this.labelingMode, required this.labelData});
 
+  /// ✅ `LabelingMode`에 따른 빈 LabelModel 반환 함수
+  static LabelModel _getEmptyLabel(LabelingMode mode) {
+    switch (mode) {
+      case LabelingMode.singleClassification:
+        return SingleClassificationLabel.empty();
+      case LabelingMode.multiClassification:
+        return MultiClassificationLabel.empty();
+      case LabelingMode.singleClassSegmentation:
+        return SingleClassSegmentationLabel.empty();
+      case LabelingMode.multiClassSegmentation:
+        return MultiClassSegmentationLabel.empty();
+    }
+  }
+
   /// **빈 LabelEntry 객체를 생성하는 팩토리 메서드.**
   factory LabelEntry.empty(LabelingMode mode) {
-    return LabelEntry(dataFilename: '', dataPath: '', labelingMode: mode, labelData: null);
+    return LabelEntry(dataFilename: '', dataPath: '', labelingMode: mode, labelData: _getEmptyLabel(mode) as T);
   }
 
   /// **LabelEntry 객체를 JSON 형식으로 변환.**
@@ -84,7 +95,7 @@ class LabelEntry<T extends LabelModel> {
         'data_filename': dataFilename,
         'data_path': dataPath,
         'labeling_mode': labelingMode.toString().split('.').last,
-        'label_data': labelData?.toJson(),
+        'label_data': labelData.toJson(),
       };
 
   /// **JSON 데이터를 기반으로 LabelEntry 객체를 생성하는 팩토리 메서드.**
