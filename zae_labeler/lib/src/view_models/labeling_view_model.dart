@@ -154,8 +154,8 @@ class LabelingViewModel extends ChangeNotifier {
     int newIndex = _currentIndex + delta;
     if (newIndex >= 0 && newIndex < project.dataPaths.length) {
       _currentIndex = newIndex;
-      notifyListeners();
       await loadCurrentData();
+      notifyListeners();
     }
   }
 
