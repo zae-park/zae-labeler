@@ -156,7 +156,7 @@ class LabelingPageState extends State<LabelingPage> {
                     onKeyEvent: (event) => _handleKeyEvent(event, labelingVM),
                     child: Column(
                       children: [
-                        LabelingModeSelector.button(selectedMode: _selectedMode, onModeChanged: (newMode) => setState(() => _selectedMode = newMode)),
+                        LabelingModeSelector.button(selectedMode: _selectedMode, onModeChanged: (newMode) => {}),
                         const Divider(),
                         Expanded(child: Padding(padding: const EdgeInsets.all(16.0), child: _buildViewer(labelingVM))),
                         Padding(
