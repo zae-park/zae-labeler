@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../models/label_entry.dart';
 import '../../utils/storage_helper.dart';
 import '../../views/widgets/core/buttons.dart';
 import '../../models/data_model.dart';
