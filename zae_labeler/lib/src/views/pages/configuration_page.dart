@@ -14,6 +14,7 @@ import '../../models/label_entry.dart';
 import '../../models/project_model.dart';
 import '../../models/data_model.dart';
 import '../../view_models/project_list_view_model.dart';
+import '../widgets/labeling_mode_selector.dart';
 
 class ConfigureProjectPage extends StatefulWidget {
   // Project to be edited, or null for creating a new one
@@ -199,24 +200,7 @@ class ConfigureProjectPageState extends State<ConfigureProjectPage> {
               ),
               const SizedBox(height: 16),
               // Labeling mode dropdown
-              DropdownButtonFormField<LabelingMode>(
-                value: _selectedMode,
-                decoration: const InputDecoration(labelText: 'Labeling Mode'),
-                items: LabelingMode.values.map((mode) {
-                  final displayText = {
-                        LabelingMode.singleClassification: 'Single Classification',
-                        LabelingMode.multiClassification: 'Multi Classification',
-                        LabelingMode.singleClassSegmentation: 'Segmentation (Binary)',
-                        LabelingMode.multiClassSegmentation: 'Segmentation (Multi-Class)',
-                      }[mode] ??
-                      mode.toString();
-                  return DropdownMenuItem<LabelingMode>(value: mode, child: Text(displayText));
-                }).toList(),
-                onChanged: (newMode) async {
-                  if (newMode == null) return;
-                  setState(() => _selectedMode = newMode);
-                },
-              ),
+              LabelingModeSelector.dropdown(selectedMode: _selectedMode, onModeChanged: (newMode) => setState(() => _selectedMode = newMode)),
               const SizedBox(height: 16),
               // Class list section
               Row(

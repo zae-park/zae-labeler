@@ -9,7 +9,7 @@ import '../../models/project_model.dart';
 import '../viewers/object_viewer.dart';
 import '../viewers/time_series_viewer.dart';
 import '../viewers/image_viewer.dart';
-import '../widgets/labeling_mode.dart';
+import '../widgets/labeling_mode_selector.dart';
 import '../widgets/navigator.dart';
 
 class LabelingPage extends StatefulWidget {
