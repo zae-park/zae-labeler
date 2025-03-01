@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/project_model.dart';
+import '../../models/label_entry.dart';
 
 class LabelingModeSelector extends StatelessWidget {
   final LabelingMode selectedMode;
@@ -22,8 +22,7 @@ class LabelingModeSelector extends StatelessWidget {
       value: selectedMode,
       decoration: const InputDecoration(labelText: '라벨링 모드'),
       items: LabelingMode.values.map((mode) {
-        final displayText = _getModeDisplayText(mode);
-        return DropdownMenuItem<LabelingMode>(value: mode, child: Text(displayText));
+        return DropdownMenuItem<LabelingMode>(value: mode, child: Text(mode.displayName));
       }).toList(),
       onChanged: (LabelingMode? newMode) => newMode != null ? onModeChanged(newMode) : null,
     );
@@ -35,22 +34,24 @@ class LabelingModeSelector extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: LabelingMode.values.map((mode) {
-          String displayText = _getModeDisplayText(mode);
           bool isSelected = selectedMode == mode;
 
-          return GestureDetector(
+          return InkWell(
             onTap: () => onModeChanged(mode),
+            borderRadius: BorderRadius.circular(8.0),
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
               margin: const EdgeInsets.symmetric(horizontal: 4.0),
               decoration: BoxDecoration(
-                color: isSelected ? Colors.blueAccent : Colors.grey[200],
+                color: isSelected ? Colors.blueAccent : Colors.grey[300],
                 borderRadius: BorderRadius.circular(8.0),
+                border: isSelected ? Border.all(color: Colors.blue, width: 2.0) : null,
+                boxShadow: isSelected ? [BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 8, spreadRadius: 2, offset: const Offset(0, 3))] : [],
               ),
               child: Text(
-                displayText,
+                mode.displayName, // ✅ Enum의 displayName 사용
                 style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.black,
+                  color: isSelected ? Colors.white : Colors.black87,
                   fontSize: 16,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
@@ -60,14 +61,5 @@ class LabelingModeSelector extends StatelessWidget {
         }).toList(),
       ),
     );
-  }
-
-  String _getModeDisplayText(LabelingMode mode) {
-    return {
-          LabelingMode.singleClassification: 'Single Classification',
-          LabelingMode.multiClassification: 'Multi Classification',
-          LabelingMode.segmentation: 'Segmentation',
-        }[mode] ??
-        mode.toString();
   }
 }
