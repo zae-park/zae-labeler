@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/label_entry.dart';
+import '../../../theme/theme.dart';
 
 class LabelingModeSelector extends StatelessWidget {
   final LabelingMode selectedMode;
@@ -42,20 +43,8 @@ class LabelingModeSelector extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
               margin: const EdgeInsets.symmetric(horizontal: 4.0),
-              decoration: BoxDecoration(
-                color: isSelected ? Colors.blueAccent : Colors.grey[300],
-                borderRadius: BorderRadius.circular(8.0),
-                border: isSelected ? Border.all(color: Colors.blue, width: 2.0) : null,
-                boxShadow: isSelected ? [BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 8, spreadRadius: 2, offset: const Offset(0, 3))] : [],
-              ),
-              child: Text(
-                mode.displayName, // ✅ Enum의 displayName 사용
-                style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.black87,
-                  fontSize: 16,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
+              decoration: AppTheme.buttonDecoration(isSelected: isSelected),
+              child: Text(mode.displayName, style: AppTheme.buttonTextStyle(isSelected: isSelected)),
             ),
           );
         }).toList(),
