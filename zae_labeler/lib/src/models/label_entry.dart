@@ -29,7 +29,20 @@ enum LabelingMode {
   singleClassification, // 단일 분류 (Single Classification) : 하나의 데이터에 대해 하나의 클래스를 지정
   multiClassification, // 다중 분류 (Multi Classification) : 하나의 데이터에 대해 여러 개의 클래스를 지정
   singleClassSegmentation, // 단일 클래스 세그멘테이션 (Single Class Segmentation) : 이미지 또는 시계열 데이터 내 특정 역역에 대해 단일 클래스를 지정
-  multiClassSegmentation, // 다중 클래스 세그멘테이션 (Multi Class Segmentation) : 이미지 또는 시계열 데이터 내 특정 역역에 대해 다중 클래스를 지정
+  multiClassSegmentation; // 다중 클래스 세그멘테이션 (Multi Class Segmentation) : 이미지 또는 시계열 데이터 내 특정 역역에 대해 다중 클래스를 지정
+
+  String get displayName {
+    switch (this) {
+      case LabelingMode.singleClassification:
+        return 'Single Classification';
+      case LabelingMode.multiClassification:
+        return 'Multi Classification';
+      case LabelingMode.singleClassSegmentation:
+        return 'Segmentation (Binary)';
+      case LabelingMode.multiClassSegmentation:
+        return 'Segmentation (Multi-Class)';
+    }
+  }
 }
 
 /// ✅ `LabelingMode`와 JSON 변환 클래스를 매핑하는 맵.
