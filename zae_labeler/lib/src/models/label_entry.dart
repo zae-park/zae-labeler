@@ -89,4 +89,9 @@ class LabelEntry<T extends LabelModel> {
       labelData: _createLabelData(mode, json['label_data']),
     );
   }
+
+  /// ✅ copyWith() 추가
+  LabelEntry<T> copyWith({T? labelData}) {
+    return LabelEntry<T>(dataFilename: dataFilename, dataPath: dataPath, labelingMode: labelingMode, labelData: labelData ?? this.labelData);
+  }
 }
