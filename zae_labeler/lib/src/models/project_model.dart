@@ -8,6 +8,7 @@ Project 클래스는 프로젝트 ID, 이름, 라벨링 모드, 클래스 목록
 
 import './data_model.dart';
 import './label_entry.dart';
+import './label_models/label_model.dart';
 import '../utils/storage_helper.dart';
 
 /// Represents a project with its metadata and data paths.
