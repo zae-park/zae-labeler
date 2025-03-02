@@ -2,31 +2,31 @@ import 'label_model.dart';
 
 /// ✅ Segmentation Label의 최상위 클래스
 abstract class SegmentationLabel extends LabelModel {
-  SegmentationData labelData;
+  SegmentationData label;
 
-  SegmentationLabel({required super.labeledAt, required this.labelData});
+  SegmentationLabel({required super.labeledAt, required this.label});
 }
 
 /// ✅ 단일 클래스 세그멘테이션 (Single-Class Segmentation)
 class SingleClassSegmentationLabel extends SegmentationLabel {
-  SingleClassSegmentationLabel({required super.labeledAt, required super.labelData});
+  SingleClassSegmentationLabel({required super.labeledAt, required super.label});
 
   @override
-  Map<String, dynamic> toJson() => {'labeled_at': labeledAt, 'label_data': labelData.toJson()};
+  Map<String, dynamic> toJson() => {'labeled_at': labeledAt, 'label': label.toJson()};
   factory SingleClassSegmentationLabel.fromJson(Map<String, dynamic> json) =>
-      SingleClassSegmentationLabel(labeledAt: json['labeled_at'], labelData: SegmentationData.fromJson(json['label_data']));
-  factory SingleClassSegmentationLabel.empty() => SingleClassSegmentationLabel(labeledAt: '', labelData: SegmentationData(segments: []));
+      SingleClassSegmentationLabel(labeledAt: json['labeled_at'], label: SegmentationData.fromJson(json['label_data']));
+  factory SingleClassSegmentationLabel.empty() => SingleClassSegmentationLabel(labeledAt: '', label: SegmentationData(segments: []));
 }
 
 /// ✅ 다중 클래스 세그멘테이션 (Multi-Class Segmentation) - 추후 업데이트
 class MultiClassSegmentationLabel extends SegmentationLabel {
-  MultiClassSegmentationLabel({required super.labeledAt, required super.labelData});
+  MultiClassSegmentationLabel({required super.labeledAt, required super.label});
 
   @override
-  Map<String, dynamic> toJson() => {'labeled_at': labeledAt, 'label_data': labelData.toJson()};
+  Map<String, dynamic> toJson() => {'labeled_at': labeledAt, 'label_data': label.toJson()};
   factory MultiClassSegmentationLabel.fromJson(Map<String, dynamic> json) =>
-      MultiClassSegmentationLabel(labeledAt: json['labeled_at'], labelData: SegmentationData.fromJson(json['label_data']));
-  factory MultiClassSegmentationLabel.empty() => MultiClassSegmentationLabel(labeledAt: '', labelData: SegmentationData(segments: []));
+      MultiClassSegmentationLabel(labeledAt: json['labeled_at'], label: SegmentationData.fromJson(json['label_data']));
+  factory MultiClassSegmentationLabel.empty() => MultiClassSegmentationLabel(labeledAt: '', label: SegmentationData(segments: []));
 }
 
 /// ✅ 세그멘테이션 데이터 구조를 저장하는 클래스.
