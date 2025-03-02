@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../models/label_entry.dart';
+import '../models/label_models/label_model.dart';
 import '../models/project_model.dart';
 
 class ConfigurationViewModel extends ChangeNotifier {
