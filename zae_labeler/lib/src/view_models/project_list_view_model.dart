@@ -1,6 +1,6 @@
 // lib/src/view_models/project_view_model.dart
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../models/label_models/label_model.dart';
 import '../models/project_model.dart';
 import '../utils/storage_helper.dart';
 
@@ -88,7 +88,7 @@ class ProjectListViewModel extends ChangeNotifier {
       for (var entry in _projects) {
         entry.labelEntries.clear();
       }
-    } else if (newMode == LabelingMode.segmentation) {
+    } else if (newMode == LabelingMode.singleClassSegmentation) {
       for (var entry in _projects) {
         entry.labelEntries.clear();
       }
