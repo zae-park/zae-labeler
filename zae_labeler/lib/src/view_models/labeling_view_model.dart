@@ -117,13 +117,13 @@ class LabelingViewModel extends ChangeNotifier {
       final segmentationLabel = entry.labelData as SegmentationLabel;
       final List<int> sampleIndices = [10, 20, 30]; // ✅ 예제 인덱스
 
-      List<Segment> updatedSegments = List.from(segmentationLabel.labelData!.segments);
+      List<Segment> updatedSegments = List.from(segmentationLabel.label.segments); // ✅ label로 변경
       if (!updatedSegments.any((s) => s.indices == sampleIndices)) {
         updatedSegments.add(Segment(indices: sampleIndices, classLabel: label));
       }
 
       LabelEntry<LabelModel> updatedEntry = entry.copyWith(
-        labelData: segmentationLabel.copyWith(labelData: SegmentationData(segments: updatedSegments)),
+        labelData: segmentationLabel.copyWith(label: SegmentationData(segments: updatedSegments)), // ✅ label로 변경
       );
 
       _labelEntryCache[entry.dataFilename] = updatedEntry;
