@@ -5,6 +5,8 @@ abstract class SegmentationLabel extends LabelModel {
   SegmentationData label;
 
   SegmentationLabel({required super.labeledAt, required this.label});
+
+  SegmentationLabel copyWith({SegmentationData? label});
 }
 
 /// ✅ 단일 클래스 세그멘테이션 (Single-Class Segmentation)
@@ -16,6 +18,10 @@ class SingleClassSegmentationLabel extends SegmentationLabel {
   factory SingleClassSegmentationLabel.fromJson(Map<String, dynamic> json) =>
       SingleClassSegmentationLabel(labeledAt: json['labeled_at'], label: SegmentationData.fromJson(json['label_data']));
   factory SingleClassSegmentationLabel.empty() => SingleClassSegmentationLabel(labeledAt: '', label: SegmentationData(segments: []));
+  @override
+  SingleClassSegmentationLabel copyWith({SegmentationData? label}) {
+    return SingleClassSegmentationLabel(labeledAt: DateTime.now().toIso8601String(), label: label ?? this.label);
+  }
 }
 
 /// ✅ 다중 클래스 세그멘테이션 (Multi-Class Segmentation) - 추후 업데이트
@@ -27,6 +33,10 @@ class MultiClassSegmentationLabel extends SegmentationLabel {
   factory MultiClassSegmentationLabel.fromJson(Map<String, dynamic> json) =>
       MultiClassSegmentationLabel(labeledAt: json['labeled_at'], label: SegmentationData.fromJson(json['label_data']));
   factory MultiClassSegmentationLabel.empty() => MultiClassSegmentationLabel(labeledAt: '', label: SegmentationData(segments: []));
+  @override
+  MultiClassSegmentationLabel copyWith({SegmentationData? label}) {
+    return MultiClassSegmentationLabel(labeledAt: DateTime.now().toIso8601String(), label: label ?? this.label);
+  }
 }
 
 /// ✅ 세그멘테이션 데이터 구조를 저장하는 클래스.
