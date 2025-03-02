@@ -47,5 +47,11 @@ abstract class LabelModel {
   LabelModel({required this.labeledAt});
 
   /// JSON 변환 메서드 (모든 Label 모델이 구현해야 함)
-  Map<String, dynamic> toJson();
+  Map<String, dynamic> toJson() => throw UnimplementedError();
+
+  /// ✅ JSON 데이터를 기반으로 객체를 생성하는 추상 메서드
+  static LabelModel fromJson(Map<String, dynamic> json) => throw UnimplementedError();
+
+  /// ✅ 기본값을 반환하는 추상 메서드
+  static LabelModel empty() => throw UnimplementedError();
 }
