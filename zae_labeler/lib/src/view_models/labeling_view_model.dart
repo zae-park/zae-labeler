@@ -80,7 +80,12 @@ class LabelingViewModel extends ChangeNotifier {
     }
 
     final dataPath = project.dataPaths.firstWhere((dp) => dp.fileName == dataFilename).filePath ?? '';
-    LabelEntry<LabelModel> newEntry = LabelEntry<LabelModel>(dataFilename: dataFilename, dataPath: dataPath, labelingMode: project.mode, labelData: null);
+    LabelEntry<LabelModel> newEntry = LabelEntry<LabelModel>(
+      dataFilename: dataFilename,
+      dataPath: dataPath,
+      labelingMode: project.mode,
+      labelData: LabelModel.empty(),
+    );
     project.labelEntries.add(newEntry);
     _labelEntryCache[dataFilename] = newEntry;
     return newEntry;
@@ -99,7 +104,7 @@ class LabelingViewModel extends ChangeNotifier {
     final entry = getOrCreateLabelEntry();
 
     // ✅ Label 업데이트 로직 간결화
-    final updatedLabel = _updateLabel(entry, mode, label);
+    final updatedLabel = _updateLabel(entry, label);
     if (updatedLabel) {
       notifyListeners();
       await storageHelper.saveLabelEntry(project.id, entry);
@@ -107,34 +112,26 @@ class LabelingViewModel extends ChangeNotifier {
   }
 
   /// ✅ `LabelingMode`에 따라 `labelData`를 업데이트하는 함수
-  bool _updateLabel(LabelEntry entry, LabelingMode mode, String label) {
-    switch (mode) {
-      case LabelingMode.singleClassification:
-        entry.labelData = SingleClassificationLabel(labeledAt: DateTime.now().toIso8601String(), label: label);
-        return true;
+  bool _updateLabel(LabelEntry<LabelModel> entry, String label) {
+    if (entry.labelData is SegmentationLabel) {
+      final segmentationLabel = entry.labelData as SegmentationLabel;
+      final List<int> sampleIndices = [10, 20, 30]; // ✅ 예제 인덱스
 
-      case LabelingMode.multiClassification:
-        entry.labelData ??= MultiClassificationLabel(labeledAt: DateTime.now().toIso8601String(), labels: []);
-        final labelList = (entry.labelData as MultiClassificationLabel).labels;
-        labelList.contains(label) ? labelList.remove(label) : labelList.add(label);
-        return true;
+      List<Segment> updatedSegments = List.from(segmentationLabel.labelData!.segments);
+      if (!updatedSegments.any((s) => s.indices == sampleIndices)) {
+        updatedSegments.add(Segment(indices: sampleIndices, classLabel: label));
+      }
 
-      case LabelingMode.singleClassSegmentation:
-      case LabelingMode.multiClassSegmentation:
-        entry.labelData ??= SingleClassSegmentationLabel(
-          labeledAt: DateTime.now().toIso8601String(),
-          labelData: SegmentationData(segments: []),
-        );
+      LabelEntry<LabelModel> updatedEntry = entry.copyWith(
+        labelData: segmentationLabel.copyWith(labelData: SegmentationData(segments: updatedSegments)),
+      );
 
-        final List<int> sampleIndices = [10, 20, 30]; // ✅ 예제 인덱스
-        final segmentationLabel = entry.labelData as SingleClassSegmentationLabel;
-
-        // ✅ 중복 방지
-        if (!segmentationLabel.labelData.segments.any((s) => s.indices == sampleIndices)) {
-          segmentationLabel.labelData.segments.add(Segment(indices: sampleIndices, classLabel: label));
-        }
-        return true;
+      _labelEntryCache[entry.dataFilename] = updatedEntry;
+      project.labelEntries[project.labelEntries.indexWhere((e) => e.dataFilename == entry.dataFilename)] = updatedEntry;
+      return true;
     }
+
+    return false;
   }
 
   /// ✅ `LabelingMode`에 따라 라벨이 선택되었는지 확인하는 함수
