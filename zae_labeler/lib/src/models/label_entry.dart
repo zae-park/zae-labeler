@@ -4,46 +4,10 @@ import 'label_models/classification_label_model.dart';
 import 'label_models/segmentation_label_model.dart';
 
 /*
-이 파일은 라벨링 모드를 정의하는 열거형과 데이터 파일에 대한 라벨 정보의 정의를 포함합니다.
-  - LabelingMode는 프로젝트 설정 및 라벨링 작업에서 사용됩니다.
+이 파일은 데이터 파일에 대한 라벨 정보의 정의를 포함합니다.
   - LabelEntry 클래스는 단일 분류(Single Classification), 다중 분류(Multi Classification), 세그멘테이션(Segmentation) 등의 작업을 지원하며,
     현재 프로젝트의 LabelingMode에 따라 단일 라벨 정보만 저장합니다.
 */
-
-/// ✅ 라벨링 모드 열거형 (Labeling Mode Enum)
-/// - 프로젝트와 라벨링 작업에서 사용되는 주요 모드를 정의함.
-///
-/// 📌 **LabelingMode 종류**
-/// ```dart
-/// LabelingMode.singleClassification  // 단일 분류
-/// LabelingMode.multiClassification   // 다중 분류
-/// LabelingMode.segmentation          // 세그멘테이션
-/// ```
-///
-/// 📌 **예제 코드**
-/// ```dart
-/// LabelingMode mode = LabelingMode.singleClassification;
-/// print(mode.toString());  // "LabelingMode.singleClassification"
-/// ```
-enum LabelingMode {
-  singleClassification, // 단일 분류 (Single Classification) : 하나의 데이터에 대해 하나의 클래스를 지정
-  multiClassification, // 다중 분류 (Multi Classification) : 하나의 데이터에 대해 여러 개의 클래스를 지정
-  singleClassSegmentation, // 단일 클래스 세그멘테이션 (Single Class Segmentation) : 이미지 또는 시계열 데이터 내 특정 역역에 대해 단일 클래스를 지정
-  multiClassSegmentation; // 다중 클래스 세그멘테이션 (Multi Class Segmentation) : 이미지 또는 시계열 데이터 내 특정 역역에 대해 다중 클래스를 지정
-
-  String get displayName {
-    switch (this) {
-      case LabelingMode.singleClassification:
-        return 'Single Classification';
-      case LabelingMode.multiClassification:
-        return 'Multi Classification';
-      case LabelingMode.singleClassSegmentation:
-        return 'Segmentation (Binary)';
-      case LabelingMode.multiClassSegmentation:
-        return 'Segmentation (Multi-Class)';
-    }
-  }
-}
 
 /// ✅ `LabelingMode`와 JSON 변환 클래스를 매핑하는 맵.
 /// - 새로운 `LabelingMode`가 추가될 경우 이 맵에만 추가하면 됨.
