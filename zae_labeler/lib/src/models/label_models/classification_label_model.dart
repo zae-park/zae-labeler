@@ -56,7 +56,7 @@ class MultiClassificationLabel extends ClassificationLabelModel<List<String>> {
 
   /// ✅ `empty()` 구현
   @override
-  factory MultiClassificationLabel.empty() => MultiClassificationLabel(labeledAt: DateTime.now(), label: [])
+  factory MultiClassificationLabel.empty() => MultiClassificationLabel(labeledAt: DateTime.now(), label: []);
 
   @override
   MultiClassificationLabel updateLabel(List<String> labelData) => MultiClassificationLabel(labeledAt: DateTime.now(), label: labelData);
