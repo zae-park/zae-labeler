@@ -1,15 +1,14 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:html' as html;
-import 'dart:async';
-import 'package:archive/archive.dart';
-import 'package:flutter/services.dart';
-import 'package:zae_labeler/src/models/data_model.dart';
 
+import 'package:flutter/services.dart';
+import 'package:archive/archive.dart';
+
+import './interface_storage_helper.dart';
 import '../../models/project_model.dart';
+import '../../models/data_model.dart';
 import '../../models/label_model.dart';
-import '../../models/label_models/classification_label_model.dart';
-import '../../models/label_models/segmentation_label_model.dart';
-import 'interface_storage_helper.dart';
 
 class StorageHelperImpl implements StorageHelperInterface {
   // ==============================
@@ -63,7 +62,7 @@ class StorageHelperImpl implements StorageHelperInterface {
       'data_path': dataPath,
       'mode': labelModel.runtimeType.toString(),
       'labeled_at': labelModel.labeledAt.toIso8601String(),
-      'label_data': _convertLabelModelToJson(labelModel),
+      'label_data': LabelModelConverter.toJson(labelModel),
     };
 
     int index = existingEntries.indexWhere((entry) => entry['data_path'] == dataPath);
@@ -90,10 +89,10 @@ class StorageHelperImpl implements StorageHelperInterface {
       );
 
       if (labelEntry.isNotEmpty) {
-        return _convertJsonToLabelModel(mode, labelEntry['label_data']);
+        return LabelModelConverter.fromJson(mode, labelEntry['label_data']);
       }
     }
-    return _convertJsonToLabelModel(mode, {});
+    return LabelModelConverter.fromJson(mode, {});
   }
 
   // ==============================
@@ -108,7 +107,7 @@ class StorageHelperImpl implements StorageHelperInterface {
         .map((label) => {
               'mode': label.runtimeType.toString(),
               'labeled_at': label.labeledAt.toIso8601String(),
-              'label_data': _convertLabelModelToJson(label),
+              'label_data': LabelModelConverter.toJson(label),
             })
         .toList();
 
@@ -125,7 +124,7 @@ class StorageHelperImpl implements StorageHelperInterface {
       final jsonData = jsonDecode(labelsJson);
       return (jsonData as List).map((entry) {
         final mode = LabelingMode.values.firstWhere((e) => e.toString() == entry['mode']);
-        return _convertJsonToLabelModel(mode, entry['label_data']);
+        return LabelModelConverter.fromJson(mode, entry['label_data']);
       }).toList();
     }
     return [];
@@ -153,7 +152,7 @@ class StorageHelperImpl implements StorageHelperInterface {
         .map((label) => {
               'mode': label.runtimeType.toString(),
               'labeled_at': label.labeledAt.toIso8601String(),
-              'label_data': _convertLabelModelToJson(label),
+              'label_data': LabelModelConverter.toJson(label),
             })
         .toList();
 
@@ -194,7 +193,7 @@ class StorageHelperImpl implements StorageHelperInterface {
             if (jsonData is List) {
               final labels = jsonData.map((entry) {
                 final mode = LabelingMode.values.firstWhere((e) => e.toString() == entry['mode']);
-                return _convertJsonToLabelModel(mode, entry['label_data']);
+                return LabelModelConverter.fromJson(mode, entry['label_data']);
               }).toList();
               completer.complete(labels);
             } else {
@@ -212,37 +211,5 @@ class StorageHelperImpl implements StorageHelperInterface {
 
     input.click();
     return completer.future;
-  }
-
-  /// ✅ `LabelModel`을 JSON으로 변환하는 메서드
-  Map<String, dynamic> _convertLabelModelToJson(LabelModel labelModel) {
-    if (labelModel is SingleClassificationLabelModel) {
-      return {'labeled_at': labelModel.labeledAt.toIso8601String(), 'label': labelModel.label};
-    } else if (labelModel is MultiClassificationLabelModel) {
-      return {'labeled_at': labelModel.labeledAt.toIso8601String(), 'labels': labelModel.label};
-    } else if (labelModel is SingleClassSegmentationLabelModel) {
-      return {'labeled_at': labelModel.labeledAt.toIso8601String(), 'segmentation': labelModel.label.toJson()};
-    } else if (labelModel is MultiClassSegmentationLabelModel) {
-      return {'labeled_at': labelModel.labeledAt.toIso8601String(), 'segmentation': labelModel.label.toJson()};
-    }
-    throw Exception("Unknown LabelModel type");
-  }
-
-  /// ✅ JSON 데이터를 `LabelModel` 객체로 변환하는 메서드
-  LabelModel _convertJsonToLabelModel(LabelingMode mode, Map<String, dynamic> json) {
-    try {
-      switch (mode) {
-        case LabelingMode.singleClassification:
-          return SingleClassificationLabelModel(labeledAt: DateTime.parse(json['labeled_at']), label: json['label']);
-        case LabelingMode.multiClassification:
-          return MultiClassificationLabelModel(labeledAt: DateTime.parse(json['labeled_at']), label: List<String>.from(json['labels']));
-        case LabelingMode.singleClassSegmentation:
-          return SingleClassSegmentationLabelModel(labeledAt: DateTime.parse(json['labeled_at']), label: SegmentationData.fromJson(json['segmentation']));
-        case LabelingMode.multiClassSegmentation:
-          return MultiClassSegmentationLabelModel(labeledAt: DateTime.parse(json['labeled_at']), label: SegmentationData.fromJson(json['segmentation']));
-      }
-    } catch (e) {
-      return SingleClassificationLabelModel.empty();
-    }
   }
 }
