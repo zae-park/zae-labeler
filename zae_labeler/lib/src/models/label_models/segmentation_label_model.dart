@@ -2,41 +2,67 @@ import 'label_model.dart';
 
 /// ✅ Segmentation Label의 최상위 클래스
 abstract class SegmentationLabel<T> extends LabelModel<T> {
-  @override
-  SegmentationData label;
+  SegmentationLabel({required super.label, required super.labeledAt});
 
-  SegmentationLabel({required super.labeledAt, required this.label});
+  /// ✅ 단일/다중 분류 여부 (각 서브클래스에서 오버라이드 가능)
+  bool get isMultiClass;
 
-  SegmentationLabel copyWith({SegmentationData? label});
+  // /// ✅ 기존 객체를 변경하여 새로운 `SegmentationLabel`을 반환
+  // SegmentationLabel copyWith({DateTime? labeledAt, SegmentationData? label});
 }
 
 /// ✅ 단일 클래스 세그멘테이션 (Single-Class Segmentation)
-class SingleClassSegmentationLabel extends SegmentationLabel {
-  SingleClassSegmentationLabel({required super.labeledAt, required super.label});
+class SingleClassSegmentationLabelModel extends SegmentationLabel<SegmentationData> {
+  final bool _isMultiClass = false;
+  SingleClassSegmentationLabelModel({required super.labeledAt, required super.label});
 
   @override
-  Map<String, dynamic> toJson() => {'labeled_at': labeledAt, 'label': label.toJson()};
-  factory SingleClassSegmentationLabel.fromJson(Map<String, dynamic> json) =>
-      SingleClassSegmentationLabel(labeledAt: json['labeled_at'], label: SegmentationData.fromJson(json['label_data']));
-  factory SingleClassSegmentationLabel.empty() => SingleClassSegmentationLabel(labeledAt: '', label: SegmentationData(segments: []));
+  bool get isMultiClass => _isMultiClass;
+
+  factory SingleClassSegmentationLabelModel.empty() => SingleClassSegmentationLabelModel(labeledAt: DateTime.now(), label: SegmentationData(segments: {}));
+
   @override
-  SingleClassSegmentationLabel copyWith({SegmentationData? label}) {
-    return SingleClassSegmentationLabel(labeledAt: DateTime.now().toIso8601String(), label: label ?? this.label);
+  LabelModel updateLabel(SegmentationData labelData) {
+    // TODO: implement updateLabel
+    throw UnimplementedError();
+  }
+
+  SingleClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) {
+    return SingleClassSegmentationLabelModel(labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
   }
 }
 
 /// ✅ 다중 클래스 세그멘테이션 (Multi-Class Segmentation) - 추후 업데이트
-class MultiClassSegmentationLabel extends SegmentationLabel {
-  MultiClassSegmentationLabel({required super.labeledAt, required super.label});
+class MultiClassSegmentationLabelModel extends SegmentationLabel<SegmentationData> {
+  final bool _isMultiClass = false;
+  MultiClassSegmentationLabelModel({required super.label, required super.labeledAt});
 
   @override
-  Map<String, dynamic> toJson() => {'labeled_at': labeledAt, 'label_data': label.toJson()};
-  factory MultiClassSegmentationLabel.fromJson(Map<String, dynamic> json) =>
-      MultiClassSegmentationLabel(labeledAt: json['labeled_at'], label: SegmentationData.fromJson(json['label_data']));
-  factory MultiClassSegmentationLabel.empty() => MultiClassSegmentationLabel(labeledAt: '', label: SegmentationData(segments: []));
+  bool get isMultiClass => _isMultiClass;
+
+  factory MultiClassSegmentationLabelModel.empty() => MultiClassSegmentationLabelModel(labeledAt: DateTime.now(), label: SegmentationData(segments: {}));
+
+  // @override
+  // Map<String, dynamic> toJson() => {
+  //   'labeled_at': labeledAt.toIso8601String(), // ✅ DateTime을 String으로 변환
+  //   'label_data': label.toJson(),
+  // };
+
+  // factory MultiClassSegmentationLabel.fromJson(Map<String, dynamic> json) {
+  //   return MultiClassSegmentationLabel(
+  //     labeledAt: DateTime.parse(json['labeled_at']), // ✅ String → DateTime 변환
+  //     label: SegmentationData.fromJson(json['label_data']),
+  //   );
+  // }
+
+  MultiClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) {
+    return MultiClassSegmentationLabelModel(labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
+  }
+
   @override
-  MultiClassSegmentationLabel copyWith({SegmentationData? label}) {
-    return MultiClassSegmentationLabel(labeledAt: DateTime.now().toIso8601String(), label: label ?? this.label);
+  LabelModel updateLabel(SegmentationData labelData) {
+    // TODO: implement updateLabel
+    throw UnimplementedError();
   }
 }
 
