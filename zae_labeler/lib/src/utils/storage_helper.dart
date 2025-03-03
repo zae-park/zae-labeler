@@ -1,6 +1,7 @@
 // lib/src/utils/storage_helper.dart
 import '../models/data_model.dart';
 import '../models/label_entry.dart';
+import '../models/label_model.dart';
 import '../models/project_model.dart';
 import 'proxy_storage_helper/interface_storage_helper.dart';
 import 'proxy_storage_helper/native_storage_helper.dart' if (dart.library.html) 'proxy_storage_helper/web_storage_helper.dart';
@@ -12,26 +13,25 @@ class StorageHelper extends StorageHelperInterface {
 
   // Project IO
   @override
-  Future<void> saveProjects(List<Project> projects) => _instance.saveProjects(projects);
+  Future<void> saveProjectConfig(List<Project> projects) => _instance.saveProjectConfig(projects);
   @override
-  Future<List<Project>> loadProjects() => _instance.loadProjects();
+  Future<List<Project>> loadProjectFromConfig(String projectConfig) => _instance.loadProjectFromConfig(projectConfig);
   @override
   Future<String> downloadProjectConfig(Project project) => _instance.downloadProjectConfig(project);
 
-  // LabelEntries IO
+  // Single LabelModel IO
   @override
-  Future<void> saveLabelEntries(String projectId, List<LabelEntry> labelEntries) => _instance.saveLabelEntries(projectId, labelEntries);
+  Future<void> saveLabelData(String projectId, String dataPath, LabelModel labelModel) => _instance.saveLabelData(projectId, dataPath, labelModel);
   @override
-  Future<List<LabelEntry>> loadLabelEntries(String projectId) => _instance.loadLabelEntries(projectId);
+  Future<LabelModel> loadLabelData(String projectId, String dataPath, LabelingMode mode) => _instance.loadLabelData(projectId, dataPath, mode);
   @override
-  Future<List<LabelEntry>> importLabelEntries() => _instance.importLabelEntries();
-  @override
-  Future<String> downloadLabelsAsZip(Project project, List<LabelEntry> labelEntries, List<DataPath> fileDataList) =>
-      _instance.downloadLabelsAsZip(project, labelEntries, fileDataList);
+  Future<String> downloadLabelData(Project project, List<LabelModel> labelModels, List<DataPath> fileDataList);
 
-  // LabelEntry IO
+  // Entire LabelModel IO
   @override
-  Future<void> saveLabelEntry(String projectId, LabelEntry newEntry) => _instance.saveLabelEntry(projectId, newEntry);
+  Future<void> saveAllLabels(String projectId, List<LabelModel> labels); // 프로젝트의 모든 Label 저장
   @override
-  Future<LabelEntry> loadLabelEntry(String projectId, String dataPath) => _instance.loadLabelEntry(projectId, dataPath);
+  Future<List<LabelModel>> loadAllLabels(String projectId); // 프로젝트의 모든 Label 로드
+  @override
+  Future<List<LabelModel>> importAllLabels(); // 외부 Label 데이터 가져오기
 }
