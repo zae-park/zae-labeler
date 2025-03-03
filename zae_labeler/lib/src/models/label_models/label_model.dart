@@ -41,29 +41,13 @@ enum LabelingMode {
 }
 
 /// ✅ LabelModel의 최상위 추상 클래스 (Base Model)
-abstract class LabelModel {
+abstract class LabelModel<T> {
   final String labeledAt;
 
   LabelModel({required this.labeledAt});
 
-  /// ✅ 데이터를 JSON으로 변환 (필수)
   Map<String, dynamic> toJson();
-
-  /// ✅ JSON 데이터를 기반으로 객체를 생성하는 메서드 (필수)
-  static LabelModel fromJson(Map<String, dynamic> json);
-
-  /// ✅ 기본값을 반환하는 정적 메서드 (필수)
-  static LabelModel empty();
-
-  /// ✅ 특정 데이터의 라벨을 저장하는 메서드 (필수)
-  void saveLabel(String dataId, dynamic labelData);
-
-  /// ✅ 특정 데이터의 라벨을 로드하는 메서드 (필수)
-  dynamic loadLabel(String dataId);
-
-  /// ✅ 기존 라벨을 변경하는 메서드 (필수)
-  LabelModel updateLabel(dynamic labelData);
-
-  /// ✅ 특정 데이터의 라벨을 삭제하는 메서드 (필수)
-  void deleteLabel(String dataId);
+  factory LabelModel.fromJson(Map<String, dynamic> json) => throw UnimplementedError('fromJson() must be implemented in subclasses.');
+  factory LabelModel.empty() => throw UnimplementedError('fromJson() must be implemented in subclasses.');
+  LabelModel updateLabel(T labelData);
 }
