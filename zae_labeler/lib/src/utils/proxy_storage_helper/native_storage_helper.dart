@@ -108,14 +108,15 @@ class StorageHelperImpl implements StorageHelperInterface {
     }
 
     // ✅ JSON 직렬화된 라벨 데이터 추가 (LabelModel.toJson() 사용)
-    final labelsJson = jsonEncode(labelModels
+    List<Map<String, dynamic>> labelEntries = labelModels
         .map((label) => {
               'mode': label.runtimeType.toString(),
               'labeled_at': label.labeledAt.toIso8601String(),
               'label_data': _convertLabelModelToJson(label),
             })
-        .toList());
+        .toList();
 
+    final labelsJson = jsonEncode(labelEntries);
     archive.addFile(ArchiveFile('labels.json', labelsJson.length, utf8.encode(labelsJson)));
 
     // ✅ ZIP 파일 생성
@@ -142,7 +143,8 @@ class StorageHelperImpl implements StorageHelperInterface {
             })
         .toList();
 
-    await file.writeAsString(jsonEncode(labelEntries));
+    // await file.writeAsString(jsonEncode(labelEntries));
+    await file.writeAsString(utf8.decode(utf8.encode(jsonEncode(labelEntries))));
   }
 
   @override
@@ -205,27 +207,32 @@ class StorageHelperImpl implements StorageHelperInterface {
 
   /// ✅ JSON 데이터를 `LabelModel` 객체로 변환하는 메서드
   LabelModel _convertJsonToLabelModel(LabelingMode mode, Map<String, dynamic> json) {
-    switch (mode) {
-      case LabelingMode.singleClassification:
-        return SingleClassificationLabelModel(
-          labeledAt: DateTime.parse(json['labeled_at']),
-          label: json['label'],
-        );
-      case LabelingMode.multiClassification:
-        return MultiClassificationLabelModel(
-          labeledAt: DateTime.parse(json['labeled_at']),
-          label: List<String>.from(json['labels']),
-        );
-      case LabelingMode.singleClassSegmentation:
-        return SingleClassSegmentationLabelModel(
-          labeledAt: DateTime.parse(json['labeled_at']),
-          label: SegmentationData.fromJson(json['segmentation']),
-        );
-      case LabelingMode.multiClassSegmentation:
-        return MultiClassSegmentationLabelModel(
-          labeledAt: DateTime.parse(json['labeled_at']),
-          label: SegmentationData.fromJson(json['segmentation']),
-        );
+    try {
+      switch (mode) {
+        case LabelingMode.singleClassification:
+          return SingleClassificationLabelModel(
+            labeledAt: DateTime.parse(json['labeled_at']),
+            label: json['label'],
+          );
+        case LabelingMode.multiClassification:
+          return MultiClassificationLabelModel(
+            labeledAt: DateTime.parse(json['labeled_at']),
+            label: List<String>.from(json['labels']),
+          );
+        case LabelingMode.singleClassSegmentation:
+          return SingleClassSegmentationLabelModel(
+            labeledAt: DateTime.parse(json['labeled_at']),
+            label: SegmentationData.fromJson(json['segmentation']),
+          );
+        case LabelingMode.multiClassSegmentation:
+          return MultiClassSegmentationLabelModel(
+            labeledAt: DateTime.parse(json['labeled_at']),
+            label: SegmentationData.fromJson(json['segmentation']),
+          );
+      }
+    } catch (e) {
+      print("⚠️ LabelModel 변환 실패: $e");
+      return SingleClassificationLabelModel.empty(); // 예외 발생 시 기본값 반환
     }
   }
 }
