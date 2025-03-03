@@ -1,6 +1,6 @@
 // lib/src/view_models/project_view_model.dart
 import 'package:flutter/material.dart';
-import '../models/label_models/label_model.dart';
+import '../models/label_model.dart';
 import '../models/project_model.dart';
 import '../utils/storage_helper.dart';
 

@@ -36,7 +36,7 @@ class LabelViewModel {
 
   /// ✅ StorageHelper에서 Label 데이터를 불러옴
   Future<void> loadLabel() async {
-    Map<String, dynamic> entry = await ProxyStorageHelper.instance.loadLabelEntry(projectId, dataPath);
+    Map<String, dynamic> entry = await StorageHelper.instance.loadLabelEntry(projectId, dataPath);
     mode = LabelingMode.values.firstWhere((e) => e.toString().split('.').last == entry['mode']);
 
     switch (mode) {

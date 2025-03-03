@@ -1,5 +1,5 @@
 // lib/src/models/label_entry.dart
-import 'label_models/label_model.dart';
+import 'label_model.dart';
 import 'label_models/classification_label_model.dart';
 import 'label_models/segmentation_label_model.dart';
 

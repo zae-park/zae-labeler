@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/label_entry.dart';
 import '../models/label_models/classification_label_model.dart';
-import '../models/label_models/label_model.dart';
+import '../models/label_model.dart';
 import '../models/label_models/segmentation_label_model.dart';
 import '../models/project_model.dart';
 import '../models/data_model.dart';
