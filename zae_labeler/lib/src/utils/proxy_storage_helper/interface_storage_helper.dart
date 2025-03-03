@@ -1,18 +1,21 @@
 // lib/src/utils/interface_storage_helper.dart
 import '../../models/project_model.dart';
 import '../../models/data_model.dart';
-import '../../models/label_entry.dart';
+import '../../models/label_model.dart';
 
 abstract class StorageHelperInterface {
-  Future<void> saveProjects(List<Project> projects);
-  Future<List<Project>> loadProjects();
+  // Project IO
+  Future<void> saveProjectConfig(List<Project> projects);
+  Future<List<Project>> loadProjectFromConfig(String projectConfig);
   Future<String> downloadProjectConfig(Project project);
 
-  Future<void> saveLabelEntries(String projectId, List<LabelEntry> labelEntries);
-  Future<List<LabelEntry>> loadLabelEntries(String projectId);
-  Future<List<LabelEntry>> importLabelEntries();
-  Future<String> downloadLabelsAsZip(Project project, List<LabelEntry> labelEntries, List<DataPath> fileDataList);
+  // Single LabelModel IO
+  Future<void> saveLabelData(String projectId, String dataPath, LabelModel labelModel);
+  Future<LabelModel> loadLabelData(String projectId, String dataPath, LabelingMode mode);
+  Future<String> downloadLabelData(Project project, List<LabelModel> labelModels, List<DataPath> fileDataList);
 
-  Future<void> saveLabelEntry(String projectId, LabelEntry newEntry);
-  Future<LabelEntry> loadLabelEntry(String projectId, String dataPath);
+  // Entire LabelModel IO
+  Future<void> saveAllLabels(String projectId, List<LabelModel> labels);
+  Future<List<LabelModel>> loadAllLabels(String projectId);
+  Future<List<LabelModel>> importAllLabels();
 }
