@@ -40,18 +40,30 @@ enum LabelingMode {
   }
 }
 
-/// ✅ LabelType의 최상위 클래스 (모든 Label의 기본 인터페이스)
+/// ✅ LabelModel의 최상위 추상 클래스 (Base Model)
 abstract class LabelModel {
-  String labeledAt; // 라벨이 부여된 시간 (ISO 8601 형식)
+  final String labeledAt;
 
   LabelModel({required this.labeledAt});
 
-  /// JSON 변환 메서드 (모든 Label 모델이 구현해야 함)
-  Map<String, dynamic> toJson() => throw UnimplementedError();
+  /// ✅ 데이터를 JSON으로 변환 (필수)
+  Map<String, dynamic> toJson();
 
-  /// ✅ JSON 데이터를 기반으로 객체를 생성하는 추상 메서드
-  static LabelModel fromJson(Map<String, dynamic> json) => throw UnimplementedError();
+  /// ✅ JSON 데이터를 기반으로 객체를 생성하는 메서드 (필수)
+  static LabelModel fromJson(Map<String, dynamic> json);
 
-  /// ✅ 기본값을 반환하는 추상 메서드
-  static LabelModel empty() => throw UnimplementedError();
+  /// ✅ 기본값을 반환하는 정적 메서드 (필수)
+  static LabelModel empty();
+
+  /// ✅ 특정 데이터의 라벨을 저장하는 메서드 (필수)
+  void saveLabel(String dataId, dynamic labelData);
+
+  /// ✅ 특정 데이터의 라벨을 로드하는 메서드 (필수)
+  dynamic loadLabel(String dataId);
+
+  /// ✅ 기존 라벨을 변경하는 메서드 (필수)
+  LabelModel updateLabel(dynamic labelData);
+
+  /// ✅ 특정 데이터의 라벨을 삭제하는 메서드 (필수)
+  void deleteLabel(String dataId);
 }
