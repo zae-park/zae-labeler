@@ -12,28 +12,31 @@ abstract class ClassificationLabelModel<T> extends LabelModel<T> {
 }
 
 /// ✅ 단일 분류 (Single Classification)
-class SingleClassificationLabel extends ClassificationLabel {
+class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
+  final bool _isMultiClass = false;
   final String label;
 
-  SingleClassificationLabel({required super.labeledAt, required this.label});
+  SingleClassificationLabelModel({required super.labeledAt, required this.label});
+
+  @override
+  bool get isMultiClass => _isMultiClass;
 
   @override
   Map<String, dynamic> toJson() => {'labeled_at': labeledAt, 'label': label};
 
-  /// ✅ `fromJson()` 구현
   @override
-  factory SingleClassificationLabel.fromJson(Map<String, dynamic> json) {
-    return SingleClassificationLabel(labeledAt: json['labeled_at'], label: json['label']);
+  factory SingleClassificationLabelModel.fromJson(Map<String, dynamic> json) {
+    return SingleClassificationLabelModel(labeledAt: json['labeled_at'], label: json['label']);
   }
 
-  /// ✅ `empty()` 구현
   @override
-  factory SingleClassificationLabel.empty() {
-    return SingleClassificationLabel(labeledAt: '', label: '');
+  factory SingleClassificationLabelModel.empty() {
+    return SingleClassificationLabelModel(labeledAt: '', label: '');
   }
 
-  SingleClassificationLabel updateLabel(String newLabel) {
-    return SingleClassificationLabel(labeledAt: DateTime.now().toIso8601String(), label: newLabel);
+  @override
+  SingleClassificationLabelModel updateLabel(String labelData) {
+    return SingleClassificationLabelModel(labeledAt: DateTime.now().toIso8601String(), label: labelData);
   }
 }
 
