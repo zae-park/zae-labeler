@@ -81,8 +81,8 @@ class StorageHelper extends StorageHelperInterface {
   /// - Web: `Blob()`을 활용한 자동 다운로드 (`labels_project_<projectId>.zip`)
   /// - Native: `labels_project_<projectId>.zip` 파일을 생성 후 경로 반환
   @override
-  Future<String> downloadLabelData(Project project, List<LabelModel> labelModels, List<DataPath> fileDataList) =>
-      _instance.downloadLabelData(project, labelModels, fileDataList);
+  Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataPath> fileDataList) =>
+      _instance.exportAllLabels(project, labelModels, fileDataList);
 
   /// ✅ **외부 Label JSON 데이터를 가져오기**
   /// - Web: `FileReader()`를 사용하여 JSON 파일 로드
