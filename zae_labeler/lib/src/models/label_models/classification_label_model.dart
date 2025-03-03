@@ -2,68 +2,64 @@ import 'label_model.dart';
 
 /// ✅ ClassificationLabelModel: 분류(Label) 모델의 상위 클래스
 abstract class ClassificationLabelModel<T> extends LabelModel<T> {
-  ClassificationLabelModel({required super.labeledAt});
+  ClassificationLabelModel({required super.label, required super.labeledAt});
 
   /// ✅ 단일/다중 분류 여부 (각 서브클래스에서 오버라이드 가능)
   bool get isMultiClass;
-
-  @override
-  Map<String, dynamic> toJson();
 }
 
 /// ✅ 단일 분류 (Single Classification)
 class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
   final bool _isMultiClass = false;
-  final String label;
 
-  SingleClassificationLabelModel({required super.labeledAt, required this.label});
+  SingleClassificationLabelModel({required super.label, required super.labeledAt});
 
   @override
   bool get isMultiClass => _isMultiClass;
 
-  @override
-  Map<String, dynamic> toJson() => {'labeled_at': labeledAt, 'label': label};
+  // @override
+  // Map<String, String> toJson() => {'labeled_at': labeledAt, 'label': label};
 
-  @override
-  factory SingleClassificationLabelModel.fromJson(Map<String, dynamic> json) {
-    return SingleClassificationLabelModel(labeledAt: json['labeled_at'], label: json['label']);
-  }
+  // @override
+  // factory SingleClassificationLabelModel.fromJson(Map<String, String> json) {
+  //   return SingleClassificationLabelModel(label: json['label']!, labeledAt: json['labeled_at']!);
+  // }
 
   @override
   factory SingleClassificationLabelModel.empty() {
-    return SingleClassificationLabelModel(labeledAt: '', label: '');
+    return SingleClassificationLabelModel(labeledAt: DateTime.now(), label: 'empty');
   }
 
   @override
   SingleClassificationLabelModel updateLabel(String labelData) {
-    return SingleClassificationLabelModel(labeledAt: DateTime.now().toIso8601String(), label: labelData);
+    return SingleClassificationLabelModel(labeledAt: DateTime.now(), label: labelData);
   }
 }
 
 /// ✅ 다중 분류 (Multi Classification)
-class MultiClassificationLabel extends ClassificationLabel {
-  final List<String> labels;
+class MultiClassificationLabel extends ClassificationLabelModel<List<String>> {
+  final bool _isMultiClass = true;
 
-  MultiClassificationLabel({required super.labeledAt, required this.labels});
+  MultiClassificationLabel({required super.label, required super.labeledAt});
 
   @override
-  Map<String, dynamic> toJson() => {'labeled_at': labeledAt, 'labels': labels};
+  bool get isMultiClass => _isMultiClass;
 
-  /// ✅ `fromJson()` 구현
-  @override
-  factory MultiClassificationLabel.fromJson(Map<String, dynamic> json) {
-    return MultiClassificationLabel(labeledAt: json['labeled_at'], labels: List<String>.from(json['labels']));
-  }
+  // @override
+  // Map<String, List<String>> toJson() => {'label': label, 'labeled_at': labeledAt};
+
+  // /// ✅ `fromJson()` 구현
+  // @override
+  // factory MultiClassificationLabel.fromJson(Map<String, dynamic> json) {
+  //   return MultiClassificationLabel(labeledAt: json['labeled_at'], labels: List<String>.from(json['labels']));
+  // }
 
   /// ✅ `empty()` 구현
   @override
-  factory MultiClassificationLabel.empty() {
-    return MultiClassificationLabel(labeledAt: '', labels: []);
-  }
+  factory MultiClassificationLabel.empty() => MultiClassificationLabel(labeledAt: DateTime.now(), label: [])
 
-  MultiClassificationLabel updateLabel(List<String> newLabels) {
-    return MultiClassificationLabel(labeledAt: DateTime.now().toIso8601String(), labels: newLabels);
-  }
+  @override
+  MultiClassificationLabel updateLabel(List<String> labelData) => MultiClassificationLabel(labeledAt: DateTime.now(), label: labelData);
 }
 
 // /// ✅ 크로스 분류 (Cross Classification) - 추후 업데이트
