@@ -37,10 +37,10 @@ class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
 }
 
 /// ✅ 다중 분류 (Multi Classification)
-class MultiClassificationLabel extends ClassificationLabelModel<List<String>> {
+class MultiClassificationLabelModel extends ClassificationLabelModel<List<String>> {
   final bool _isMultiClass = true;
 
-  MultiClassificationLabel({required super.label, required super.labeledAt});
+  MultiClassificationLabelModel({required super.label, required super.labeledAt});
 
   @override
   bool get isMultiClass => _isMultiClass;
@@ -56,10 +56,10 @@ class MultiClassificationLabel extends ClassificationLabelModel<List<String>> {
 
   /// ✅ `empty()` 구현
   @override
-  factory MultiClassificationLabel.empty() => MultiClassificationLabel(labeledAt: DateTime.now(), label: []);
+  factory MultiClassificationLabelModel.empty() => MultiClassificationLabelModel(labeledAt: DateTime.now(), label: []);
 
   @override
-  MultiClassificationLabel updateLabel(List<String> labelData) => MultiClassificationLabel(labeledAt: DateTime.now(), label: labelData);
+  MultiClassificationLabelModel updateLabel(List<String> labelData) => MultiClassificationLabelModel(labeledAt: DateTime.now(), label: labelData);
 }
 
 // /// ✅ 크로스 분류 (Cross Classification) - 추후 업데이트
