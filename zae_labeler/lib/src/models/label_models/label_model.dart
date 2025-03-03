@@ -42,12 +42,13 @@ enum LabelingMode {
 
 /// ✅ LabelModel의 최상위 추상 클래스 (Base Model)
 abstract class LabelModel<T> {
+  final T label;
   final String labeledAt;
 
-  LabelModel({required this.labeledAt});
+  LabelModel({required this.label, required this.labeledAt});
 
-  Map<String, dynamic> toJson();
-  factory LabelModel.fromJson(Map<String, dynamic> json) => throw UnimplementedError('fromJson() must be implemented in subclasses.');
+  Map<String, T> toJson();
+  factory LabelModel.fromJson(Map<String, T> json) => throw UnimplementedError('fromJson() must be implemented in subclasses.');
   factory LabelModel.empty() => throw UnimplementedError('fromJson() must be implemented in subclasses.');
   LabelModel updateLabel(T labelData);
 }
