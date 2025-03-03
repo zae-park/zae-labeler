@@ -4,6 +4,7 @@ import '../models/label_model.dart';
 import '../models/project_model.dart';
 import 'proxy_storage_helper/interface_storage_helper.dart';
 import 'proxy_storage_helper/native_storage_helper.dart' if (dart.library.html) 'proxy_storage_helper/web_storage_helper.dart';
+export 'proxy_storage_helper/interface_storage_helper.dart';
 
 /// ✅ **StorageHelper: 플랫폼별 StorageHelperImpl을 Wrapping하는 클래스**
 /// - Web과 Native 환경에 따라 `StorageHelperImpl`이 자동으로 선택됨.
