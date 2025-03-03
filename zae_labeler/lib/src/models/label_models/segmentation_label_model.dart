@@ -21,10 +21,12 @@ class SingleClassSegmentationLabelModel extends SegmentationLabel<SegmentationDa
 
   factory SingleClassSegmentationLabelModel.empty() => SingleClassSegmentationLabelModel(labeledAt: DateTime.now(), label: SegmentationData(segments: {}));
 
+  SingleClassSegmentationLabelModel addPixel(List<int> pixel) => updateLabel(label.addPixel(pixel, label.segments.keys.first));
+  SingleClassSegmentationLabelModel removePixel(List<int> pixel) => updateLabel(label.removePixel(pixel));
+
   @override
-  LabelModel updateLabel(SegmentationData labelData) {
-    // TODO: implement updateLabel
-    throw UnimplementedError();
+  SingleClassSegmentationLabelModel updateLabel(SegmentationData labelData) {
+    return SingleClassSegmentationLabelModel(labeledAt: DateTime.now(), label: labelData);
   }
 
   SingleClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) {
@@ -42,27 +44,16 @@ class MultiClassSegmentationLabelModel extends SegmentationLabel<SegmentationDat
 
   factory MultiClassSegmentationLabelModel.empty() => MultiClassSegmentationLabelModel(labeledAt: DateTime.now(), label: SegmentationData(segments: {}));
 
-  // @override
-  // Map<String, dynamic> toJson() => {
-  //   'labeled_at': labeledAt.toIso8601String(), // ✅ DateTime을 String으로 변환
-  //   'label_data': label.toJson(),
-  // };
+  MultiClassSegmentationLabelModel addPixel(List<int> pixel, String classLabel) => updateLabel(label.addPixel(pixel, classLabel));
+  MultiClassSegmentationLabelModel removePixel(List<int> pixel) => updateLabel(label.removePixel(pixel));
 
-  // factory MultiClassSegmentationLabel.fromJson(Map<String, dynamic> json) {
-  //   return MultiClassSegmentationLabel(
-  //     labeledAt: DateTime.parse(json['labeled_at']), // ✅ String → DateTime 변환
-  //     label: SegmentationData.fromJson(json['label_data']),
-  //   );
-  // }
+  @override
+  MultiClassSegmentationLabelModel updateLabel(SegmentationData labelData) {
+    return MultiClassSegmentationLabelModel(labeledAt: DateTime.now(), label: labelData);
+  }
 
   MultiClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) {
     return MultiClassSegmentationLabelModel(labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
-  }
-
-  @override
-  LabelModel updateLabel(SegmentationData labelData) {
-    // TODO: implement updateLabel
-    throw UnimplementedError();
   }
 }
 
