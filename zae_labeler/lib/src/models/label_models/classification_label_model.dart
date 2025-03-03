@@ -1,8 +1,14 @@
 import 'label_model.dart';
 
-//// ✅ Classification Label의 최상위 클래스
-abstract class ClassificationLabel extends LabelModel {
-  ClassificationLabel({required super.labeledAt});
+/// ✅ ClassificationLabelModel: 분류(Label) 모델의 상위 클래스
+abstract class ClassificationLabelModel<T> extends LabelModel<T> {
+  ClassificationLabelModel({required super.labeledAt});
+
+  /// ✅ 단일/다중 분류 여부 (각 서브클래스에서 오버라이드 가능)
+  bool get isMultiClass;
+
+  @override
+  Map<String, dynamic> toJson();
 }
 
 /// ✅ 단일 분류 (Single Classification)
