@@ -1,8 +1,5 @@
 import '../models/label_model.dart';
-import '../models/label_models/classification_label_model.dart';
-import '../models/label_models/segmentation_label_model.dart';
 import '../utils/storage_helper.dart';
-import '../models/project_model.dart';
 
 /// ✅ Label 저장 및 로드를 관리하는 ViewModel
 class LabelViewModel {
@@ -12,51 +9,20 @@ class LabelViewModel {
   final LabelingMode mode; // ✅ 현재 데이터의 LabelingMode
   LabelModel labelModel; // ✅ 현재 라벨링 모델
 
-  LabelViewModel({
-    required this.projectId,
-    required this.dataFilename,
-    required this.dataPath,
-    required this.mode,
-    required this.labelModel,
-  });
+  LabelViewModel({required this.projectId, required this.dataFilename, required this.dataPath, required this.mode, required this.labelModel});
 
   /// ✅ Label 데이터를 StorageHelper에 저장
   Future<void> saveLabel() async {
-    await StorageHelper.instance.saveLabelEntry(
-      projectId,
-      {
-        'data_filename': dataFilename,
-        'data_path': dataPath,
-        'mode': mode.toString().split('.').last,
-        'labeled_at': labelModel.labeledAt.toIso8601String(),
-        'label_data': labelModel.toJson(),
-      },
-    );
+    await StorageHelper.instance.saveLabelData(projectId, dataPath, labelModel);
   }
 
   /// ✅ StorageHelper에서 Label 데이터를 불러옴
   Future<void> loadLabel() async {
-    Map<String, dynamic> entry = await StorageHelper.instance.loadLabelEntry(projectId, dataPath);
-    mode = LabelingMode.values.firstWhere((e) => e.toString().split('.').last == entry['mode']);
-
-    switch (mode) {
-      case LabelingMode.singleClassification:
-        labelModel = SingleClassificationLabelModel.fromJson(entry['label_data']);
-        break;
-      case LabelingMode.multiClassification:
-        labelModel = MultiClassificationLabelModel.fromJson(entry['label_data']);
-        break;
-      case LabelingMode.singleClassSegmentation:
-        labelModel = SingleClassSegmentationLabelModel.fromJson(entry['label_data']);
-        break;
-      case LabelingMode.multiClassSegmentation:
-        labelModel = MultiClassSegmentationLabelModel.fromJson(entry['label_data']);
-        break;
-    }
+    labelModel = await StorageHelper.instance.loadLabelData(projectId, dataPath, mode);
   }
 
   /// ✅ 새로운 Label 데이터로 업데이트
-  void updateLabel(dynamic newLabelData) {
+  void updateLabel<T>(T newLabelData) {
     labelModel = labelModel.updateLabel(newLabelData);
   }
 }
