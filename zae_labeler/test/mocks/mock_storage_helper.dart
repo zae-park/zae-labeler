@@ -72,4 +72,28 @@ class MockStorageHelper implements StorageHelperInterface {
     // TODO: implement saveAllLabels
     throw UnimplementedError();
   }
+
+  @override
+  Future<void> clearAllCache() {
+    // TODO: implement clearAllCache
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> deleteProjectLabels(String projectId) {
+    // TODO: implement deleteProjectLabels
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<Project>> loadProjectList() {
+    // TODO: implement loadProjectList
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> saveProjectList(List<Project> projects) {
+    // TODO: implement saveProjectList
+    throw UnimplementedError();
+  }
 }
