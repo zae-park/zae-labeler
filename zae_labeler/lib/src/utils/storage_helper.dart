@@ -74,6 +74,12 @@ class StorageHelper extends StorageHelperInterface {
   @override
   Future<LabelModel> loadLabelData(String projectId, String dataPath, LabelingMode mode) => _instance.loadLabelData(projectId, dataPath, mode);
 
+  /// ✅ **프로젝트 내 Label 삭제**
+  /// - Web: `localStorage`에서 JSON 삭제
+  /// - Native: `labels_project_<projectId>.json` 파일에서 JSON 삭제
+  @override
+  Future<void> deleteProjectLabels(String projectId) => _instance.deleteProjectLabels(projectId);
+
   // ==============================
   // 📌 **Project-wide Label IO**
   // ==============================
