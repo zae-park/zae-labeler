@@ -22,6 +22,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(storageHelper: StorageHelper.instance)),
         ChangeNotifierProvider<LocaleViewModel>(create: (_) => LocaleViewModel()),
+        Provider<StorageHelperInterface>.value(value: StorageHelper.instance), // ✅ StorageHelper 제공
       ],
       child: Consumer<LocaleViewModel>(
         builder: (context, localeVM, child) {
