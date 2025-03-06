@@ -15,10 +15,10 @@ class GridPainterWidget extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _SegmentationLabelingWidgetState createState() => _SegmentationLabelingWidgetState();
+  SegmentationLabelingWidgetState createState() => SegmentationLabelingWidgetState();
 }
 
-class _SegmentationLabelingWidgetState extends State<GridPainterWidget> {
+class SegmentationLabelingWidgetState extends State<GridPainterWidget> {
   late List<List<int>> labelGrid; // 2D 배열 형태의 라벨링 데이터
   int selectedLabel = 1; // 선택된 클래스 ID
   Offset? startDrag; // Box 드래그 시작점
