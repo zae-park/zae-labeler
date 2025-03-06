@@ -1,27 +1,41 @@
 // lib/src/view_models/configuration_view_model.dart
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:uuid/uuid.dart'; // 프로젝트 ID 생성
 import '../models/label_model.dart';
 import '../models/project_model.dart';
+import '../models/data_model.dart';
 
+/// ✅ **ConfigurationViewModel**
+/// - 새로운 프로젝트 생성 및 설정을 관리하는 ViewModel
+/// - 기존 프로젝트 수정은 `ProjectViewModel`에서 처리
 class ConfigurationViewModel extends ChangeNotifier {
-  LabelingMode? _selectedMode;
-  List<String> _classes = [];
-  String _dataDirectory = ''; // 데이터 디렉토리 경로
+  String _projectName = "";
+  LabelingMode _selectedMode = LabelingMode.singleClassification;
+  List<String> _classes = ['1', '2', '3'];
+  List<DataPath> _dataPaths = [];
 
-  LabelingMode? get selectedMode => _selectedMode;
+  String get projectName => _projectName;
+  LabelingMode get selectedMode => _selectedMode;
   List<String> get classes => _classes;
-  String get dataDirectory => _dataDirectory;
+  List<DataPath> get dataPaths => _dataPaths;
 
-  // 라벨링 모드 선택
-  void selectMode(LabelingMode mode) {
+  /// ✅ 프로젝트 이름 설정
+  void setProjectName(String name) {
+    _projectName = name;
+    notifyListeners();
+  }
+
+  /// ✅ 라벨링 모드 설정
+  void setLabelingMode(LabelingMode mode) {
     _selectedMode = mode;
     notifyListeners();
   }
 
-  // 클래스 추가
+  /// ✅ 클래스 추가
   void addClass(String className) {
     if (_classes.length < 10 && !_classes.contains(className)) {
       _classes.add(className);
@@ -29,49 +43,53 @@ class ConfigurationViewModel extends ChangeNotifier {
     }
   }
 
-  // 클래스 제거
-  void removeClass(String className) {
-    _classes.remove(className);
+  /// ✅ 클래스 제거
+  void removeClass(int index) {
+    _classes.removeAt(index);
     notifyListeners();
   }
 
-  // 데이터 디렉토리 설정
-  Future<void> setDataDirectory() async {
-    // 디렉토리 선택 다이얼로그 열기
-    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
-    if (selectedDirectory != null) {
-      _dataDirectory = selectedDirectory;
-      notifyListeners();
-    }
-  }
+  /// ✅ 데이터 경로 추가
+  Future<void> addDataPath() async {
+    if (kIsWeb) {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(allowMultiple: true, withData: true);
 
-  Future<Project?> importProjectConfig() async {
-    try {
-      // 파일 선택
-      final result = await FilePicker.platform.pickFiles(withData: true);
-      if (result != null && result.files.isNotEmpty) {
-        final file = result.files.first;
-
-        // Web 환경: bytes 속성 사용
-        final content = file.bytes != null ? utf8.decode(file.bytes!) : await File(file.path!).readAsString(); // Native 환경
-
-        // JSON 디코딩 및 프로젝트 객체 생성
-        final Map<String, dynamic> projectJson = jsonDecode(content);
-        final project = Project.fromJson(projectJson);
-        return project;
+      if (result != null) {
+        for (var file in result.files) {
+          _dataPaths.add(DataPath(fileName: file.name, base64Content: base64Encode(file.bytes ?? [])));
+        }
+        notifyListeners();
       }
-    } catch (e) {
-      debugPrint('Failed to import project: $e');
-      return null;
+    } else {
+      String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+      if (selectedDirectory != null) {
+        final directory = Directory(selectedDirectory);
+        final files = directory.listSync().whereType<File>();
+        for (var file in files) {
+          _dataPaths.add(DataPath(fileName: file.uri.pathSegments.last, filePath: file.path));
+        }
+        notifyListeners();
+      }
     }
-    return null;
   }
 
-  // 설정 초기화
+  /// ✅ 새로운 프로젝트 생성
+  Project createProject() {
+    return Project(
+      id: const Uuid().v4(), // UUID를 사용하여 고유 ID 생성
+      name: _projectName,
+      mode: _selectedMode,
+      classes: _classes,
+      dataPaths: _dataPaths,
+    );
+  }
+
+  /// ✅ 프로젝트 설정 초기화
   void reset() {
-    _selectedMode = null;
-    _classes = [];
-    _dataDirectory = '';
+    _projectName = "";
+    _selectedMode = LabelingMode.singleClassification;
+    _classes = ['1', '2', '3'];
+    _dataPaths = [];
     notifyListeners();
   }
 }
