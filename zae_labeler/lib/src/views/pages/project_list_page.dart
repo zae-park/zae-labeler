@@ -19,6 +19,7 @@ class ProjectListPage extends StatefulWidget {
 }
 
 class _ProjectListPageState extends State<ProjectListPage> {
+  /// ✅ 프로젝트 가져오기 (Import)
   Future<void> _importProject(BuildContext context) async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -47,12 +48,13 @@ class _ProjectListPageState extends State<ProjectListPage> {
     }
   }
 
-  Future<void> _confirmDelete(BuildContext context, ProjectListViewModel projectListVM, Project project) async {
+  /// ✅ 프로젝트 삭제 확인 다이얼로그
+  Future<void> _confirmDelete(BuildContext context, ProjectViewModel projectVM, ProjectListViewModel projectListVM) async {
     bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Project'),
-        content: Text('Are you sure you want to delete the project "${project.name}"?'),
+        content: Text('Are you sure you want to delete the project "${projectVM.project.name}"?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
@@ -61,8 +63,9 @@ class _ProjectListPageState extends State<ProjectListPage> {
     );
 
     if (confirmed == true) {
-      await projectListVM.removeProject(project.id);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted project: ${project.name}')));
+      await projectVM.deleteProject(); // ✅ `ProjectViewModel`을 사용하여 삭제
+      await projectListVM.removeProject(projectVM.project.id);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted project: ${projectVM.project.name}')));
     }
   }
 
@@ -105,7 +108,6 @@ class _ProjectListPageState extends State<ProjectListPage> {
                   itemBuilder: (context, index) {
                     final project = projectListVM.projects[index];
 
-                    // ✅ 개별 프로젝트 ViewModel을 생성하여 Provider 등록
                     return ChangeNotifierProvider(
                       create: (context) => ProjectViewModel(storageHelper: StorageHelper.instance, project: project),
                       child: Consumer<ProjectViewModel>(
@@ -115,7 +117,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
                             onEdit: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ConfigureProjectPage(project: project))),
                             onDownload: () => projectVM.downloadProjectConfig(),
                             onShare: () => projectVM.shareProject(context),
-                            onDelete: () => _confirmDelete(context, projectListVM, project),
+                            onDelete: () => _confirmDelete(context, projectVM, projectListVM),
                             onTap: () => Navigator.pushNamed(context, '/labeling', arguments: project),
                           );
                         },
