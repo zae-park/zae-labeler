@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'src/view_models/configuration_view_model.dart';
 import 'src/views/pages/project_list_page.dart';
 import 'src/views/pages/configuration_page.dart';
 import 'src/views/pages/labeling_page.dart';
@@ -22,7 +23,8 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(storageHelper: StorageHelper.instance)),
         ChangeNotifierProvider<LocaleViewModel>(create: (_) => LocaleViewModel()),
-        Provider<StorageHelperInterface>.value(value: StorageHelper.instance), // ✅ StorageHelper 제공
+        ChangeNotifierProvider<ConfigurationViewModel>(create: (_) => ConfigurationViewModel()), // ✅ 추가
+        Provider<StorageHelperInterface>.value(value: StorageHelper.instance),
       ],
       child: Consumer<LocaleViewModel>(
         builder: (context, localeVM, child) {
