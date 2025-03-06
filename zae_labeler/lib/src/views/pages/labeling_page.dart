@@ -76,8 +76,8 @@ class LabelingPageState extends State<LabelingPage> {
   }
 
   Future<void> _toggleLabel(LabelingViewModel labelingVM, String label) async {
-    await labelingVM.addOrUpdateLabel(label, _selectedMode);
-    labelingVM.toggleLabel(label, _selectedMode); // ✅ ViewModel에서 상태 변경 관리
+    await labelingVM.addOrUpdateLabel(label);
+    labelingVM.toggleLabel(label); // ✅ ViewModel에서 상태 변경 관리
   }
 
   Future<void> _downloadLabels(BuildContext context, LabelingViewModel labelingVM) async {
@@ -94,7 +94,7 @@ class LabelingPageState extends State<LabelingPage> {
     );
 
     try {
-      String filePath = await labelingVM.downloadLabelsAsZip();
+      String filePath = await labelingVM.exportAllLabels();
 
       if (!mounted) return;
       Navigator.of(context).pop();
@@ -173,7 +173,7 @@ class LabelingPageState extends State<LabelingPage> {
                               final label = labelingVM.project.classes[index];
 
                               return LabelButton(
-                                isSelected: labelingVM.isLabelSelected(label, _selectedMode),
+                                isSelected: labelingVM.isLabelSelected(label),
                                 onPressedFunc: () async => await _toggleLabel(labelingVM, label),
                                 label: label,
                               );
