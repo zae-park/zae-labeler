@@ -10,9 +10,9 @@ import 'package:uuid/uuid.dart'; // For generating unique project IDs
 import 'package:file_picker/file_picker.dart'; // For picking directories or files
 import 'package:flutter/foundation.dart' show kIsWeb; // To determine the platform (web or native)
 
-import '../../models/label_entry.dart';
 import '../../models/project_model.dart';
 import '../../models/data_model.dart';
+import '../../models/label_model.dart';
 import '../../view_models/project_list_view_model.dart';
 import '../widgets/labeling_mode_selector.dart';
 
