@@ -1,4 +1,6 @@
 // lib/src/models/project_model.dart
+import 'dart:convert';
+
 import './data_model.dart';
 import './label_model.dart';
 import '../utils/storage_helper.dart';
@@ -95,6 +97,8 @@ class Project {
       labels: (json['labels'] as List?)?.map((e) => LabelModelConverter.fromJson(mode, e)).toList() ?? [],
     );
   }
+
+  String toJsonString() => jsonEncode(toJson());
 
   /// ✅ `Project` 객체를 JSON 형식으로 변환
   Map<String, dynamic> toJson() => {
