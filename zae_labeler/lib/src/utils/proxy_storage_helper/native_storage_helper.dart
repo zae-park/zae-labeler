@@ -135,6 +135,16 @@ class StorageHelperImpl implements StorageHelperInterface {
     return [];
   }
 
+  @override
+  Future<void> deleteProjectLabels(String projectId) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/labels_project_$projectId.json');
+
+    if (await file.exists()) {
+      await file.delete(); // ✅ 파일 삭제
+    }
+  }
+
   // ==============================
   // 📌 **Label Data Import/Export**
   // ==============================
