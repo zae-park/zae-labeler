@@ -10,6 +10,47 @@ import '../widgets/labeling_mode_selector.dart';
 class ConfigureProjectPage extends StatelessWidget {
   const ConfigureProjectPage({Key? key}) : super(key: key);
 
+  /// ✅ 클래스 추가 다이얼로그
+  void _addClass(BuildContext context) {
+    final classController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Add Class'),
+          content: TextField(controller: classController, decoration: const InputDecoration(labelText: 'Class Name')),
+          actions: [
+            TextButton(
+              onPressed: () {
+                if (classController.text.isNotEmpty) {
+                  Provider.of<ConfigurationViewModel>(context, listen: false).addClass(classController.text);
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// ✅ 프로젝트 생성 완료 후 저장
+  void _confirmProject(BuildContext context) {
+    final configVM = Provider.of<ConfigurationViewModel>(context, listen: false);
+    final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
+
+    final newProject = configVM.createProject();
+    projectListVM.saveProject(newProject);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${newProject.name} project has been created.')),
+    );
+
+    configVM.reset();
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ConfigurationViewModel>(
@@ -79,47 +120,6 @@ class ConfigureProjectPage extends StatelessWidget {
         );
       },
     );
-  }
-
-  /// ✅ 클래스 추가 다이얼로그
-  void _addClass(BuildContext context) {
-    final classController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Add Class'),
-          content: TextField(controller: classController, decoration: const InputDecoration(labelText: 'Class Name')),
-          actions: [
-            TextButton(
-              onPressed: () {
-                if (classController.text.isNotEmpty) {
-                  Provider.of<ConfigurationViewModel>(context, listen: false).addClass(classController.text);
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  /// ✅ 프로젝트 생성 완료 후 저장
-  void _confirmProject(BuildContext context) {
-    final configVM = Provider.of<ConfigurationViewModel>(context, listen: false);
-    final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
-
-    final newProject = configVM.createProject();
-    projectListVM.saveProject(newProject);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${newProject.name} project has been created.')),
-    );
-
-    configVM.reset();
-    Navigator.pop(context);
   }
 }
 
