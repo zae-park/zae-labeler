@@ -1,6 +1,7 @@
 import 'dart:html' as html;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart'; // For generating unique project IDs
 import 'package:share_plus/share_plus.dart';
 import '../models/label_model.dart';
 import '../models/project_model.dart';
@@ -11,7 +12,8 @@ class ProjectViewModel extends ChangeNotifier {
   final StorageHelperInterface storageHelper;
   Project project;
 
-  ProjectViewModel({required this.storageHelper, required this.project});
+  ProjectViewModel({required this.storageHelper, Project? project})
+      : project = project ?? Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: []);
 
   // ==============================
   // 📌 **프로젝트 기본 정보 관리**
