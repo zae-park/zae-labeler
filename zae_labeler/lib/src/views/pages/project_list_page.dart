@@ -1,13 +1,10 @@
-import 'dart:html' as html; // 웹 전용 기능 사용
 import 'dart:convert';
 import 'dart:io' as io;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:share_plus/share_plus.dart';
 import '../../view_models/project_list_view_model.dart';
+import '../../view_models/project_view_model.dart';
 import '../../view_models/locale_view_model.dart';
 import '../../models/project_model.dart';
 import '../pages/configuration_page.dart';
@@ -22,59 +19,6 @@ class ProjectListPage extends StatefulWidget {
 }
 
 class _ProjectListPageState extends State<ProjectListPage> {
-  Future<void> _shareProject(BuildContext context, Project project) async {
-    try {
-      final projectJson = project.toJson();
-      final jsonString = jsonEncode(projectJson);
-
-      if (kIsWeb) {
-        // Web 환경: Web Share API 사용 또는 다운로드 방식
-        final blob = html.Blob([jsonString], 'application/json');
-        final url = html.Url.createObjectUrlFromBlob(blob);
-
-        // Web Share API로 텍스트 공유
-        await html.window.navigator.share({
-          'title': '${project.name} Project Configuration',
-          'text': 'Here is the project configuration:\n$jsonString',
-        });
-
-        html.Url.revokeObjectUrl(url); // URL 해제
-      } else {
-        // Native 환경: 파일 공유
-        final directory = await getTemporaryDirectory();
-        final file = io.File('${directory.path}/${project.name}_config.json');
-        await file.writeAsString(jsonString);
-
-        await Share.shareXFiles([XFile(file.path)], text: '${project.name} project configuration');
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to share project: $e')));
-    }
-  }
-
-  Future<void> _downloadProjectConfig(BuildContext context, Project project) async {
-    try {
-      final projectJson = project.toJson();
-      final jsonString = jsonEncode(projectJson);
-
-      if (kIsWeb) {
-        // Web 환경: 파일을 Blob 형태로 제공
-        final blob = html.Blob([jsonString]);
-        final url = html.Url.createObjectUrlFromBlob(blob);
-        html.AnchorElement(href: url)
-          ..setAttribute('download', '${project.name}_config.json')
-          ..click();
-        html.Url.revokeObjectUrl(url); // URL 해제
-      } else {
-        // Native 환경: 파일 시스템에 저장
-        String filePath = await StorageHelper.instance.downloadProjectConfig(project);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Project configuration downloaded: $filePath')));
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to download project configuration: $e')));
-    }
-  }
-
   Future<void> _importProject(BuildContext context) async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -84,15 +28,13 @@ class _ProjectListPageState extends State<ProjectListPage> {
 
       if (result != null) {
         final file = result.files.single;
-
         final content = file.bytes != null ? utf8.decode(file.bytes!) : await io.File(file.path!).readAsString();
-
         final jsonData = jsonDecode(content);
         final project = Project.fromJson(jsonData);
 
-        if (!mounted) return; // `mounted`는 이제 StatefulWidget에서 사용 가능
-        final projectVM = Provider.of<ProjectListViewModel>(context, listen: false);
-        await projectVM.saveProject(project);
+        if (!mounted) return;
+        final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
+        await projectListVM.saveProject(project);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Imported project: ${project.name}')));
@@ -105,7 +47,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
     }
   }
 
-  Future<void> _confirmDelete(BuildContext context, ProjectListViewModel projectVM, Project project) async {
+  Future<void> _confirmDelete(BuildContext context, ProjectListViewModel projectListVM, Project project) async {
     bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -119,7 +61,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
     );
 
     if (confirmed == true) {
-      await projectVM.removeProject(project.id);
+      await projectListVM.removeProject(project.id);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted project: ${project.name}')));
     }
   }
@@ -127,7 +69,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
   @override
   Widget build(BuildContext context) {
     return Consumer2<ProjectListViewModel, LocaleViewModel>(
-      builder: (context, projectVM, localeVM, child) {
+      builder: (context, projectListVM, localeVM, child) {
         return Scaffold(
           appBar: AppBar(
             title: Text(localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 목록' : 'Project List'),
@@ -152,23 +94,32 @@ class _ProjectListPageState extends State<ProjectListPage> {
               ),
             ],
           ),
-          body: projectVM.projects.isEmpty
+          body: projectListVM.projects.isEmpty
               ? Center(
                   child: Text(
                     localeVM.currentLocale.languageCode == 'ko' ? '등록된 프로젝트가 없습니다.' : 'No projects available.',
                   ),
                 )
               : ListView.builder(
-                  itemCount: projectVM.projects.length,
+                  itemCount: projectListVM.projects.length,
                   itemBuilder: (context, index) {
-                    final project = projectVM.projects[index];
-                    return ProjectTile(
-                      project: project,
-                      onEdit: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ConfigureProjectPage(project: project))),
-                      onDownload: () => _downloadProjectConfig(context, project),
-                      onShare: () => _shareProject(context, project),
-                      onDelete: () => _confirmDelete(context, projectVM, project),
-                      onTap: () => Navigator.pushNamed(context, '/labeling', arguments: project),
+                    final project = projectListVM.projects[index];
+
+                    // ✅ 개별 프로젝트 ViewModel을 생성하여 Provider 등록
+                    return ChangeNotifierProvider(
+                      create: (context) => ProjectViewModel(storageHelper: StorageHelper.instance, project: project),
+                      child: Consumer<ProjectViewModel>(
+                        builder: (context, projectVM, _) {
+                          return ProjectTile(
+                            project: project,
+                            onEdit: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ConfigureProjectPage(project: project))),
+                            onDownload: () => projectVM.downloadProjectConfig(),
+                            onShare: () => projectVM.shareProject(context),
+                            onDelete: () => _confirmDelete(context, projectListVM, project),
+                            onTap: () => Navigator.pushNamed(context, '/labeling', arguments: project),
+                          );
+                        },
+                      ),
                     );
                   },
                 ),
