@@ -45,6 +45,26 @@ class StorageHelperImpl implements StorageHelperInterface {
   }
 
   // ==============================
+  // 📌 **Project List Management**
+  // ==============================
+  @override
+  Future<void> saveProjectList(List<Project> projects) async {
+    final projectsJson = jsonEncode(projects.map((e) => e.toJson()).toList());
+    html.window.localStorage['projects'] = projectsJson; // ✅ `localStorage`에 저장
+  }
+
+  @override
+  Future<List<Project>> loadProjectList() async {
+    final projectsJson = html.window.localStorage['projects'];
+
+    if (projectsJson != null) {
+      final jsonData = jsonDecode(projectsJson);
+      return (jsonData as List).map((e) => Project.fromJson(e)).toList();
+    }
+    return [];
+  }
+
+  // ==============================
   // 📌 **Single Label Data IO**
   // ==============================
 
@@ -218,5 +238,13 @@ class StorageHelperImpl implements StorageHelperInterface {
 
     input.click();
     return completer.future;
+  }
+
+  // ==============================
+  // 📌 **Cache Management**
+  // ==============================
+  @override
+  Future<void> clearAllCache() async {
+    html.window.localStorage.clear(); // ✅ localStorage 전체 삭제
   }
 }

@@ -43,6 +43,22 @@ class StorageHelper extends StorageHelperInterface {
   Future<String> downloadProjectConfig(Project project) => _instance.downloadProjectConfig(project);
 
   // ==============================
+  // 📌 **Project List Management**
+  // ==============================
+
+  /// ✅ **프로젝트 리스트 저장**
+  /// - Web: `localStorage['projects']`
+  /// - Native: `projects.json` 파일 저장
+  @override
+  Future<void> saveProjectList(List<Project> projects) => _instance.saveProjectList(projects);
+
+  /// ✅ **저장된 프로젝트 리스트 불러오기**
+  /// - Web: `localStorage`에서 JSON 읽기
+  /// - Native: `projects.json` 파일에서 JSON 읽기
+  @override
+  Future<List<Project>> loadProjectList() => _instance.loadProjectList();
+
+  // ==============================
   // 📌 **Single Label Data IO**
   // ==============================
 
@@ -90,4 +106,12 @@ class StorageHelper extends StorageHelperInterface {
   /// - Native: `labels_import.json` 파일에서 JSON 데이터 읽기
   @override
   Future<List<LabelModel>> importAllLabels() => _instance.importAllLabels();
+
+  // ==============================
+  // 📌 **Cache Management**
+  // ==============================
+
+  /// ✅ **모든 캐시 삭제 (Web: localStorage 초기화, Native: 프로젝트 데이터 삭제)**
+  @override
+  Future<void> clearAllCache() => _instance.clearAllCache();
 }

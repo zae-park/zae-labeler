@@ -45,6 +45,32 @@ class StorageHelperImpl implements StorageHelperInterface {
   }
 
   // ==============================
+  // 📌 **Project List Management**
+  // ==============================
+
+  @override
+  Future<void> saveProjectList(List<Project> projects) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/projects.json');
+
+    final projectsJson = jsonEncode(projects.map((e) => e.toJson()).toList());
+    await file.writeAsString(projectsJson); // ✅ 프로젝트 리스트를 JSON 파일로 저장
+  }
+
+  @override
+  Future<List<Project>> loadProjectList() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/projects.json');
+
+    if (await file.exists()) {
+      final content = await file.readAsString();
+      final jsonData = jsonDecode(content);
+      return (jsonData as List).map((e) => Project.fromJson(e)).toList();
+    }
+    return [];
+  }
+
+  // ==============================
   // 📌 **Single Label Data IO**
   // ==============================
 
@@ -197,5 +223,20 @@ class StorageHelperImpl implements StorageHelperInterface {
       }).toList();
     }
     return [];
+  }
+
+  // ==============================
+  // 📌 **Cache Management**
+  // ==============================
+  @override
+  Future<void> clearAllCache() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final files = directory.listSync();
+
+    for (var file in files) {
+      if (file is File && file.path.endsWith('.json')) {
+        await file.delete(); // ✅ 모든 JSON 파일 삭제
+      }
+    }
   }
 }
