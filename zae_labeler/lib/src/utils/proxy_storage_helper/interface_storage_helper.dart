@@ -14,6 +14,12 @@ abstract class StorageHelperInterface {
   Future<String> downloadProjectConfig(Project project);
 
   // ==============================
+  // 📌 **Project List Management**
+  // ==============================
+  Future<void> saveProjectList(List<Project> projects);
+  Future<List<Project>> loadProjectList();
+
+  // ==============================
   // 📌 **Single Label Data IO**
   // ==============================
   Future<void> saveLabelData(String projectId, String dataPath, LabelModel labelModel);
@@ -30,6 +36,11 @@ abstract class StorageHelperInterface {
   // ==============================
   Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataPath> fileDataList);
   Future<List<LabelModel>> importAllLabels();
+
+  // ==============================
+  // 📌 **Cache Management**
+  // ==============================
+  Future<void> clearAllCache();
 }
 
 class LabelModelConverter {
