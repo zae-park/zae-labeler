@@ -1,4 +1,4 @@
-import '../label_model.dart';
+import 'base_label_model.dart';
 
 /// ✅ Segmentation Label의 최상위 클래스
 abstract class SegmentationLabel<T> extends LabelModel<T> {
