@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import '../../view_models/project_list_view_model.dart';
 import '../../view_models/project_view_model.dart';
 import '../../view_models/locale_view_model.dart';
+import '../../view_models/configuration_view_model.dart';
 import '../../models/project_model.dart';
 import '../pages/configuration_page.dart';
 import '../../utils/storage_helper.dart';
@@ -118,7 +119,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
                                 context,
                                 MaterialPageRoute(
                                     builder: (_) => ChangeNotifierProvider(
-                                        create: (_) => ConfigurationViewModel(),
+                                        create: (_) => ConfigurationViewModel.fromProject(project), // 🔥 기존 프로젝트 데이터를 반영하여 생성
                                         child: const ConfigureProjectPage(),
                                     ),
                                 ),
