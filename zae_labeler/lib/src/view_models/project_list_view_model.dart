@@ -39,6 +39,24 @@ class ProjectListViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// ✅ 프로젝트 업데이트
+  Future<void> updateProject(BuildContext context, Project updatedProject) async {
+    int index = _projects.indexWhere((project) => project.id == updatedProject.id);
+    if (index != -1) {
+      _projects[index] = Project(
+        id: updatedProject.id,
+        name: updatedProject.name,
+        mode: updatedProject.mode,
+        classes: updatedProject.classes,
+        dataPaths: updatedProject.dataPaths,
+      );
+
+      await StorageHelper.instance.saveProjectConfig(_projects);
+
+      notifyListeners();
+    }
+  }
+
   /// ✅ 모든 프로젝트 데이터 캐시 초기화
   Future<void> clearAllProjectsCache() async {
     await storageHelper.clearAllCache();
