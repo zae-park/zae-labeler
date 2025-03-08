@@ -88,7 +88,12 @@ class _ProjectListPageState extends State<ProjectListPage> {
               ),
               IconButton(
                 icon: const Icon(Icons.add),
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ConfigureProjectPage())),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChangeNotifierProvider(create: (_) => ConfigurationViewModel(), child: const ConfigureProjectPage()),
+                  ),
+                ),
                 tooltip: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 생성' : 'Create Project',
               ),
               IconButton(
@@ -119,11 +124,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
                                 context,
                                 MaterialPageRoute(
                                     builder: (_) => ChangeNotifierProvider(
-                                        create: (_) => ConfigurationViewModel.fromProject(project), // 🔥 기존 프로젝트 데이터를 반영하여 생성
-                                        child: const ConfigureProjectPage(),
-                                    ),
-                                ),
-                            ),
+                                        create: (_) => ConfigurationViewModel.fromProject(project), child: const ConfigureProjectPage()))),
                             onDownload: () => projectVM.downloadProjectConfig(),
                             onShare: () => projectVM.shareProject(context),
                             onDelete: () => _confirmDelete(context, projectVM, projectListVM),
