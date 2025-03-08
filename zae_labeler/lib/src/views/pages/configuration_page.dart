@@ -10,9 +10,9 @@ import '../widgets/labeling_mode_selector.dart';
 class ConfigureProjectPage extends StatelessWidget {
   const ConfigureProjectPage({Key? key}) : super(key: key);
 
-  /// ✅ 클래스 추가 다이얼로그
   void _addClass(BuildContext context) {
     final classController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (context) {
@@ -22,8 +22,12 @@ class ConfigureProjectPage extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () {
-                if (classController.text.isNotEmpty) {
-                  Provider.of<ConfigurationViewModel>(context, listen: false).addClass(classController.text);
+                final className = classController.text.trim();
+                if (className.isNotEmpty) {
+                  final configVM = Provider.of<ConfigurationViewModel>(context, listen: false);
+                  configVM.addClass(className);
+
+                  // ✅ UI 업데이트 보장 후 다이얼로그 닫기
                   Navigator.pop(context);
                 }
               },
@@ -35,16 +39,21 @@ class ConfigureProjectPage extends StatelessWidget {
     );
   }
 
-  /// ✅ 프로젝트 생성 완료 후 저장
   void _confirmProject(BuildContext context) {
     final configVM = Provider.of<ConfigurationViewModel>(context, listen: false);
     final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
 
+    final isNewProject = configVM.projectName.isEmpty; // ✅ 기존 프로젝트인지 새 프로젝트인지 확인
     final newProject = configVM.createProject();
-    projectListVM.saveProject(newProject);
+
+    if (isNewProject) {
+      projectListVM.saveProject(configVM.createProject());
+    } else {
+      projectListVM.updateProject(context, newProject); // ✅ 기존 프로젝트 수정 메서드 추가
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${newProject.name} project has been created.')),
+      SnackBar(content: Text('${newProject.name} project has been ${isNewProject ? "created" : "updated"}.')),
     );
 
     configVM.reset();
