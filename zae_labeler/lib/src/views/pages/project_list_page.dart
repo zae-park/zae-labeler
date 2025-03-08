@@ -118,8 +118,11 @@ class _ProjectListPageState extends State<ProjectListPage> {
                                 context,
                                 MaterialPageRoute(
                                     builder: (_) => ChangeNotifierProvider(
-                                        create: (_) => ProjectViewModel(storageHelper: StorageHelper.instance, project: project),
-                                        child: const ConfigureProjectPage()))),
+                                        create: (_) => ConfigurationViewModel(),
+                                        child: const ConfigureProjectPage(),
+                                    ),
+                                ),
+                            ),
                             onDownload: () => projectVM.downloadProjectConfig(),
                             onShare: () => projectVM.shareProject(context),
                             onDelete: () => _confirmDelete(context, projectVM, projectListVM),
