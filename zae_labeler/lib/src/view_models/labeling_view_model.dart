@@ -62,8 +62,9 @@ class LabelingViewModel extends ChangeNotifier {
     }
 
     final dataPath = project.dataPaths.firstWhere((dp) => dp.fileName == dataFilename).filePath ?? '';
-    final newLabelVM =
-        LabelViewModel(projectId: project.id, dataFilename: dataFilename, dataPath: dataPath, mode: project.mode, labelModel: LabelModel.empty());
+
+    final newLabelVM = LabelViewModel(
+        projectId: project.id, dataFilename: dataFilename, dataPath: dataPath, mode: project.mode, labelModel: LabelModelFactory.createNew(project.mode));
 
     _labelCache[dataFilename] = newLabelVM;
     return newLabelVM;
