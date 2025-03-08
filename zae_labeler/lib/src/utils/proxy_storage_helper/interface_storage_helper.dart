@@ -2,8 +2,8 @@
 import '../../models/data_model.dart';
 import '../../models/label_model.dart';
 import '../../models/project_model.dart';
-import '../../models/label_models/classification_label_model.dart';
-import '../../models/label_models/segmentation_label_model.dart';
+import '../../models/sub_models/classification_label_model.dart';
+import '../../models/sub_models/segmentation_label_model.dart';
 
 abstract class StorageHelperInterface {
   // ==============================
