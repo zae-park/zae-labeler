@@ -12,23 +12,22 @@ class ConfigureProjectPage extends StatelessWidget {
 
   void _addClass(BuildContext context) {
     final classController = TextEditingController();
+    final configVM = Provider.of<ConfigurationViewModel>(context, listen: false); // ✅ 다이얼로그 내부에서 찾지 않도록 미리 가져오기
 
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Add Class'),
           content: TextField(controller: classController, decoration: const InputDecoration(labelText: 'Class Name')),
           actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
             TextButton(
               onPressed: () {
                 final className = classController.text.trim();
                 if (className.isNotEmpty) {
-                  final configVM = Provider.of<ConfigurationViewModel>(context, listen: false);
                   configVM.addClass(className);
-
-                  // ✅ UI 업데이트 보장 후 다이얼로그 닫기
-                  Navigator.pop(context);
+                  Navigator.pop(dialogContext);
                 }
               },
               child: const Text('Add'),
