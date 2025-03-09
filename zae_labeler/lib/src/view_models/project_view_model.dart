@@ -13,7 +13,13 @@ class ProjectViewModel extends ChangeNotifier {
   Project project;
 
   ProjectViewModel({required this.storageHelper, Project? project})
-      : project = project ?? Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: []);
+      : project = project ??
+            Project(
+              id: project?.id ?? const Uuid().v4(),
+              name: project?.name ?? '',
+              mode: project?.mode ?? LabelingMode.singleClassification,
+              classes: project?.classes ?? [],
+            );
 
   // ==============================
   // 📌 **프로젝트 기본 정보 관리**
