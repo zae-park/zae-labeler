@@ -27,7 +27,12 @@ class ProjectListViewModel extends ChangeNotifier {
 
   /// ✅ 프로젝트 저장
   Future<void> saveProject(Project project) async {
-    _projects.add(project);
+    int index = _projects.indexWhere((p) => p.id == project.id);
+    if (index != -1) {
+      _projects[index] = project.copyWith(id: project.id);
+    } else {
+      _projects.add(project);
+    }
     await storageHelper.saveProjectList(_projects);
     notifyListeners();
   }
