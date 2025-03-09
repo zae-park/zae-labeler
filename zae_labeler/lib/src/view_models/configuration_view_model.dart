@@ -87,9 +87,9 @@ class ConfigurationViewModel extends ChangeNotifier {
   }
 
   /// ✅ 새로운 프로젝트 생성
-  Project createProject() {
+  Project createProject({String? existingId}) {
     return Project(
-      id: const Uuid().v4(), // UUID를 사용하여 고유 ID 생성
+      id: existingId ?? const Uuid().v4(), // 기존 ID 유지
       name: _projectName,
       mode: _selectedMode,
       classes: _classes,
