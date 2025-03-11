@@ -42,16 +42,13 @@ class ConfigureProjectPage extends StatelessWidget {
     final configVM = Provider.of<ConfigurationViewModel>(context, listen: false);
     final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
 
-    // ✅ 프로젝트 ID가 있는 경우 기존 프로젝트, 없는 경우 새 프로젝트로 판단
-    final bool isNewProject = configVM.currentProjectId == null;
-
-    // ✅ 기존 프로젝트 ID 유지하도록 수정
-    final newProject = configVM.createProject(existingId: configVM.currentProjectId);
+    final newProject = configVM.project;
+    final isNewProject = projectListVM.projects.every((p) => p.id != newProject.id);
 
     if (isNewProject) {
       projectListVM.saveProject(newProject);
     } else {
-      projectListVM.updateProject(context, newProject); // ✅ 기존 프로젝트 수정 메서드 추가
+      projectListVM.updateProject(context, newProject);
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -83,7 +80,7 @@ class ConfigureProjectPage extends StatelessWidget {
 
                   /// ✅ 라벨링 모드 선택
                   LabelingModeSelector.dropdown(
-                    selectedMode: configVM.selectedMode,
+                    selectedMode: configVM.project.mode,
                     onModeChanged: (newMode) => configVM.setLabelingMode(newMode),
                   ),
                   const SizedBox(height: 16),
@@ -96,7 +93,7 @@ class ConfigureProjectPage extends StatelessWidget {
                       IconButton(icon: const Icon(Icons.add), onPressed: () => _addClass(context), tooltip: 'Add Class'),
                     ],
                   ),
-                  ...configVM.classes.asMap().entries.map((entry) {
+                  ...configVM.project.classes.asMap().entries.map((entry) {
                     int index = entry.key;
                     String className = entry.value;
                     return ListTile(
