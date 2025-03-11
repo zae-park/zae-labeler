@@ -12,6 +12,7 @@ import '../models/data_model.dart';
 /// - 새로운 프로젝트 생성 및 설정을 관리하는 ViewModel
 /// - 기존 프로젝트 수정은 `ProjectViewModel`에서 처리
 class ConfigurationViewModel extends ChangeNotifier {
+  String? _currentProjectId;
   String _projectName;
   LabelingMode _selectedMode;
   List<String> _classes;
@@ -19,18 +20,21 @@ class ConfigurationViewModel extends ChangeNotifier {
 
   // 기본 생성자 (새 프로젝트 생성용)
   ConfigurationViewModel()
-      : _projectName = "",
+      : _currentProjectId = null,
+        _projectName = "",
         _selectedMode = LabelingMode.singleClassification,
         _classes = ['1', '2', '3'],
         _dataPaths = [];
 
   // 🔥 기존 프로젝트 수정용 생성자 추가
   ConfigurationViewModel.fromProject(Project project)
-      : _projectName = project.name,
+      : _currentProjectId = project.id,
+        _projectName = project.name,
         _selectedMode = project.mode,
         _classes = List.from(project.classes),
         _dataPaths = List.from(project.dataPaths);
 
+  String? get currentProjectId => _currentProjectId;
   String get projectName => _projectName;
   LabelingMode get selectedMode => _selectedMode;
   List<String> get classes => _classes;
@@ -99,6 +103,7 @@ class ConfigurationViewModel extends ChangeNotifier {
 
   /// ✅ 프로젝트 설정 초기화
   void reset() {
+    _currentProjectId = null;
     _projectName = "";
     _selectedMode = LabelingMode.singleClassification;
     _classes = ['1', '2', '3'];
