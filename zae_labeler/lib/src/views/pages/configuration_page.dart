@@ -42,11 +42,14 @@ class ConfigureProjectPage extends StatelessWidget {
     final configVM = Provider.of<ConfigurationViewModel>(context, listen: false);
     final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
 
-    final isNewProject = configVM.projectName.isEmpty; // ✅ 기존 프로젝트인지 새 프로젝트인지 확인
-    final newProject = configVM.createProject();
+    // ✅ 프로젝트 ID가 있는 경우 기존 프로젝트, 없는 경우 새 프로젝트로 판단
+    final bool isNewProject = configVM.currentProjectId == null;
+
+    // ✅ 기존 프로젝트 ID 유지하도록 수정
+    final newProject = configVM.createProject(existingId: configVM.currentProjectId);
 
     if (isNewProject) {
-      projectListVM.saveProject(configVM.createProject());
+      projectListVM.saveProject(newProject);
     } else {
       projectListVM.updateProject(context, newProject); // ✅ 기존 프로젝트 수정 메서드 추가
     }
