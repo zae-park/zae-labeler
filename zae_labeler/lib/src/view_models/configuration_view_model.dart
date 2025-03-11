@@ -9,61 +9,45 @@ import '../models/project_model.dart';
 import '../models/data_model.dart';
 
 /// ✅ **ConfigurationViewModel**
-/// - 새로운 프로젝트 생성 및 설정을 관리하는 ViewModel
+/// - 프로젝트 생성 및 설정을 관리하는 ViewModel
 /// - 기존 프로젝트 수정은 `ProjectViewModel`에서 처리
 class ConfigurationViewModel extends ChangeNotifier {
-  String? _currentProjectId;
-  String _projectName;
-  LabelingMode _selectedMode;
-  List<String> _classes;
-  List<DataPath> _dataPaths;
+  Project _project;
 
-  // 기본 생성자 (새 프로젝트 생성용)
-  ConfigurationViewModel()
-      : _currentProjectId = null,
-        _projectName = "",
-        _selectedMode = LabelingMode.singleClassification,
-        _classes = ['1', '2', '3'],
-        _dataPaths = [];
+  // ✅ 새 프로젝트 생성 시 기본값 설정
+  ConfigurationViewModel() : _project = Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: [], dataPaths: []);
 
-  // 🔥 기존 프로젝트 수정용 생성자 추가
-  ConfigurationViewModel.fromProject(Project project)
-      : _currentProjectId = project.id,
-        _projectName = project.name,
-        _selectedMode = project.mode,
-        _classes = List.from(project.classes),
-        _dataPaths = List.from(project.dataPaths);
+  // ✅ 기존 프로젝트 수정용 생성자
+  ConfigurationViewModel.fromProject(Project existingProject) : _project = existingProject;
 
-  String? get currentProjectId => _currentProjectId;
-  String get projectName => _projectName;
-  LabelingMode get selectedMode => _selectedMode;
-  List<String> get classes => _classes;
-  List<DataPath> get dataPaths => _dataPaths;
+  Project get project => _project;
 
   /// ✅ 프로젝트 이름 설정
   void setProjectName(String name) {
-    _projectName = name;
+    _project = _project.copyWith(name: name);
     notifyListeners();
   }
 
   /// ✅ 라벨링 모드 설정
   void setLabelingMode(LabelingMode mode) {
-    _selectedMode = mode;
+    _project = _project.copyWith(mode: mode);
     notifyListeners();
   }
 
   /// ✅ 클래스 추가
   void addClass(String className) {
-    if (_classes.length < 10 && !_classes.contains(className)) {
-      _classes.add(className);
+    if (!_project.classes.contains(className)) {
+      _project = _project.copyWith(classes: [..._project.classes, className]);
       notifyListeners();
     }
   }
 
   /// ✅ 클래스 제거
   void removeClass(int index) {
-    _classes.removeAt(index);
-    notifyListeners();
+    if (index >= 0 && index < _project.classes.length) {
+      _project = _project.copyWith(classes: List.from(_project.classes)..removeAt(index));
+      notifyListeners();
+    }
   }
 
   /// ✅ 데이터 경로 추가
@@ -73,7 +57,7 @@ class ConfigurationViewModel extends ChangeNotifier {
 
       if (result != null) {
         for (var file in result.files) {
-          _dataPaths.add(DataPath(fileName: file.name, base64Content: base64Encode(file.bytes ?? [])));
+          _project = _project.copyWith(dataPaths: [..._project.dataPaths, DataPath(fileName: file.name, base64Content: base64Encode(file.bytes ?? []))]);
         }
         notifyListeners();
       }
@@ -83,31 +67,16 @@ class ConfigurationViewModel extends ChangeNotifier {
         final directory = Directory(selectedDirectory);
         final files = directory.listSync().whereType<File>();
         for (var file in files) {
-          _dataPaths.add(DataPath(fileName: file.uri.pathSegments.last, filePath: file.path));
+          _project = _project.copyWith(dataPaths: [..._project.dataPaths, DataPath(fileName: file.uri.pathSegments.last, filePath: file.path)]);
         }
         notifyListeners();
       }
     }
   }
 
-  /// ✅ 새로운 프로젝트 생성
-  Project createProject({String? existingId}) {
-    return Project(
-      id: existingId ?? const Uuid().v4(), // 기존 ID 유지
-      name: _projectName,
-      mode: _selectedMode,
-      classes: _classes,
-      dataPaths: _dataPaths,
-    );
-  }
-
   /// ✅ 프로젝트 설정 초기화
   void reset() {
-    _currentProjectId = null;
-    _projectName = "";
-    _selectedMode = LabelingMode.singleClassification;
-    _classes = ['1', '2', '3'];
-    _dataPaths = [];
+    _project = Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: [], dataPaths: []);
     notifyListeners();
   }
 }
