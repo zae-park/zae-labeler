@@ -1,132 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../view_models/labeling_view_model.dart';
 
 enum SegmentationMode { pixelMask, boundingBox }
 
-class GridPainterWidget extends StatefulWidget {
+class GridPainterWidget extends StatelessWidget {
   final SegmentationMode mode;
-  final int gridSize;
   final Function(List<List<int>> labeledData) onLabelUpdated;
 
   const GridPainterWidget({
     required this.mode,
-    required this.gridSize,
     required this.onLabelUpdated,
     Key? key,
   }) : super(key: key);
 
   @override
-  SegmentationLabelingWidgetState createState() => SegmentationLabelingWidgetState();
-}
-
-class SegmentationLabelingWidgetState extends State<GridPainterWidget> {
-  late List<List<int>> labelGrid;
-  int selectedLabel = 1;
-  Offset? startDrag;
-  Offset? currentPointerPosition;
-  double brushSize = 1.0; // ✅ 브러시 크기 추가
-
-  @override
-  void initState() {
-    super.initState();
-    labelGrid = List.generate(widget.gridSize, (_) => List.filled(widget.gridSize, 0));
-  }
-
-  void _updateLabel(int x, int y) {
-    if (widget.mode == SegmentationMode.pixelMask) {
-      setState(() {
-        for (int i = -brushSize ~/ 2; i <= brushSize ~/ 2; i++) {
-          for (int j = -brushSize ~/ 2; j <= brushSize ~/ 2; j++) {
-            int newX = x + j;
-            int newY = y + i;
-            if (newX >= 0 && newX < widget.gridSize && newY >= 0 && newY < widget.gridSize) {
-              labelGrid[newY][newX] = selectedLabel;
-            }
-          }
-        }
-      });
-    }
-    widget.onLabelUpdated(labelGrid);
-  }
-
-  void _startBoxSelection(Offset position) {
-    if (widget.mode == SegmentationMode.boundingBox) {
-      setState(() {
-        startDrag = position;
-      });
-    }
-  }
-
-  void _updateBoxSelection(Offset position) {
-    if (startDrag == null) return;
-    setState(() {
-      currentPointerPosition = position;
-    });
-  }
-
-  void _endBoxSelection() {
-    if (startDrag == null || currentPointerPosition == null) return;
-
-    int x1 = (startDrag!.dx / (500 / widget.gridSize)).floor();
-    int y1 = (startDrag!.dy / (500 / widget.gridSize)).floor();
-    int x2 = (currentPointerPosition!.dx / (500 / widget.gridSize)).floor();
-    int y2 = (currentPointerPosition!.dy / (500 / widget.gridSize)).floor();
-
-    for (int i = y1; i <= y2; i++) {
-      for (int j = x1; j <= x2; j++) {
-        if (i >= 0 && i < widget.gridSize && j >= 0 && j < widget.gridSize) {
-          labelGrid[i][j] = selectedLabel;
-        }
-      }
-    }
-
-    widget.onLabelUpdated(labelGrid);
-
-    setState(() {
-      startDrag = null;
-      currentPointerPosition = null;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // ✅ 브러시 크기 조절 Slider 추가
-        if (widget.mode == SegmentationMode.pixelMask)
-          Slider(
-            value: brushSize,
-            min: 1,
-            max: 5,
-            divisions: 4,
-            label: "${brushSize.toInt()} px",
-            onChanged: (value) {
-              setState(() {
-                brushSize = value;
-              });
-            },
-          ),
-
-        GestureDetector(
+    return Consumer<SegmentationLabelingViewModel>(
+      builder: (context, labelingVM, child) {
+        return GestureDetector(
           onPanUpdate: (details) {
+            int gridSize = labelingVM.gridSize;
             double dx = details.localPosition.dx;
             double dy = details.localPosition.dy;
-            int x = (dx / (500 / widget.gridSize)).floor();
-            int y = (dy / (500 / widget.gridSize)).floor();
+            int x = (dx / (500 / gridSize)).floor();
+            int y = (dy / (500 / gridSize)).floor();
 
-            if (widget.mode == SegmentationMode.pixelMask) {
-              _updateLabel(x, y);
+            if (mode == SegmentationMode.pixelMask) {
+              labelingVM.updateSegmentationLabel(x, y);
             } else {
-              _updateBoxSelection(details.localPosition);
+              labelingVM.updateBoxSelection(details.localPosition);
             }
           },
-          onPanStart: (details) => _startBoxSelection(details.localPosition),
-          onPanEnd: (_) => _endBoxSelection(),
+          onPanStart: (details) => labelingVM.startBoxSelection(details.localPosition),
+          onPanEnd: (_) => labelingVM.endBoxSelection(),
           child: CustomPaint(
-            painter: GridPainter(labelGrid, widget.gridSize, startDrag, currentPointerPosition),
+            painter: GridPainter(
+              labelingVM.labelGrid,
+              labelingVM.gridSize,
+              labelingVM.startDrag,
+              labelingVM.currentPointerPosition,
+            ),
             size: const Size(500, 500),
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 }
@@ -165,11 +83,10 @@ class GridPainter extends CustomPainter {
     }
 
     if (startDrag != null && currentPointerPosition != null) {
-      double x1 = startDrag!.dx;
-      double y1 = startDrag!.dy;
-      double x2 = currentPointerPosition!.dx;
-      double y2 = currentPointerPosition!.dy;
-      canvas.drawRect(Rect.fromPoints(Offset(x1, y1), Offset(x2, y2)), boundingBoxPaint);
+      canvas.drawRect(
+        Rect.fromPoints(startDrag!, currentPointerPosition!),
+        boundingBoxPaint,
+      );
     }
   }
 
