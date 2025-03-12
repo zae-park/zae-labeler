@@ -112,3 +112,13 @@ class LabelingViewModel extends ChangeNotifier {
     return await storageHelper.exportAllLabels(project, allLabels, project.dataPaths);
   }
 }
+
+class GridPainterViewModel extends ChangeNotifier {
+  int _gridSize = 32; // 기본 Grid 크기
+  int get gridSize => _gridSize;
+
+  void setGridSize(int newSize) {
+    _gridSize = newSize;
+    notifyListeners();
+  }
+}
