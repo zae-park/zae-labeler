@@ -113,12 +113,49 @@ class LabelingViewModel extends ChangeNotifier {
   }
 }
 
-class GridPainterViewModel extends ChangeNotifier {
-  int _gridSize = 32; // 기본 Grid 크기
+class SegmentationLabelingViewModel extends LabelingViewModel {
+  int _gridSize = 32; // ✅ 기본 Grid 크기
   int get gridSize => _gridSize;
+
+  Offset? _startDrag;
+  Offset? _currentPointerPosition;
+  Offset? get startDrag => _startDrag;
+  Offset? get currentPointerPosition => _currentPointerPosition;
+
+  List<List<int>> _labelGrid = List.generate(32, (_) => List.filled(32, 0));
+  List<List<int>> get labelGrid => _labelGrid;
+
+  SegmentationLabelingViewModel({required super.project, required super.storageHelper});
 
   void setGridSize(int newSize) {
     _gridSize = newSize;
+    _labelGrid = List.generate(newSize, (_) => List.filled(newSize, 0)); // ✅ Grid 크기 변경 시 초기화
+    notifyListeners();
+  }
+
+  void updateSegmentationLabel(int x, int y) {
+    _labelGrid[y][x] = 1; // ✅ 특정 좌표에 라벨 적용
+    notifyListeners();
+  }
+
+  void clearLabels() {
+    _labelGrid = List.generate(_gridSize, (_) => List.filled(_gridSize, 0));
+    notifyListeners();
+  }
+
+  void startBoxSelection(Offset position) {
+    _startDrag = position;
+    notifyListeners();
+  }
+
+  void updateBoxSelection(Offset position) {
+    _currentPointerPosition = position;
+    notifyListeners();
+  }
+
+  void endBoxSelection() {
+    _startDrag = null;
+    _currentPointerPosition = null;
     notifyListeners();
   }
 }
