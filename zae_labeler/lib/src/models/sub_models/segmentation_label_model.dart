@@ -1,8 +1,8 @@
 import 'base_label_model.dart';
 
 /// ✅ Segmentation Label의 최상위 클래스
-abstract class SegmentationLabel<T> extends LabelModel<T> {
-  SegmentationLabel({required super.label, required super.labeledAt});
+abstract class SegmentationLabelModel<T> extends LabelModel<T> {
+  SegmentationLabelModel({required super.label, required super.labeledAt});
 
   /// ✅ 단일/다중 분류 여부 (각 서브클래스에서 오버라이드 가능)
   bool get isMultiClass;
@@ -12,7 +12,7 @@ abstract class SegmentationLabel<T> extends LabelModel<T> {
 }
 
 /// ✅ 단일 클래스 세그멘테이션 (Single-Class Segmentation)
-class SingleClassSegmentationLabelModel extends SegmentationLabel<SegmentationData> {
+class SingleClassSegmentationLabelModel extends SegmentationLabelModel<SegmentationData> {
   final bool _isMultiClass = false;
   SingleClassSegmentationLabelModel({required super.labeledAt, required super.label});
 
@@ -35,7 +35,7 @@ class SingleClassSegmentationLabelModel extends SegmentationLabel<SegmentationDa
 }
 
 /// ✅ 다중 클래스 세그멘테이션 (Multi-Class Segmentation) - 추후 업데이트
-class MultiClassSegmentationLabelModel extends SegmentationLabel<SegmentationData> {
+class MultiClassSegmentationLabelModel extends SegmentationLabelModel<SegmentationData> {
   final bool _isMultiClass = false;
   MultiClassSegmentationLabelModel({required super.label, required super.labeledAt});
 
