@@ -27,9 +27,8 @@ class GridPainterWidget extends StatelessWidget {
             int y = (dy / (500 / gridSize)).floor();
 
             if (mode == SegmentationMode.pixelMask) {
-              labelingVM.updateSegmentationLabel(x, y);
-            } else {
-              labelingVM.updateBoxSelection(details.localPosition);
+              labelingVM.updateSegmentationLabel(x, y, 1);
+              onLabelUpdated(labelingVM.labelGrid);
             }
           },
           onPanStart: (details) => labelingVM.startBoxSelection(details.localPosition),
