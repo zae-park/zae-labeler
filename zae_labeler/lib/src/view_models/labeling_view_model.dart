@@ -127,32 +127,48 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
 
   SegmentationLabelingViewModel({required super.project, required super.storageHelper});
 
+  /// ✅ Grid 크기 조절 (초기화 포함)
   void setGridSize(int newSize) {
     _gridSize = newSize;
     _labelGrid = List.generate(newSize, (_) => List.filled(newSize, 0)); // ✅ Grid 크기 변경 시 초기화
     notifyListeners();
   }
 
-  void updateSegmentationLabel(int x, int y) {
-    _labelGrid[y][x] = 1; // ✅ 특정 좌표에 라벨 적용
-    notifyListeners();
+  /// ✅ Grid 내 픽셀들을 전체적으로 업데이트
+  void updateSegmentationGrid(List<List<int>> labeledData) {
+    if (labeledData.length == _gridSize && labeledData[0].length == _gridSize) {
+      _labelGrid = labeledData;
+      notifyListeners();
+    }
   }
 
+  /// ✅ 개별 픽셀 업데이트 (기존 메서드 유지)
+  void updateSegmentationLabel(int x, int y, int label) {
+    if (x >= 0 && x < _gridSize && y >= 0 && y < _gridSize) {
+      _labelGrid[y][x] = label;
+      notifyListeners();
+    }
+  }
+
+  /// ✅ Grid 초기화
   void clearLabels() {
     _labelGrid = List.generate(_gridSize, (_) => List.filled(_gridSize, 0));
     notifyListeners();
   }
 
+  /// ✅ Bounding Box 선택 시작
   void startBoxSelection(Offset position) {
     _startDrag = position;
     notifyListeners();
   }
 
+  /// ✅ Bounding Box 선택 업데이트
   void updateBoxSelection(Offset position) {
     _currentPointerPosition = position;
     notifyListeners();
   }
 
+  /// ✅ Bounding Box 선택 완료
   void endBoxSelection() {
     _startDrag = null;
     _currentPointerPosition = null;
