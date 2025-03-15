@@ -18,7 +18,9 @@ abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatefulWid
 abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<BaseLabelingPage<T>> {
   late FocusNode _focusNode;
   late Project project;
+  T? labelingVM; // ✅ null 가능성을 고려하여 '?' 추가
   bool _isProjectLoaded = false;
+  bool _isViewModelInitialized = false; // ✅ ViewModel 초기화 여부 체크
 
   @override
   void initState() {
@@ -30,9 +32,20 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
     if (!_isProjectLoaded) {
-      project = ModalRoute.of(context)!.settings.arguments as Project;
+      project = ModalRoute.of(context)!.settings.arguments as Project; // ✅ project를 먼저 초기화
       _isProjectLoaded = true;
+
+      // ✅ project가 초기화된 후에 ViewModel 생성 및 초기화 실행
+      labelingVM = createViewModel();
+      labelingVM!.initialize().then((_) {
+        if (mounted) {
+          setState(() {
+            _isViewModelInitialized = true; // ✅ ViewModel 초기화 완료
+          });
+        }
+      });
     }
   }
 
@@ -82,26 +95,28 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => createViewModel(),
+    if (!_isViewModelInitialized || labelingVM == null) {
+      return const Center(child: CircularProgressIndicator()); // ✅ ViewModel이 초기화될 때까지 Indicator 표시
+    }
+
+    return ChangeNotifierProvider<T>.value(
+      value: labelingVM!,
       child: Consumer<T>(
         builder: (context, labelingVM, child) {
-          return (!labelingVM.isInitialized)
-              ? const Center(child: CircularProgressIndicator())
-              : Scaffold(
-                  appBar: buildAppBar(labelingVM),
-                  body: KeyboardListener(
-                    focusNode: _focusNode,
-                    autofocus: true,
-                    child: Column(
-                      children: [
-                        Expanded(child: buildViewer(labelingVM)),
-                        buildModeSpecificUI(labelingVM), // ✅ 모드별 UI
-                        buildNavigator(labelingVM),
-                      ],
-                    ),
-                  ),
-                );
+          return Scaffold(
+            appBar: buildAppBar(labelingVM),
+            body: KeyboardListener(
+              focusNode: _focusNode,
+              autofocus: true,
+              child: Column(
+                children: [
+                  Expanded(child: buildViewer(labelingVM)),
+                  buildModeSpecificUI(labelingVM), // ✅ 모드별 UI
+                  buildNavigator(labelingVM),
+                ],
+              ),
+            ),
+          );
         },
       ),
     );
