@@ -9,6 +9,11 @@ import '../../viewers/object_viewer.dart';
 import '../../viewers/time_series_viewer.dart';
 import '../../widgets/navigator.dart';
 
+/// **BaseLabelingPage**
+/// - 라벨링 페이지의 공통 기능을 제공하는 추상 클래스.
+/// - 공통 UI(AppBar, Viewer, Navigator)를 포함하며,
+///   모드별 UI는 `buildModeSpecificUI()`에서 오버라이드.
+/// - ClassificationLabelingPage 및 SegmentationLabelingPage에서 상속받아 사용.
 abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatefulWidget {
   const BaseLabelingPage({Key? key}) : super(key: key);
 
@@ -33,20 +38,23 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
     if (!_isProjectLoaded) {
       project = ModalRoute.of(context)!.settings.arguments as Project;
       _isProjectLoaded = true;
-
-      labelingVM = createViewModel();
-      labelingVM!.initialize().then((_) {
-        if (mounted) {
-          setState(() {
-            _isViewModelInitialized = true;
-          });
-        }
-      });
+      initializeViewModel();
     }
+  }
+
+  /// **ViewModel 초기화 로직 분리**
+  void initializeViewModel() {
+    labelingVM = createViewModel();
+    labelingVM!.initialize().then((_) {
+      if (mounted) {
+        setState(() {
+          _isViewModelInitialized = true;
+        });
+      }
+    });
   }
 
   @override
@@ -55,18 +63,18 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
     super.dispose();
   }
 
-  /// ✅ 키보드 이벤트 핸들러 (공통 처리)
+  /// **공통 키보드 이벤트 핸들러**
   void _handleKeyEvent(KeyEvent event, T labelingVM) {
     if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-        labelingVM.movePrevious(); // ✅ 좌측 방향키 → 이전 데이터
+        labelingVM.movePrevious();
       } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-        labelingVM.moveNext(); // ✅ 우측 방향키 → 다음 데이터
+        labelingVM.moveNext();
       } else if (event.logicalKey == LogicalKeyboardKey.backspace) {
-        labelingVM.movePrevious(); // ✅ 백스페이스 → 이전 데이터
+        labelingVM.movePrevious();
       } else if (LogicalKeyboardKey.digit0.keyId <= event.logicalKey.keyId && event.logicalKey.keyId <= LogicalKeyboardKey.digit9.keyId) {
         int index = event.logicalKey.keyId - LogicalKeyboardKey.digit0.keyId;
-        handleNumericKeyInput(labelingVM, index); // ✅ 숫자 입력 처리
+        handleNumericKeyInput(labelingVM, index);
       }
     }
   }
@@ -74,22 +82,14 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
   /// **숫자 키 입력 처리 (각 모드에서 오버라이드 필요)**
   void handleNumericKeyInput(T labelingVM, int index);
 
-  /// ✅ 공통 AppBar
+  /// **공통 AppBar**
   PreferredSizeWidget buildAppBar(T labelingVM) {
     return AppBar(
       title: Text('${project.name} 라벨링'),
-      actions: [
-        PopupMenuButton<String>(
-          onSelected: (value) => (value == 'zip') ? _downloadLabels(context, labelingVM) : null,
-          itemBuilder: (BuildContext context) => [
-            const PopupMenuItem<String>(value: 'zip', child: Text('ZIP 압축 후 다운로드')),
-          ],
-        ),
-      ],
     );
   }
 
-  /// ✅ Viewer
+  /// **공통 Viewer**
   Widget buildViewer(T labelingVM) {
     final unifiedData = labelingVM.currentUnifiedData;
     switch (unifiedData.fileType) {
@@ -104,7 +104,7 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
     }
   }
 
-  /// ✅ 진행도 표시
+  /// **진행도 표시**
   Widget buildProgressIndicator(T labelingVM) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -115,7 +115,7 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
     );
   }
 
-  /// ✅ Navigator
+  /// **공통 Navigator**
   Widget buildNavigator(T labelingVM) {
     return Column(
       children: [
@@ -125,7 +125,7 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
     );
   }
 
-  /// ✅ 모드별 UI 구현
+  /// **모드별 UI 구현 (오버라이드 필요)**
   Widget buildModeSpecificUI(T labelingVM);
 
   @override
@@ -158,32 +158,32 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
     );
   }
 
-  /// ✅ ViewModel 생성
+  /// **ViewModel 생성 (각 모드에서 오버라이드 필요)**
   T createViewModel();
 
-  /// ✅ 라벨링 데이터 다운로드 기능 복구
-  Future<void> _downloadLabels(BuildContext context, T labelingVM) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const AlertDialog(
-        title: Text('다운로드 중'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [CircularProgressIndicator(), SizedBox(height: 16), Text('라벨링 데이터를 다운로드하고 있습니다...')],
-        ),
-      ),
-    );
+  // /// ✅ 라벨링 데이터 다운로드 기능 복구
+  // Future<void> _downloadLabels(BuildContext context, T labelingVM) async {
+  //   showDialog(
+  //     context: context,
+  //     barrierDismissible: false,
+  //     builder: (context) => const AlertDialog(
+  //       title: Text('다운로드 중'),
+  //       content: Column(
+  //         mainAxisSize: MainAxisSize.min,
+  //         children: [CircularProgressIndicator(), SizedBox(height: 16), Text('라벨링 데이터를 다운로드하고 있습니다...')],
+  //       ),
+  //     ),
+  //   );
 
-    try {
-      String filePath = await labelingVM.exportAllLabels();
-      if (!context.mounted) return;
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('다운로드 완료: $filePath')));
-    } catch (e) {
-      if (!context.mounted) return;
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('다운로드 실패: $e')));
-    }
-  }
+  //   try {
+  //     String filePath = await labelingVM.exportAllLabels();
+  //     if (!context.mounted) return;
+  //     Navigator.of(context).pop();
+  //     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('다운로드 완료: $filePath')));
+  //   } catch (e) {
+  //     if (!context.mounted) return;
+  //     Navigator.of(context).pop();
+  //     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('다운로드 실패: $e')));
+  //   }
+  // }
 }
