@@ -86,6 +86,14 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
   PreferredSizeWidget buildAppBar(T labelingVM) {
     return AppBar(
       title: Text('${project.name} 라벨링'),
+      actions: [
+        PopupMenuButton<String>(
+          onSelected: (value) => (value == 'zip') ? _downloadLabels(context, labelingVM) : null,
+          itemBuilder: (BuildContext context) => [
+            const PopupMenuItem<String>(value: 'zip', child: Text('ZIP 압축 후 다운로드')),
+          ],
+        ),
+      ],
     );
   }
 
@@ -161,29 +169,28 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
   /// **ViewModel 생성 (각 모드에서 오버라이드 필요)**
   T createViewModel();
 
-  // /// ✅ 라벨링 데이터 다운로드 기능 복구
-  // Future<void> _downloadLabels(BuildContext context, T labelingVM) async {
-  //   showDialog(
-  //     context: context,
-  //     barrierDismissible: false,
-  //     builder: (context) => const AlertDialog(
-  //       title: Text('다운로드 중'),
-  //       content: Column(
-  //         mainAxisSize: MainAxisSize.min,
-  //         children: [CircularProgressIndicator(), SizedBox(height: 16), Text('라벨링 데이터를 다운로드하고 있습니다...')],
-  //       ),
-  //     ),
-  //   );
+  Future<void> _downloadLabels(BuildContext context, T labelingVM) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        title: Text('다운로드 중'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [CircularProgressIndicator(), SizedBox(height: 16), Text('라벨링 데이터를 다운로드하고 있습니다...')],
+        ),
+      ),
+    );
 
-  //   try {
-  //     String filePath = await labelingVM.exportAllLabels();
-  //     if (!context.mounted) return;
-  //     Navigator.of(context).pop();
-  //     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('다운로드 완료: $filePath')));
-  //   } catch (e) {
-  //     if (!context.mounted) return;
-  //     Navigator.of(context).pop();
-  //     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('다운로드 실패: $e')));
-  //   }
-  // }
+    try {
+      String filePath = await labelingVM.exportAllLabels();
+      if (!context.mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('다운로드 완료: $filePath')));
+    } catch (e) {
+      if (!context.mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('다운로드 실패: $e')));
+    }
+  }
 }
