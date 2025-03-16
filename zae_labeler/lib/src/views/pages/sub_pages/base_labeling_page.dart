@@ -73,7 +73,7 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
       } else if (event.logicalKey == LogicalKeyboardKey.backspace) {
         labelingVM.movePrevious();
       } else if (LogicalKeyboardKey.digit0.keyId <= event.logicalKey.keyId && event.logicalKey.keyId <= LogicalKeyboardKey.digit9.keyId) {
-        int index = event.logicalKey.keyId - LogicalKeyboardKey.digit0.keyId;
+        int index = event.logicalKey.keyId - LogicalKeyboardKey.digit0.keyId - 1;
         handleNumericKeyInput(labelingVM, index);
       }
     }
