@@ -1,17 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../view_models/configuration_view_model.dart';
 import '../../view_models/project_list_view_model.dart';
 import '../widgets/labeling_mode_selector.dart';
 
-/// ✅ **ConfigureProjectPage**
-/// - 새 프로젝트 생성 및 기존 프로젝트 편집을 담당하는 페이지.
-/// - `ConfigurationViewModel`을 사용하여 프로젝트 정보를 관리.
-/// - 기존 프로젝트를 편집하는 경우 "Create Project"가 아닌 "Update Project" 버튼을 표시.
 class ConfigureProjectPage extends StatelessWidget {
   const ConfigureProjectPage({Key? key}) : super(key: key);
 
-  /// ✅ 클래스 추가 다이얼로그
   void _addClass(BuildContext context) {
     final classController = TextEditingController();
     final configVM = Provider.of<ConfigurationViewModel>(context, listen: false);
@@ -40,7 +36,6 @@ class ConfigureProjectPage extends StatelessWidget {
     );
   }
 
-  /// ✅ 프로젝트 생성/수정 버튼 핸들러
   void _confirmProject(BuildContext context) {
     final configVM = Provider.of<ConfigurationViewModel>(context, listen: false);
     final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
@@ -73,9 +68,9 @@ class ConfigureProjectPage extends StatelessWidget {
             child: Form(
               child: ListView(
                 children: [
-                  /// ✅ 프로젝트 이름 입력 (기존 프로젝트 수정 시, 기존 값 유지)
+                  /// ✅ 프로젝트 이름 입력
                   TextFormField(
-                    initialValue: configVM.project.name, // ✅ 기존 프로젝트 이름 유지
+                    initialValue: configVM.project.name,
                     decoration: const InputDecoration(labelText: 'Project Name'),
                     onChanged: (value) => configVM.setProjectName(value),
                     validator: (value) => (value == null || value.isEmpty) ? "Please enter a project name" : null,
@@ -112,12 +107,32 @@ class ConfigureProjectPage extends StatelessWidget {
 
                   const SizedBox(height: 16),
 
-                  /// ✅ 데이터 경로 선택
+                  /// ✅ 환경별 데이터 선택 버튼
                   ElevatedButton.icon(
                     icon: const Icon(Icons.folder_open),
-                    label: const Text('Select Data Directory'),
+                    label: const Text(kIsWeb ? 'Select Files' : 'Select Data Directory'),
                     onPressed: () => configVM.addDataPath(),
                   ),
+                  const SizedBox(height: 16),
+
+                  /// ✅ 선택된 데이터 파일 목록
+                  if (configVM.project.dataPaths.isNotEmpty) ...[
+                    const Text('Selected Data:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 150, // ✅ 리스트 뷰 크기 조정
+                      child: ListView.builder(
+                        itemCount: configVM.project.dataPaths.length,
+                        itemBuilder: (context, index) {
+                          final dataPath = configVM.project.dataPaths[index];
+                          return ListTile(
+                            title: Text(dataPath.fileName),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+
                   const SizedBox(height: 32),
 
                   /// ✅ 프로젝트 생성/수정 버튼
