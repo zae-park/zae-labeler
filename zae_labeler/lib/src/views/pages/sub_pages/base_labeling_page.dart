@@ -8,6 +8,11 @@ import '../../viewers/object_viewer.dart';
 import '../../viewers/time_series_viewer.dart';
 import '../../widgets/navigator.dart';
 
+/// **BaseLabelingPage**
+/// - 라벨링 페이지의 기본 구조를 제공하는 추상 클래스.
+/// - 공통 UI 요소(AppBar, Viewer, Navigator)를 포함하며,
+///   라벨링 모드별 UI는 `buildModeSpecificUI()`에서 구현해야 함.
+/// - ClassificationLabelingPage 및 SegmentationLabelingPage에서 상속받아 사용.
 abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatefulWidget {
   const BaseLabelingPage({Key? key}) : super(key: key);
 
@@ -15,17 +20,23 @@ abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatefulWid
   BaseLabelingPageState<T> createState();
 }
 
+/// **BaseLabelingPageState**
+/// - BaseLabelingPage의 상태 클래스.
+/// - `project`를 관리하며, `labelingVM`을 초기화하고,
+///   `buildModeSpecificUI()`를 통해 모드별 UI를 구현해야 함.
 abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<BaseLabelingPage<T>> {
   late FocusNode _focusNode;
-  late Project project;
-  T? labelingVM; // ✅ null 가능성을 고려하여 '?' 추가
-  bool _isProjectLoaded = false;
-  bool _isViewModelInitialized = false; // ✅ ViewModel 초기화 여부 체크
+  late Project project; // ✅ 현재 라벨링 작업 중인 프로젝트
+  T? labelingVM; // ✅ 라벨링을 관리하는 ViewModel (초기에는 null일 수 있음)
+  bool _isProjectLoaded = false; // ✅ 프로젝트가 로드되었는지 여부
+  bool _isViewModelInitialized = false; // ✅ ViewModel이 초기화되었는지 여부
 
   @override
   void initState() {
     super.initState();
     _focusNode = FocusNode();
+
+    // ✅ 키보드 입력을 처리하기 위해 포커스를 요청
     WidgetsBinding.instance.addPostFrameCallback((_) => FocusScope.of(context).requestFocus(_focusNode));
   }
 
@@ -34,10 +45,11 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
     super.didChangeDependencies();
 
     if (!_isProjectLoaded) {
-      project = ModalRoute.of(context)!.settings.arguments as Project; // ✅ project를 먼저 초기화
+      // ✅ 현재 페이지의 프로젝트 정보 가져오기
+      project = ModalRoute.of(context)!.settings.arguments as Project;
       _isProjectLoaded = true;
 
-      // ✅ project가 초기화된 후에 ViewModel 생성 및 초기화 실행
+      // ✅ ViewModel 생성 및 초기화 실행
       labelingVM = createViewModel();
       labelingVM!.initialize().then((_) {
         if (mounted) {
@@ -51,11 +63,12 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
 
   @override
   void dispose() {
-    _focusNode.dispose();
+    _focusNode.dispose(); // ✅ FocusNode 해제
     super.dispose();
   }
 
-  /// ✅ 공통 AppBar (다운로드 기능 포함)
+  /// **공통 AppBar 생성**
+  /// - 프로젝트 제목을 표시하며, 다운로드 기능을 제공.
   PreferredSizeWidget buildAppBar(T labelingVM) {
     return AppBar(
       title: Text('${project.name} 라벨링'),
@@ -70,7 +83,8 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
     );
   }
 
-  /// ✅ Viewer (공통 UI)
+  /// **공통 Viewer 생성**
+  /// - 프로젝트의 데이터 유형에 따라 적절한 Viewer를 반환.
   Widget buildViewer(T labelingVM) {
     final unifiedData = labelingVM.currentUnifiedData;
     switch (unifiedData.fileType) {
@@ -85,18 +99,22 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
     }
   }
 
-  /// ✅ Navigator (공통 UI)
+  /// **공통 Navigator 생성**
+  /// - 사용자가 이전/다음 데이터를 이동할 수 있도록 함.
   Widget buildNavigator(T labelingVM) {
     return NavigationButtons(onPrevious: labelingVM.movePrevious, onNext: labelingVM.moveNext);
   }
 
-  /// ✅ 라벨링 모드별 UI (Segmentation: Painter, Classification: Selector)
+  /// **라벨링 모드별 UI 구현 (오버라이드 필요)**
+  /// - Classification 모드: LabelSelectorWidget 사용
+  /// - Segmentation 모드: GridPainterWidget 사용
   Widget buildModeSpecificUI(T labelingVM);
 
   @override
   Widget build(BuildContext context) {
+    // ✅ ViewModel이 초기화될 때까지 Indicator 표시
     if (!_isViewModelInitialized || labelingVM == null) {
-      return const Center(child: CircularProgressIndicator()); // ✅ ViewModel이 초기화될 때까지 Indicator 표시
+      return const Center(child: CircularProgressIndicator());
     }
 
     return ChangeNotifierProvider<T>.value(
@@ -104,15 +122,15 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
       child: Consumer<T>(
         builder: (context, labelingVM, child) {
           return Scaffold(
-            appBar: buildAppBar(labelingVM),
+            appBar: buildAppBar(labelingVM), // ✅ 공통 AppBar
             body: KeyboardListener(
               focusNode: _focusNode,
               autofocus: true,
               child: Column(
                 children: [
-                  Expanded(child: buildViewer(labelingVM)),
-                  buildModeSpecificUI(labelingVM), // ✅ 모드별 UI
-                  buildNavigator(labelingVM),
+                  Expanded(child: buildViewer(labelingVM)), // ✅ 공통 Viewer
+                  buildModeSpecificUI(labelingVM), // ✅ 모드별 UI (오버라이드 필요)
+                  buildNavigator(labelingVM), // ✅ 공통 Navigator
                 ],
               ),
             ),
@@ -122,10 +140,10 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
     );
   }
 
-  /// ✅ 각 모드별 ViewModel 생성 (오버라이드 필요)
+  /// **각 모드별 ViewModel 생성 (오버라이드 필요)**
   T createViewModel();
 
-  /// ✅ 다운로드 기능
+  /// **라벨링 데이터 다운로드 기능**
   Future<void> _downloadLabels(BuildContext context, T labelingVM) async {
     showDialog(
       context: context,
