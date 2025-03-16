@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../models/data_model.dart';
 import '../../../models/project_model.dart';
@@ -99,10 +100,44 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
     }
   }
 
+  /// ✅ 진행도 표시 UI 추가
+  Widget buildProgressIndicator(T labelingVM) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Text(
+        '데이터 ${labelingVM.currentIndex + 1} / ${labelingVM.project.dataPaths.length} - ${labelingVM.currentDataFileName}',
+        style: const TextStyle(fontSize: 16),
+      ),
+    );
+  }
+
   /// **공통 Navigator 생성**
   /// - 사용자가 이전/다음 데이터를 이동할 수 있도록 함.
   Widget buildNavigator(T labelingVM) {
-    return NavigationButtons(onPrevious: labelingVM.movePrevious, onNext: labelingVM.moveNext);
+    return Column(
+      children: [
+        buildProgressIndicator(labelingVM), // ✅ 진행도 표시
+        NavigationButtons(onPrevious: labelingVM.movePrevious, onNext: labelingVM.moveNext),
+      ],
+    );
+  }
+
+  /// ✅ 키보드 이벤트 핸들러 추가
+  void _handleKeyEvent(KeyEvent event, T labelingVM) {
+    if (event is KeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+        labelingVM.movePrevious(); // ✅ 좌측 방향키 → 이전 데이터
+      } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+        labelingVM.moveNext(); // ✅ 우측 방향키 → 다음 데이터
+      } else if (event.logicalKey == LogicalKeyboardKey.backspace) {
+        labelingVM.movePrevious(); // ✅ 백스페이스 → 이전 데이터 (추가 기능)
+      } else if (LogicalKeyboardKey.digit0.keyId <= event.logicalKey.keyId && event.logicalKey.keyId <= LogicalKeyboardKey.digit9.keyId) {
+        int index = event.logicalKey.keyId - LogicalKeyboardKey.digit0.keyId;
+        if (index < labelingVM.project.classes.length) {
+          _toggleLabel(labelingVM, labelingVM.project.classes[index]);
+        }
+      }
+    }
   }
 
   /// **라벨링 모드별 UI 구현 (오버라이드 필요)**
@@ -126,11 +161,12 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
             body: KeyboardListener(
               focusNode: _focusNode,
               autofocus: true,
+              onKeyEvent: (event) => _handleKeyEvent(event, labelingVM), // ✅ 키보드 이벤트 핸들러 적용
               child: Column(
                 children: [
                   Expanded(child: buildViewer(labelingVM)), // ✅ 공통 Viewer
                   buildModeSpecificUI(labelingVM), // ✅ 모드별 UI (오버라이드 필요)
-                  buildNavigator(labelingVM), // ✅ 공통 Navigator
+                  buildNavigator(labelingVM), // ✅ 공통 Navigator + 진행도 표시
                 ],
               ),
             ),
