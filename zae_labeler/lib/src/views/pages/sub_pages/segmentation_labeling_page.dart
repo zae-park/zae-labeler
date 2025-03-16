@@ -24,4 +24,11 @@ class _SegmentationLabelingPageState extends BaseLabelingPageState<SegmentationL
   SegmentationLabelingViewModel createViewModel() {
     return SegmentationLabelingViewModel(project: project, storageHelper: StorageHelper.instance);
   }
+
+  @override
+  void handleNumericKeyInput(SegmentationLabelingViewModel labelingVM, int index) {
+    // if (index < labelingVM.project.classes.length) {
+    //   labelingVM.setActiveLabel(index); // ✅ 해당 Label로 Painting 준비
+    // }
+  }
 }
