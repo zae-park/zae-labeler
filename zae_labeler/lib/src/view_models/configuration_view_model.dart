@@ -13,14 +13,20 @@ import '../models/data_model.dart';
 /// - 기존 프로젝트 수정은 `ProjectViewModel`에서 처리
 class ConfigurationViewModel extends ChangeNotifier {
   Project _project;
+  final bool _isEditing; // ✅ 기존 프로젝트 수정 여부 플래그
 
   // ✅ 새 프로젝트 생성 시 기본값 설정
-  ConfigurationViewModel() : _project = Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: [], dataPaths: []);
+  ConfigurationViewModel()
+      : _project = Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: [], dataPaths: []),
+        _isEditing = false;
 
   // ✅ 기존 프로젝트 수정용 생성자
-  ConfigurationViewModel.fromProject(Project existingProject) : _project = existingProject;
+  ConfigurationViewModel.fromProject(Project existingProject)
+      : _project = existingProject,
+        _isEditing = true;
 
   Project get project => _project;
+  bool get isEditing => _isEditing; // ✅ 수정 모드 여부 반환
 
   /// ✅ 프로젝트 이름 설정
   void setProjectName(String name) {
@@ -76,7 +82,11 @@ class ConfigurationViewModel extends ChangeNotifier {
 
   /// ✅ 프로젝트 설정 초기화
   void reset() {
-    _project = Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: [], dataPaths: []);
+    if (_isEditing) {
+      _project = _project.copyWith(); // ✅ 기존 프로젝트 수정 모드일 경우 초기화하지 않음
+    } else {
+      _project = Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: [], dataPaths: []);
+    }
     notifyListeners();
   }
 }
