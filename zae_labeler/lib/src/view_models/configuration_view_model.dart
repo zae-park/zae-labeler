@@ -80,6 +80,14 @@ class ConfigurationViewModel extends ChangeNotifier {
     }
   }
 
+  /// ✅ 데이터 경로 삭제 기능 추가
+  void removeDataPath(int index) {
+    if (index >= 0 && index < _project.dataPaths.length) {
+      _project = _project.copyWith(dataPaths: List.from(_project.dataPaths)..removeAt(index));
+      notifyListeners();
+    }
+  }
+
   /// ✅ 프로젝트 설정 초기화
   void reset() {
     if (_isEditing) {
