@@ -17,7 +17,7 @@ class ConfigurationViewModel extends ChangeNotifier {
 
   // ✅ 새 프로젝트 생성 시 기본값 설정
   ConfigurationViewModel()
-      : _project = Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: [], dataPaths: []),
+      : _project = Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: ["True", "False"], dataPaths: []),
         _isEditing = false;
 
   // ✅ 기존 프로젝트 수정용 생성자
