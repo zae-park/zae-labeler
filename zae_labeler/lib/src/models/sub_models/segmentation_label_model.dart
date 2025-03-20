@@ -98,8 +98,45 @@ class SegmentationData {
 
   SegmentationData({required this.segments});
 
+  /// ✅ Run-Length Encoding 적용 (RLE 압축)
+  SegmentationData applyRunLengthEncoding() {
+    Map<String, Segment> encodedSegments = {};
+
+    for (var entry in segments.entries) {
+      String classLabel = entry.key;
+      Segment segment = entry.value;
+      Set<(int, int)> encodedIndices = _runLengthEncode(segment.indices);
+      encodedSegments[classLabel] = Segment(indices: encodedIndices, classLabel: classLabel);
+    }
+
+    return SegmentationData(segments: encodedSegments);
+  }
+
+  /// ✅ Run-Length Encoding 알고리즘
+  static Set<(int, int)> _runLengthEncode(Set<(int, int)> indices) {
+    List<(int, int)> sortedIndices = indices.toList()..sort((a, b) => a.$1.compareTo(b.$1)); // ✅ x좌표 기준 정렬
+    Set<(int, int)> encoded = {};
+    int? prevX;
+    int count = 0;
+
+    for (var (x, y) in sortedIndices) {
+      if (prevX == null || prevX + count == x) {
+        count++;
+      } else {
+        encoded.add((prevX, count));
+        count = 1;
+      }
+      prevX = x;
+    }
+
+    if (prevX != null) {
+      encoded.add((prevX, count));
+    }
+
+    return encoded;
+  }
+
   /// ✅ JSON 변환 메서드
-  /// - 각 `Segment` 객체를 JSON으로 변환하여 클래스 라벨별로 저장.
   Map<String, dynamic> toJson() => {'segments': segments.map((key, segment) => MapEntry(key, segment.toJson()))};
 
   /// ✅ JSON 데이터를 기반으로 `SegmentationData` 객체 생성.
@@ -118,7 +155,7 @@ class SegmentationData {
     if (updatedSegments.containsKey(classLabel)) {
       updatedSegments[classLabel] = updatedSegments[classLabel]!.addPixel(x, y);
     } else {
-      updatedSegments[classLabel] = Segment(indices: [(x, 1)], classLabel: classLabel);
+      updatedSegments[classLabel] = Segment(indices: {(x, y)}, classLabel: classLabel);
     }
 
     return SegmentationData(segments: updatedSegments);
@@ -171,26 +208,6 @@ class Segment {
   final String classLabel;
 
   Segment({required Set<(int, int)> indices, required this.classLabel}) : indices = _applyRunLengthEncoding(indices); // ✅ 중복 제거 및 빠른 검색 가능하도록 Set 변환
-
-  static Set<(int, int)> _applyRunLengthEncoding(Set<(int, int)> indices) {
-    Set<(int, int)> encoded = {};
-    int? prevX;
-    int count = 0;
-
-    for (var (x, len) in indices) {
-      if (prevX == null || prevX + count == x) {
-        count += len;
-      } else {
-        encoded.add((prevX, count));
-        count = len;
-      }
-      prevX = x;
-    }
-    if (prevX != null) {
-      encoded.add((prevX, count));
-    }
-    return encoded;
-  }
 
   /// ✅ Segment 객체를 JSON 형식으로 변환.
   Map<String, dynamic> toJson() => {
