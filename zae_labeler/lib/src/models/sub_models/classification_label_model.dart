@@ -29,6 +29,9 @@ class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
   SingleClassificationLabelModel updateLabel(String labelData) {
     return SingleClassificationLabelModel(labeledAt: DateTime.now(), label: labelData);
   }
+
+  @override
+  bool isSelected(String labelData) => label == labelData; // ✅ 단일 값 비교
 }
 
 /// ✅ 다중 분류 (Multi Classification)
@@ -53,6 +56,9 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<List<String
 
   @override
   MultiClassificationLabelModel updateLabel(List<String> labelData) => MultiClassificationLabelModel(labeledAt: DateTime.now(), label: labelData);
+
+  @override
+  bool isSelected(List<String> labelData) => labelData.every(label.contains); // ✅ 다중 값 비교
 }
 
 // /// ✅ 크로스 분류 (Cross Classification) - 추후 업데이트
