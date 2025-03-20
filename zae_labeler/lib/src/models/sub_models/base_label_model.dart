@@ -11,6 +11,7 @@ abstract class LabelModel<T> {
 
   LabelModel({required this.label, required this.labeledAt});
 
+  bool get isMultiClass;
   T get labelData => label;
   String get formattedLabeledAt => labeledAt.toIso8601String();
 

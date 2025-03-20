@@ -4,20 +4,16 @@ import 'base_label_model.dart';
 abstract class SegmentationLabelModel<T> extends LabelModel<T> {
   SegmentationLabelModel({required super.label, required super.labeledAt});
 
-  /// ✅ 단일/다중 분류 여부 (각 서브클래스에서 오버라이드 가능)
-  bool get isMultiClass;
-
   // /// ✅ 기존 객체를 변경하여 새로운 `SegmentationLabel`을 반환
   // SegmentationLabel copyWith({DateTime? labeledAt, SegmentationData? label});
 }
 
 /// ✅ 단일 클래스 세그멘테이션 (Single-Class Segmentation)
 class SingleClassSegmentationLabelModel extends SegmentationLabelModel<SegmentationData> {
-  final bool _isMultiClass = false;
   SingleClassSegmentationLabelModel({required super.labeledAt, required super.label});
 
   @override
-  bool get isMultiClass => _isMultiClass;
+  bool get isMultiClass => false;
 
   factory SingleClassSegmentationLabelModel.empty() => SingleClassSegmentationLabelModel(labeledAt: DateTime.now(), label: SegmentationData(segments: {}));
 
@@ -36,11 +32,10 @@ class SingleClassSegmentationLabelModel extends SegmentationLabelModel<Segmentat
 
 /// ✅ 다중 클래스 세그멘테이션 (Multi-Class Segmentation) - 추후 업데이트
 class MultiClassSegmentationLabelModel extends SegmentationLabelModel<SegmentationData> {
-  final bool _isMultiClass = false;
   MultiClassSegmentationLabelModel({required super.label, required super.labeledAt});
 
   @override
-  bool get isMultiClass => _isMultiClass;
+  bool get isMultiClass => true;
 
   factory MultiClassSegmentationLabelModel.empty() => MultiClassSegmentationLabelModel(labeledAt: DateTime.now(), label: SegmentationData(segments: {}));
 

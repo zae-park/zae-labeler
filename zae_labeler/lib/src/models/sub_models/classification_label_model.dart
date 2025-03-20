@@ -3,19 +3,14 @@ import 'base_label_model.dart';
 /// ✅ ClassificationLabelModel: 분류(Label) 모델의 상위 클래스
 abstract class ClassificationLabelModel<T> extends LabelModel<T> {
   ClassificationLabelModel({required super.label, required super.labeledAt});
-
-  /// ✅ 단일/다중 분류 여부 (각 서브클래스에서 오버라이드 가능)
-  bool get isMultiClass;
 }
 
 /// ✅ 단일 분류 (Single Classification)
 class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
-  final bool _isMultiClass = false;
-
   SingleClassificationLabelModel({required super.label, required super.labeledAt});
 
   @override
-  bool get isMultiClass => _isMultiClass;
+  bool get isMultiClass => false;
 
   // @override
   // Map<String, String> toJson() => {'labeled_at': labeledAt, 'label': label};
@@ -38,12 +33,10 @@ class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
 
 /// ✅ 다중 분류 (Multi Classification)
 class MultiClassificationLabelModel extends ClassificationLabelModel<List<String>> {
-  final bool _isMultiClass = true;
-
   MultiClassificationLabelModel({required super.label, required super.labeledAt});
 
   @override
-  bool get isMultiClass => _isMultiClass;
+  bool get isMultiClass => true;
 
   // @override
   // Map<String, List<String>> toJson() => {'label': label, 'labeled_at': labeledAt};
