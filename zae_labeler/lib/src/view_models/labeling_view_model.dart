@@ -79,8 +79,22 @@ class LabelingViewModel extends ChangeNotifier {
   /// ✅ Label 추가 또는 업데이트
   Future<void> addOrUpdateLabel(dynamic labelData) async {
     final labelVM = getOrCreateLabelVM();
-    labelVM.updateLabel(labelData);
 
+    if (labelVM.labelModel.isMultiClass) {
+      if (labelData is List<String>) {
+        labelVM.updateLabel(labelData); // ✅ 다중 분류는 List<String> 필요
+      } else if (labelData is String) {
+        labelVM.updateLabel([labelData]); // ✅ String을 List<String>으로 변환하여 전달
+      } else {
+        throw ArgumentError("Expected a List<String> for MultiClassificationLabelModel, but got ${labelData.runtimeType}");
+      }
+    } else {
+      if (labelData is String) {
+        labelVM.updateLabel(labelData); // ✅ 단일 분류는 String 필요
+      } else {
+        throw ArgumentError("Expected a String for SingleClassificationLabelModel, but got ${labelData.runtimeType}");
+      }
+    }
     notifyListeners();
     await labelVM.saveLabel();
   }
