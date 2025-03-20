@@ -25,6 +25,12 @@ class SingleClassSegmentationLabelModel extends SegmentationLabelModel<Segmentat
     return SingleClassSegmentationLabelModel(labeledAt: DateTime.now(), label: labelData);
   }
 
+  @override
+  bool isSelected(SegmentationData labelData) {
+    return labelData.segments.values.any((segment) =>
+        segment.indices.any((index) => label.segments.containsKey(segment.classLabel) && label.segments[segment.classLabel]!.indices.contains(index)));
+  }
+
   SingleClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) {
     return SingleClassSegmentationLabelModel(labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
   }
@@ -45,6 +51,13 @@ class MultiClassSegmentationLabelModel extends SegmentationLabelModel<Segmentati
   @override
   MultiClassSegmentationLabelModel updateLabel(SegmentationData labelData) {
     return MultiClassSegmentationLabelModel(labeledAt: DateTime.now(), label: labelData);
+  }
+
+  /// ✅ 특정 픽셀 (x, y)이 특정 클래스 내에서 선택되었는지 확인
+  @override
+  bool isSelected(SegmentationData labelData) {
+    return labelData.segments.values.any((segment) =>
+        segment.indices.any((index) => label.segments.containsKey(segment.classLabel) && label.segments[segment.classLabel]!.indices.contains(index)));
   }
 
   MultiClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) {
@@ -150,17 +163,17 @@ class Segment {
   /// - 1D 데이터(시계열)은 `[index]` 형태로 저장.
   /// - 2D 데이터(이미지)는 `[x, y]` 형태로 저장.
   /// - `Set`을 사용하여 중복된 좌표를 자동으로 제거하고 탐색 속도를 향상.
-  final List<(int, int)> indices;
+  final Set<(int, int)> indices;
 
   /// **세그먼트에 해당하는 클래스 라벨**
   /// - 해당 영역이 어떤 클래스에 속하는지 나타냄.
   /// - 예: `"car"`, `"road"`, `"tree"` 등.
   final String classLabel;
 
-  Segment({required List<(int, int)> indices, required this.classLabel}) : indices = _applyRunLengthEncoding(indices); // ✅ 중복 제거 및 빠른 검색 가능하도록 Set 변환
+  Segment({required Set<(int, int)> indices, required this.classLabel}) : indices = _applyRunLengthEncoding(indices); // ✅ 중복 제거 및 빠른 검색 가능하도록 Set 변환
 
-  static List<(int, int)> _applyRunLengthEncoding(List<(int, int)> indices) {
-    List<(int, int)> encoded = [];
+  static Set<(int, int)> _applyRunLengthEncoding(Set<(int, int)> indices) {
+    Set<(int, int)> encoded = {};
     int? prevX;
     int count = 0;
 
@@ -181,28 +194,22 @@ class Segment {
 
   /// ✅ Segment 객체를 JSON 형식으로 변환.
   Map<String, dynamic> toJson() => {
-        'indices': indices.map((e) => {'x': e.$1, 'count': e.$2}).toList(),
+        'indices': indices.map((e) => {'x': e.$1, 'y': e.$2}).toList(),
         'class_label': classLabel,
       };
 
   /// ✅ JSON 데이터를 기반으로 Segment 객체를 생성하는 팩토리 메서드.
-  factory Segment.fromJson(Map<String, dynamic> json) {
-    return Segment(
-      indices: (json['indices'] as List).map((e) => (e['x'] as int, e['count'] as int)).toList(),
-      classLabel: json['class_label'],
-    );
-  }
+  factory Segment.fromJson(Map<String, dynamic> json) =>
+      Segment(indices: (json['indices']).map((e) => (e['x'] as int, e['y'] as int)), classLabel: json['class_label']);
 
-  /// ✅ 특정 픽셀을 빠르게 추가하는 메서드.
-  /// - 중복된 픽셀은 자동으로 제거됨.
-  Segment addPixel(int x, int y) {
-    List<(int, int)> updatedIndices = List.from(indices)..add((x, 1));
-    return Segment(indices: updatedIndices, classLabel: classLabel);
-  }
+  /// ✅ 특정 픽셀을 추가하는 메서드.
+  Segment addPixel(Set<(int, int)> updatedIndices) => Segment(indices: updatedIndices, classLabel: classLabel);
 
-  /// ✅ 특정 픽셀을 빠르게 삭제하는 메서드.
-  Segment removePixel(int x, int y) {
-    List<(int, int)> updatedIndices = indices.where((entry) => entry.$1 != x).toList();
-    return Segment(indices: updatedIndices, classLabel: classLabel);
+  /// ✅ 특정 픽셀을 삭제하는 메서드.
+  Segment removePixel(Set<(int, int)> updatedIndices) => Segment(indices: updatedIndices, classLabel: classLabel);
+
+  /// ✅ 특정 픽셀이 해당 클래스에 속해 있는지 확인
+  bool containsPixel(int x, int y) {
+    return indices.contains((x, y));
   }
 }
