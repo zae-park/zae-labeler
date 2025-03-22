@@ -223,13 +223,13 @@ class Segment {
   
   Segment addPixel(int x, int y) {
   final updated = Set<(int, int)>.from(indices)..add((x, y));
-  return Segment(indices: updated, classLabel: classLabel);
-}
+    return Segment(indices: updated, classLabel: classLabel);
+  }
 
-Segment removePixel(int x, int y) {
-  final updated = Set<(int, int)>.from(indices)..remove((x, y));
-  return Segment(indices: updated, classLabel: classLabel);
-}
+  Segment removePixel(int x, int y) {
+    final updated = Set<(int, int)>.from(indices)..remove((x, y));
+    return Segment(indices: updated, classLabel: classLabel);
+  }
 
   /// ✅ 특정 픽셀이 해당 클래스에 속해 있는지 확인
   bool containsPixel(int x, int y) {
