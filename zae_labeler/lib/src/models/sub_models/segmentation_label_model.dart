@@ -207,7 +207,7 @@ class Segment {
   /// - 예: `"car"`, `"road"`, `"tree"` 등.
   final String classLabel;
 
-  Segment({required Set<(int, int)> indices, required this.classLabel}) : indices = _applyRunLengthEncoding(indices); // ✅ 중복 제거 및 빠른 검색 가능하도록 Set 변환
+  Segment({required this.indices, required this.classLabel});
 
   /// ✅ Segment 객체를 JSON 형식으로 변환.
   Map<String, dynamic> toJson() => {
@@ -216,14 +216,20 @@ class Segment {
       };
 
   /// ✅ JSON 데이터를 기반으로 Segment 객체를 생성하는 팩토리 메서드.
-  factory Segment.fromJson(Map<String, dynamic> json) =>
-      Segment(indices: (json['indices']).map((e) => (e['x'] as int, e['y'] as int)), classLabel: json['class_label']);
+  factory Segment.fromJson(Map<String, dynamic> json) => Segment(
+    indices: (json['indices'] as List).map((e) => (e['x'] as int, e['y'] as int)).toSet(),
+    classLabel: json['class_label'],
+  );
+  
+  Segment addPixel(int x, int y) {
+  final updated = Set<(int, int)>.from(indices)..add((x, y));
+  return Segment(indices: updated, classLabel: classLabel);
+}
 
-  /// ✅ 특정 픽셀을 추가하는 메서드.
-  Segment addPixel(Set<(int, int)> updatedIndices) => Segment(indices: updatedIndices, classLabel: classLabel);
-
-  /// ✅ 특정 픽셀을 삭제하는 메서드.
-  Segment removePixel(Set<(int, int)> updatedIndices) => Segment(indices: updatedIndices, classLabel: classLabel);
+Segment removePixel(int x, int y) {
+  final updated = Set<(int, int)>.from(indices)..remove((x, y));
+  return Segment(indices: updated, classLabel: classLabel);
+}
 
   /// ✅ 특정 픽셀이 해당 클래스에 속해 있는지 확인
   bool containsPixel(int x, int y) {
