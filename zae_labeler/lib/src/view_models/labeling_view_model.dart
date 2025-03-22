@@ -1,15 +1,14 @@
-// lib/src/view_models/labeling_view_model.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../models/label_entry.dart';
+import '../models/label_model.dart';
 import '../models/project_model.dart';
 import '../models/data_model.dart';
-import '../utils/proxy_storage_helper/interface_storage_helper.dart';
+import '../utils/storage_helper.dart';
+import 'label_view_model.dart';
 
 class LabelingViewModel extends ChangeNotifier {
-  // 멤버 변수 선언
   final Project project;
-  final StorageHelperInterface storageHelper; // ✅ Dependency Injection 허용
+  final StorageHelperInterface storageHelper;
 
   bool _isInitialized = false;
   final bool _memoryOptimized = true;
@@ -19,8 +18,8 @@ class LabelingViewModel extends ChangeNotifier {
   UnifiedData _currentUnifiedData = UnifiedData.empty();
 
   final Set<String> selectedLabels = {};
+  final Map<String, LabelViewModel> _labelCache = {}; // ✅ LabelViewModel 캐싱
 
-  // Getter & Setter
   bool get isInitialized => _isInitialized;
 
   int get currentIndex => _currentIndex;
@@ -32,20 +31,15 @@ class LabelingViewModel extends ChangeNotifier {
   Map<String, dynamic>? get currentObjectData => _currentUnifiedData.objectData;
   File? get currentImageFile => _currentUnifiedData.file;
 
-  List<LabelEntry> get labelEntries => project.labelEntries;
+  // ✅ LabelViewModel을 활용한 현재 데이터 라벨 가져오기
+  LabelViewModel get currentLabelVM => getOrCreateLabelVM();
 
-  // Factory 생성자
   Future<void> moveNext() async => _move(1);
   Future<void> movePrevious() async => _move(-1);
 
-  // 인스턴스 생성
   LabelingViewModel({required this.project, required this.storageHelper});
 
   Future<void> initialize() async {
-    if (project.labelEntries.isEmpty) {
-      project.labelEntries = await project.loadLabelEntries();
-    }
-
     // ✅ 데이터 로딩 최적화
     if (_memoryOptimized) {
       _unifiedDataList.clear();
@@ -55,96 +49,65 @@ class LabelingViewModel extends ChangeNotifier {
       _currentUnifiedData = _unifiedDataList.isNotEmpty ? _unifiedDataList.first : UnifiedData.empty();
     }
 
-    _isInitialized = true; // ✅ 초기화 완료
+    _isInitialized = true;
     notifyListeners();
   }
 
-  LabelEntry get currentLabelEntry {
-    final dataFilename = currentUnifiedData.fileName; // ✅ 현재 파일 기반으로 검색
+  /// ✅ 현재 파일의 `LabelViewModel`을 가져오거나 생성
+  LabelViewModel getOrCreateLabelVM() {
+    final dataFilename = currentUnifiedData.fileName;
 
-    return project.labelEntries.firstWhere(
-      (entry) => entry.dataFilename == dataFilename,
-      orElse: () => LabelEntry.empty(),
-    );
+    if (_labelCache.containsKey(dataFilename)) {
+      return _labelCache[dataFilename]!;
+    }
+
+    final dataPath = project.dataPaths.firstWhere((dp) => dp.fileName == dataFilename).filePath ?? '';
+
+    final newLabelVM = LabelViewModel(
+        projectId: project.id, dataFilename: dataFilename, dataPath: dataPath, mode: project.mode, labelModel: LabelModelFactory.createNew(project.mode));
+
+    _labelCache[dataFilename] = newLabelVM;
+    return newLabelVM;
   }
 
   Future<void> loadCurrentData() async {
-    // ✅ 이름 변경
     if (_currentIndex < 0 || _currentIndex >= project.dataPaths.length) return;
-
     _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths[_currentIndex]);
-
     notifyListeners();
   }
 
-  Future<void> addOrUpdateLabel(String label, LabelingMode mode) async {
-    final dataFilename = currentUnifiedData.fileName; // ✅ 현재 파일 이름 기반으로 관리
+  /// ✅ Label 추가 또는 업데이트
+  Future<void> addOrUpdateLabel(dynamic labelData) async {
+    final labelVM = getOrCreateLabelVM();
 
-    LabelEntry? existingEntry = project.labelEntries.firstWhere(
-      (entry) => entry.dataFilename == dataFilename,
-      orElse: () => LabelEntry.empty(),
-    );
-
-    if (existingEntry.dataFilename.isEmpty) {
-      existingEntry = LabelEntry(
-        dataFilename: dataFilename,
-        dataPath: project.dataPaths.firstWhere((dp) => dp.fileName == dataFilename).filePath ?? '',
-      );
-      project.labelEntries.add(existingEntry);
-    }
-
-    print("Saving label for data: $dataFilename, Mode: $mode, Label: $label");
-
-    switch (mode) {
-      case LabelingMode.singleClassification:
-        existingEntry.singleClassification = SingleClassificationLabel(
-          labeledAt: DateTime.now().toIso8601String(),
-          label: label,
-        );
-        break;
-      case LabelingMode.multiClassification:
-        existingEntry.multiClassification ??= MultiClassificationLabel(
-          labeledAt: DateTime.now().toIso8601String(),
-          labels: [],
-        );
-        if (existingEntry.multiClassification!.labels.contains(label)) {
-          existingEntry.multiClassification!.labels.remove(label);
-        } else {
-          existingEntry.multiClassification!.labels.add(label);
-        }
-        break;
-      case LabelingMode.segmentation:
-        existingEntry.segmentation = SegmentationLabel(
-          labeledAt: DateTime.now().toIso8601String(),
-          label: SegmentationData(indice: [label], classes: [label]),
-        );
-        break;
-    }
-
-    notifyListeners();
-    await storageHelper.saveLabelEntry(project.id, existingEntry);
-  }
-
-  bool isLabelSelected(String label, LabelingMode mode) {
-    LabelEntry entry = currentLabelEntry; // ✅ 최신 LabelEntry 가져오기
-
-    switch (mode) {
-      case LabelingMode.singleClassification:
-        return entry.singleClassification?.label == label;
-      case LabelingMode.multiClassification:
-        if (entry.multiClassification == null) return false;
-        return entry.multiClassification?.labels.contains(label) ?? false;
-      default:
-        return false;
-    }
-  }
-
-  void toggleLabel(String label, LabelingMode mode) {
-    if (isLabelSelected(label, mode)) {
-      selectedLabels.remove(label);
+    if (labelVM.labelModel.isMultiClass) {
+      if (labelData is List<String>) {
+        labelVM.updateLabel(labelData); // ✅ 다중 분류는 List<String> 필요
+      } else if (labelData is String) {
+        labelVM.updateLabel([labelData]); // ✅ String을 List<String>으로 변환하여 전달
+      } else {
+        throw ArgumentError("Expected a List<String> for MultiClassificationLabelModel, but got ${labelData.runtimeType}");
+      }
     } else {
-      selectedLabels.add(label);
+      if (labelData is String) {
+        labelVM.updateLabel(labelData); // ✅ 단일 분류는 String 필요
+      } else {
+        throw ArgumentError("Expected a String for SingleClassificationLabelModel, but got ${labelData.runtimeType}");
+      }
     }
+    notifyListeners();
+    await labelVM.saveLabel();
+  }
+
+  /// ✅ 현재 선택된 라벨인지 확인
+  bool isLabelSelected(String label) {
+    final labelVM = getOrCreateLabelVM();
+    return labelVM.labelModel.label == label;
+  }
+
+  /// ✅ 라벨 선택/해제
+  void toggleLabel(String label) {
+    isLabelSelected(label) ? selectedLabels.remove(label) : selectedLabels.add(label);
     notifyListeners();
   }
 
@@ -152,12 +115,77 @@ class LabelingViewModel extends ChangeNotifier {
     int newIndex = _currentIndex + delta;
     if (newIndex >= 0 && newIndex < project.dataPaths.length) {
       _currentIndex = newIndex;
-      notifyListeners();
       await loadCurrentData();
+      notifyListeners();
     }
   }
 
-  Future<String> downloadLabelsAsZip() async {
-    return await storageHelper.downloadLabelsAsZip(project, project.labelEntries, []);
+  /// ✅ Label Export (ZIP 다운로드)
+  Future<String> exportAllLabels() async {
+    final allLabels = _labelCache.values.map((vm) => vm.labelModel).toList();
+    return await storageHelper.exportAllLabels(project, allLabels, project.dataPaths);
+  }
+}
+
+class SegmentationLabelingViewModel extends LabelingViewModel {
+  int _gridSize = 32; // ✅ 기본 Grid 크기
+  int get gridSize => _gridSize;
+
+  Offset? _startDrag;
+  Offset? _currentPointerPosition;
+  Offset? get startDrag => _startDrag;
+  Offset? get currentPointerPosition => _currentPointerPosition;
+
+  List<List<int>> _labelGrid = List.generate(32, (_) => List.filled(32, 0));
+  List<List<int>> get labelGrid => _labelGrid;
+
+  SegmentationLabelingViewModel({required super.project, required super.storageHelper});
+
+  /// ✅ Grid 크기 조절 (초기화 포함)
+  void setGridSize(int newSize) {
+    _gridSize = newSize;
+    _labelGrid = List.generate(newSize, (_) => List.filled(newSize, 0)); // ✅ Grid 크기 변경 시 초기화
+    notifyListeners();
+  }
+
+  /// ✅ Grid 내 픽셀들을 전체적으로 업데이트
+  void updateSegmentationGrid(List<List<int>> labeledData) {
+    if (labeledData.length == _gridSize && labeledData[0].length == _gridSize) {
+      _labelGrid = labeledData;
+      notifyListeners();
+    }
+  }
+
+  /// ✅ 개별 픽셀 업데이트 (기존 메서드 유지)
+  void updateSegmentationLabel(int x, int y, int label) {
+    if (x >= 0 && x < _gridSize && y >= 0 && y < _gridSize) {
+      _labelGrid[y][x] = label;
+      notifyListeners();
+    }
+  }
+
+  /// ✅ Grid 초기화
+  void clearLabels() {
+    _labelGrid = List.generate(_gridSize, (_) => List.filled(_gridSize, 0));
+    notifyListeners();
+  }
+
+  /// ✅ Bounding Box 선택 시작
+  void startBoxSelection(Offset position) {
+    _startDrag = position;
+    notifyListeners();
+  }
+
+  /// ✅ Bounding Box 선택 업데이트
+  void updateBoxSelection(Offset position) {
+    _currentPointerPosition = position;
+    notifyListeners();
+  }
+
+  /// ✅ Bounding Box 선택 완료
+  void endBoxSelection() {
+    _startDrag = null;
+    _currentPointerPosition = null;
+    notifyListeners();
   }
 }

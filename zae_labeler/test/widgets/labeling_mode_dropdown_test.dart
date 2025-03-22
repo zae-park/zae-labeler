@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
-import 'package:zae_labeler/src/views/widgets/labeling_mode.dart';
+import 'package:zae_labeler/src/views/widgets/labeling_mode_selector.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
 
 void main() {
