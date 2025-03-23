@@ -112,27 +112,16 @@ class SegmentationData {
 
   /// ✅ 특정 클래스에 대해 픽셀 추가.
   SegmentationData addPixel(int x, int y, String classLabel) {
-    Map<String, Segment> updatedSegments = Map.from(segments);
-
-    if (updatedSegments.containsKey(classLabel)) {
-      updatedSegments[classLabel] = updatedSegments[classLabel]!.addPixel(x, y);
-    } else {
-      updatedSegments[classLabel] = Segment(indices: {(x, y)}, classLabel: classLabel);
-    }
-
-    return SegmentationData(segments: updatedSegments);
+    Segment updated = segments[classLabel]?.addPixel(x, y) ?? Segment(indices: {(x, y)}, classLabel: classLabel);
+    return SegmentationData(segments: {...segments, classLabel: updated});
   }
 
   /// ✅ 특정 픽셀을 삭제하는 메서드.
   SegmentationData removePixel(int x, int y) {
-    Map<String, Segment> updatedSegments = {};
-
-    segments.forEach((classLabel, segment) {
-      Segment updatedSegment = segment.removePixel(x, y);
-      if (updatedSegment.indices.isNotEmpty) {
-        updatedSegments[classLabel] = updatedSegment;
-      }
-    });
+    final updatedSegments = {
+      for (final entry in segments.entries)
+        if (entry.value.containsPixel(x, y)) entry.key: entry.value.removePixel(x, y) else entry.key: entry.value,
+    }..removeWhere((_, segment) => segment.indices.isEmpty);
 
     return SegmentationData(segments: updatedSegments);
   }
