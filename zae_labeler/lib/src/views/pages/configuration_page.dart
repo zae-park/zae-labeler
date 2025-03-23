@@ -46,7 +46,7 @@ class ConfigureProjectPage extends StatelessWidget {
     if (isNewProject) {
       projectListVM.saveProject(updatedProject);
     } else {
-      projectListVM.updateProject(context, updatedProject);
+      projectListVM.updateProject(updatedProject);
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
