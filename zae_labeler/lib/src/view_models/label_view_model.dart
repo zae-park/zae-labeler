@@ -25,6 +25,8 @@ class LabelViewModel {
   void updateLabel<T>(T newLabelData) {
     labelModel = labelModel.updateLabel(newLabelData);
   }
+
+  bool isSelected(String label) => labelModel.isSelected(label);
 }
 
 
