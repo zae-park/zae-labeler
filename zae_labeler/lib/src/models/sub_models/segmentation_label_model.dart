@@ -210,23 +210,33 @@ class Segment {
   Segment({required this.indices, required this.classLabel});
 
   /// ✅ Segment 객체를 JSON 형식으로 변환.
-  Map<String, dynamic> toJson() => {
-        'indices': indices.map((e) => {'x': e.$1, 'y': e.$2}).toList(),
-        'class_label': classLabel,
-      };
+  Map<String, dynamic> toJson() => {'indices': SegmentRLECodec.encode(indices), 'class_label': classLabel};
+
+  @override
+  int get hashCode => classLabel.hashCode ^ indices.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Segment && classLabel == other.classLabel && indices.length == other.indices.length && indices.containsAll(other.indices);
 
   /// ✅ JSON 데이터를 기반으로 Segment 객체를 생성하는 팩토리 메서드.
-  factory Segment.fromJson(Map<String, dynamic> json) => Segment(
-    indices: (json['indices'] as List).map((e) => (e['x'] as int, e['y'] as int)).toSet(),
-    classLabel: json['class_label'],
-  );
-  
+  factory Segment.fromJson(Map<String, dynamic> json) {
+    final rawIndices = json['indices'] as List;
+    final isRLE = rawIndices.isNotEmpty && rawIndices.first.containsKey('count');
+    final indices = isRLE ? SegmentRLECodec.decode(List<Map<String, int>>.from(rawIndices)) : rawIndices.map((e) => (e['x'] as int, e['y'] as int)).toSet();
+
+    return Segment(indices: indices, classLabel: json['class_label']);
+  }
+
   Segment addPixel(int x, int y) {
-  final updated = Set<(int, int)>.from(indices)..add((x, y));
+    if (indices.contains((x, y))) return this;
+    final updated = Set<(int, int)>.from(indices)..add((x, y));
     return Segment(indices: updated, classLabel: classLabel);
   }
 
   Segment removePixel(int x, int y) {
+    if (!indices.contains((x, y))) return this;
     final updated = Set<(int, int)>.from(indices)..remove((x, y));
     return Segment(indices: updated, classLabel: classLabel);
   }
@@ -234,5 +244,53 @@ class Segment {
   /// ✅ 특정 픽셀이 해당 클래스에 속해 있는지 확인
   bool containsPixel(int x, int y) {
     return indices.contains((x, y));
+  }
+}
+
+class SegmentRLECodec {
+  /// ✅ 인코딩: 일반 좌표 Set → RLE 리스트
+  static List<Map<String, int>> encode(Set<(int, int)> pixels) {
+    final sorted = pixels.toList()..sort((a, b) => a.$2 == b.$2 ? a.$1.compareTo(b.$1) : a.$2.compareTo(b.$2));
+    final List<Map<String, int>> encoded = [];
+
+    int? startX;
+    int? y;
+    int count = 0;
+
+    for (final (x, currentY) in sorted) {
+      if (startX == null || x != startX + count || currentY != y) {
+        if (startX != null) {
+          encoded.add({'x': startX, 'y': y!, 'count': count});
+        }
+        startX = x;
+        y = currentY;
+        count = 1;
+      } else {
+        count++;
+      }
+    }
+
+    if (startX != null) {
+      encoded.add({'x': startX, 'y': y!, 'count': count});
+    }
+
+    return encoded;
+  }
+
+  /// ✅ 디코딩: RLE 리스트 → Set<(x, y)>
+  static Set<(int, int)> decode(List<Map<String, int>> rleList) {
+    final Set<(int, int)> result = {};
+
+    for (var rle in rleList) {
+      int startX = rle['x']!;
+      int y = rle['y']!;
+      int count = rle['count'] ?? 1;
+
+      for (int dx = 0; dx < count; dx++) {
+        result.add((startX + dx, y));
+      }
+    }
+
+    return result;
   }
 }
