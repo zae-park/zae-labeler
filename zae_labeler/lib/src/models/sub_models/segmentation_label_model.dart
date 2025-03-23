@@ -1,4 +1,5 @@
 import 'base_label_model.dart';
+import '../../utils/run_length_codec.dart';
 
 /// ✅ Segmentation Label의 최상위 클래스
 abstract class SegmentationLabelModel<T> extends LabelModel<T> {
@@ -27,13 +28,14 @@ class SingleClassSegmentationLabelModel extends SegmentationLabelModel<Segmentat
 
   @override
   bool isSelected(SegmentationData labelData) {
-    return labelData.segments.values.any((segment) =>
-        segment.indices.any((index) => label.segments.containsKey(segment.classLabel) && label.segments[segment.classLabel]!.indices.contains(index)));
+    if (label.segments.isEmpty || labelData.segments.isEmpty) return false;
+    final labelClass = label.segments.keys.first;
+
+    return labelData.segments[labelClass]?.indices.any((index) => label.segments[labelClass]?.indices.contains(index) ?? false) ?? false;
   }
 
-  SingleClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) {
-    return SingleClassSegmentationLabelModel(labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
-  }
+  SingleClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) =>
+      SingleClassSegmentationLabelModel(labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
 }
 
 /// ✅ 다중 클래스 세그멘테이션 (Multi-Class Segmentation) - 추후 업데이트
@@ -55,14 +57,15 @@ class MultiClassSegmentationLabelModel extends SegmentationLabelModel<Segmentati
 
   /// ✅ 특정 픽셀 (x, y)이 특정 클래스 내에서 선택되었는지 확인
   @override
-  bool isSelected(SegmentationData labelData) {
-    return labelData.segments.values.any((segment) =>
-        segment.indices.any((index) => label.segments.containsKey(segment.classLabel) && label.segments[segment.classLabel]!.indices.contains(index)));
+  bool isSelected(SegmentationData other) {
+    return other.segments.entries.any((entry) {
+      final targetSegment = label.segments[entry.key];
+      return targetSegment != null && entry.value.indices.any((index) => targetSegment.indices.contains(index));
+    });
   }
 
-  MultiClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) {
-    return MultiClassSegmentationLabelModel(labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
-  }
+  MultiClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) =>
+      MultiClassSegmentationLabelModel(labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
 }
 
 /// ✅ 세그멘테이션 데이터 구조를 저장하는 클래스.
@@ -161,7 +164,7 @@ class Segment {
   Segment({required this.indices, required this.classLabel});
 
   /// ✅ Segment 객체를 JSON 형식으로 변환.
-  Map<String, dynamic> toJson() => {'indices': SegmentRLECodec.encode(indices), 'class_label': classLabel};
+  Map<String, dynamic> toJson() => {'indices': RunLengthCodec.encode(indices), 'class_label': classLabel};
 
   @override
   int get hashCode => classLabel.hashCode ^ indices.hashCode;
@@ -175,7 +178,7 @@ class Segment {
   factory Segment.fromJson(Map<String, dynamic> json) {
     final rawIndices = json['indices'] as List;
     final isRLE = rawIndices.isNotEmpty && rawIndices.first.containsKey('count');
-    final indices = isRLE ? SegmentRLECodec.decode(List<Map<String, int>>.from(rawIndices)) : rawIndices.map((e) => (e['x'] as int, e['y'] as int)).toSet();
+    final indices = isRLE ? RunLengthCodec.decode(List<Map<String, int>>.from(rawIndices)) : rawIndices.map((e) => (e['x'] as int, e['y'] as int)).toSet();
 
     return Segment(indices: indices, classLabel: json['class_label']);
   }
@@ -195,53 +198,5 @@ class Segment {
   /// ✅ 특정 픽셀이 해당 클래스에 속해 있는지 확인
   bool containsPixel(int x, int y) {
     return indices.contains((x, y));
-  }
-}
-
-class SegmentRLECodec {
-  /// ✅ 인코딩: 일반 좌표 Set → RLE 리스트
-  static List<Map<String, int>> encode(Set<(int, int)> pixels) {
-    final sorted = pixels.toList()..sort((a, b) => a.$2 == b.$2 ? a.$1.compareTo(b.$1) : a.$2.compareTo(b.$2));
-    final List<Map<String, int>> encoded = [];
-
-    int? startX;
-    int? y;
-    int count = 0;
-
-    for (final (x, currentY) in sorted) {
-      if (startX == null || x != startX + count || currentY != y) {
-        if (startX != null) {
-          encoded.add({'x': startX, 'y': y!, 'count': count});
-        }
-        startX = x;
-        y = currentY;
-        count = 1;
-      } else {
-        count++;
-      }
-    }
-
-    if (startX != null) {
-      encoded.add({'x': startX, 'y': y!, 'count': count});
-    }
-
-    return encoded;
-  }
-
-  /// ✅ 디코딩: RLE 리스트 → Set<(x, y)>
-  static Set<(int, int)> decode(List<Map<String, int>> rleList) {
-    final Set<(int, int)> result = {};
-
-    for (var rle in rleList) {
-      int startX = rle['x']!;
-      int y = rle['y']!;
-      int count = rle['count'] ?? 1;
-
-      for (int dx = 0; dx < count; dx++) {
-        result.add((startX + dx, y));
-      }
-    }
-
-    return result;
   }
 }
