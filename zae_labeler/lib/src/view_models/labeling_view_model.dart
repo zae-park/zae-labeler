@@ -1,3 +1,4 @@
+// lib/src/view_models/labeling_view_model.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/label_model.dart';
@@ -48,6 +49,7 @@ class LabelingViewModel extends ChangeNotifier {
       _unifiedDataList = await Future.wait(project.dataPaths.map((dpath) => UnifiedData.fromDataPath(dpath)));
       _currentUnifiedData = _unifiedDataList.isNotEmpty ? _unifiedDataList.first : UnifiedData.empty();
     }
+    await getOrCreateLabelVM().loadLabel();
 
     _isInitialized = true;
     notifyListeners();
