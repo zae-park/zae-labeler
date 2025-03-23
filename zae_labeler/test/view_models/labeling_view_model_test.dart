@@ -1,4 +1,6 @@
+// test/view_models/labeling_view_model_test.dart
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zae_labeler/src/models/sub_models/classification_label_model.dart';
 import 'package:zae_labeler/src/view_models/labeling_view_model.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
 import 'package:zae_labeler/src/models/data_model.dart';
@@ -43,5 +45,33 @@ void main() {
       await viewModel.movePrevious();
       expect(viewModel.currentIndex, equals(0));
     });
+  });
+
+  test('label is preserved across reloads', () async {
+    final storage = MockStorageHelper();
+
+    // 🛠 테스트 전용 프로젝트 정의
+    final project = Project(
+      id: 'proj1',
+      name: 'Test',
+      mode: LabelingMode.singleClassification,
+      classes: ['A', 'B'],
+      dataPaths: [DataPath(fileName: 'sample.txt', filePath: '/sample.txt')],
+    );
+
+    // 1️⃣ 첫 번째 ViewModel → label 저장
+    final firstVM = LabelingViewModel(project: project, storageHelper: storage);
+    await firstVM.initialize();
+    await firstVM.addOrUpdateLabel('A');
+
+    // 2️⃣ 두 번째 ViewModel → 같은 프로젝트로 다시 로딩
+    final secondVM = LabelingViewModel(project: project, storageHelper: storage);
+    await secondVM.initialize();
+
+    final label = secondVM.currentLabelVM.labelModel;
+
+    // ✅ 검증
+    expect(label is SingleClassificationLabelModel, isTrue);
+    expect((label as SingleClassificationLabelModel).label, equals('A'));
   });
 }
