@@ -33,15 +33,11 @@ class Project {
   // 📌 **프로젝트 정보 관리**
   // ==============================
 
+  /// ✅ 테스트 및 초기화용 빈 프로젝트 생성자
+  factory Project.empty() => Project(id: 'empty', name: '', mode: LabelingMode.singleClassification, classes: const []);
+
   /// ✅ 프로젝트 복사본을 생성하는 `copyWith` 메소드
-  Project copyWith({
-    String? id,
-    String? name,
-    LabelingMode? mode,
-    List<String>? classes,
-    List<DataPath>? dataPaths,
-    List<LabelModel>? labels,
-  }) {
+  Project copyWith({String? id, String? name, LabelingMode? mode, List<String>? classes, List<DataPath>? dataPaths, List<LabelModel>? labels}) {
     return Project(
       id: id ?? this.id,
       name: name ?? this.name,
