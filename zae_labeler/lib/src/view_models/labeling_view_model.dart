@@ -75,6 +75,7 @@ class LabelingViewModel extends ChangeNotifier {
   Future<void> loadCurrentData() async {
     if (_currentIndex < 0 || _currentIndex >= project.dataPaths.length) return;
     _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths[_currentIndex]);
+    await getOrCreateLabelVM().loadLabel();
     notifyListeners();
   }
 
