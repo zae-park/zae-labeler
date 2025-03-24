@@ -74,4 +74,34 @@ void main() {
     expect(label is SingleClassificationLabelModel, isTrue);
     expect((label as SingleClassificationLabelModel).label, equals('A'));
   });
+
+  test('label is preserved for each individual data', () async {
+    final storage = MockStorageHelper();
+
+    final project = Project(
+      id: 'proj123',
+      name: 'Test',
+      mode: LabelingMode.singleClassification,
+      classes: ['A', 'B'],
+      dataPaths: [
+        DataPath(fileName: 'data1.txt', filePath: '/data1.txt'),
+        DataPath(fileName: 'data2.txt', filePath: '/data2.txt'),
+      ],
+    );
+
+    final firstVM = LabelingViewModel(project: project, storageHelper: storage);
+    await firstVM.initialize();
+    await firstVM.addOrUpdateLabel('A');
+
+    await firstVM.moveNext();
+    await firstVM.addOrUpdateLabel('B');
+
+    // 재로딩
+    final secondVM = LabelingViewModel(project: project, storageHelper: storage);
+    await secondVM.initialize();
+    await secondVM.moveNext();
+
+    final label = secondVM.currentLabelVM.labelModel;
+    expect((label as SingleClassificationLabelModel).label, equals('B'));
+  });
 }
