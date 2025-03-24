@@ -8,6 +8,8 @@ FileData, DataPath, UnifiedData 클래스를 사용하여 데이터를 로드, �
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:uuid/uuid.dart';
+
 enum FileType { series, object, image, unsupported }
 
 /// Represents file data and its associated content and metadata.
@@ -31,11 +33,12 @@ class FileData {
 
 /// Represents a data path that can be used to load file content.
 class DataPath {
+  final String id; // ✅ 고유 식별자 (uuid)
   final String fileName; // 파일 이름
   final String? base64Content; // Base64 인코딩된 파일 내용 (Web 환경)
   final String? filePath; // 파일 경로 (Native 환경)
 
-  DataPath({required this.fileName, this.base64Content, this.filePath});
+  DataPath({String? id, required this.fileName, this.base64Content, this.filePath}) : id = id ?? const Uuid().v4();
 
   /// Loads the content of the file based on its environment (Web or Native).
   Future<String?> loadData() async {
@@ -57,6 +60,7 @@ class DataPath {
 
   /// Creates a DataPath instance from a JSON-compatible map.
   factory DataPath.fromJson(Map<String, dynamic> json) => DataPath(
+        id: json['id'],
         fileName: json['fileName'],
         base64Content: json['base64Content'],
         filePath: json['filePath'],
@@ -64,6 +68,7 @@ class DataPath {
 
   /// Converts the DataPath instance into a JSON-compatible map.
   Map<String, dynamic> toJson() => {
+        'id': id,
         'fileName': fileName,
         'base64Content': base64Content,
         'filePath': filePath,
