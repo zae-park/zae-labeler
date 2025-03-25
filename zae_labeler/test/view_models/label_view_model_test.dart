@@ -10,6 +10,7 @@ void main() {
     setUp(() {
       labelVM = LabelViewModel(
         projectId: 'proj-1',
+        dataId: 'data-1',
         dataFilename: 'data-1.txt',
         dataPath: '/path/data-1.txt',
         mode: LabelingMode.singleClassification,

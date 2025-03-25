@@ -29,10 +29,10 @@ class MockStorageHelper implements StorageHelperInterface {
   Future<List<Project>> loadProjectList() async => [];
 
   @override
-  Future<void> saveLabelData(String projectId, String dataPath, LabelModel labelModel) async {}
+  Future<void> saveLabelData(String projectId, String dataId, String dataPath, LabelModel labelModel) async {}
 
   @override
-  Future<LabelModel> loadLabelData(String projectId, String dataPath, LabelingMode mode) async => SingleClassificationLabelModel.empty();
+  Future<LabelModel> loadLabelData(String projectId, String dataId, String dataPath, LabelingMode mode) async => SingleClassificationLabelModel.empty();
 
   @override
   Future<void> saveAllLabels(String projectId, List<LabelModel> labels) async {}
