@@ -92,11 +92,11 @@ class UnifiedData {
     this.seriesData,
     this.objectData,
     this.content,
-    this.fileName = "asd",
+    required this.fileName,
     required this.fileType,
   });
 
-  factory UnifiedData.empty() => UnifiedData(dataId: 'empty', fileType: FileType.unsupported);
+  factory UnifiedData.empty() => UnifiedData(dataId: 'empty', fileType: FileType.unsupported, fileName: '');
 
   /// Creates a UnifiedData instance from a DataPath by determining the file type.
   static Future<UnifiedData> fromDataPath(DataPath dataPath) async {
@@ -126,7 +126,7 @@ class UnifiedData {
     }
 
     // 지원되지 않는 파일 형식
-    return UnifiedData(dataId: id, fileType: FileType.unsupported);
+    return UnifiedData(dataId: id, fileType: FileType.unsupported, fileName: fileName);
   }
 
   /// Parses series data (CSV format) into a list of doubles.
