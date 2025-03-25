@@ -4,21 +4,23 @@ import '../utils/storage_helper.dart';
 /// ✅ Label 저장 및 로드를 관리하는 ViewModel
 class LabelViewModel {
   final String projectId; // ✅ 프로젝트 ID
+  final String dataId; // ✅ 데이터 ID
   final String dataFilename; // ✅ 데이터 파일명
   final String dataPath; // ✅ 데이터 파일 경로
   final LabelingMode mode; // ✅ 현재 데이터의 LabelingMode
   LabelModel labelModel; // ✅ 현재 라벨링 모델
 
-  LabelViewModel({required this.projectId, required this.dataFilename, required this.dataPath, required this.mode, required this.labelModel});
+  LabelViewModel(
+      {required this.projectId, required this.dataId, required this.dataFilename, required this.dataPath, required this.mode, required this.labelModel});
 
   /// ✅ Label 데이터를 StorageHelper에 저장
   Future<void> saveLabel() async {
-    await StorageHelper.instance.saveLabelData(projectId, dataPath, labelModel);
+    await StorageHelper.instance.saveLabelData(projectId, dataId, dataPath, labelModel);
   }
 
   /// ✅ StorageHelper에서 Label 데이터를 불러옴
   Future<void> loadLabel() async {
-    labelModel = await StorageHelper.instance.loadLabelData(projectId, dataPath, mode);
+    labelModel = await StorageHelper.instance.loadLabelData(projectId, dataPath, dataId, mode);
   }
 
   /// ✅ 새로운 Label 데이터로 업데이트
