@@ -88,6 +88,7 @@ class StorageHelperImpl implements StorageHelperInterface {
 
     // ✅ `LabelModel`을 JSON으로 변환
     Map<String, dynamic> labelEntry = {
+      'data_id': dataId,
       'data_path': dataPath,
       'mode': labelModel.runtimeType.toString(),
       'labeled_at': labelModel.labeledAt.toIso8601String(),
@@ -113,7 +114,7 @@ class StorageHelperImpl implements StorageHelperInterface {
       final content = await file.readAsString();
       final jsonData = jsonDecode(content);
       final entries = (jsonData as List).map((e) => e as Map<String, dynamic>).toList();
-      Map<String, dynamic>? labelEntry = entries.firstWhere((entry) => entry['data_path'] == dataPath, orElse: () => {});
+      Map<String, dynamic>? labelEntry = entries.firstWhere((entry) => entry['data_id'] == dataId, orElse: () => {});
 
       if (labelEntry.isNotEmpty) {
         return LabelModelConverter.fromJson(mode, labelEntry['label_data']);
