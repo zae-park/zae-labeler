@@ -77,6 +77,7 @@ class DataPath {
 
 /// Represents unified data that encapsulates various types of content.
 class UnifiedData {
+  final String dataId; // ✅ 유일 식별자 추가
   final File? file; // Native 환경의 파일 객체
   final List<double>? seriesData; // 시계열 데이터
   final Map<String, dynamic>? objectData; // JSON 오브젝트 데이터
@@ -86,6 +87,7 @@ class UnifiedData {
   String fileName;
 
   UnifiedData({
+    required this.dataId,
     this.file,
     this.seriesData,
     this.objectData,
@@ -94,34 +96,37 @@ class UnifiedData {
     required this.fileType,
   });
 
-  factory UnifiedData.empty() => UnifiedData(fileType: FileType.unsupported);
+  factory UnifiedData.empty() => UnifiedData(dataId: 'empty', fileType: FileType.unsupported);
 
   /// Creates a UnifiedData instance from a DataPath by determining the file type.
   static Future<UnifiedData> fromDataPath(DataPath dataPath) async {
     final fileName = dataPath.fileName;
+    final id = dataPath.id;
+
     if (fileName.endsWith('.csv')) {
       // 시계열 데이터 로드
       final content = await dataPath.loadData();
       final seriesData = _parseSeriesData(content ?? '');
-      return UnifiedData(fileName: fileName, seriesData: seriesData, fileType: FileType.series);
+      return UnifiedData(dataId: id, fileName: fileName, seriesData: seriesData, fileType: FileType.series);
     } else if (fileName.endsWith('.json')) {
       // JSON 오브젝트 데이터 로드
       final content = await dataPath.loadData();
       final objectData = _parseObjectData(content ?? '');
-      return UnifiedData(fileName: fileName, objectData: objectData, fileType: FileType.object);
+      return UnifiedData(dataId: id, fileName: fileName, objectData: objectData, fileType: FileType.object);
     } else if (['.png', '.jpg', '.jpeg'].any((ext) => fileName.endsWith(ext))) {
       // ✅ 이미지 파일 로드 (UTF-8 디코딩 없이 처리)
       final content = await dataPath.loadData();
       return UnifiedData(
+        dataId: id,
         fileName: fileName,
         file: dataPath.filePath != null ? File(dataPath.filePath!) : null,
-        content: content, // ✅ Base64 데이터 그대로 저장
+        content: content,
         fileType: FileType.image,
       );
     }
 
     // 지원되지 않는 파일 형식
-    return UnifiedData(fileType: FileType.unsupported);
+    return UnifiedData(dataId: id, fileType: FileType.unsupported);
   }
 
   /// Parses series data (CSV format) into a list of doubles.
