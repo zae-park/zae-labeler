@@ -75,7 +75,7 @@ class StorageHelperImpl implements StorageHelperInterface {
   // ==============================
 
   @override
-  Future<void> saveLabelData(String projectId, String dataPath, LabelModel labelModel) async {
+  Future<void> saveLabelData(String projectId, String dataId, String dataPath, LabelModel labelModel) async {
     final directory = await getApplicationDocumentsDirectory();
     final file = File('${directory.path}/labels_project_$projectId.json');
 
@@ -105,7 +105,7 @@ class StorageHelperImpl implements StorageHelperInterface {
   }
 
   @override
-  Future<LabelModel> loadLabelData(String projectId, String dataPath, LabelingMode mode) async {
+  Future<LabelModel> loadLabelData(String projectId, String dataId, String dataPath, LabelingMode mode) async {
     final directory = await getApplicationDocumentsDirectory();
     final file = File('${directory.path}/labels_project_$projectId.json');
 

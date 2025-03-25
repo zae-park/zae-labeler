@@ -66,13 +66,15 @@ class StorageHelper extends StorageHelperInterface {
   /// - Web: `localStorage['labels_project_<projectId>']`
   /// - Native: `labels_project_<projectId>.json` 파일 저장
   @override
-  Future<void> saveLabelData(String projectId, String dataPath, LabelModel labelModel) => _instance.saveLabelData(projectId, dataPath, labelModel);
+  Future<void> saveLabelData(String projectId, String dataId, String dataPath, LabelModel labelModel) =>
+      _instance.saveLabelData(projectId, dataId, dataPath, labelModel);
 
   /// ✅ **개별 데이터(Label) 불러오기**
   /// - Web: `localStorage`에서 JSON 읽기
   /// - Native: `labels_project_<projectId>.json` 파일에서 JSON 읽기
   @override
-  Future<LabelModel> loadLabelData(String projectId, String dataPath, LabelingMode mode) => _instance.loadLabelData(projectId, dataPath, mode);
+  Future<LabelModel> loadLabelData(String projectId, String dataId, String dataPath, LabelingMode mode) =>
+      _instance.loadLabelData(projectId, dataId, dataPath, mode);
 
   /// ✅ **프로젝트 내 Label 삭제**
   /// - Web: `localStorage`에서 JSON 삭제

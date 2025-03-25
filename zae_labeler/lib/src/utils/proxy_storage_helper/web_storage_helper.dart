@@ -69,7 +69,7 @@ class StorageHelperImpl implements StorageHelperInterface {
   // ==============================
 
   @override
-  Future<void> saveLabelData(String projectId, String dataPath, LabelModel labelModel) async {
+  Future<void> saveLabelData(String projectId, String dataId, String dataPath, LabelModel labelModel) async {
     final storageKey = 'labels_project_$projectId';
     final labelsJson = html.window.localStorage[storageKey];
 
@@ -97,7 +97,7 @@ class StorageHelperImpl implements StorageHelperInterface {
   }
 
   @override
-  Future<LabelModel> loadLabelData(String projectId, String dataPath, LabelingMode mode) async {
+  Future<LabelModel> loadLabelData(String projectId, String dataId, String dataPath, LabelingMode mode) async {
     final storageKey = 'labels_project_$projectId';
     final labelsJson = html.window.localStorage[storageKey];
 

@@ -22,8 +22,8 @@ abstract class StorageHelperInterface {
   // ==============================
   // 📌 **Single Label Data IO**
   // ==============================
-  Future<void> saveLabelData(String projectId, String dataPath, LabelModel labelModel);
-  Future<LabelModel> loadLabelData(String projectId, String dataPath, LabelingMode mode);
+  Future<void> saveLabelData(String projectId, String dataId, String dataPath, LabelModel labelModel);
+  Future<LabelModel> loadLabelData(String projectId, String dataId, String dataPath, LabelingMode mode);
 
   // ==============================
   // 📌 **Project-wide Label IO**
