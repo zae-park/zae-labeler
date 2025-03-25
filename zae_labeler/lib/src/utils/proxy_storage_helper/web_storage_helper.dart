@@ -80,6 +80,7 @@ class StorageHelperImpl implements StorageHelperInterface {
     }
 
     Map<String, dynamic> labelEntry = {
+      'data_id': dataId,
       'data_path': dataPath,
       'mode': labelModel.runtimeType.toString(),
       'labeled_at': labelModel.labeledAt.toIso8601String(),
@@ -105,7 +106,7 @@ class StorageHelperImpl implements StorageHelperInterface {
       final jsonData = jsonDecode(labelsJson);
       final entries = (jsonData as List).map((e) => e as Map<String, dynamic>).toList();
       Map<String, dynamic>? labelEntry = entries.firstWhere(
-        (entry) => entry['data_path'] == dataPath,
+        (entry) => entry['data_id'] == dataId,
         orElse: () => {},
       );
 
