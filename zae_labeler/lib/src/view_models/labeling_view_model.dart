@@ -57,18 +57,20 @@ class LabelingViewModel extends ChangeNotifier {
 
   /// ✅ 현재 파일의 `LabelViewModel`을 가져오거나 생성
   LabelViewModel getOrCreateLabelVM() {
-    final dataFilename = currentUnifiedData.fileName;
+    final id = currentUnifiedData.dataId;
 
-    if (_labelCache.containsKey(dataFilename)) {
-      return _labelCache[dataFilename]!;
-    }
-
-    final dataPath = project.dataPaths.firstWhere((dp) => dp.fileName == dataFilename).filePath ?? '';
+    if (_labelCache.containsKey(id)) return _labelCache[id]!;
 
     final newLabelVM = LabelViewModel(
-        projectId: project.id, dataFilename: dataFilename, dataPath: dataPath, mode: project.mode, labelModel: LabelModelFactory.createNew(project.mode));
+      projectId: project.id,
+      dataId: id, // ✅ 캐시 키로 사용
+      dataFilename: currentUnifiedData.fileName,
+      dataPath: currentUnifiedData.file?.path ?? '',
+      mode: project.mode,
+      labelModel: LabelModelFactory.createNew(project.mode),
+    );
 
-    _labelCache[dataFilename] = newLabelVM;
+    _labelCache[id] = newLabelVM;
     return newLabelVM;
   }
 
