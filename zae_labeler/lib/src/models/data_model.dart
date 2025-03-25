@@ -78,13 +78,13 @@ class DataPath {
 /// Represents unified data that encapsulates various types of content.
 class UnifiedData {
   final String dataId; // ✅ 유일 식별자 추가
+  final String fileName;
+  final FileType fileType; // 파일 유형
   final File? file; // Native 환경의 파일 객체
   final List<double>? seriesData; // 시계열 데이터
   final Map<String, dynamic>? objectData; // JSON 오브젝트 데이터
-  final String? content; // ✅ Base64 인코딩된 이미지 데이터 추가 (Web 지원)
-  final FileType fileType; // 파일 유형
 
-  String fileName;
+  final String? content; // ✅ Base64 인코딩된 이미지 데이터 추가 (Web 지원)
 
   UnifiedData({
     required this.dataId,
