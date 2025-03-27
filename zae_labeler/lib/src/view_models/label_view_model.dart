@@ -20,7 +20,7 @@ class LabelViewModel {
 
   /// ✅ StorageHelper에서 Label 데이터를 불러옴
   Future<void> loadLabel() async {
-    labelModel = await StorageHelper.instance.loadLabelData(projectId, dataPath, dataId, mode);
+    labelModel = await StorageHelper.instance.loadLabelData(projectId, dataId, dataPath, mode);
   }
 
   /// ✅ 새로운 Label 데이터로 업데이트
