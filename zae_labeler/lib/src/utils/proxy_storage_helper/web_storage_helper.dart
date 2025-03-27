@@ -87,7 +87,7 @@ class StorageHelperImpl implements StorageHelperInterface {
       'label_data': LabelModelConverter.toJson(labelModel),
     };
 
-    int index = existingEntries.indexWhere((entry) => entry['data_path'] == dataPath);
+    int index = existingEntries.indexWhere((entry) => entry['data_id'] == dataId);
     if (index != -1) {
       existingEntries[index] = labelEntry;
     } else {
