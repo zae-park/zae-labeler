@@ -77,7 +77,25 @@ class LabelingViewModel extends ChangeNotifier {
   Future<void> loadCurrentData() async {
     if (_currentIndex < 0 || _currentIndex >= project.dataPaths.length) return;
     _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths[_currentIndex]);
-    await getOrCreateLabelVM().loadLabel();
+
+    final id = _currentUnifiedData.dataId;
+
+    if (_labelCache.containsKey(id)) {
+      final loadedLabel = await storageHelper.loadLabelData(project.id, id, _currentUnifiedData.file?.path ?? '', project.mode);
+      _labelCache[id]!.labelModel = loadedLabel;
+    } else {
+      final labelVM = LabelViewModel(
+        projectId: project.id,
+        dataId: id,
+        dataFilename: _currentUnifiedData.fileName,
+        dataPath: _currentUnifiedData.file?.path ?? '',
+        mode: project.mode,
+        labelModel: LabelModelFactory.createNew(project.mode),
+      );
+      await labelVM.loadLabel(); // ✅ 여기에 저장된 타입에 맞게 불러옴
+      _labelCache[id] = labelVM;
+    }
+
     notifyListeners();
   }
 
