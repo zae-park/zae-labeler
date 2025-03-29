@@ -35,7 +35,7 @@ class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
 }
 
 /// ✅ 다중 분류 (Multi Classification)
-class MultiClassificationLabelModel extends ClassificationLabelModel<List<String>> {
+class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>> {
   MultiClassificationLabelModel({required super.label, required super.labeledAt});
 
   @override
@@ -52,13 +52,23 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<List<String
 
   /// ✅ `empty()` 구현
   @override
-  factory MultiClassificationLabelModel.empty() => MultiClassificationLabelModel(labeledAt: DateTime.now(), label: []);
+  factory MultiClassificationLabelModel.empty() => MultiClassificationLabelModel(labeledAt: DateTime.now(), label: {});
 
   @override
-  MultiClassificationLabelModel updateLabel(List<String> labelData) => MultiClassificationLabelModel(labeledAt: DateTime.now(), label: labelData);
+  MultiClassificationLabelModel updateLabel(Set<String> labelData) => MultiClassificationLabelModel(labeledAt: DateTime.now(), label: labelData);
+
+  MultiClassificationLabelModel toggleLabel(String labelItem) {
+    final newList = Set<String>.from(label);
+    if (newList.contains(labelItem)) {
+      newList.remove(labelItem);
+    } else {
+      newList.add(labelItem);
+    }
+    return MultiClassificationLabelModel(labeledAt: DateTime.now(), label: newList);
+  }
 
   @override
-  bool isSelected(List<String> labelData) => labelData.every(label.contains); // ✅ 다중 값 비교
+  bool isSelected(Set<String> labelData) => labelData.every(label.contains); // ✅ 다중 값 비교
 }
 
 // /// ✅ 크로스 분류 (Cross Classification) - 추후 업데이트
