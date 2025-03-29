@@ -62,7 +62,7 @@ void main() {
     // 1️⃣ 첫 번째 ViewModel → label 저장
     final firstVM = LabelingViewModel(project: project, storageHelper: storage);
     await firstVM.initialize();
-    await firstVM.addOrUpdateLabel('A');
+    await firstVM.updateLabel('A');
 
     // 2️⃣ 두 번째 ViewModel → 같은 프로젝트로 다시 로딩
     final secondVM = LabelingViewModel(project: project, storageHelper: storage);
@@ -91,10 +91,10 @@ void main() {
 
     final firstVM = LabelingViewModel(project: project, storageHelper: storage);
     await firstVM.initialize();
-    await firstVM.addOrUpdateLabel('A');
+    await firstVM.updateLabel('A');
 
     await firstVM.moveNext();
-    await firstVM.addOrUpdateLabel('B');
+    await firstVM.updateLabel('B');
 
     // 재로딩
     final secondVM = LabelingViewModel(project: project, storageHelper: storage);

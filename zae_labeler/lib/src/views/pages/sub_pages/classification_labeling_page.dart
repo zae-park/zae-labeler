@@ -25,7 +25,7 @@ class _ClassificationLabelingPageState extends BaseLabelingPageState<LabelingVie
   @override
   void handleNumericKeyInput(LabelingViewModel labelingVM, int index) {
     if (index < labelingVM.project.classes.length) {
-      labelingVM.addOrUpdateLabel(labelingVM.project.classes[index]); // ✅ 즉시 적용
+      labelingVM.updateLabel(labelingVM.project.classes[index]); // ✅ 즉시 적용
     }
   }
 }

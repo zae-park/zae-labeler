@@ -116,7 +116,7 @@ class LabelingViewModel extends ChangeNotifier {
   /// ✅ 현재 데이터에 대한 라벨을 업데이트 및 저장
   ///
   /// `labelData`는 모델 내부에서 타입에 따라 처리됩니다.
-  Future<void> addOrUpdateLabel(dynamic labelData) async {
+  Future<void> updateLabel(dynamic labelData) async {
     final labelVM = getOrCreateLabelVM();
     labelVM.updateLabel(labelData);
     // if (labelVM.labelModel.isMultiClass) {
