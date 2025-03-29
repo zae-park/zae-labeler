@@ -7,6 +7,18 @@ import '../models/data_model.dart';
 import '../utils/storage_helper.dart';
 import 'label_view_model.dart';
 
+/// ✅ 라벨링 전체 흐름을 조율하는 뷰모델
+///
+/// `LabelingViewModel`은 프로젝트의 데이터 단위로 라벨링을 수행하고,
+/// 각 데이터에 대응되는 `LabelViewModel`을 생성 및 관리합니다.
+/// ///
+/// - 데이터 이동 (`moveNext`, `movePrevious`)을 통해 현재 데이터를 갱신하고,
+/// - 해당 데이터의 라벨을 생성, 불러오기, 업데이트, 저장까지 담당합니다.
+/// - 실제 라벨의 타입에 따라 분류/세그멘테이션 등 다양한 모델을 다룰 수 있습니다.
+///
+/// ⚠️ `LabelViewModel`과의 차이점:
+/// - `LabelViewModel`은 **개별 데이터 단위의 라벨**만을 관리합니다.
+/// - `LabelingViewModel`은 **프로젝트 단위**에서 데이터 전체의 흐름과 라벨 캐싱, 전환, 저장을 담당합니다.
 class LabelingViewModel extends ChangeNotifier {
   final Project project;
   final StorageHelperInterface storageHelper;
@@ -18,7 +30,7 @@ class LabelingViewModel extends ChangeNotifier {
   List<UnifiedData> _unifiedDataList = [];
   UnifiedData _currentUnifiedData = UnifiedData.empty();
 
-  final Set<String> selectedLabels = {};
+  final Set<String> selectedLabels = {}; // ✅ UI 상태 관리용
   final Map<String, LabelViewModel> _labelCache = {}; // ✅ LabelViewModel 캐싱
 
   bool get isInitialized => _isInitialized;
@@ -32,16 +44,17 @@ class LabelingViewModel extends ChangeNotifier {
   Map<String, dynamic>? get currentObjectData => _currentUnifiedData.objectData;
   File? get currentImageFile => _currentUnifiedData.file;
 
-  // ✅ LabelViewModel을 활용한 현재 데이터 라벨 가져오기
+  /// ✅ 현재 데이터에 대응되는 라벨 뷰모델
   LabelViewModel get currentLabelVM => getOrCreateLabelVM();
 
   Future<void> moveNext() async => _move(1);
   Future<void> movePrevious() async => _move(-1);
 
+  /// ✅ 생성자 - 프로젝트 및 저장 헬퍼 주입
   LabelingViewModel({required this.project, required this.storageHelper});
 
+  /// ✅ 생성자 - 프로젝트 및 저장 헬퍼 주입
   Future<void> initialize() async {
-    // ✅ 데이터 로딩 최적화
     if (_memoryOptimized) {
       _unifiedDataList.clear();
       _currentUnifiedData = project.dataPaths.isNotEmpty ? await UnifiedData.fromDataPath(project.dataPaths.first) : UnifiedData.empty();
@@ -55,7 +68,7 @@ class LabelingViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// ✅ 현재 파일의 `LabelViewModel`을 가져오거나 생성
+  /// ✅ 현재 데이터에 해당하는 LabelViewModel을 생성 or 재사용
   LabelViewModel getOrCreateLabelVM() {
     final id = currentUnifiedData.dataId;
 
@@ -74,6 +87,7 @@ class LabelingViewModel extends ChangeNotifier {
     return newLabelVM;
   }
 
+  /// ✅ 현재 인덱스 위치의 데이터를 로드하고 라벨 동기화
   Future<void> loadCurrentData() async {
     if (_currentIndex < 0 || _currentIndex >= project.dataPaths.length) return;
     _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths[_currentIndex]);
@@ -99,7 +113,9 @@ class LabelingViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// ✅ Label 추가 또는 업데이트
+  /// ✅ 현재 데이터에 대한 라벨을 업데이트 및 저장
+  ///
+  /// `labelData`는 모델 내부에서 타입에 따라 처리됩니다.
   Future<void> addOrUpdateLabel(dynamic labelData) async {
     final labelVM = getOrCreateLabelVM();
     labelVM.updateLabel(labelData);
@@ -122,13 +138,15 @@ class LabelingViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// ✅ 현재 선택된 라벨인지 확인
+  /// ✅ 해당 라벨이 현재 라벨과 일치하는지 확인 (단일 선택 UI용)
   bool isLabelSelected(String label) {
     final labelVM = getOrCreateLabelVM();
     return labelVM.labelModel.label == label;
   }
 
-  /// ✅ 라벨 선택/해제
+  /// ✅ UI에서 라벨 선택 여부를 토글 (단순 시각 상태용, 저장은 아님)
+  ///
+  /// ❗ 내부 라벨 모델과 직접 연결되어 있지 않음.
   void toggleLabel(String label) {
     isLabelSelected(label) ? selectedLabels.remove(label) : selectedLabels.add(label);
     notifyListeners();
