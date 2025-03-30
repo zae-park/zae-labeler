@@ -3,6 +3,7 @@ import 'base_label_model.dart';
 /// ✅ ClassificationLabelModel: 분류(Label) 모델의 상위 클래스
 abstract class ClassificationLabelModel<T> extends LabelModel<T> {
   ClassificationLabelModel({required super.label, required super.labeledAt});
+  LabelModel toggleLabel(String labelItem);
 }
 
 /// ✅ 단일 분류 (Single Classification)
