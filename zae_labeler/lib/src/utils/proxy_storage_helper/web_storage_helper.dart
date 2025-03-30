@@ -114,7 +114,7 @@ class StorageHelperImpl implements StorageHelperInterface {
         return LabelModelConverter.fromJson(mode, labelEntry['label_data']);
       }
     }
-    return LabelModelConverter.fromJson(mode, {});
+    return LabelModelFactory.createNew(mode);
   }
 
   // ==============================

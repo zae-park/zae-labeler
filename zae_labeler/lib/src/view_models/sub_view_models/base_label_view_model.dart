@@ -23,7 +23,9 @@ abstract class LabelViewModel extends ChangeNotifier {
   });
 
   Future<void> loadLabel() async {
+    print("[loadLabelModel] BEFORE: ${labelModel.runtimeType}");
     labelModel = await StorageHelper.instance.loadLabelData(projectId, dataId, dataPath, mode);
+    print("[loadLabelModel] AFTER: ${labelModel.runtimeType}");
     notifyListeners();
   }
 
