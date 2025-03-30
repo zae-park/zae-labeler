@@ -1,5 +1,5 @@
 import '../../models/sub_models/classification_label_model.dart';
-import 'base_label_view_model.dart';
+import 'base_labeling_view_model.dart';
 
 class ClassificationLabelingViewModel extends LabelingViewModel {
   ClassificationLabelingViewModel({

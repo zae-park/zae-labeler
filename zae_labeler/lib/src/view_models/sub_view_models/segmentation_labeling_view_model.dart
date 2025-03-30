@@ -1,6 +1,6 @@
 // lib/view_models/sub_view_models/segmentation_labeling_view_model.dart
 import 'package:flutter/material.dart';
-import 'base_label_view_model.dart';
+import 'base_labeling_view_model.dart';
 
 class SegmentationLabelingViewModel extends LabelingViewModel {
   SegmentationLabelingViewModel({
