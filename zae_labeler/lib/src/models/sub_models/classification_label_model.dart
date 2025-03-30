@@ -76,10 +76,13 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
   // bool isSelected(Set<String> labelData) => labelData.every(label.contains); // ✅ 다중 값 비교
   bool isSelected(dynamic labelData) {
     if (labelData is String) {
-      return label.contains(labelData);
+      final result = label.contains(labelData);
+      print("[isSelected] labelItem: $labelData → $result");
     } else if (labelData is Set<String>) {
-      return labelData.every(label.contains);
+      final result = labelData.every(label.contains);
+      print("[isSelected] labelItem: $labelData → $result");
     }
+    print("[isSelected] labelItem: $labelData → False");
     return false;
   }
 }

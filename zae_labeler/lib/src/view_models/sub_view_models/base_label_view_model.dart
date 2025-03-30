@@ -28,6 +28,8 @@ abstract class LabelViewModel extends ChangeNotifier {
   }
 
   Future<void> saveLabel() async {
+    print("[saveLabelModel] : $labelModel");
+    print("[saveLabel] saving label: ${labelModel.label}");
     await StorageHelper.instance.saveLabelData(projectId, dataId, dataPath, labelModel);
   }
 
