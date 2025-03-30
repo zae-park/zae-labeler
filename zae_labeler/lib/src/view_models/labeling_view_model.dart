@@ -30,7 +30,6 @@ class LabelingViewModel extends ChangeNotifier {
   List<UnifiedData> _unifiedDataList = [];
   UnifiedData _currentUnifiedData = UnifiedData.empty();
 
-  final Set<String> selectedLabels = {}; // ✅ UI 상태 관리용
   final Map<String, LabelViewModel> _labelCache = {}; // ✅ LabelViewModel 캐싱
 
   bool get isInitialized => _isInitialized;
@@ -139,16 +138,12 @@ class LabelingViewModel extends ChangeNotifier {
   }
 
   /// ✅ 해당 라벨이 현재 라벨과 일치하는지 확인 (단일 선택 UI용)
-  bool isLabelSelected(String label) {
-    final labelVM = getOrCreateLabelVM();
-    return labelVM.labelModel.label == label;
-  }
+  bool isLabelSelected(String labelItem) => currentLabelVM.labelModel.isSelected(labelItem);
 
-  /// ✅ UI에서 라벨 선택 여부를 토글 (단순 시각 상태용, 저장은 아님)
-  ///
-  /// ❗ 내부 라벨 모델과 직접 연결되어 있지 않음.
-  void toggleLabel(String label) {
-    isLabelSelected(label) ? selectedLabels.remove(label) : selectedLabels.add(label);
+  Future<void> toggleLabel(String labelItem) async {
+    final labelVM = getOrCreateLabelVM();
+    labelVM.labelModel = labelVM.labelModel.toggleLabel(labelItem);
+    await labelVM.saveLabel();
     notifyListeners();
   }
 

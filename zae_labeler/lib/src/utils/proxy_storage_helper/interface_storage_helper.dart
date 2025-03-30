@@ -66,7 +66,7 @@ class LabelModelConverter {
         case LabelingMode.singleClassification:
           return SingleClassificationLabelModel(labeledAt: DateTime.parse(json['labeled_at']), label: json['label']);
         case LabelingMode.multiClassification:
-          return MultiClassificationLabelModel(labeledAt: DateTime.parse(json['labeled_at']), label: List<String>.from(json['labels']));
+          return MultiClassificationLabelModel(labeledAt: DateTime.parse(json['labeled_at']), label: Set<String>.from(json['labels']));
         case LabelingMode.singleClassSegmentation:
           return SingleClassSegmentationLabelModel(labeledAt: DateTime.parse(json['labeled_at']), label: SegmentationData.fromJson(json['segmentation']));
         case LabelingMode.multiClassSegmentation:

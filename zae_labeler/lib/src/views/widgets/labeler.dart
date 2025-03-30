@@ -8,7 +8,7 @@ class LabelSelectorWidget extends StatelessWidget {
   const LabelSelectorWidget({Key? key, required this.labelingVM}) : super(key: key);
 
   Future<void> _toggleLabel(LabelingViewModel labelingVM, String label) async {
-    await labelingVM.addOrUpdateLabel(label);
+    await labelingVM.updateLabel(label);
     labelingVM.toggleLabel(label);
   }
 
