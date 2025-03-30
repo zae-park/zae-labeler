@@ -31,6 +31,9 @@ class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
   }
 
   @override
+  LabelModel toggleLabel(String labelItem) => updateLabel(labelItem);
+
+  @override
   bool isSelected(String labelData) => label == labelData; // ✅ 단일 값 비교
 }
 
@@ -57,14 +60,15 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
   @override
   MultiClassificationLabelModel updateLabel(Set<String> labelData) => MultiClassificationLabelModel(labeledAt: DateTime.now(), label: labelData);
 
-  MultiClassificationLabelModel toggleLabel(String labelItem) {
-    final newList = Set<String>.from(label);
-    if (newList.contains(labelItem)) {
-      newList.remove(labelItem);
+  @override
+  LabelModel toggleLabel(String labelItem) {
+    final updated = Set<String>.from(label);
+    if (updated.contains(labelItem)) {
+      updated.remove(labelItem);
     } else {
-      newList.add(labelItem);
+      updated.add(labelItem);
     }
-    return MultiClassificationLabelModel(labeledAt: DateTime.now(), label: newList);
+    return updateLabel(updated);
   }
 
   @override
