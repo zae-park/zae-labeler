@@ -1,10 +1,9 @@
-// 📁 sub_view_models/base_label_view_model.dart
+// 📁 sub_view_models/base_labeling_view_model.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../label_view_model.dart';
 import '../../models/data_model.dart';
-import '../../models/label_model.dart';
 import '../../models/project_model.dart';
 import '../../utils/proxy_storage_helper/interface_storage_helper.dart';
 
@@ -70,13 +69,12 @@ abstract class LabelingViewModel extends ChangeNotifier {
     final id = _currentUnifiedData.dataId;
 
     return _labelCache.putIfAbsent(id, () {
-      return LabelViewModel(
+      return LabelViewModelFactory.create(
         projectId: project.id,
         dataId: id,
         dataFilename: _currentUnifiedData.fileName,
         dataPath: _currentUnifiedData.file?.path ?? '',
         mode: project.mode,
-        labelModel: LabelModelFactory.createNew(project.mode),
       );
     });
   }
