@@ -242,10 +242,10 @@
 import '../models/label_model.dart';
 import '../models/project_model.dart';
 import '../utils/proxy_storage_helper/interface_storage_helper.dart';
-import 'sub_view_models/base_label_view_model.dart';
+import 'sub_view_models/base_labeling_view_model.dart';
 import 'sub_view_models/classification_labeling_view_model.dart';
 import 'sub_view_models/segmentation_labeling_view_model.dart';
-export 'sub_view_models/base_label_view_model.dart';
+export 'sub_view_models/base_labeling_view_model.dart';
 export 'sub_view_models/classification_labeling_view_model.dart';
 export 'sub_view_models/segmentation_labeling_view_model.dart';
 
