@@ -73,7 +73,15 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
   }
 
   @override
-  bool isSelected(Set<String> labelData) => labelData.every(label.contains); // ✅ 다중 값 비교
+  // bool isSelected(Set<String> labelData) => labelData.every(label.contains); // ✅ 다중 값 비교
+  bool isSelected(dynamic labelData) {
+    if (labelData is String) {
+      return label.contains(labelData);
+    } else if (labelData is Set<String>) {
+      return labelData.every(label.contains);
+    }
+    return false;
+  }
 }
 
 // /// ✅ 크로스 분류 (Cross Classification) - 추후 업데이트
