@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+
 import '../../../utils/storage_helper.dart';
 import '../../../view_models/labeling_view_model.dart';
-import 'base_labeling_page.dart';
 import '../../widgets/labeler.dart';
+import 'base_labeling_page.dart';
 
 class ClassificationLabelingPage extends BaseLabelingPage<LabelingViewModel> {
   const ClassificationLabelingPage({Key? key}) : super(key: key);
@@ -13,14 +14,10 @@ class ClassificationLabelingPage extends BaseLabelingPage<LabelingViewModel> {
 
 class _ClassificationLabelingPageState extends BaseLabelingPageState<LabelingViewModel> {
   @override
-  Widget buildModeSpecificUI(LabelingViewModel labelingVM) {
-    return LabelSelectorWidget(labelingVM: labelingVM); // ✅ Label 선택 UI
-  }
+  Widget buildModeSpecificUI(LabelingViewModel labelingVM) => LabelSelectorWidget(labelingVM: labelingVM);
 
   @override
-  LabelingViewModel createViewModel() {
-    return LabelingViewModel(project: project, storageHelper: StorageHelper.instance);
-  }
+  LabelingViewModel createViewModel() => LabelingViewModelFactory.create(project, StorageHelper.instance);
 
   @override
   void handleNumericKeyInput(LabelingViewModel labelingVM, int index) {
