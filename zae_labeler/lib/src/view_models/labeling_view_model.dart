@@ -225,3 +225,15 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
     notifyListeners();
   }
 }
+
+// // ✅ 모드별 뷰모델을 감싸는 proxy
+// LabelingViewModel createLabelingViewModel(Project project, StorageHelperInterface helper) {
+//   switch (project.mode) {
+//     case LabelingMode.singleClassification:
+//     case LabelingMode.multiClassification:
+//       return ClassificationLabelingViewModel(project: project, storageHelper: helper);
+//     case LabelingMode.singleClassSegmentation:
+//     case LabelingMode.multiClassSegmentation:
+//       return SegmentationLabelingViewModel(project: project, storageHelper: helper);
+//   }
+// }
