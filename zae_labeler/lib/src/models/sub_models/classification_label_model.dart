@@ -13,13 +13,13 @@ class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
   @override
   bool get isMultiClass => false;
 
-  // @override
-  // Map<String, String> toJson() => {'labeled_at': labeledAt, 'label': label};
+  @override
+  Map<String, dynamic> toJson() => {'label': label, 'labeled_at': labeledAt.toIso8601String()};
 
-  // @override
-  // factory SingleClassificationLabelModel.fromJson(Map<String, String> json) {
-  //   return SingleClassificationLabelModel(label: json['label']!, labeledAt: json['labeled_at']!);
-  // }
+  @override
+  factory SingleClassificationLabelModel.fromJson(Map<String, dynamic> json) {
+    return SingleClassificationLabelModel(label: json['label'] as String, labeledAt: json['labels']);
+  }
 
   @override
   factory SingleClassificationLabelModel.empty() {
@@ -45,14 +45,14 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
   @override
   bool get isMultiClass => true;
 
-  // @override
-  // Map<String, List<String>> toJson() => {'label': label, 'labeled_at': labeledAt};
+  @override
+  Map<String, dynamic> toJson() => {'label': label.toList(), 'labeled_at': labeledAt.toIso8601String()};
 
-  // /// ✅ `fromJson()` 구현
-  // @override
-  // factory MultiClassificationLabel.fromJson(Map<String, dynamic> json) {
-  //   return MultiClassificationLabel(labeledAt: json['labeled_at'], labels: List<String>.from(json['labels']));
-  // }
+  /// ✅ `fromJson()` 구현
+  @override
+  factory MultiClassificationLabelModel.fromJson(Map<String, dynamic> json) {
+    return MultiClassificationLabelModel(label: Set<String>.from(json['labels']), labeledAt: json['labeled_at']);
+  }
 
   /// ✅ `empty()` 구현
   @override
@@ -78,9 +78,11 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
     if (labelData is String) {
       final result = label.contains(labelData);
       print("[isSelected] labelItem: $labelData → $result");
+      return result;
     } else if (labelData is Set<String>) {
       final result = labelData.every(label.contains);
       print("[isSelected] labelItem: $labelData → $result");
+      return result;
     }
     print("[isSelected] labelItem: $labelData → False");
     return false;
