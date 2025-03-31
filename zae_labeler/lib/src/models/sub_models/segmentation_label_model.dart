@@ -16,6 +16,14 @@ class SingleClassSegmentationLabelModel extends SegmentationLabelModel<Segmentat
   @override
   bool get isMultiClass => false;
 
+  @override
+  Map<String, dynamic> toJson() => {'label': label, 'labeled_at': labeledAt.toIso8601String()};
+
+  @override
+  factory SingleClassSegmentationLabelModel.fromJson(Map<String, dynamic> json) {
+    return SingleClassSegmentationLabelModel(label: SegmentationData.fromJson(json['segmentation']), labeledAt: DateTime.parse(json['labeled_at']));
+  }
+
   factory SingleClassSegmentationLabelModel.empty() => SingleClassSegmentationLabelModel(labeledAt: DateTime.now(), label: SegmentationData(segments: {}));
 
   SingleClassSegmentationLabelModel addPixel(int x, int y) => updateLabel(label.addPixel(x, y, label.segments.keys.first));
@@ -44,6 +52,14 @@ class MultiClassSegmentationLabelModel extends SegmentationLabelModel<Segmentati
 
   @override
   bool get isMultiClass => true;
+
+  @override
+  Map<String, dynamic> toJson() => {'label': label, 'labeled_at': labeledAt.toIso8601String()};
+
+  @override
+  factory MultiClassSegmentationLabelModel.fromJson(Map<String, dynamic> json) {
+    return MultiClassSegmentationLabelModel(label: SegmentationData.fromJson(json['segmentation']), labeledAt: DateTime.parse(json['labeled_at']));
+  }
 
   factory MultiClassSegmentationLabelModel.empty() => MultiClassSegmentationLabelModel(labeledAt: DateTime.now(), label: SegmentationData(segments: {}));
 
