@@ -9,7 +9,7 @@ class LabelSelectorWidget extends StatelessWidget {
 
   Future<void> _toggleLabel(LabelingViewModel labelingVM, String label) async {
     await labelingVM.updateLabel(label);
-    labelingVM.toggleLabel(label);
+    // labelingVM.toggleLabel(label); // 이제 UI를 위한 toggle은 없음.
   }
 
   @override
