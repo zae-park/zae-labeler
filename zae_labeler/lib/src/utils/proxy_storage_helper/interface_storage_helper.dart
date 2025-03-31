@@ -46,17 +46,15 @@ abstract class StorageHelperInterface {
 
 class LabelModelConverter {
   /// ✅ `LabelModel`을 JSON으로 변환하는 메서드
-  static Map<String, dynamic> toJson(LabelModel labelModel) {
-    if (labelModel is SingleClassificationLabelModel) {
-      return {'labeled_at': labelModel.labeledAt.toIso8601String(), 'label': labelModel.label};
-    } else if (labelModel is MultiClassificationLabelModel) {
-      return {'labeled_at': labelModel.labeledAt.toIso8601String(), 'labels': labelModel.label};
-    } else if (labelModel is SingleClassSegmentationLabelModel) {
-      return {'labeled_at': labelModel.labeledAt.toIso8601String(), 'segmentation': labelModel.label.toJson()};
-    } else if (labelModel is MultiClassSegmentationLabelModel) {
-      return {'labeled_at': labelModel.labeledAt.toIso8601String(), 'segmentation': labelModel.label.toJson()};
+  static Map<String, dynamic> toJson(LabelModel model) {
+    if (model is SingleClassificationLabelModel ||
+        model is MultiClassificationLabelModel ||
+        model is SingleClassSegmentationLabelModel ||
+        model is MultiClassSegmentationLabelModel) {
+      return model.toJson(); // ✅ 각 구현체의 toJson() 사용
+    } else {
+      throw UnimplementedError("toJson() not implemented for ${model.runtimeType}");
     }
-    throw Exception("Unknown LabelModel type");
   }
 
   /// ✅ JSON 데이터를 `LabelModel` 객체로 변환하는 메서드
