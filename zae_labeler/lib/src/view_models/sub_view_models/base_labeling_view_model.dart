@@ -48,9 +48,14 @@ abstract class LabelingViewModel extends ChangeNotifier {
     }
     await getOrCreateLabelVM().loadLabel();
     await validateLabelModelType();
+    await postInitialize();
     _isInitialized = true;
     notifyListeners();
   }
+
+  // ✅ 공통 초기화 후 작업 (구현체에서 구체적 정의)
+  @protected
+  Future<void> postInitialize() async {}
 
   // ✅ 공통 Label 모델 일치 확인
   Future<void> validateLabelModelType() async {
