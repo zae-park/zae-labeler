@@ -17,7 +17,7 @@ class SingleClassSegmentationLabelModel extends SegmentationLabelModel<Segmentat
   bool get isMultiClass => false;
 
   @override
-  Map<String, dynamic> toJson() => {'label': label, 'labeled_at': labeledAt.toIso8601String()};
+  Map<String, dynamic> toJson() => {'label': label.toJson(), 'labeled_at': labeledAt.toIso8601String()};
 
   @override
   factory SingleClassSegmentationLabelModel.fromJson(Map<String, dynamic> json) {
@@ -54,7 +54,7 @@ class MultiClassSegmentationLabelModel extends SegmentationLabelModel<Segmentati
   bool get isMultiClass => true;
 
   @override
-  Map<String, dynamic> toJson() => {'label': label, 'labeled_at': labeledAt.toIso8601String()};
+  Map<String, dynamic> toJson() => {'label': label.toJson(), 'labeled_at': labeledAt.toIso8601String()};
 
   @override
   factory MultiClassSegmentationLabelModel.fromJson(Map<String, dynamic> json) {
