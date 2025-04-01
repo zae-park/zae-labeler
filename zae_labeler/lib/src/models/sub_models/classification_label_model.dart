@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import 'base_label_model.dart';
 
 /// ✅ ClassificationLabelModel: 분류(Label) 모델의 상위 클래스
@@ -77,14 +79,14 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
   bool isSelected(dynamic labelData) {
     if (labelData is String) {
       final result = label.contains(labelData);
-      print("[isSelected] labelItem: $labelData → $result");
+      debugPrint("[isSelected] labelItem: $labelData → $result");
       return result;
     } else if (labelData is Set<String>) {
       final result = labelData.every(label.contains);
-      print("[isSelected] labelItem: $labelData → $result");
+      debugPrint("[isSelected] labelItem: $labelData → $result");
       return result;
     }
-    print("[isSelected] labelItem: $labelData → False");
+    debugPrint("[isSelected] labelItem: $labelData → False");
     return false;
   }
 }

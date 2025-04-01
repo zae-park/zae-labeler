@@ -66,7 +66,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
     final actualType = labelVM.labelModel.runtimeType;
 
     if (expectedType != actualType) {
-      print("⚠️ 라벨 모델 타입 불일치: 현재=$actualType, 기대=$expectedType → 초기화 수행");
+      debugPrint("⚠️ 라벨 모델 타입 불일치: 현재=$actualType, 기대=$expectedType → 초기화 수행");
 
       labelVM.labelModel = expected;
       await labelVM.saveLabel();

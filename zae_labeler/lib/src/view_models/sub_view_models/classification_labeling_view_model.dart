@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import 'base_labeling_view_model.dart';
 import '../../models/sub_models/classification_label_model.dart';
 import '../../models/sub_models/segmentation_label_model.dart';
@@ -20,7 +22,7 @@ class ClassificationLabelingViewModel extends LabelingViewModel {
           ? model.toggleLabel(labelData) // ✅ 다중 선택: toggle
           : model.updateLabel(labelData); // ✅ 단일 선택: 덮어쓰기
 
-      print("[updateLabel] selected: ${labelVM.labelModel.label}");
+      debugPrint("[updateLabel] selected: ${labelVM.labelModel.label}");
       await labelVM.saveLabel();
       notifyListeners();
     } else if (labelVM.labelModel is SegmentationLabelModel) {

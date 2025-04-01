@@ -118,7 +118,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
                       create: (context) => ProjectViewModel(storageHelper: StorageHelper.instance, project: project),
                       child: Consumer<ProjectViewModel>(
                         builder: (context, projectVM, _) {
-                          print("[LabelingPage 진입] project.mode = ${project.mode}");
+                          debugPrint("[LabelingPage 진입] project.mode = ${project.mode}");
                           return ProjectTile(
                             project: project,
                             onEdit: () => Navigator.push(
