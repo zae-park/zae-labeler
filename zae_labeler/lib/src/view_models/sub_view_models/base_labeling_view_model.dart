@@ -2,6 +2,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 
+import '../../models/label_model.dart';
 import '../label_view_model.dart';
 import '../../models/data_model.dart';
 import '../../models/project_model.dart';
@@ -46,8 +47,25 @@ abstract class LabelingViewModel extends ChangeNotifier {
       _currentUnifiedData = _unifiedDataList.isNotEmpty ? _unifiedDataList.first : UnifiedData.empty();
     }
     await getOrCreateLabelVM().loadLabel();
+    await validateLabelModelType();
     _isInitialized = true;
     notifyListeners();
+  }
+
+  // ✅ 공통 Label 모델 일치 확인
+  Future<void> validateLabelModelType() async {
+    final labelVM = currentLabelVM;
+
+    final expected = LabelModelFactory.createNew(project.mode);
+    final expectedType = expected.runtimeType;
+    final actualType = labelVM.labelModel.runtimeType;
+
+    if (expectedType != actualType) {
+      print("⚠️ 라벨 모델 타입 불일치: 현재=$actualType, 기대=$expectedType → 초기화 수행");
+
+      labelVM.labelModel = expected;
+      await labelVM.saveLabel();
+    }
   }
 
   // ✅ 공통 이동
