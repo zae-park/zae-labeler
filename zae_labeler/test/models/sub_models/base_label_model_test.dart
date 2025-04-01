@@ -14,6 +14,11 @@ class DummyLabelModel extends LabelModel<String> {
 
   @override
   bool isSelected(String labelData) => label == labelData;
+
+  @override
+  Map<String, dynamic> toJson() {
+    throw UnimplementedError();
+  }
 }
 
 void main() {
