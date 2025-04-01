@@ -1,12 +1,21 @@
 // lib/view_models/sub_view_models/segmentation_labeling_view_model.dart
 import 'package:flutter/material.dart';
+import '../../models/sub_models/segmentation_label_model.dart';
 import 'base_labeling_view_model.dart';
 
 class SegmentationLabelingViewModel extends LabelingViewModel {
+  String? _selectedClass;
+  String? get selectedClass => _selectedClass;
+
   SegmentationLabelingViewModel({
     required super.project,
     required super.storageHelper,
   });
+
+  @override
+  Future<void> postInitialize() async {
+    restoreGridFromLabel();
+  }
 
   // ✅ 1. Grid 상태 관리
   int _gridSize = 32;
@@ -23,6 +32,11 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
 
   void clearLabels() {
     _labelGrid = List.generate(_gridSize, (_) => List.filled(_gridSize, 0));
+    notifyListeners();
+  }
+
+  void setSelectedClass(String classLabel) {
+    _selectedClass = classLabel;
     notifyListeners();
   }
 
@@ -68,6 +82,43 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
   Future<void> updateLabel(dynamic labelData) async {
     currentLabelVM.updateLabel(labelData);
     await currentLabelVM.saveLabel();
+    notifyListeners();
+  }
+
+  Future<void> saveCurrentGridAsLabel() async {
+    if (_selectedClass == null) {
+      debugPrint("[saveCurrentGridAsLabel] No class selected.");
+      return;
+    }
+
+    final selectedPixels = <(int, int)>{};
+    for (int y = 0; y < _gridSize; y++) {
+      for (int x = 0; x < _gridSize; x++) {
+        if (_labelGrid[y][x] == 1) {
+          selectedPixels.add((x, y));
+        }
+      }
+    }
+
+    final segmentation = SegmentationData(segments: {_selectedClass!: Segment(indices: selectedPixels, classLabel: _selectedClass!)});
+
+    await updateLabel(segmentation);
+  }
+
+  void restoreGridFromLabel() {
+    final label = currentLabelVM.labelModel.label;
+    if (label is! SegmentationData) return;
+
+    _labelGrid = List.generate(_gridSize, (_) => List.filled(_gridSize, 0));
+
+    for (var segment in label.segments.values) {
+      for (final (x, y) in segment.indices) {
+        if (x < _gridSize && y < _gridSize) {
+          _labelGrid[y][x] = 1;
+        }
+      }
+    }
+
     notifyListeners();
   }
 }
