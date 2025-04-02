@@ -54,6 +54,16 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
     }
   }
 
+  void addPixel(int x, int y) {
+    final classLabel = _selectedClass;
+    if (classLabel == null) return;
+
+    final labelVM = currentLabelVM;
+    if (labelVM is SegmentationLabelViewModel) {
+      labelVM.addPixel(x, y, classLabel);
+    }
+  }
+
   // ✅ 2. 박스 선택 (UI 상에서 드래그로 선택 영역 표시)
   Offset? _startDrag;
   Offset? _currentPointerPosition;
