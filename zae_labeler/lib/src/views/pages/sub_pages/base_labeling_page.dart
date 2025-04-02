@@ -1,14 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../../models/data_model.dart';
 import '../../../models/project_model.dart';
 import '../../../view_models/labeling_view_model.dart';
-import '../../viewers/image_viewer.dart';
-import '../../viewers/object_viewer.dart';
-import '../../viewers/time_series_viewer.dart';
 import '../../widgets/navigator.dart';
-import '../../widgets/shared/class_selector.dart';
 import '../../widgets/shared/labeling_progress.dart';
 import '../../widgets/shared/viewer_builder.dart';
 
