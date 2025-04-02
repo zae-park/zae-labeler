@@ -1,6 +1,7 @@
 // lib/view_models/sub_view_models/segmentation_labeling_view_model.dart
 import 'package:flutter/material.dart';
 import '../../models/sub_models/segmentation_label_model.dart';
+import '../label_view_model.dart';
 import 'base_labeling_view_model.dart';
 
 class SegmentationLabelingViewModel extends LabelingViewModel {
@@ -61,6 +62,13 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
     final labelVM = currentLabelVM;
     if (labelVM is SegmentationLabelViewModel) {
       labelVM.addPixel(x, y, classLabel);
+    }
+  }
+
+  void removePixel(int x, int y) {
+    final labelVM = currentLabelVM;
+    if (labelVM is SegmentationLabelViewModel) {
+      labelVM.removePixel(x, y);
     }
   }
 
