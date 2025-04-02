@@ -18,6 +18,11 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
     restoreGridFromLabel();
   }
 
+  @override
+  Future<void> postMove() async {
+    restoreGridFromLabel();
+  }
+
   // ✅ 1. Grid 상태 관리
   int _gridSize = 32;
   int get gridSize => _gridSize;
