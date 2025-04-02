@@ -33,6 +33,7 @@ class _GridPainterWidgetState extends State<GridPainterWidget> {
         final cellSize = constraints.maxWidth / gridSize;
 
         return Listener(
+          behavior: HitTestBehavior.opaque, // <- 이게 중요!
           onPointerDown: (event) {
             setState(() => _isDragging = true);
             _paintAt(event.localPosition, cellSize, viewModel);
@@ -44,6 +45,7 @@ class _GridPainterWidgetState extends State<GridPainterWidget> {
           },
           onPointerUp: (_) => setState(() => _isDragging = false),
           onPointerCancel: (_) => setState(() => _isDragging = false),
+
           child: CustomPaint(
             size: Size.square(constraints.maxWidth),
             painter: _GridPainter(labelGrid: labelGrid, cellSize: cellSize),
