@@ -1,4 +1,4 @@
-// 📁 views/widgets/labeling_progress.dart
+// 📁 views/widgets/shared/labeling_progress.dart
 import 'package:flutter/material.dart';
 import '../../../view_models/labeling_view_model.dart';
 

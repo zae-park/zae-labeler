@@ -1,4 +1,4 @@
-// 📁 views/widgets/viewer_builder.dart
+// 📁 views/widgets/shared/viewer_builder.dart
 import 'package:flutter/material.dart';
 import '../../../models/data_model.dart';
 import '../../viewers/image_viewer.dart';
