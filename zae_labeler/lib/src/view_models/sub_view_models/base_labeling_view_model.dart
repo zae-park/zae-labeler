@@ -53,9 +53,12 @@ abstract class LabelingViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ 공통 초기화 후 작업 (구현체에서 구체적 정의)
+  // ✅ 공통 후 작업 (구현체에서 구체적 정의)
   @protected
   Future<void> postInitialize() async {}
+
+  @protected
+  Future<void> postMove() async {}
 
   // ✅ 공통 Label 모델 일치 확인
   Future<void> validateLabelModelType() async {
@@ -83,6 +86,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
       _currentIndex = newIndex;
       _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths[_currentIndex]);
       await getOrCreateLabelVM().loadLabel();
+      postMove();
       notifyListeners();
     }
   }
