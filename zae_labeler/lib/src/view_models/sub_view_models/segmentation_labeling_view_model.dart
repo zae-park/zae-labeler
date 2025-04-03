@@ -16,6 +16,9 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
   @override
   Future<void> postInitialize() async {
     restoreGridFromLabel();
+    if (_selectedClass == null && project.classes.isNotEmpty) {
+      _selectedClass = project.classes.first;
+    }
   }
 
   @override
