@@ -7,6 +7,8 @@ abstract class SegmentationLabelModel<T> extends LabelModel<T> {
 
   // /// ✅ 기존 객체를 변경하여 새로운 `SegmentationLabel`을 반환
   // SegmentationLabel copyWith({DateTime? labeledAt, SegmentationData? label});
+  SegmentationLabelModel<T> addPixel(int x, int y, String classLabel);
+  SegmentationLabelModel<T> removePixel(int x, int y);
 }
 
 /// ✅ 단일 클래스 세그멘테이션 (Single-Class Segmentation)
@@ -26,7 +28,9 @@ class SingleClassSegmentationLabelModel extends SegmentationLabelModel<Segmentat
 
   factory SingleClassSegmentationLabelModel.empty() => SingleClassSegmentationLabelModel(labeledAt: DateTime.now(), label: SegmentationData(segments: {}));
 
+  @override
   SingleClassSegmentationLabelModel addPixel(int x, int y, String classLabel) => updateLabel(label.addPixel(x, y, classLabel));
+  @override
   SingleClassSegmentationLabelModel removePixel(int x, int y) => updateLabel(label.removePixel(x, y));
 
   @override
@@ -63,7 +67,9 @@ class MultiClassSegmentationLabelModel extends SegmentationLabelModel<Segmentati
 
   factory MultiClassSegmentationLabelModel.empty() => MultiClassSegmentationLabelModel(labeledAt: DateTime.now(), label: SegmentationData(segments: {}));
 
+  @override
   MultiClassSegmentationLabelModel addPixel(int x, int y, String classLabel) => updateLabel(label.addPixel(x, y, classLabel));
+  @override
   MultiClassSegmentationLabelModel removePixel(int x, int y) => updateLabel(label.removePixel(x, y));
 
   @override
