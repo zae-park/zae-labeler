@@ -17,7 +17,7 @@ void main() {
     test('MultiClassSegmentationLabelModel pixel add/remove', () {
       final model = MultiClassSegmentationLabelModel.empty().addPixel(2, 2, 'person').removePixel(2, 2);
 
-      expect(model.label.segments['person']?.containsPixel(2, 2) ?? false, isFalse);
+      expect(model.label.segments['person']?.containsPixel(2, 2), isFalse);
     });
   });
 }

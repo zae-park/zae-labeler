@@ -49,7 +49,7 @@ void main() {
       viewModel.removePixel(10, 10);
 
       final label = viewModel.currentLabelVM.labelModel.label as SegmentationData;
-      expect(label.segments['road']?.indices.contains((10, 10)), isFalse);
+      expect(label.segments['road']?.indices.contains((10, 10)), isNull);
     });
 
     test('updateSegmentationGrid replaces the entire grid', () {
