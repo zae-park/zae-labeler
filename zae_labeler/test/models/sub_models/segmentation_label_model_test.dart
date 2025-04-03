@@ -7,7 +7,7 @@ void main() {
       final model =
           SingleClassSegmentationLabelModel.empty().copyWith(label: SegmentationData(segments: {'object': Segment(indices: {}, classLabel: 'object')}));
 
-      final added = model.addPixel(1, 1);
+      final added = model.addPixel(1, 1, "sample");
       final removed = added.removePixel(1, 1);
 
       expect(added.label.segments['object']!.containsPixel(1, 1), isTrue);
