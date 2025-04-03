@@ -15,6 +15,7 @@ class _SegmentationLabelingPageState extends BaseLabelingPageState<SegmentationL
   @override
   Widget buildViewer(SegmentationLabelingViewModel labelingVM) {
     return Stack(
+      alignment: Alignment.center,
       children: [
         super.buildViewer(labelingVM),
         GridPainterWidget(
