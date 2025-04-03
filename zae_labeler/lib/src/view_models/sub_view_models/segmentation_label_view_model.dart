@@ -24,12 +24,8 @@ class SegmentationLabelViewModel extends LabelViewModel {
   }
 
   void addPixel(int x, int y, String classLabel) {
-    if (labelModel is MultiClassSegmentationLabelModel) {
+    if (labelModel is SegmentationLabelModel) {
       final updated = (labelModel as MultiClassSegmentationLabelModel).addPixel(x, y, classLabel);
-      labelModel = updated;
-      notifyListeners();
-    } else if (labelModel is SingleClassSegmentationLabelModel) {
-      final updated = (labelModel as SingleClassSegmentationLabelModel).addPixel(x, y);
       labelModel = updated;
       notifyListeners();
     }
@@ -38,10 +34,6 @@ class SegmentationLabelViewModel extends LabelViewModel {
   void removePixel(int x, int y) {
     if (labelModel is MultiClassSegmentationLabelModel) {
       final updated = (labelModel as MultiClassSegmentationLabelModel).removePixel(x, y);
-      labelModel = updated;
-      notifyListeners();
-    } else if (labelModel is SingleClassSegmentationLabelModel) {
-      final updated = (labelModel as SingleClassSegmentationLabelModel).removePixel(x, y);
       labelModel = updated;
       notifyListeners();
     }
