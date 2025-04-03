@@ -17,11 +17,13 @@ class _SegmentationLabelingPageState extends BaseLabelingPageState<SegmentationL
     return Stack(
       alignment: Alignment.center,
       children: [
-        super.buildViewer(labelingVM),
-        GridPainterWidget(
-          mode: SegmentationMode.pixelMask,
-          onLabelUpdated: (labeledData) => labelingVM.updateSegmentationGrid(labeledData),
-        ),
+        Positioned.fill(child: super.buildViewer(labelingVM)),
+        Positioned.fill(
+          child: GridPainterWidget(
+            mode: SegmentationMode.pixelMask,
+            onLabelUpdated: (labeledData) => labelingVM.updateSegmentationGrid(labeledData),
+          ),
+        )
       ],
     );
   }
