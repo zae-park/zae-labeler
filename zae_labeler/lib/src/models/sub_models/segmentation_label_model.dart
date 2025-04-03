@@ -26,7 +26,7 @@ class SingleClassSegmentationLabelModel extends SegmentationLabelModel<Segmentat
 
   factory SingleClassSegmentationLabelModel.empty() => SingleClassSegmentationLabelModel(labeledAt: DateTime.now(), label: SegmentationData(segments: {}));
 
-  SingleClassSegmentationLabelModel addPixel(int x, int y) => updateLabel(label.addPixel(x, y, label.segments.keys.first));
+  SingleClassSegmentationLabelModel addPixel(int x, int y, String classLabel) => updateLabel(label.addPixel(x, y, classLabel));
   SingleClassSegmentationLabelModel removePixel(int x, int y) => updateLabel(label.removePixel(x, y));
 
   @override
