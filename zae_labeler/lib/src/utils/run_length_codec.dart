@@ -29,7 +29,7 @@ class RunLengthCodec {
   }
 
   /// ✅ 디코딩: RLE 리스트 → Set<(x, y)>
-  static Set<(int, int)> decode(List<Map<String, int>> rleList) {
+  static Set<(int, int)> decode(List<Map<String, dynamic>> rleList) {
     final Set<(int, int)> result = {};
 
     for (var rle in rleList) {

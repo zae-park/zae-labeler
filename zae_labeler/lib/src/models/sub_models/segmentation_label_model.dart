@@ -194,7 +194,7 @@ class Segment {
   factory Segment.fromJson(Map<String, dynamic> json) {
     final rawIndices = json['indices'] as List;
     final isRLE = rawIndices.isNotEmpty && rawIndices.first.containsKey('count');
-    final indices = isRLE ? RunLengthCodec.decode(List<Map<String, int>>.from(rawIndices)) : rawIndices.map((e) => (e['x'] as int, e['y'] as int)).toSet();
+    final indices = isRLE ? RunLengthCodec.decode(List<Map<String, dynamic>>.from(rawIndices)) : rawIndices.map((e) => (e['x'] as int, e['y'] as int)).toSet();
 
     return Segment(indices: indices, classLabel: json['class_label']);
   }
