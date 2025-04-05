@@ -1,12 +1,11 @@
-import 'dart:html' as html;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart'; // For generating unique project IDs
-import 'package:share_plus/share_plus.dart';
 import '../models/label_model.dart';
 import '../models/project_model.dart';
 import '../models/data_model.dart';
 import '../utils/storage_helper.dart';
+import '../utils/share_helper.dart';
 
 class ProjectViewModel extends ChangeNotifier {
   final StorageHelperInterface storageHelper;
@@ -124,10 +123,10 @@ class ProjectViewModel extends ChangeNotifier {
       final jsonString = project.toJsonString();
 
       if (kIsWeb) {
-        await html.window.navigator.share({'title': project.name, 'text': jsonString});
+        await shareTextOnWeb(project.name, jsonString);
       } else {
         String filePath = await storageHelper.downloadProjectConfig(project);
-        await Share.shareXFiles([XFile(filePath)], text: '${project.name} project configuration');
+        await shareFileOnMobile(filePath, text: '${project.name} project configuration');
       }
     } catch (e) {
       if (!context.mounted) return; // ✅ 비동기적 `BuildContext` 사용 방지
