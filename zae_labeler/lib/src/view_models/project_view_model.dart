@@ -127,8 +127,11 @@ class ProjectViewModel extends ChangeNotifier {
         getFilePath: () => storageHelper.downloadProjectConfig(project),
       );
     } catch (e) {
-      if (!context.mounted) return; // ✅ 비동기적 `BuildContext` 사용 방지
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to share project: $e')));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to share project: $e')),
+        );
+      }
     }
   }
 }
