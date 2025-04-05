@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../../models/data_model.dart';
 import '../../../models/project_model.dart';
 import '../../../view_models/labeling_view_model.dart';
-import '../../viewers/image_viewer.dart';
-import '../../viewers/object_viewer.dart';
-import '../../viewers/time_series_viewer.dart';
 import '../../widgets/navigator.dart';
+import '../../widgets/shared/labeling_progress.dart';
+import '../../widgets/shared/viewer_builder.dart';
 
 /// **BaseLabelingPage**
 /// - 라벨링 페이지의 공통 기능을 제공하는 추상 클래스.
@@ -98,36 +96,13 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
   }
 
   /// **공통 Viewer**
-  Widget buildViewer(T labelingVM) {
-    final unifiedData = labelingVM.currentUnifiedData;
-    switch (unifiedData.fileType) {
-      case FileType.series:
-        return TimeSeriesChart(data: unifiedData.seriesData ?? []);
-      case FileType.object:
-        return ObjectViewer.fromMap(unifiedData.objectData ?? {});
-      case FileType.image:
-        return ImageViewer.fromUnifiedData(unifiedData);
-      default:
-        return const Center(child: Text('지원되지 않는 파일 형식입니다.'));
-    }
-  }
-
-  /// **진행도 표시**
-  Widget buildProgressIndicator(T labelingVM) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Text(
-        '데이터 ${labelingVM.currentIndex + 1} / ${labelingVM.project.dataPaths.length} - ${labelingVM.currentDataFileName}',
-        style: const TextStyle(fontSize: 16),
-      ),
-    );
-  }
+  Widget buildViewer(T labelingVM) => ViewerBuilder(data: labelingVM.currentUnifiedData);
 
   /// **공통 Navigator**
   Widget buildNavigator(T labelingVM) {
     return Column(
       children: [
-        buildProgressIndicator(labelingVM),
+        LabelingProgress(labelingVM: labelingVM),
         NavigationButtons(onPrevious: labelingVM.movePrevious, onNext: labelingVM.moveNext),
       ],
     );

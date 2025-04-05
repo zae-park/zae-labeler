@@ -43,10 +43,11 @@ class ConfigureProjectPage extends StatelessWidget {
     final updatedProject = configVM.project;
     final isNewProject = !configVM.isEditing;
 
+    debugPrint("[confirmProject] mode: ${configVM.project.mode} is $isNewProject"); // ✅ 이 로그 추가
     if (isNewProject) {
       projectListVM.saveProject(updatedProject);
     } else {
-      projectListVM.updateProject(context, updatedProject);
+      projectListVM.updateProject(updatedProject);
     }
 
     ScaffoldMessenger.of(context).showSnackBar(

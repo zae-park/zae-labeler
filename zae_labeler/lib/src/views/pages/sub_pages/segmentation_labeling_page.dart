@@ -13,11 +13,57 @@ class SegmentationLabelingPage extends BaseLabelingPage<SegmentationLabelingView
 
 class _SegmentationLabelingPageState extends BaseLabelingPageState<SegmentationLabelingViewModel> {
   @override
+  Widget buildViewer(SegmentationLabelingViewModel labelingVM) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Positioned.fill(child: super.buildViewer(labelingVM)),
+        Positioned.fill(
+          child: GridPainterWidget(
+            mode: SegmentationMode.pixelMask,
+            onLabelUpdated: (labeledData) => labelingVM.updateSegmentationGrid(labeledData),
+          ),
+        )
+      ],
+    );
+  }
+
+  @override
   Widget buildModeSpecificUI(SegmentationLabelingViewModel labelingVM) {
-    return GridPainterWidget(
-      mode: SegmentationMode.pixelMask,
-      onLabelUpdated: (labeledData) => labelingVM.updateSegmentationGrid(labeledData),
-    ); // ✅ Grid Painter 추가
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+      child: Row(
+        children: [
+          const Text('클래스 선택:'),
+          const SizedBox(width: 12),
+          DropdownButton<String>(
+            value: labelingVM.selectedClass,
+            items: labelingVM.project.classes
+                .map((cls) => DropdownMenuItem<String>(
+                      value: cls,
+                      child: Text(cls),
+                    ))
+                .toList(),
+            onChanged: (newValue) {
+              if (newValue != null) labelingVM.setSelectedClass(newValue);
+            },
+          ),
+          const SizedBox(width: 12),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.save),
+            label: const Text('선택 라벨 저장'),
+            onPressed: labelingVM.saveCurrentGridAsLabel,
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.clear),
+            label: const Text('라벨 초기화'),
+            onPressed: labelingVM.clearLabels,
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

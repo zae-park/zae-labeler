@@ -1,18 +1,17 @@
-import 'dart:html' as html;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart'; // For generating unique project IDs
-import 'package:share_plus/share_plus.dart';
 import '../models/label_model.dart';
 import '../models/project_model.dart';
 import '../models/data_model.dart';
+import '../utils/proxy_share_helper/interface_share_helper.dart';
 import '../utils/storage_helper.dart';
 
 class ProjectViewModel extends ChangeNotifier {
-  final StorageHelperInterface storageHelper;
   Project project;
+  final StorageHelperInterface storageHelper;
+  final ShareHelperInterface shareHelper;
 
-  ProjectViewModel({required this.storageHelper, Project? project})
+  ProjectViewModel({required this.storageHelper, required this.shareHelper, Project? project})
       : project = project ??
             Project(
               id: project?.id ?? const Uuid().v4(),
@@ -122,16 +121,17 @@ class ProjectViewModel extends ChangeNotifier {
   Future<void> shareProject(BuildContext context) async {
     try {
       final jsonString = project.toJsonString();
-
-      if (kIsWeb) {
-        await html.window.navigator.share({'title': project.name, 'text': jsonString});
-      } else {
-        String filePath = await storageHelper.downloadProjectConfig(project);
-        await Share.shareXFiles([XFile(filePath)], text: '${project.name} project configuration');
-      }
+      await shareHelper.shareProject(
+        name: project.name,
+        jsonString: jsonString,
+        getFilePath: () => storageHelper.downloadProjectConfig(project),
+      );
     } catch (e) {
-      if (!context.mounted) return; // ✅ 비동기적 `BuildContext` 사용 방지
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to share project: $e')));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to share project: $e')),
+        );
+      }
     }
   }
 }

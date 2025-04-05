@@ -3,6 +3,7 @@ import 'dart:io' as io;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:zae_labeler/src/utils/share_helper.dart';
 import '../../view_models/project_list_view_model.dart';
 import '../../view_models/project_view_model.dart';
 import '../../view_models/locale_view_model.dart';
@@ -115,9 +116,10 @@ class _ProjectListPageState extends State<ProjectListPage> {
                     final project = projectListVM.projects[index];
 
                     return ChangeNotifierProvider(
-                      create: (context) => ProjectViewModel(storageHelper: StorageHelper.instance, project: project),
+                      create: (context) => ProjectViewModel(storageHelper: StorageHelper.instance, project: project, shareHelper: getShareHelper()),
                       child: Consumer<ProjectViewModel>(
                         builder: (context, projectVM, _) {
+                          debugPrint("[LabelingPage 진입] project.mode = ${project.mode}");
                           return ProjectTile(
                             project: project,
                             onEdit: () => Navigator.push(

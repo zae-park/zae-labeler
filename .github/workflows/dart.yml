@@ -33,6 +33,8 @@ jobs:
         working-directory: ./zae_labeler
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
-      - name: Run tests
+      - name: Run tests (excluding web-only)
         working-directory: ./zae_labeler
         run: flutter test
+
+      

@@ -15,9 +15,10 @@ abstract class LabelModel<T> {
   T get labelData => label;
   String get formattedLabeledAt => labeledAt.toIso8601String();
 
-  // Map<String, T> toJson();
-  // factory LabelModel.fromJson(Map<String, T> json) => throw UnimplementedError('fromJson() must be implemented in subclasses.');
+  Map<String, dynamic> toJson();
+  factory LabelModel.fromJson(Map<String, dynamic> json) => throw UnimplementedError('fromJson() must be implemented in subclasses.');
   factory LabelModel.empty() => throw UnimplementedError('fromJson() must be implemented in subclasses.');
+
   LabelModel updateLabel(T labelData);
   bool isSelected(T labelData);
 }

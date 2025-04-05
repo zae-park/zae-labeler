@@ -69,7 +69,7 @@ class StorageHelperImpl implements StorageHelperInterface {
   // ==============================
 
   @override
-  Future<void> saveLabelData(String projectId, String dataPath, LabelModel labelModel) async {
+  Future<void> saveLabelData(String projectId, String dataId, String dataPath, LabelModel labelModel) async {
     final storageKey = 'labels_project_$projectId';
     final labelsJson = html.window.localStorage[storageKey];
 
@@ -80,13 +80,14 @@ class StorageHelperImpl implements StorageHelperInterface {
     }
 
     Map<String, dynamic> labelEntry = {
+      'data_id': dataId,
       'data_path': dataPath,
       'mode': labelModel.runtimeType.toString(),
       'labeled_at': labelModel.labeledAt.toIso8601String(),
       'label_data': LabelModelConverter.toJson(labelModel),
     };
 
-    int index = existingEntries.indexWhere((entry) => entry['data_path'] == dataPath);
+    int index = existingEntries.indexWhere((entry) => entry['data_id'] == dataId);
     if (index != -1) {
       existingEntries[index] = labelEntry;
     } else {
@@ -97,7 +98,7 @@ class StorageHelperImpl implements StorageHelperInterface {
   }
 
   @override
-  Future<LabelModel> loadLabelData(String projectId, String dataPath, LabelingMode mode) async {
+  Future<LabelModel> loadLabelData(String projectId, String dataId, String dataPath, LabelingMode mode) async {
     final storageKey = 'labels_project_$projectId';
     final labelsJson = html.window.localStorage[storageKey];
 
@@ -105,7 +106,7 @@ class StorageHelperImpl implements StorageHelperInterface {
       final jsonData = jsonDecode(labelsJson);
       final entries = (jsonData as List).map((e) => e as Map<String, dynamic>).toList();
       Map<String, dynamic>? labelEntry = entries.firstWhere(
-        (entry) => entry['data_path'] == dataPath,
+        (entry) => entry['data_id'] == dataId,
         orElse: () => {},
       );
 
@@ -113,7 +114,7 @@ class StorageHelperImpl implements StorageHelperInterface {
         return LabelModelConverter.fromJson(mode, labelEntry['label_data']);
       }
     }
-    return LabelModelConverter.fromJson(mode, {});
+    return LabelModelFactory.createNew(mode);
   }
 
   // ==============================

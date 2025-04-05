@@ -33,15 +33,11 @@ class Project {
   // 📌 **프로젝트 정보 관리**
   // ==============================
 
+  /// ✅ 테스트 및 초기화용 빈 프로젝트 생성자
+  factory Project.empty() => Project(id: 'empty', name: '', mode: LabelingMode.singleClassification, classes: const []);
+
   /// ✅ 프로젝트 복사본을 생성하는 `copyWith` 메소드
-  Project copyWith({
-    String? id,
-    String? name,
-    LabelingMode? mode,
-    List<String>? classes,
-    List<DataPath>? dataPaths,
-    List<LabelModel>? labels,
-  }) {
+  Project copyWith({String? id, String? name, LabelingMode? mode, List<String>? classes, List<DataPath>? dataPaths, List<LabelModel>? labels}) {
     return Project(
       id: id ?? this.id,
       name: name ?? this.name,
@@ -52,29 +48,29 @@ class Project {
     );
   }
 
-  // ==============================
-  // 📌 **라벨 데이터 관리**
-  // ==============================
+  // // ==============================
+  // // 📌 **라벨 데이터 관리**
+  // // ==============================
 
-  /// ✅ 특정 데이터의 라벨 추가
-  void addLabel(String dataPath, LabelModel label) {
-    labels.add(label);
-  }
+  // /// ✅ 특정 데이터의 라벨 추가
+  // void addLabel(String dataPath, LabelModel label) {
+  //   labels.add(label);
+  // }
 
-  /// ✅ 특정 데이터의 라벨 제거
-  void removeLabel(String dataPath) {
-    labels.removeWhere((label) => label.label == dataPath);
-  }
+  // /// ✅ 특정 데이터의 라벨 제거
+  // void removeLabel(String dataPath) {
+  //   labels.removeWhere((label) => label.label == dataPath);
+  // }
 
-  /// ✅ 특정 데이터의 라벨 업데이트
-  void updateLabel(String dataPath, LabelModel updatedLabel) {
-    int index = labels.indexWhere((label) => label.label == dataPath);
-    if (index != -1) {
-      labels[index] = updatedLabel;
-    } else {
-      labels.add(updatedLabel);
-    }
-  }
+  // /// ✅ 특정 데이터의 라벨 업데이트
+  // void updateLabel(String dataPath, LabelModel updatedLabel) {
+  //   int index = labels.indexWhere((label) => label.label == dataPath);
+  //   if (index != -1) {
+  //     labels[index] = updatedLabel;
+  //   } else {
+  //     labels.add(updatedLabel);
+  //   }
+  // }
 
   /// ✅ 모든 라벨 초기화
   void clearLabels() {
@@ -110,27 +106,27 @@ class Project {
         'labels': labels.map((e) => LabelModelConverter.toJson(e)).toList(),
       };
 
-  // ==============================
-  // 📌 **StorageHelper를 활용한 라벨 관리**
-  // ==============================
+  // // ==============================
+  // // 📌 **StorageHelper를 활용한 라벨 관리**
+  // // ==============================
 
-  /// ✅ StorageHelper를 사용하여 모든 라벨 데이터 로드
-  Future<void> loadAllLabels() async {
-    labels = await StorageHelper.instance.loadAllLabels(id);
-  }
+  // /// ✅ StorageHelper를 사용하여 모든 라벨 데이터 로드
+  // Future<void> loadAllLabels() async {
+  //   labels = await StorageHelper.instance.loadAllLabels(id);
+  // }
 
-  /// ✅ 특정 데이터에 대한 라벨을 불러옴
-  Future<LabelModel> loadLabel(String dataPath) async {
-    return await StorageHelper.instance.loadLabelData(id, dataPath, mode);
-  }
+  // /// ✅ 특정 데이터에 대한 라벨을 불러옴
+  // Future<LabelModel> loadLabel(String dataPath) async {
+  //   return await StorageHelper.instance.loadLabelData(id, dataPath, mode);
+  // }
 
-  /// ✅ 특정 데이터의 라벨을 저장
-  Future<void> saveLabel(String dataPath, LabelModel labelModel) async {
-    await StorageHelper.instance.saveLabelData(id, dataPath, labelModel);
-  }
+  // /// ✅ 특정 데이터의 라벨을 저장
+  // Future<void> saveLabel(String dataPath, LabelModel labelModel) async {
+  //   await StorageHelper.instance.saveLabelData(id, dataPath, labelModel);
+  // }
 
-  /// ✅ 프로젝트의 모든 라벨을 저장
-  Future<void> saveAllLabels() async {
-    await StorageHelper.instance.saveAllLabels(id, labels);
-  }
+  // /// ✅ 프로젝트의 모든 라벨을 저장
+  // Future<void> saveAllLabels() async {
+  //   await StorageHelper.instance.saveAllLabels(id, labels);
+  // }
 }

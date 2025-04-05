@@ -1,4 +1,5 @@
 import 'base_label_model.dart';
+import '../../utils/run_length_codec.dart';
 
 /// ✅ Segmentation Label의 최상위 클래스
 abstract class SegmentationLabelModel<T> extends LabelModel<T> {
@@ -6,6 +7,8 @@ abstract class SegmentationLabelModel<T> extends LabelModel<T> {
 
   // /// ✅ 기존 객체를 변경하여 새로운 `SegmentationLabel`을 반환
   // SegmentationLabel copyWith({DateTime? labeledAt, SegmentationData? label});
+  SegmentationLabelModel<T> addPixel(int x, int y, String classLabel);
+  SegmentationLabelModel<T> removePixel(int x, int y);
 }
 
 /// ✅ 단일 클래스 세그멘테이션 (Single-Class Segmentation)
@@ -15,9 +18,19 @@ class SingleClassSegmentationLabelModel extends SegmentationLabelModel<Segmentat
   @override
   bool get isMultiClass => false;
 
+  @override
+  Map<String, dynamic> toJson() => {'label': label.toJson(), 'labeled_at': labeledAt.toIso8601String()};
+
+  @override
+  factory SingleClassSegmentationLabelModel.fromJson(Map<String, dynamic> json) {
+    return SingleClassSegmentationLabelModel(label: SegmentationData.fromJson(json['segmentation']), labeledAt: DateTime.parse(json['labeled_at']));
+  }
+
   factory SingleClassSegmentationLabelModel.empty() => SingleClassSegmentationLabelModel(labeledAt: DateTime.now(), label: SegmentationData(segments: {}));
 
-  SingleClassSegmentationLabelModel addPixel(int x, int y) => updateLabel(label.addPixel(x, y, label.segments.keys.first));
+  @override
+  SingleClassSegmentationLabelModel addPixel(int x, int y, String classLabel) => updateLabel(label.addPixel(x, y, classLabel));
+  @override
   SingleClassSegmentationLabelModel removePixel(int x, int y) => updateLabel(label.removePixel(x, y));
 
   @override
@@ -27,13 +40,14 @@ class SingleClassSegmentationLabelModel extends SegmentationLabelModel<Segmentat
 
   @override
   bool isSelected(SegmentationData labelData) {
-    return labelData.segments.values.any((segment) =>
-        segment.indices.any((index) => label.segments.containsKey(segment.classLabel) && label.segments[segment.classLabel]!.indices.contains(index)));
+    if (label.segments.isEmpty || labelData.segments.isEmpty) return false;
+    final labelClass = label.segments.keys.first;
+
+    return labelData.segments[labelClass]?.indices.any((index) => label.segments[labelClass]?.indices.contains(index) ?? false) ?? false;
   }
 
-  SingleClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) {
-    return SingleClassSegmentationLabelModel(labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
-  }
+  SingleClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) =>
+      SingleClassSegmentationLabelModel(labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
 }
 
 /// ✅ 다중 클래스 세그멘테이션 (Multi-Class Segmentation) - 추후 업데이트
@@ -43,9 +57,19 @@ class MultiClassSegmentationLabelModel extends SegmentationLabelModel<Segmentati
   @override
   bool get isMultiClass => true;
 
+  @override
+  Map<String, dynamic> toJson() => {'label': label.toJson(), 'labeled_at': labeledAt.toIso8601String()};
+
+  @override
+  factory MultiClassSegmentationLabelModel.fromJson(Map<String, dynamic> json) {
+    return MultiClassSegmentationLabelModel(label: SegmentationData.fromJson(json['segmentation']), labeledAt: DateTime.parse(json['labeled_at']));
+  }
+
   factory MultiClassSegmentationLabelModel.empty() => MultiClassSegmentationLabelModel(labeledAt: DateTime.now(), label: SegmentationData(segments: {}));
 
+  @override
   MultiClassSegmentationLabelModel addPixel(int x, int y, String classLabel) => updateLabel(label.addPixel(x, y, classLabel));
+  @override
   MultiClassSegmentationLabelModel removePixel(int x, int y) => updateLabel(label.removePixel(x, y));
 
   @override
@@ -55,14 +79,15 @@ class MultiClassSegmentationLabelModel extends SegmentationLabelModel<Segmentati
 
   /// ✅ 특정 픽셀 (x, y)이 특정 클래스 내에서 선택되었는지 확인
   @override
-  bool isSelected(SegmentationData labelData) {
-    return labelData.segments.values.any((segment) =>
-        segment.indices.any((index) => label.segments.containsKey(segment.classLabel) && label.segments[segment.classLabel]!.indices.contains(index)));
+  bool isSelected(SegmentationData other) {
+    return other.segments.entries.any((entry) {
+      final targetSegment = label.segments[entry.key];
+      return targetSegment != null && entry.value.indices.any((index) => targetSegment.indices.contains(index));
+    });
   }
 
-  MultiClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) {
-    return MultiClassSegmentationLabelModel(labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
-  }
+  MultiClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) =>
+      MultiClassSegmentationLabelModel(labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
 }
 
 /// ✅ 세그멘테이션 데이터 구조를 저장하는 클래스.
@@ -98,44 +123,6 @@ class SegmentationData {
 
   SegmentationData({required this.segments});
 
-  /// ✅ Run-Length Encoding 적용 (RLE 압축)
-  SegmentationData applyRunLengthEncoding() {
-    Map<String, Segment> encodedSegments = {};
-
-    for (var entry in segments.entries) {
-      String classLabel = entry.key;
-      Segment segment = entry.value;
-      Set<(int, int)> encodedIndices = _runLengthEncode(segment.indices);
-      encodedSegments[classLabel] = Segment(indices: encodedIndices, classLabel: classLabel);
-    }
-
-    return SegmentationData(segments: encodedSegments);
-  }
-
-  /// ✅ Run-Length Encoding 알고리즘
-  static Set<(int, int)> _runLengthEncode(Set<(int, int)> indices) {
-    List<(int, int)> sortedIndices = indices.toList()..sort((a, b) => a.$1.compareTo(b.$1)); // ✅ x좌표 기준 정렬
-    Set<(int, int)> encoded = {};
-    int? prevX;
-    int count = 0;
-
-    for (var (x, y) in sortedIndices) {
-      if (prevX == null || prevX + count == x) {
-        count++;
-      } else {
-        encoded.add((prevX, count));
-        count = 1;
-      }
-      prevX = x;
-    }
-
-    if (prevX != null) {
-      encoded.add((prevX, count));
-    }
-
-    return encoded;
-  }
-
   /// ✅ JSON 변환 메서드
   Map<String, dynamic> toJson() => {'segments': segments.map((key, segment) => MapEntry(key, segment.toJson()))};
 
@@ -150,27 +137,16 @@ class SegmentationData {
 
   /// ✅ 특정 클래스에 대해 픽셀 추가.
   SegmentationData addPixel(int x, int y, String classLabel) {
-    Map<String, Segment> updatedSegments = Map.from(segments);
-
-    if (updatedSegments.containsKey(classLabel)) {
-      updatedSegments[classLabel] = updatedSegments[classLabel]!.addPixel(x, y);
-    } else {
-      updatedSegments[classLabel] = Segment(indices: {(x, y)}, classLabel: classLabel);
-    }
-
-    return SegmentationData(segments: updatedSegments);
+    Segment updated = segments[classLabel]?.addPixel(x, y) ?? Segment(indices: {(x, y)}, classLabel: classLabel);
+    return SegmentationData(segments: {...segments, classLabel: updated});
   }
 
   /// ✅ 특정 픽셀을 삭제하는 메서드.
   SegmentationData removePixel(int x, int y) {
-    Map<String, Segment> updatedSegments = {};
-
-    segments.forEach((classLabel, segment) {
-      Segment updatedSegment = segment.removePixel(x, y);
-      if (updatedSegment.indices.isNotEmpty) {
-        updatedSegments[classLabel] = updatedSegment;
-      }
-    });
+    final updatedSegments = {
+      for (final entry in segments.entries)
+        if (entry.value.containsPixel(x, y)) entry.key: entry.value.removePixel(x, y) else entry.key: entry.value,
+    }..removeWhere((_, segment) => segment.indices.isEmpty);
 
     return SegmentationData(segments: updatedSegments);
   }
@@ -207,23 +183,39 @@ class Segment {
   /// - 예: `"car"`, `"road"`, `"tree"` 등.
   final String classLabel;
 
-  Segment({required Set<(int, int)> indices, required this.classLabel}) : indices = _applyRunLengthEncoding(indices); // ✅ 중복 제거 및 빠른 검색 가능하도록 Set 변환
+  Segment({required this.indices, required this.classLabel});
 
   /// ✅ Segment 객체를 JSON 형식으로 변환.
-  Map<String, dynamic> toJson() => {
-        'indices': indices.map((e) => {'x': e.$1, 'y': e.$2}).toList(),
-        'class_label': classLabel,
-      };
+  Map<String, dynamic> toJson() => {'indices': RunLengthCodec.encode(indices), 'class_label': classLabel};
+
+  @override
+  int get hashCode => classLabel.hashCode ^ indices.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Segment && classLabel == other.classLabel && indices.length == other.indices.length && indices.containsAll(other.indices);
 
   /// ✅ JSON 데이터를 기반으로 Segment 객체를 생성하는 팩토리 메서드.
-  factory Segment.fromJson(Map<String, dynamic> json) =>
-      Segment(indices: (json['indices']).map((e) => (e['x'] as int, e['y'] as int)), classLabel: json['class_label']);
+  factory Segment.fromJson(Map<String, dynamic> json) {
+    final rawIndices = json['indices'] as List;
+    final isRLE = rawIndices.isNotEmpty && rawIndices.first.containsKey('count');
+    final indices = isRLE ? RunLengthCodec.decode(List<Map<String, dynamic>>.from(rawIndices)) : rawIndices.map((e) => (e['x'] as int, e['y'] as int)).toSet();
 
-  /// ✅ 특정 픽셀을 추가하는 메서드.
-  Segment addPixel(Set<(int, int)> updatedIndices) => Segment(indices: updatedIndices, classLabel: classLabel);
+    return Segment(indices: indices, classLabel: json['class_label']);
+  }
 
-  /// ✅ 특정 픽셀을 삭제하는 메서드.
-  Segment removePixel(Set<(int, int)> updatedIndices) => Segment(indices: updatedIndices, classLabel: classLabel);
+  Segment addPixel(int x, int y) {
+    if (indices.contains((x, y))) return this;
+    final updated = Set<(int, int)>.from(indices)..add((x, y));
+    return Segment(indices: updated, classLabel: classLabel);
+  }
+
+  Segment removePixel(int x, int y) {
+    if (!indices.contains((x, y))) return this;
+    final updated = Set<(int, int)>.from(indices)..remove((x, y));
+    return Segment(indices: updated, classLabel: classLabel);
+  }
 
   /// ✅ 특정 픽셀이 해당 클래스에 속해 있는지 확인
   bool containsPixel(int x, int y) {

@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart'; // 프로젝트 ID 생성
 import '../models/label_model.dart';
 import '../models/project_model.dart';
 import '../models/data_model.dart';
+import '../utils/storage_helper.dart';
 
 /// ✅ **ConfigurationViewModel**
 /// - 프로젝트 생성 및 설정을 관리하는 ViewModel
@@ -36,7 +37,11 @@ class ConfigurationViewModel extends ChangeNotifier {
 
   /// ✅ 라벨링 모드 설정
   void setLabelingMode(LabelingMode mode) {
-    _project = _project.copyWith(mode: mode);
+    if (_project.mode != mode) {
+      StorageHelper.instance.deleteProjectLabels(_project.id);
+      _project = _project.copyWith(mode: mode);
+    }
+
     notifyListeners();
   }
 
