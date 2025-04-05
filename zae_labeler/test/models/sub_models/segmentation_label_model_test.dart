@@ -11,7 +11,7 @@ void main() {
       final removed = added.removePixel(1, 1);
 
       expect(added.label.segments['sample']!.containsPixel(1, 1), isTrue);
-      expect(removed.label.segments['sample']!.containsPixel(1, 1), isFalse);
+      expect(removed.label.segments['sample']!.containsPixel(1, 1), isNull);
     });
 
     test('MultiClassSegmentationLabelModel pixel add/remove', () {
