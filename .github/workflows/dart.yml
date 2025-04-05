@@ -35,8 +35,6 @@ jobs:
 
       - name: Run tests (excluding web-only)
         working-directory: ./zae_labeler
-        run: flutter test --exclude-tags=web-only
-      
-      - name: Run web-only tests
-        run: flutter test --tags=web-only
+        run: flutter test
+
       
