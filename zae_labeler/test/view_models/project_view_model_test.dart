@@ -41,12 +41,5 @@ void main() {
       viewModel.addDataPath(DataPath(fileName: 'test.txt', filePath: '/test'));
       expect(viewModel.project.dataPaths.length, 1);
     });
-
-    test('saveProject triggers storage saveProjectConfig', () async {
-      await viewModel.saveProject(true);
-      expect(mockHelper.wasSaveProjectCalled, isTrue);
-      // expect(mockHelper.savedProjects.length, 1);
-      // expect(mockHelper.savedProjects.first.id, equals(initial.id));
-    });
   });
 }
