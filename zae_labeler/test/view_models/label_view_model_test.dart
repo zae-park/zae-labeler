@@ -36,7 +36,7 @@ void main() {
       labelVM.removePixel(5, 5);
 
       final label = labelVM.labelModel.label as SegmentationData;
-      expect(label.segments['sky']?.indices.contains((5, 5)), isFalse);
+      expect(label.segments['sky']?.indices.contains((5, 5)), isNull);
     });
 
     test('updateLabel replaces the labelModel content', () {
