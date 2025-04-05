@@ -1,8 +1,8 @@
 import 'package:share_plus/share_plus.dart';
 
-import '../share_helper.dart';
+import 'interface_share_helper.dart';
 
-class MobileShareHelper implements ShareHelperInterface {
+class ShareHelperImpl implements ShareHelperInterface {
   @override
   Future<void> shareProject({
     required String name,

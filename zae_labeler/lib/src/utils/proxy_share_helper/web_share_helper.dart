@@ -1,8 +1,8 @@
 import 'dart:html' as html;
 
-import '../share_helper.dart';
+import 'interface_share_helper.dart';
 
-class WebShareHelper implements ShareHelperInterface {
+class ShareHelperImpl implements ShareHelperInterface {
   @override
   Future<void> shareProject({
     required String name,
