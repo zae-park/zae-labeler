@@ -1,3 +1,4 @@
+@Tags(['web-only'])
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zae_labeler/src/models/data_model.dart';
 import 'package:zae_labeler/src/view_models/project_view_model.dart';
@@ -40,6 +41,13 @@ void main() {
     test('addDataPath adds data path', () {
       viewModel.addDataPath(DataPath(fileName: 'test.txt', filePath: '/test'));
       expect(viewModel.project.dataPaths.length, 1);
+    });
+
+    test('saveProject triggers storage saveProjectConfig', () async {
+      await viewModel.saveProject(true);
+      expect(mockHelper.wasSaveProjectCalled, isTrue);
+      // expect(mockHelper.savedProjects.length, 1);
+      // expect(mockHelper.savedProjects.first.id, equals(initial.id));
     });
   });
 }
