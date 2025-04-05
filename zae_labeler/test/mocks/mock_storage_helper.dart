@@ -6,10 +6,18 @@ import 'package:zae_labeler/src/models/data_model.dart';
 
 class MockStorageHelper implements StorageHelperInterface {
   List<Project> savedProjects = [];
+  bool wasSaveProjectCalled = false;
+  bool shouldThrowOnSave = false;
 
   @override
-  Future<void> saveProjectConfig(List<Project> projects) async {
-    savedProjects = projects;
+  Future<void> saveProjectConfig(List<Project> project) async {
+    wasSaveProjectCalled = true;
+
+    if (shouldThrowOnSave) {
+      throw Exception('Failed to save');
+    }
+
+    savedProjects = project; // 단일 저장 후 리스트 유지
   }
 
   @override
