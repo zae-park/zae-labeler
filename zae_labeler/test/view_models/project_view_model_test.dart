@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zae_labeler/src/models/data_model.dart';
-import 'package:zae_labeler/src/utils/share_helper.dart';
 import 'package:zae_labeler/src/view_models/project_view_model.dart';
 import 'package:zae_labeler/src/models/label_model.dart';
 import '../mocks/mock_storage_helper.dart';
+import '../mocks/mock_share_helper.dart';
 
 void main() {
   group('ProjectViewModel', () {
@@ -17,7 +17,7 @@ void main() {
 
     setUp(() {
       mockHelper = MockStorageHelper();
-      viewModel = ProjectViewModel(storageHelper: mockHelper, shareHelper: ShareHelper());
+      viewModel = ProjectViewModel(storageHelper: mockHelper, shareHelper: MockShareHelper());
     });
 
     test('setName updates project name', () {
