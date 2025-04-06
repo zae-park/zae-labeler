@@ -6,6 +6,7 @@ import 'src/views/pages/configuration_page.dart';
 import 'src/views/pages/labeling_page.dart';
 import 'src/view_models/project_list_view_model.dart';
 import 'src/view_models/locale_view_model.dart';
+import 'src/utils/storage_helper.dart'; // ✅ StorageHelper import 추가
 
 void main() {
   runApp(const MyApp());
@@ -19,8 +20,9 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       // Registering providers for state management
       providers: [
-        ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel()),
+        ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(storageHelper: StorageHelper.instance)),
         ChangeNotifierProvider<LocaleViewModel>(create: (_) => LocaleViewModel()),
+        Provider<StorageHelperInterface>.value(value: StorageHelper.instance),
       ],
       child: Consumer<LocaleViewModel>(
         builder: (context, localeVM, child) {

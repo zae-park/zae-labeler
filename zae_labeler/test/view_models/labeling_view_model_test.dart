@@ -1,108 +1,95 @@
-// test/view_models/labeling_view_model_test.dart
-
-import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:zae_labeler/src/view_models/labeling_view_model.dart';
+import 'package:zae_labeler/src/models/label_model.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
-import 'package:zae_labeler/src/models/data_model.dart';
-
-import '../mocks/mock_path_provider.dart';
+import 'package:zae_labeler/src/models/sub_models/segmentation_label_model.dart';
+import 'package:zae_labeler/src/view_models/sub_view_models/segmentation_labeling_view_model.dart';
 import '../mocks/mock_storage_helper.dart';
+import '../mocks/mock_path_provider.dart';
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
-  // ✅ 테스트 실행 전에 `path_provider` Mock 적용
   setUpAll(() {
     MockPathProvider.setup();
   });
-
-  group('LabelingViewModel Tests', () {
-    late Project project;
-    late LabelingViewModel labelingVM;
-    late MockStorageHelper mockStorageHelper;
+  group('SegmentationLabelingViewModel', () {
+    late SegmentationLabelingViewModel viewModel;
 
     setUp(() {
-      mockStorageHelper = MockStorageHelper();
-      project = Project(
-        id: 'test_project',
+      final project = Project(
+        id: 'test-project',
         name: 'Test Project',
-        mode: LabelingMode.singleClassification,
-        classes: ['A', 'B', 'C'],
-        dataPaths: [
-          DataPath(
-            fileName: 'file1.json',
-            base64Content: base64Encode(utf8.encode('[{"dataFilename": "file1.json", "dataPath": "file1.json"}]')),
-          ),
-          DataPath(fileName: 'file2.csv', base64Content: 'MTAwLDIwMCwzMDA=')
-        ],
-        labelEntries: [],
+        mode: LabelingMode.multiClassSegmentation,
+        dataPaths: [],
+        classes: ['car', 'road'],
       );
-      labelingVM = LabelingViewModel(project: project, storageHelper: mockStorageHelper);
+
+      viewModel = SegmentationLabelingViewModel(
+        project: project,
+        storageHelper: MockStorageHelper(), // ✅ 실제 저장은 Mock
+      );
     });
 
-    test('✅ 초기화 테스트 - labelEntries가 프로젝트와 동일해야 함', () async {
-      await labelingVM.initialize();
-      expect(labelingVM.labelEntries, equals(project.labelEntries));
-      expect(labelingVM.unifiedDataList.isEmpty, isTrue);
-      expect(labelingVM.currentUnifiedData, isNotNull);
+    test('initial selected class is first in project.classes', () async {
+      await viewModel.postInitialize();
+      expect(viewModel.selectedClass, equals('car'));
     });
 
-    test('✅ 초기화 후 첫 번째 데이터가 로드되는지 확인', () async {
-      await labelingVM.initialize();
-      expect(labelingVM.currentUnifiedData, isNotNull);
-      expect(labelingVM.currentDataFileName, 'file1.json');
+    test('setSelectedClass changes the selected class', () {
+      viewModel.setSelectedClass('road');
+      expect(viewModel.selectedClass, equals('road'));
     });
 
-    test('✅ loadCurrentData()가 올바르게 실행되는지 확인', () async {
-      await labelingVM.initialize();
-      await labelingVM.loadCurrentData();
-      expect(labelingVM.currentUnifiedData, isNotNull);
+    test('addPixel updates label model and grid state', () {
+      viewModel.setSelectedClass('car');
+      viewModel.addPixel(5, 5);
+
+      final label = viewModel.currentLabelVM.labelModel.label as SegmentationData;
+      expect(label.segments.containsKey('car'), isTrue);
+      expect(label.segments['car']!.indices.contains((5, 5)), isTrue);
     });
 
-    test('✅ 라벨 추가 테스트 (saveLabelEntry가 호출되는지 확인)', () async {
-      await labelingVM.initialize();
-      await labelingVM.addOrUpdateLabel('A', LabelingMode.singleClassification);
+    test('removePixel removes the pixel from the segment', () {
+      viewModel.setSelectedClass('road');
+      viewModel.addPixel(10, 10);
+      viewModel.removePixel(10, 10);
 
-      expect(labelingVM.labelEntries.any((entry) => entry.dataFilename == labelingVM.currentDataFileName && entry.singleClassification?.label == 'A'), isTrue);
+      final label = viewModel.currentLabelVM.labelModel.label as SegmentationData;
+      expect(label.segments['road']?.indices.contains((10, 10)), isNull);
     });
 
-    test('✅ 라벨 선택 확인 테스트', () async {
-      await labelingVM.initialize();
-      await labelingVM.addOrUpdateLabel('A', LabelingMode.singleClassification);
+    test('updateSegmentationGrid replaces the entire grid', () {
+      final newGrid = List.generate(32, (_) => List.filled(32, 0));
+      newGrid[3][4] = 1;
 
-      expect(labelingVM.isLabelSelected('A', LabelingMode.singleClassification), isTrue);
-      expect(labelingVM.isLabelSelected('B', LabelingMode.singleClassification), isFalse);
+      viewModel.updateSegmentationGrid(newGrid);
+      expect(viewModel.labelGrid[3][4], equals(1));
     });
 
-    test('✅ 라벨이 없는 경우 기본값 반환 확인', () async {
-      await labelingVM.initialize();
-      expect(labelingVM.isLabelSelected('X', LabelingMode.singleClassification), isFalse);
+    test('saveCurrentGridAsLabel stores grid into labelModel', () async {
+      viewModel.setSelectedClass('car');
+      viewModel.updateSegmentationLabel(1, 2, 1);
+      viewModel.updateSegmentationLabel(2, 2, 1);
+
+      await viewModel.saveCurrentGridAsLabel();
+
+      final label = viewModel.currentLabelVM.labelModel.label as SegmentationData;
+      final segment = label.segments['car'];
+
+      expect(segment, isNotNull);
+      expect(segment!.indices.contains((1, 2)), isTrue);
+      expect(segment.indices.contains((2, 2)), isTrue);
     });
 
-    test('✅ moveNext() 실행 후 loadCurrentData()가 호출되는지 확인', () async {
-      await labelingVM.initialize();
-      await labelingVM.moveNext();
+    test('restoreGridFromLabel reconstructs grid from label', () async {
+      // 가짜 세그먼트 구성
+      final fakeLabel = SegmentationData(segments: {
+        'car': Segment(indices: {(1, 1), (2, 2)}, classLabel: 'car'),
+      });
 
-      expect(labelingVM.currentUnifiedData, isNotNull);
-      expect(labelingVM.currentIndex, 1);
-    });
+      viewModel.currentLabelVM.updateLabel(fakeLabel);
+      viewModel.restoreGridFromLabel();
 
-    test('✅ movePrevious() 실행 후 loadCurrentData()가 호출되는지 확인', () async {
-      await labelingVM.initialize();
-      await labelingVM.movePrevious();
-
-      expect(labelingVM.currentUnifiedData, isNotNull);
-      expect(labelingVM.currentIndex, 0);
-    });
-
-    test('✅ 라벨 다운로드 테스트', () async {
-      await labelingVM.initialize();
-      await labelingVM.addOrUpdateLabel('A', LabelingMode.singleClassification);
-
-      String zipPath = await labelingVM.downloadLabelsAsZip();
-      expect(zipPath, 'mock_zip_path.zip');
+      expect(viewModel.labelGrid[1][1], equals(1));
+      expect(viewModel.labelGrid[2][2], equals(1));
     });
   });
 }

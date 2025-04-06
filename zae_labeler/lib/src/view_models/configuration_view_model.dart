@@ -1,76 +1,105 @@
 // lib/src/view_models/configuration_view_model.dart
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:uuid/uuid.dart'; // 프로젝트 ID 생성
+import '../models/label_model.dart';
 import '../models/project_model.dart';
+import '../models/data_model.dart';
+import '../utils/storage_helper.dart';
 
+/// ✅ **ConfigurationViewModel**
+/// - 프로젝트 생성 및 설정을 관리하는 ViewModel
+/// - 기존 프로젝트 수정은 `ProjectViewModel`에서 처리
 class ConfigurationViewModel extends ChangeNotifier {
-  LabelingMode? _selectedMode;
-  List<String> _classes = [];
-  String _dataDirectory = ''; // 데이터 디렉토리 경로
+  Project _project;
+  final bool _isEditing; // ✅ 기존 프로젝트 수정 여부 플래그
 
-  LabelingMode? get selectedMode => _selectedMode;
-  List<String> get classes => _classes;
-  String get dataDirectory => _dataDirectory;
+  // ✅ 새 프로젝트 생성 시 기본값 설정
+  ConfigurationViewModel()
+      : _project = Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: ["True", "False"], dataPaths: []),
+        _isEditing = false;
 
-  // 라벨링 모드 선택
-  void selectMode(LabelingMode mode) {
-    _selectedMode = mode;
+  // ✅ 기존 프로젝트 수정용 생성자
+  ConfigurationViewModel.fromProject(Project existingProject)
+      : _project = existingProject,
+        _isEditing = true;
+
+  Project get project => _project;
+  bool get isEditing => _isEditing; // ✅ 수정 모드 여부 반환
+
+  /// ✅ 프로젝트 이름 설정
+  void setProjectName(String name) {
+    _project = _project.copyWith(name: name);
     notifyListeners();
   }
 
-  // 클래스 추가
+  /// ✅ 라벨링 모드 설정
+  void setLabelingMode(LabelingMode mode) {
+    if (_project.mode != mode) {
+      StorageHelper.instance.deleteProjectLabels(_project.id);
+      _project = _project.copyWith(mode: mode);
+    }
+
+    notifyListeners();
+  }
+
+  /// ✅ 클래스 추가
   void addClass(String className) {
-    if (_classes.length < 10 && !_classes.contains(className)) {
-      _classes.add(className);
+    if (!_project.classes.contains(className)) {
+      _project = _project.copyWith(classes: [..._project.classes, className]);
       notifyListeners();
     }
   }
 
-  // 클래스 제거
-  void removeClass(String className) {
-    _classes.remove(className);
-    notifyListeners();
-  }
-
-  // 데이터 디렉토리 설정
-  Future<void> setDataDirectory() async {
-    // 디렉토리 선택 다이얼로그 열기
-    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
-    if (selectedDirectory != null) {
-      _dataDirectory = selectedDirectory;
+  /// ✅ 클래스 제거
+  void removeClass(int index) {
+    if (index >= 0 && index < _project.classes.length) {
+      _project = _project.copyWith(classes: List.from(_project.classes)..removeAt(index));
       notifyListeners();
     }
   }
 
-  Future<Project?> importProjectConfig() async {
-    try {
-      // 파일 선택
-      final result = await FilePicker.platform.pickFiles(withData: true);
-      if (result != null && result.files.isNotEmpty) {
-        final file = result.files.first;
+  /// ✅ 데이터 경로 추가
+  Future<void> addDataPath() async {
+    if (kIsWeb) {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(allowMultiple: true, withData: true);
 
-        // Web 환경: bytes 속성 사용
-        final content = file.bytes != null ? utf8.decode(file.bytes!) : await File(file.path!).readAsString(); // Native 환경
-
-        // JSON 디코딩 및 프로젝트 객체 생성
-        final Map<String, dynamic> projectJson = jsonDecode(content);
-        final project = Project.fromJson(projectJson);
-        return project;
+      if (result != null) {
+        for (var file in result.files) {
+          _project = _project.copyWith(dataPaths: [..._project.dataPaths, DataPath(fileName: file.name, base64Content: base64Encode(file.bytes ?? []))]);
+        }
+        notifyListeners();
       }
-    } catch (e) {
-      debugPrint('Failed to import project: $e');
-      return null;
+    } else {
+      String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+      if (selectedDirectory != null) {
+        final directory = Directory(selectedDirectory);
+        final files = directory.listSync().whereType<File>();
+        for (var file in files) {
+          _project = _project.copyWith(dataPaths: [..._project.dataPaths, DataPath(fileName: file.uri.pathSegments.last, filePath: file.path)]);
+        }
+        notifyListeners();
+      }
     }
-    return null;
   }
 
-  // 설정 초기화
+  /// ✅ 데이터 경로 삭제 기능 추가
+  void removeDataPath(int index) {
+    if (index >= 0 && index < _project.dataPaths.length) {
+      _project = _project.copyWith(dataPaths: List.from(_project.dataPaths)..removeAt(index));
+      notifyListeners();
+    }
+  }
+
+  /// ✅ 프로젝트 설정 초기화
   void reset() {
-    _selectedMode = null;
-    _classes = [];
-    _dataDirectory = '';
+    if (_isEditing) {
+      _project = _project.copyWith(); // ✅ 기존 프로젝트 수정 모드일 경우 초기화하지 않음
+    } else {
+      _project = Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: [], dataPaths: []);
+    }
     notifyListeners();
   }
 }

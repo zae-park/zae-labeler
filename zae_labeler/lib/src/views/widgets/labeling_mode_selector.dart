@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../models/project_model.dart';
+import '../../models/label_model.dart';
+import '../../../theme/theme.dart';
 
 class LabelingModeSelector extends StatelessWidget {
   final LabelingMode selectedMode;
@@ -22,8 +23,7 @@ class LabelingModeSelector extends StatelessWidget {
       value: selectedMode,
       decoration: const InputDecoration(labelText: '라벨링 모드'),
       items: LabelingMode.values.map((mode) {
-        final displayText = _getModeDisplayText(mode);
-        return DropdownMenuItem<LabelingMode>(value: mode, child: Text(displayText));
+        return DropdownMenuItem<LabelingMode>(value: mode, child: Text(mode.displayName));
       }).toList(),
       onChanged: (LabelingMode? newMode) => newMode != null ? onModeChanged(newMode) : null,
     );
@@ -35,39 +35,20 @@ class LabelingModeSelector extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: LabelingMode.values.map((mode) {
-          String displayText = _getModeDisplayText(mode);
           bool isSelected = selectedMode == mode;
 
-          return GestureDetector(
+          return InkWell(
             onTap: () => onModeChanged(mode),
+            borderRadius: BorderRadius.circular(8.0),
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
               margin: const EdgeInsets.symmetric(horizontal: 4.0),
-              decoration: BoxDecoration(
-                color: isSelected ? Colors.blueAccent : Colors.grey[200],
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              child: Text(
-                displayText,
-                style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.black,
-                  fontSize: 16,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
+              decoration: AppTheme.buttonDecoration(isSelected: isSelected),
+              child: Text(mode.displayName, style: AppTheme.buttonTextStyle(isSelected: isSelected)),
             ),
           );
         }).toList(),
       ),
     );
-  }
-
-  String _getModeDisplayText(LabelingMode mode) {
-    return {
-          LabelingMode.singleClassification: 'Single Classification',
-          LabelingMode.multiClassification: 'Multi Classification',
-          LabelingMode.segmentation: 'Segmentation',
-        }[mode] ??
-        mode.toString();
   }
 }

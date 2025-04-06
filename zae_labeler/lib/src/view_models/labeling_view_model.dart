@@ -1,163 +1,265 @@
-// lib/src/view_models/labeling_view_model.dart
-import 'dart:io';
-import 'package:flutter/material.dart';
-import '../models/label_entry.dart';
+// // lib/src/view_models/labeling_view_model.dart
+// import 'dart:io';
+// import 'package:flutter/material.dart';
+// import '../models/label_model.dart';
+// import '../models/project_model.dart';
+// import '../models/data_model.dart';
+// import '../utils/storage_helper.dart';
+// import 'label_view_model.dart';
+
+// /// ✅ 라벨링 전체 흐름을 조율하는 뷰모델
+// ///
+// /// `LabelingViewModel`은 프로젝트의 데이터 단위로 라벨링을 수행하고,
+// /// 각 데이터에 대응되는 `LabelViewModel`을 생성 및 관리합니다.
+// /// ///
+// /// - 데이터 이동 (`moveNext`, `movePrevious`)을 통해 현재 데이터를 갱신하고,
+// /// - 해당 데이터의 라벨을 생성, 불러오기, 업데이트, 저장까지 담당합니다.
+// /// - 실제 라벨의 타입에 따라 분류/세그멘테이션 등 다양한 모델을 다룰 수 있습니다.
+// ///
+// /// ⚠️ `LabelViewModel`과의 차이점:
+// /// - `LabelViewModel`은 **개별 데이터 단위의 라벨**만을 관리합니다.
+// /// - `LabelingViewModel`은 **프로젝트 단위**에서 데이터 전체의 흐름과 라벨 캐싱, 전환, 저장을 담당합니다.
+// class LabelingViewModel extends ChangeNotifier {
+//   final Project project;
+//   final StorageHelperInterface storageHelper;
+
+//   bool _isInitialized = false;
+//   final bool _memoryOptimized = true;
+
+//   int _currentIndex = 0;
+//   List<UnifiedData> _unifiedDataList = [];
+//   UnifiedData _currentUnifiedData = UnifiedData.empty();
+
+//   final Map<String, LabelViewModel> _labelCache = {}; // ✅ LabelViewModel 캐싱
+
+//   bool get isInitialized => _isInitialized;
+
+//   int get currentIndex => _currentIndex;
+//   List<UnifiedData> get unifiedDataList => _unifiedDataList;
+//   UnifiedData get currentUnifiedData => _currentUnifiedData;
+
+//   String get currentDataFileName => currentUnifiedData.fileName;
+//   List<double>? get currentSeriesData => _currentUnifiedData.seriesData;
+//   Map<String, dynamic>? get currentObjectData => _currentUnifiedData.objectData;
+//   File? get currentImageFile => _currentUnifiedData.file;
+
+//   /// ✅ 현재 데이터에 대응되는 라벨 뷰모델
+//   LabelViewModel get currentLabelVM => getOrCreateLabelVM();
+
+//   Future<void> moveNext() async => _move(1);
+//   Future<void> movePrevious() async => _move(-1);
+
+//   /// ✅ 생성자 - 프로젝트 및 저장 헬퍼 주입
+//   LabelingViewModel({required this.project, required this.storageHelper});
+
+//   /// ✅ 생성자 - 프로젝트 및 저장 헬퍼 주입
+//   Future<void> initialize() async {
+//     if (_memoryOptimized) {
+//       _unifiedDataList.clear();
+//       _currentUnifiedData = project.dataPaths.isNotEmpty ? await UnifiedData.fromDataPath(project.dataPaths.first) : UnifiedData.empty();
+//     } else {
+//       _unifiedDataList = await Future.wait(project.dataPaths.map((dpath) => UnifiedData.fromDataPath(dpath)));
+//       _currentUnifiedData = _unifiedDataList.isNotEmpty ? _unifiedDataList.first : UnifiedData.empty();
+//     }
+//     await getOrCreateLabelVM().loadLabel();
+
+//     _isInitialized = true;
+//     notifyListeners();
+//   }
+
+//   /// ✅ 현재 데이터에 해당하는 LabelViewModel을 생성 or 재사용
+//   LabelViewModel getOrCreateLabelVM() {
+//     final id = currentUnifiedData.dataId;
+
+//     if (_labelCache.containsKey(id)) return _labelCache[id]!;
+
+//     final newLabelVM = LabelViewModel(
+//       projectId: project.id,
+//       dataId: id, // ✅ 캐시 키로 사용
+//       dataFilename: currentUnifiedData.fileName,
+//       dataPath: currentUnifiedData.file?.path ?? '',
+//       mode: project.mode,
+//       labelModel: LabelModelFactory.createNew(project.mode),
+//     );
+
+//     _labelCache[id] = newLabelVM;
+//     return newLabelVM;
+//   }
+
+//   /// ✅ 현재 인덱스 위치의 데이터를 로드하고 라벨 동기화
+//   Future<void> loadCurrentData() async {
+//     if (_currentIndex < 0 || _currentIndex >= project.dataPaths.length) return;
+//     _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths[_currentIndex]);
+
+//     final id = _currentUnifiedData.dataId;
+
+//     if (_labelCache.containsKey(id)) {
+//       final loadedLabel = await storageHelper.loadLabelData(project.id, id, _currentUnifiedData.file?.path ?? '', project.mode);
+//       _labelCache[id]!.labelModel = loadedLabel;
+//     } else {
+//       final labelVM = LabelViewModel(
+//         projectId: project.id,
+//         dataId: id,
+//         dataFilename: _currentUnifiedData.fileName,
+//         dataPath: _currentUnifiedData.file?.path ?? '',
+//         mode: project.mode,
+//         labelModel: LabelModelFactory.createNew(project.mode),
+//       );
+//       await labelVM.loadLabel(); // ✅ 여기에 저장된 타입에 맞게 불러옴
+//       _labelCache[id] = labelVM;
+//     }
+
+//     notifyListeners();
+//   }
+
+//   /// ✅ 현재 데이터에 대한 라벨을 업데이트 및 저장
+//   ///
+//   /// `labelData`는 모델 내부에서 타입에 따라 처리됩니다.
+//   Future<void> updateLabel(dynamic labelData) async {
+//     final labelVM = getOrCreateLabelVM();
+//     labelVM.updateLabel(labelData);
+//     // if (labelVM.labelModel.isMultiClass) {
+//     //   if (labelData is List<String>) {
+//     //     labelVM.updateLabel(labelData); // ✅ 다중 분류는 List<String> 필요
+//     //   } else if (labelData is String) {
+//     //     labelVM.updateLabel([labelData]); // ✅ String을 List<String>으로 변환하여 전달
+//     //   } else {
+//     //     throw ArgumentError("Expected a List<String> for MultiClassificationLabelModel, but got ${labelData.runtimeType}");
+//     //   }
+//     // } else {
+//     //   if (labelData is String) {
+//     //     labelVM.updateLabel(labelData); // ✅ 단일 분류는 String 필요
+//     //   } else {
+//     //     throw ArgumentError("Expected a String for SingleClassificationLabelModel, but got ${labelData.runtimeType}");
+//     //   }
+//     // }
+//     await labelVM.saveLabel();
+//     notifyListeners();
+//   }
+
+//   /// ✅ 해당 라벨이 현재 라벨과 일치하는지 확인 (단일 선택 UI용)
+//   bool isLabelSelected(String labelItem) => currentLabelVM.labelModel.isSelected(labelItem);
+
+//   Future<void> toggleLabel(String labelItem) async {
+//     final labelVM = getOrCreateLabelVM();
+//     labelVM.labelModel = labelVM.labelModel.toggleLabel(labelItem);
+//     await labelVM.saveLabel();
+//     notifyListeners();
+//   }
+
+//   Future<void> _move(int delta) async {
+//     int newIndex = _currentIndex + delta;
+//     if (newIndex >= 0 && newIndex < project.dataPaths.length) {
+//       _currentIndex = newIndex;
+//       await loadCurrentData();
+//       notifyListeners();
+//     }
+//   }
+
+//   /// ✅ Label Export (ZIP 다운로드)
+//   Future<String> exportAllLabels() async {
+//     final allLabels = _labelCache.values.map((vm) => vm.labelModel).toList();
+//     return await storageHelper.exportAllLabels(project, allLabels, project.dataPaths);
+//   }
+// }
+
+// class SegmentationLabelingViewModel extends LabelingViewModel {
+//   int _gridSize = 32; // ✅ 기본 Grid 크기
+//   int get gridSize => _gridSize;
+
+//   Offset? _startDrag;
+//   Offset? _currentPointerPosition;
+//   Offset? get startDrag => _startDrag;
+//   Offset? get currentPointerPosition => _currentPointerPosition;
+
+//   List<List<int>> _labelGrid = List.generate(32, (_) => List.filled(32, 0));
+//   List<List<int>> get labelGrid => _labelGrid;
+
+//   SegmentationLabelingViewModel({required super.project, required super.storageHelper});
+
+//   /// ✅ Grid 크기 조절 (초기화 포함)
+//   void setGridSize(int newSize) {
+//     _gridSize = newSize;
+//     _labelGrid = List.generate(newSize, (_) => List.filled(newSize, 0)); // ✅ Grid 크기 변경 시 초기화
+//     notifyListeners();
+//   }
+
+//   /// ✅ Grid 내 픽셀들을 전체적으로 업데이트
+//   void updateSegmentationGrid(List<List<int>> labeledData) {
+//     if (labeledData.length == _gridSize && labeledData[0].length == _gridSize) {
+//       _labelGrid = labeledData;
+//       notifyListeners();
+//     }
+//   }
+
+//   /// ✅ 개별 픽셀 업데이트 (기존 메서드 유지)
+//   void updateSegmentationLabel(int x, int y, int label) {
+//     if (x >= 0 && x < _gridSize && y >= 0 && y < _gridSize) {
+//       _labelGrid[y][x] = label;
+//       notifyListeners();
+//     }
+//   }
+
+//   /// ✅ Grid 초기화
+//   void clearLabels() {
+//     _labelGrid = List.generate(_gridSize, (_) => List.filled(_gridSize, 0));
+//     notifyListeners();
+//   }
+
+//   /// ✅ Bounding Box 선택 시작
+//   void startBoxSelection(Offset position) {
+//     _startDrag = position;
+//     notifyListeners();
+//   }
+
+//   /// ✅ Bounding Box 선택 업데이트
+//   void updateBoxSelection(Offset position) {
+//     _currentPointerPosition = position;
+//     notifyListeners();
+//   }
+
+//   /// ✅ Bounding Box 선택 완료
+//   void endBoxSelection() {
+//     _startDrag = null;
+//     _currentPointerPosition = null;
+//     notifyListeners();
+//   }
+// }
+
+// // // ✅ 모드별 뷰모델을 감싸는 proxy
+// // LabelingViewModel createLabelingViewModel(Project project, StorageHelperInterface helper) {
+// //   switch (project.mode) {
+// //     case LabelingMode.singleClassification:
+// //     case LabelingMode.multiClassification:
+// //       return ClassificationLabelingViewModel(project: project, storageHelper: helper);
+// //     case LabelingMode.singleClassSegmentation:
+// //     case LabelingMode.multiClassSegmentation:
+// //       return SegmentationLabelingViewModel(project: project, storageHelper: helper);
+// //   }
+// // }
+
+// lib/view_models/labeling_view_model.dart
+import '../models/label_model.dart';
 import '../models/project_model.dart';
-import '../models/data_model.dart';
 import '../utils/proxy_storage_helper/interface_storage_helper.dart';
+import 'sub_view_models/base_labeling_view_model.dart';
+import 'sub_view_models/classification_labeling_view_model.dart';
+import 'sub_view_models/segmentation_labeling_view_model.dart';
+export 'sub_view_models/base_labeling_view_model.dart';
+export 'sub_view_models/classification_labeling_view_model.dart';
+export 'sub_view_models/segmentation_labeling_view_model.dart';
 
-class LabelingViewModel extends ChangeNotifier {
-  // 멤버 변수 선언
-  final Project project;
-  final StorageHelperInterface storageHelper; // ✅ Dependency Injection 허용
-
-  bool _isInitialized = false;
-  final bool _memoryOptimized = true;
-
-  int _currentIndex = 0;
-  List<UnifiedData> _unifiedDataList = [];
-  UnifiedData _currentUnifiedData = UnifiedData.empty();
-
-  final Set<String> selectedLabels = {};
-
-  // Getter & Setter
-  bool get isInitialized => _isInitialized;
-
-  int get currentIndex => _currentIndex;
-  List<UnifiedData> get unifiedDataList => _unifiedDataList;
-  UnifiedData get currentUnifiedData => _currentUnifiedData;
-
-  String get currentDataFileName => currentUnifiedData.fileName;
-  List<double>? get currentSeriesData => _currentUnifiedData.seriesData;
-  Map<String, dynamic>? get currentObjectData => _currentUnifiedData.objectData;
-  File? get currentImageFile => _currentUnifiedData.file;
-
-  List<LabelEntry> get labelEntries => project.labelEntries;
-
-  // Factory 생성자
-  Future<void> moveNext() async => _move(1);
-  Future<void> movePrevious() async => _move(-1);
-
-  // 인스턴스 생성
-  LabelingViewModel({required this.project, required this.storageHelper});
-
-  Future<void> initialize() async {
-    if (project.labelEntries.isEmpty) {
-      project.labelEntries = await project.loadLabelEntries();
-    }
-
-    // ✅ 데이터 로딩 최적화
-    if (_memoryOptimized) {
-      _unifiedDataList.clear();
-      _currentUnifiedData = project.dataPaths.isNotEmpty ? await UnifiedData.fromDataPath(project.dataPaths.first) : UnifiedData.empty();
-    } else {
-      _unifiedDataList = await Future.wait(project.dataPaths.map((dpath) => UnifiedData.fromDataPath(dpath)));
-      _currentUnifiedData = _unifiedDataList.isNotEmpty ? _unifiedDataList.first : UnifiedData.empty();
-    }
-
-    _isInitialized = true; // ✅ 초기화 완료
-    notifyListeners();
-  }
-
-  LabelEntry get currentLabelEntry {
-    final dataFilename = currentUnifiedData.fileName; // ✅ 현재 파일 기반으로 검색
-
-    return project.labelEntries.firstWhere(
-      (entry) => entry.dataFilename == dataFilename,
-      orElse: () => LabelEntry.empty(),
-    );
-  }
-
-  Future<void> loadCurrentData() async {
-    // ✅ 이름 변경
-    if (_currentIndex < 0 || _currentIndex >= project.dataPaths.length) return;
-
-    _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths[_currentIndex]);
-
-    notifyListeners();
-  }
-
-  Future<void> addOrUpdateLabel(String label, LabelingMode mode) async {
-    final dataFilename = currentUnifiedData.fileName; // ✅ 현재 파일 이름 기반으로 관리
-
-    LabelEntry? existingEntry = project.labelEntries.firstWhere(
-      (entry) => entry.dataFilename == dataFilename,
-      orElse: () => LabelEntry.empty(),
-    );
-
-    if (existingEntry.dataFilename.isEmpty) {
-      existingEntry = LabelEntry(
-        dataFilename: dataFilename,
-        dataPath: project.dataPaths.firstWhere((dp) => dp.fileName == dataFilename).filePath ?? '',
-      );
-      project.labelEntries.add(existingEntry);
-    }
-
-    print("Saving label for data: $dataFilename, Mode: $mode, Label: $label");
-
-    switch (mode) {
+/// ✅ 라벨링 모드에 따라 적절한 ViewModel을 생성해주는 팩토리
+class LabelingViewModelFactory {
+  static LabelingViewModel create(Project project, StorageHelperInterface helper) {
+    switch (project.mode) {
       case LabelingMode.singleClassification:
-        existingEntry.singleClassification = SingleClassificationLabel(
-          labeledAt: DateTime.now().toIso8601String(),
-          label: label,
-        );
-        break;
       case LabelingMode.multiClassification:
-        existingEntry.multiClassification ??= MultiClassificationLabel(
-          labeledAt: DateTime.now().toIso8601String(),
-          labels: [],
-        );
-        if (existingEntry.multiClassification!.labels.contains(label)) {
-          existingEntry.multiClassification!.labels.remove(label);
-        } else {
-          existingEntry.multiClassification!.labels.add(label);
-        }
-        break;
-      case LabelingMode.segmentation:
-        existingEntry.segmentation = SegmentationLabel(
-          labeledAt: DateTime.now().toIso8601String(),
-          label: SegmentationData(indice: [label], classes: [label]),
-        );
-        break;
+        return ClassificationLabelingViewModel(project: project, storageHelper: helper);
+
+      case LabelingMode.singleClassSegmentation:
+      case LabelingMode.multiClassSegmentation:
+        return SegmentationLabelingViewModel(project: project, storageHelper: helper);
     }
-
-    notifyListeners();
-    await storageHelper.saveLabelEntry(project.id, existingEntry);
-  }
-
-  bool isLabelSelected(String label, LabelingMode mode) {
-    LabelEntry entry = currentLabelEntry; // ✅ 최신 LabelEntry 가져오기
-
-    switch (mode) {
-      case LabelingMode.singleClassification:
-        return entry.singleClassification?.label == label;
-      case LabelingMode.multiClassification:
-        if (entry.multiClassification == null) return false;
-        return entry.multiClassification?.labels.contains(label) ?? false;
-      default:
-        return false;
-    }
-  }
-
-  void toggleLabel(String label, LabelingMode mode) {
-    if (isLabelSelected(label, mode)) {
-      selectedLabels.remove(label);
-    } else {
-      selectedLabels.add(label);
-    }
-    notifyListeners();
-  }
-
-  Future<void> _move(int delta) async {
-    int newIndex = _currentIndex + delta;
-    if (newIndex >= 0 && newIndex < project.dataPaths.length) {
-      _currentIndex = newIndex;
-      notifyListeners();
-      await loadCurrentData();
-    }
-  }
-
-  Future<String> downloadLabelsAsZip() async {
-    return await storageHelper.downloadLabelsAsZip(project, project.labelEntries, []);
   }
 }

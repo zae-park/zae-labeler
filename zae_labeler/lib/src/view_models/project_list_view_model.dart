@@ -1,64 +1,125 @@
-// lib/src/view_models/project_view_model.dart
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import '../models/project_model.dart';
 import '../utils/storage_helper.dart';
 
 class ProjectListViewModel extends ChangeNotifier {
+  final StorageHelperInterface storageHelper;
+
   List<Project> _projects = [];
-
   bool _isLoading = false;
-  bool get isLoading => _isLoading;
 
+  bool get isLoading => _isLoading;
   List<Project> get projects => _projects;
 
-  ProjectListViewModel() {
+  ProjectListViewModel({required this.storageHelper}) {
     loadProjects();
   }
 
+  /// ✅ 모든 프로젝트 불러오기
   Future<void> loadProjects() async {
     _isLoading = true;
-    notifyListeners(); // ✅ UI 업데이트
+    notifyListeners();
 
-    _projects = await StorageHelper.instance.loadProjects();
-    List<Project> loadedProjects = await StorageHelper.instance.loadProjects(); // 비교를 위한 임시 변수 할당
-
-    // ✅ 프로젝트 목록이 변경된 경우에만 UI 업데이트
-    if (_projects.length != loadedProjects.length || !_listEquals(_projects, loadedProjects)) {
-      _projects = loadedProjects;
-      notifyListeners();
-    }
-
+    _projects = await storageHelper.loadProjectList();
     _isLoading = false;
-    notifyListeners(); // ✅ 로딩 완료 후 UI 업데이트
+    notifyListeners();
   }
 
+  /// ✅ 프로젝트 저장
   Future<void> saveProject(Project project) async {
-    _projects.add(project);
-    await StorageHelper.instance.saveProjects(_projects); // 싱글톤 인스턴스를 통해 접근
+    int index = _projects.indexWhere((p) => p.id == project.id);
+    if (index != -1) {
+      _projects[index] = project.copyWith(id: project.id);
+    } else {
+      _projects.add(project);
+    }
+    await storageHelper.saveProjectList(_projects);
     notifyListeners();
   }
 
+  /// ✅ 프로젝트 삭제
   Future<void> removeProject(String projectId) async {
-    _projects.removeWhere((project) => project.id == projectId);
-    await StorageHelper.instance.saveProjects(_projects); // 싱글톤 인스턴스를 통해 접근
+    _projects.removeWhere((p) => p.id == projectId);
+    await storageHelper.saveProjectList(_projects);
     notifyListeners();
   }
 
+  /// ✅ 프로젝트 업데이트
   Future<void> updateProject(Project updatedProject) async {
     int index = _projects.indexWhere((project) => project.id == updatedProject.id);
     if (index != -1) {
       _projects[index] = updatedProject;
-      await StorageHelper.instance.saveProjects(_projects); // 싱글톤 인스턴스를 통해 접근
+      await storageHelper.saveProjectConfig(_projects);
       notifyListeners();
     }
   }
 
-  /// ✅ 리스트 비교 함수 추가 (ID 기반 비교)
-  bool _listEquals(List<Project> list1, List<Project> list2) {
-    if (list1.length != list2.length) return false;
-    for (int i = 0; i < list1.length; i++) {
-      if (list1[i].id != list2[i].id) return false;
-    }
-    return true;
+  /// ✅ 모든 프로젝트 데이터 캐시 초기화
+  Future<void> clearAllProjectsCache() async {
+    await storageHelper.clearAllCache();
+    _projects.clear();
+    notifyListeners();
   }
 }
+
+
+
+// import 'package:flutter/material.dart';
+// import '../models/project_model.dart';
+// import '../utils/storage_helper.dart';
+
+// class ProjectListViewModel extends ChangeNotifier {
+//   List<Project> _projects = [];
+
+//   bool _isLoading = false;
+//   bool get isLoading => _isLoading;
+
+//   List<Project> get projects => _projects;
+
+//   ProjectListViewModel() {
+//     loadProjects();
+//   }
+
+//   /// ✅ 프로젝트 목록 불러오기 (StorageHelper에서 로드)
+//   Future<void> loadProjects() async {
+//     _isLoading = true;
+//     notifyListeners();
+
+//     _projects = await StorageHelper.instance.loadProjectFromConfig(""); // ✅ 기존 loadProjects() → loadProjectFromConfig() 변경
+
+//     _isLoading = false;
+//     notifyListeners();
+//   }
+
+//   /// ✅ 프로젝트 저장 (StorageHelper에 저장)
+//   Future<void> saveProject(Project project) async {
+//     _projects.add(project);
+//     await StorageHelper.instance.saveProjectConfig(_projects); // ✅ 기존 saveProjects() → saveProjectConfig() 변경
+//     notifyListeners();
+//   }
+
+//   /// ✅ 프로젝트 삭제
+//   Future<void> removeProject(String projectId) async {
+//     _projects.removeWhere((project) => project.id == projectId);
+//     await StorageHelper.instance.saveProjectConfig(_projects); // ✅ 기존 saveProjects() → saveProjectConfig() 변경
+//     notifyListeners();
+//   }
+
+//   /// ✅ 프로젝트 업데이트
+//   Future<void> updateProject(BuildContext context, Project updatedProject) async {
+//     int index = _projects.indexWhere((project) => project.id == updatedProject.id);
+//     if (index != -1) {
+//       _projects[index] = Project(
+//         id: updatedProject.id,
+//         name: updatedProject.name,
+//         mode: updatedProject.mode,
+//         classes: updatedProject.classes,
+//         dataPaths: updatedProject.dataPaths,
+//       );
+
+//       await StorageHelper.instance.saveProjectConfig(_projects);
+
+//       notifyListeners();
+//     }
+//   }
+// }

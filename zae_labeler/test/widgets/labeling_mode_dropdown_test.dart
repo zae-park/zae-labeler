@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
-import 'package:zae_labeler/src/views/widgets/labeling_mode.dart';
-import 'package:zae_labeler/src/models/project_model.dart';
+import 'package:zae_labeler/src/models/label_model.dart';
+import 'package:zae_labeler/src/views/widgets/labeling_mode_selector.dart';
 
 void main() {
   testWidgets('LabelingModeDropdown changes mode', (WidgetTester tester) async {

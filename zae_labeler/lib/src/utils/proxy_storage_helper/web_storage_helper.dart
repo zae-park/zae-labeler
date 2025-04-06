@@ -1,25 +1,29 @@
-// lib/src/utils/web_storage_helper.dart
-import 'dart:convert';
-import 'dart:html' as html;
 import 'dart:async';
-import 'dart:typed_data';
-import 'package:zae_labeler/src/models/data_model.dart';
-import 'package:archive/archive.dart'; // ZIP 압축 라이브러리
+import 'dart:convert';
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:html' as html;
 
+import 'package:flutter/services.dart';
+import 'package:archive/archive.dart';
+
+import './interface_storage_helper.dart';
 import '../../models/project_model.dart';
-import '../../models/label_entry.dart';
-import 'interface_storage_helper.dart';
+import '../../models/data_model.dart';
+import '../../models/label_model.dart';
 
 class StorageHelperImpl implements StorageHelperInterface {
-  // Project IO
+  // ==============================
+  // 📌 **Project Configuration IO**
+  // ==============================
+
   @override
-  Future<void> saveProjects(List<Project> projects) async {
+  Future<void> saveProjectConfig(List<Project> projects) async {
     final projectsJson = jsonEncode(projects.map((e) => e.toJson()).toList());
     html.window.localStorage['projects'] = projectsJson;
   }
 
   @override
-  Future<List<Project>> loadProjects() async {
+  Future<List<Project>> loadProjectFromConfig(String projectConfig) async {
     final projectsJson = html.window.localStorage['projects'];
     if (projectsJson != null) {
       final jsonData = jsonDecode(projectsJson);
@@ -39,72 +43,154 @@ class StorageHelperImpl implements StorageHelperInterface {
     html.Url.revokeObjectUrl(url);
     return "${project.name}_config.json (downloaded in browser)";
   }
-  // Project IO //
 
-  // LabelEntries IO
-
+  // ==============================
+  // 📌 **Project List Management**
+  // ==============================
   @override
-  Future<void> saveLabelEntries(String projectId, List<LabelEntry> newEntries) async {
-    final storageKey = 'labels_project_$projectId'; // ✅ 프로젝트별 키 생성
-    final labelsJson = html.window.localStorage[storageKey];
-
-    List<LabelEntry> existingEntries = [];
-    if (labelsJson != null) {
-      final jsonData = jsonDecode(labelsJson);
-      existingEntries = (jsonData as List).map((e) => LabelEntry.fromJson(e)).toList();
-    }
-
-    // ✅ 기존 라벨 데이터 중 동일한 dataPath를 가진 항목을 새로운 데이터로 업데이트
-    for (var newEntry in newEntries) {
-      int index = existingEntries.indexWhere((entry) => entry.dataPath == newEntry.dataPath);
-      if (index != -1) {
-        existingEntries[index] = newEntry;
-      } else {
-        existingEntries.add(newEntry);
-      }
-    }
-
-    // ✅ 변경된 데이터만 저장
-    final updatedLabelsJson = jsonEncode(existingEntries.map((e) => e.toJson()).toList());
-    html.window.localStorage[storageKey] = updatedLabelsJson;
+  Future<void> saveProjectList(List<Project> projects) async {
+    final projectsJson = jsonEncode(projects.map((e) => e.toJson()).toList());
+    html.window.localStorage['projects'] = projectsJson; // ✅ `localStorage`에 저장
   }
 
   @override
-  Future<List<LabelEntry>> loadLabelEntries(String projectId) async {
-    final storageKey = 'labels_project_$projectId'; // ✅ 프로젝트별 키 사용
+  Future<List<Project>> loadProjectList() async {
+    final projectsJson = html.window.localStorage['projects'];
+
+    if (projectsJson != null) {
+      final jsonData = jsonDecode(projectsJson);
+      return (jsonData as List).map((e) => Project.fromJson(e)).toList();
+    }
+    return [];
+  }
+
+  // ==============================
+  // 📌 **Single Label Data IO**
+  // ==============================
+
+  @override
+  Future<void> saveLabelData(String projectId, String dataId, String dataPath, LabelModel labelModel) async {
+    final storageKey = 'labels_project_$projectId';
+    final labelsJson = html.window.localStorage[storageKey];
+
+    List<Map<String, dynamic>> existingEntries = [];
+    if (labelsJson != null) {
+      final jsonData = jsonDecode(labelsJson);
+      existingEntries = (jsonData as List).map((e) => e as Map<String, dynamic>).toList();
+    }
+
+    Map<String, dynamic> labelEntry = {
+      'data_id': dataId,
+      'data_path': dataPath,
+      'mode': labelModel.runtimeType.toString(),
+      'labeled_at': labelModel.labeledAt.toIso8601String(),
+      'label_data': LabelModelConverter.toJson(labelModel),
+    };
+
+    int index = existingEntries.indexWhere((entry) => entry['data_id'] == dataId);
+    if (index != -1) {
+      existingEntries[index] = labelEntry;
+    } else {
+      existingEntries.add(labelEntry);
+    }
+
+    html.window.localStorage[storageKey] = jsonEncode(existingEntries);
+  }
+
+  @override
+  Future<LabelModel> loadLabelData(String projectId, String dataId, String dataPath, LabelingMode mode) async {
+    final storageKey = 'labels_project_$projectId';
     final labelsJson = html.window.localStorage[storageKey];
 
     if (labelsJson != null) {
       final jsonData = jsonDecode(labelsJson);
-      return (jsonData as List).map((e) => LabelEntry.fromJson(e as Map<String, dynamic>)).toList();
+      final entries = (jsonData as List).map((e) => e as Map<String, dynamic>).toList();
+      Map<String, dynamic>? labelEntry = entries.firstWhere(
+        (entry) => entry['data_id'] == dataId,
+        orElse: () => {},
+      );
+
+      if (labelEntry.isNotEmpty) {
+        return LabelModelConverter.fromJson(mode, labelEntry['label_data']);
+      }
+    }
+    return LabelModelFactory.createNew(mode);
+  }
+
+  // ==============================
+  // 📌 **Project-wide Label IO**
+  // ==============================
+
+  @override
+  Future<void> saveAllLabels(String projectId, List<LabelModel> labels) async {
+    final storageKey = 'labels_project_$projectId';
+
+    List<Map<String, dynamic>> labelEntries = labels
+        .map((label) => {
+              'mode': label.runtimeType.toString(),
+              'labeled_at': label.labeledAt.toIso8601String(),
+              'label_data': LabelModelConverter.toJson(label),
+            })
+        .toList();
+
+    html.window.localStorage[storageKey] = jsonEncode(labelEntries);
+  }
+
+  // ✅ 모든 Label 불러오기
+  @override
+  Future<List<LabelModel>> loadAllLabels(String projectId) async {
+    final storageKey = 'labels_project_$projectId';
+    final labelsJson = html.window.localStorage[storageKey];
+
+    if (labelsJson != null) {
+      final jsonData = jsonDecode(labelsJson);
+      return (jsonData as List).map((entry) {
+        final mode = LabelingMode.values.firstWhere((e) => e.toString() == entry['mode']);
+        return LabelModelConverter.fromJson(mode, entry['label_data']);
+      }).toList();
     }
     return [];
   }
 
   @override
-  Future<String> downloadLabelsAsZip(
-    Project project,
-    List<LabelEntry> labelEntries,
-    List<DataPath> dataPaths, // 수정된 파라미터
-  ) async {
+  Future<void> deleteProjectLabels(String projectId) async {
+    final storageKey = 'labels_project_$projectId';
+    html.window.localStorage.remove(storageKey); // ✅ localStorage에서 삭제
+  }
+
+  // ==============================
+  // 📌 **Label Data Import/Export**
+  // ==============================
+
+  @override
+  Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataPath> fileDataList) async {
     final archive = Archive();
 
-    for (var dataPath in dataPaths) {
-      final content = await dataPath.loadData(); // DataPath에서 데이터 로드
+    // ✅ DataPath에서 데이터 로드 및 ZIP 추가
+    for (var dataPath in fileDataList) {
+      final content = await dataPath.loadData();
       if (content != null) {
         final fileBytes = utf8.encode(content);
         archive.addFile(ArchiveFile(dataPath.fileName, fileBytes.length, fileBytes));
       }
     }
 
-    // JSON 직렬화한 라벨 데이터 추가
-    final labelsJson = jsonEncode(labelEntries.map((e) => e.toJson()).toList());
+    // ✅ JSON 직렬화된 라벨 데이터 추가 (LabelModel.toJson() 사용)
+    List<Map<String, dynamic>> labelEntries = labelModels
+        .map((label) => {
+              'mode': label.runtimeType.toString(),
+              'labeled_at': label.labeledAt.toIso8601String(),
+              'label_data': LabelModelConverter.toJson(label),
+            })
+        .toList();
+
+    final labelsJson = jsonEncode(labelEntries);
     archive.addFile(ArchiveFile('labels.json', labelsJson.length, utf8.encode(labelsJson)));
 
-    // ZIP 파일 생성
+    // ✅ ZIP 파일 생성
     final zipData = ZipEncoder().encode(archive);
 
-    // Blob 생성 및 다운로드 링크 구성
+    // ✅ Blob 생성 및 다운로드 링크 구성
     final blob = html.Blob([Uint8List.fromList(zipData!)]);
     final url = html.Url.createObjectUrlFromBlob(blob);
     html.AnchorElement(href: url)
@@ -116,8 +202,8 @@ class StorageHelperImpl implements StorageHelperInterface {
   }
 
   @override
-  Future<List<LabelEntry>> importLabelEntries() async {
-    final completer = Completer<List<LabelEntry>>();
+  Future<List<LabelModel>> importAllLabels() async {
+    final completer = Completer<List<LabelModel>>();
 
     final input = html.FileUploadInputElement();
     input.accept = '.json';
@@ -133,8 +219,11 @@ class StorageHelperImpl implements StorageHelperInterface {
           try {
             final jsonData = jsonDecode(reader.result as String);
             if (jsonData is List) {
-              final entries = jsonData.map((e) => LabelEntry.fromJson(e as Map<String, dynamic>)).toList();
-              completer.complete(entries);
+              final labels = jsonData.map((entry) {
+                final mode = LabelingMode.values.firstWhere((e) => e.toString() == entry['mode']);
+                return LabelModelConverter.fromJson(mode, entry['label_data']);
+              }).toList();
+              completer.complete(labels);
             } else {
               throw const FormatException('Invalid JSON format. Expected a list.');
             }
@@ -152,43 +241,11 @@ class StorageHelperImpl implements StorageHelperInterface {
     return completer.future;
   }
 
-  // LabelEntries IO //
-
-  // LabelEntry IO
-
+  // ==============================
+  // 📌 **Cache Management**
+  // ==============================
   @override
-  Future<void> saveLabelEntry(String projectId, LabelEntry newEntry) async {
-    final storageKey = 'labels_project_$projectId'; // ✅ 프로젝트별 저장 키 사용
-    final labelsJson = html.window.localStorage[storageKey];
-
-    List<LabelEntry> existingEntries = [];
-    if (labelsJson != null) {
-      final jsonData = jsonDecode(labelsJson);
-      existingEntries = (jsonData as List).map((e) => LabelEntry.fromJson(e)).toList();
-    }
-
-    int index = existingEntries.indexWhere((entry) => entry.dataPath == newEntry.dataPath);
-    if (index != -1) {
-      existingEntries[index] = newEntry;
-    } else {
-      existingEntries.add(newEntry);
-    }
-
-    html.window.localStorage['labels'] = jsonEncode(existingEntries.map((e) => e.toJson()).toList());
+  Future<void> clearAllCache() async {
+    html.window.localStorage.clear(); // ✅ localStorage 전체 삭제
   }
-
-  @override
-  Future<LabelEntry> loadLabelEntry(String projectId, String dataPath) async {
-    final storageKey = 'labels_project_$projectId'; // ✅ 프로젝트별 키 적용
-    final labelsJson = html.window.localStorage[storageKey];
-
-    if (labelsJson != null) {
-      final jsonData = jsonDecode(labelsJson);
-      final entries = (jsonData as List).map((e) => LabelEntry.fromJson(e)).toList();
-      return entries.firstWhere((entry) => entry.dataPath == dataPath, orElse: () => LabelEntry.empty());
-    }
-    return LabelEntry.empty();
-  }
-
-  // LabelEntry IO //
 }

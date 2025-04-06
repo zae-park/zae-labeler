@@ -1,73 +1,62 @@
-import 'dart:convert';
+import 'package:zae_labeler/src/models/sub_models/classification_label_model.dart';
 import 'package:zae_labeler/src/utils/proxy_storage_helper/interface_storage_helper.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
-import 'package:zae_labeler/src/models/label_entry.dart';
+import 'package:zae_labeler/src/models/label_model.dart';
 import 'package:zae_labeler/src/models/data_model.dart';
 
 class MockStorageHelper implements StorageHelperInterface {
-  final Map<String, String> _mockDatabase = {}; // ✅ 인메모리 데이터 저장
+  List<Project> savedProjects = [];
+  bool wasSaveProjectCalled = false;
+  bool shouldThrowOnSave = false;
 
   @override
-  Future<List<Project>> loadProjects() async {
-    if (_mockDatabase.containsKey('projects')) {
-      final jsonData = jsonDecode(_mockDatabase['projects']!);
-      return (jsonData as List).map((e) => Project.fromJson(e)).toList();
+  Future<void> saveProjectConfig(List<Project> project) async {
+    wasSaveProjectCalled = true;
+
+    if (shouldThrowOnSave) {
+      throw Exception('Failed to save');
     }
-    return [];
+
+    savedProjects = project; // 단일 저장 후 리스트 유지
   }
 
   @override
-  Future<void> saveProjects(List<Project> projects) async {
-    _mockDatabase['projects'] = jsonEncode(projects.map((e) => e.toJson()).toList());
-  }
-
-  @override
-  Future<List<LabelEntry>> loadLabelEntries(String projectId) async {
-    if (_mockDatabase.containsKey('labels')) {
-      final jsonData = jsonDecode(_mockDatabase['labels']!);
-      return (jsonData as List).map((e) => LabelEntry.fromJson(e)).toList();
-    }
-    return [];
-  }
-
-  @override
-  Future<void> saveLabelEntries(String projectId, List<LabelEntry> labelEntries) async {
-    _mockDatabase['labels'] = jsonEncode(labelEntries.map((e) => e.toJson()).toList());
-  }
-
-  @override
-  Future<void> saveLabelEntry(String projectId, LabelEntry labelEntry) async {
-    List<LabelEntry> existingEntries = await loadLabelEntries(projectId);
-    int index = existingEntries.indexWhere((entry) => entry.dataFilename == labelEntry.dataFilename);
-    if (index != -1) {
-      existingEntries[index] = labelEntry;
-    } else {
-      existingEntries.add(labelEntry);
-    }
-    _mockDatabase['labels'] = jsonEncode(existingEntries.map((e) => e.toJson()).toList());
-  }
-
-  @override
-  Future<LabelEntry> loadLabelEntry(String projectId, String dataPath) async {
-    List<LabelEntry> existingEntries = await loadLabelEntries(projectId);
-    return existingEntries.firstWhere(
-      (entry) => entry.dataPath == dataPath,
-      orElse: () => LabelEntry.empty(), // ✅ null 대신 기본값 반환
-    );
-  }
-
-  @override
-  Future<String> downloadLabelsAsZip(Project project, List<LabelEntry> labelEntries, List<DataPath> fileDataList) async {
-    return 'mock_zip_path.zip';
+  Future<List<Project>> loadProjectFromConfig(String config) async {
+    return savedProjects;
   }
 
   @override
   Future<String> downloadProjectConfig(Project project) async {
-    return 'mock_project_config.json';
+    return '/mock/path/${project.name}_config.json';
   }
 
   @override
-  Future<List<LabelEntry>> importLabelEntries() async {
-    return [];
-  }
+  Future<void> saveProjectList(List<Project> projects) async {}
+
+  @override
+  Future<List<Project>> loadProjectList() async => [];
+
+  @override
+  Future<void> saveLabelData(String projectId, String dataId, String dataPath, LabelModel labelModel) async {}
+
+  @override
+  Future<LabelModel> loadLabelData(String projectId, String dataId, String dataPath, LabelingMode mode) async => SingleClassificationLabelModel.empty();
+
+  @override
+  Future<void> saveAllLabels(String projectId, List<LabelModel> labels) async {}
+
+  @override
+  Future<List<LabelModel>> loadAllLabels(String projectId) async => [];
+
+  @override
+  Future<void> deleteProjectLabels(String projectId) async {}
+
+  @override
+  Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataPath> fileDataList) async => '/mock/path/${project.name}_labels.zip';
+
+  @override
+  Future<List<LabelModel>> importAllLabels() async => [];
+
+  @override
+  Future<void> clearAllCache() async {}
 }
