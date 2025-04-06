@@ -2,7 +2,7 @@
 
 ## Welcome! 🎉
 쉽고 간편한 labeling tool, **Zae-Labeler**입니다.
-Image, Time-series, Object 데이터 등을 위한 작관적인 UI를 web, windows, linux 환경에서 제공합니다.
+Image, Time-series, Object 데이터 등을 위한 직관적인 UI를 web, windows, linux 환경에서 제공합니다.
 
 ## ✨ 주요 기능
 - **프로젝트 관리**: 여러 개의 프로젝트를 만들고 관리할 수 있어요!
