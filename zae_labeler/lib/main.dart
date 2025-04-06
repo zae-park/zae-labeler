@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'src/utils/storage_helper.dart';
 import 'src/views/pages/project_list_page.dart';
 import 'src/views/pages/configuration_page.dart';
 import 'src/views/pages/labeling_page.dart';
 import 'src/view_models/project_list_view_model.dart';
 import 'src/view_models/locale_view_model.dart';
-import 'src/utils/storage_helper.dart'; // ✅ StorageHelper import 추가
 
-void main() {
+import 'firebase_options.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
