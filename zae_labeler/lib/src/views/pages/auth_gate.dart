@@ -13,7 +13,7 @@ class AuthGate extends StatelessWidget {
         if (authVM.isSignedIn) {
           return Scaffold(
             appBar: AppBar(
-              title: Text("Welcome, ${authVM.userName}"),
+              title: Text(authVM.isSignedIn ? "Welcome, ${authVM.userName}" : "Welcome Guest"),
               actions: [
                 IconButton(
                   icon: const Icon(Icons.logout),
