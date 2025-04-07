@@ -49,6 +49,8 @@ class AuthViewModel extends ChangeNotifier {
   Future<void> signOut() async {
     await _auth.signOut();
     await GoogleSignIn().signOut();
+    user = null; // ✅ 사용자 정보 초기화
+    notifyListeners(); // ✅ UI 갱신 유도
   }
 
   bool get isSignedIn => user != null;
