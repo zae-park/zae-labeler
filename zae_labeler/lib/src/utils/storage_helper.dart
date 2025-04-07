@@ -14,11 +14,14 @@ export 'proxy_storage_helper/interface_storage_helper.dart';
 /// - **Web:** `localStorage` 또는 브라우저 다운로드 (ZIP 파일)
 /// - **Native:** `Application Documents Directory` 내 JSON 파일 저장
 class StorageHelper extends StorageHelperInterface {
-  static final _instance = StorageHelperImpl();
+  static StorageHelperInterface? _instance;
 
   /// ✅ **StorageHelper 인스턴스 반환**
   /// - 플랫폼에 따라 적절한 `StorageHelperImpl`을 반환
-  static StorageHelperInterface get instance => _instance;
+  static StorageHelperInterface get instance {
+    _instance ??= StorageHelperImpl(); // ✅ 이 시점에서 분기됨
+    return _instance!;
+  }
 
   // ==============================
   // 📌 **Project Configuration IO**
