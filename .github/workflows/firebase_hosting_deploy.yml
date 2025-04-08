@@ -20,25 +20,28 @@ jobs:
           flutter-version: '3.16.5'
 
       - name: Install dependencies
+        working-directory: ./zae_labeler
         run: flutter pub get
 
       - name: Insert GA Tag into index.html
+        working-directory: ./zae_labeler
         env:
           GA_TRACKING_ID: ${{ secrets.GA_TAG_WEB }}
         run: |
-          mkdir -p web
           cp web/index.template.html web/index.html
           echo "Injecting GA ID: $GA_TRACKING_ID"
 
           sed -i "s|<!-- GOOGLE_ANALYTICS -->|<script async src='https://www.googletagmanager.com/gtag/js?id=$GA_TRACKING_ID'></script>\n<script>window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', '$GA_TRACKING_ID');</script>|" web/index.html
 
       - name: Build Flutter Web
+        working-directory: ./zae_labeler
         run: flutter build web --release
 
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
       - name: Deploy to Firebase Hosting
+        working-directory: ./zae_labeler
         run: firebase deploy --only hosting
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
