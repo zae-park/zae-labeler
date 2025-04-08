@@ -30,8 +30,8 @@ jobs:
         run: |
           cp web/index.template.html web/index.html
           echo "Injecting GA ID: $GA_TRACKING_ID"
-
-          sed -i "s|<!-- GOOGLE_ANALYTICS -->|<script async src='https://www.googletagmanager.com/gtag/js?id=$GA_TRACKING_ID'></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','$GA_TRACKING_ID');</script>|" web/index.html
+          GA_SCRIPT="<script async src='https://www.googletagmanager.com/gtag/js?id=$GA_TRACKING_ID'></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','$GA_TRACKING_ID');</script>"
+          awk -v ga_tag="$GA_SCRIPT" '{gsub("<!-- GOOGLE_ANALYTICS -->", ga_tag)}1' web/index.template.html > web/index.html
 
       - name: Build Flutter Web
         working-directory: ./zae_labeler
