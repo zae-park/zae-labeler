@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -26,7 +25,7 @@ class AuthViewModel extends ChangeNotifier {
         // ✅ Native(Android/iOS) 로그인 방식
         final googleUser = await GoogleSignIn().signIn();
         if (googleUser == null) {
-          print('🚫 로그인 취소됨 또는 팝업 차단');
+          debugPrint('🚫 로그인 취소됨 또는 팝업 차단');
           return;
         }
 
@@ -42,7 +41,7 @@ class AuthViewModel extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      print('🔥 로그인 실패: $e');
+      debugPrint('🔥 로그인 실패: $e');
     }
   }
 
