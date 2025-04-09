@@ -22,7 +22,8 @@ Image, Time-series, Object 데이터 등을 위한 직관적인 UI를 web, windo
 설치 없이 웹 브라우저에서 사용할 수 있어요! 
 아래 링크를 클릭해서 바로 시작해 보세요:
 
-[👉 데이터 라벨링 앱 사용하기](https://zae-park.github.io/zae-labeler)
+[👉 데이터 라벨링 앱 사용하기](https://zae-labeler.web.app)
+[👉 데이터 라벨링 앱 사용하기 (nightly)](https://zae-park.github.io/zae-labeler)
 
 Windows, Linux, macOS 용 독립 실행 프로그램은 곧 출시될 예정이에요! 🚀
 
