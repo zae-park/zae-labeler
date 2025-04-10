@@ -45,6 +45,20 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> signInWithGitHub() async {
+    try {
+      final githubProvider = GithubAuthProvider();
+
+      if (kIsWeb) {
+        await FirebaseAuth.instance.signInWithPopup(githubProvider);
+      } else {
+        await FirebaseAuth.instance.signInWithProvider(githubProvider);
+      }
+    } catch (e) {
+      debugPrint('❌ GitHub 로그인 실패: $e');
+    }
+  }
+
   Future<void> signOut() async {
     await _auth.signOut();
     await GoogleSignIn().signOut();
