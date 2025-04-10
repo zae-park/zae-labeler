@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../view_models/auth_view_model.dart';
 import 'project_list_page.dart';
+import '../../../env.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -10,16 +11,11 @@ class AuthGate extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<AuthViewModel>(
       builder: (context, authVM, _) {
-        if (authVM.isSignedIn) {
+        if (isDev || authVM.isSignedIn) {
           return Scaffold(
             appBar: AppBar(
               title: Text(authVM.isSignedIn ? "Welcome, ${authVM.userName}" : "Welcome Guest"),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.logout),
-                  onPressed: () => authVM.signOut(),
-                ),
-              ],
+              actions: [IconButton(icon: const Icon(Icons.logout), onPressed: () => authVM.signOut())],
             ),
             body: const ProjectListPage(),
           );
