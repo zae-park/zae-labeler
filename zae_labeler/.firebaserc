@@ -1,0 +1,17 @@
+{
+  "projects": {
+    "default": "zae-labeler"
+  },
+  "targets": {
+    "zae-labeler": {
+      "hosting": {
+        "prod": [
+          "zae-labeler"
+        ],
+        "dev": [
+          "zae-labeler-dev"
+        ]
+      }
+    }
+  }
+}
