@@ -20,13 +20,18 @@ class CloudStorageHelper implements StorageHelperInterface {
   // 📌 프로젝트 리스트 저장
   @override
   Future<void> saveProjectList(List<Project> projects) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw FirebaseAuthException(code: 'not-authenticated', message: '로그인이 필요합니다.');
+
+    final uid = user.uid;
     final batch = firestore.batch();
-    final projectsRef = firestore.collection('users').doc(_uid).collection('projects');
+    final projectsRef = firestore.collection('users').doc(uid).collection('projects');
 
     for (var project in projects) {
       final docRef = projectsRef.doc(project.id);
       batch.set(docRef, project.toJson());
     }
+
     await batch.commit();
   }
 
