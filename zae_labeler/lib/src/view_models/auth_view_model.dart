@@ -41,7 +41,7 @@ class AuthViewModel extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      final conflict = await getConflictingProvider(e);
+      // final conflict = await getConflictingProvider(e);
       debugPrint('❌ Google 로그인 실패: $e');
     }
   }
@@ -56,7 +56,7 @@ class AuthViewModel extends ChangeNotifier {
         await FirebaseAuth.instance.signInWithProvider(githubProvider);
       }
     } catch (e) {
-      final conflict = await getConflictingProvider(e);
+      // final conflict = await getConflictingProvider(e);
       debugPrint('❌ GitHub 로그인 실패: $e');
     }
   }
