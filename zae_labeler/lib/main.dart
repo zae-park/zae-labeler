@@ -12,6 +12,7 @@ import 'src/views/pages/configuration_page.dart';
 import 'src/views/pages/labeling_page.dart';
 import 'src/view_models/project_list_view_model.dart';
 import 'src/view_models/locale_view_model.dart';
+import 'env.dart';
 
 import 'firebase_options.dart';
 
@@ -33,7 +34,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<ProjectListViewModel>(
             create: (_) => ProjectListViewModel(storageHelper: kIsWeb ? CloudStorageHelper() : StorageHelper.instance)),
         ChangeNotifierProvider<LocaleViewModel>(create: (_) => LocaleViewModel()),
-        Provider<StorageHelperInterface>.value(value: StorageHelper.instance),
+        Provider<StorageHelperInterface>.value(value: isProd ? CloudStorageHelper() : StorageHelper.instance),
         ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel()),
       ],
       child: Consumer<LocaleViewModel>(
