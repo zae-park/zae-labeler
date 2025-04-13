@@ -67,16 +67,15 @@ class _ProjectListPageState extends State<ProjectListPage> {
     );
 
     if (confirmed == true) {
-      final vm = ProjectViewModel(
-        project: project,
-        storageHelper: StorageHelper.instance,
-        shareHelper: getShareHelper(),
-      );
+      final vm = ProjectViewModel(project: project, storageHelper: StorageHelper.instance, shareHelper: getShareHelper());
 
       await vm.deleteProject();
       await projectListVM.removeProject(project.id);
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted project: ${project.name}')));
+      if (mounted) {
+        setState(() {}); // ✅ 강제 UI 갱신
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted project: ${project.name}')));
+      }
     }
   }
 
