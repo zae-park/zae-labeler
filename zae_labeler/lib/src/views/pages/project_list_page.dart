@@ -51,12 +51,14 @@ class _ProjectListPageState extends State<ProjectListPage> {
   }
 
   /// ✅ 프로젝트 삭제 확인 다이얼로그
-  Future<void> _confirmDelete(BuildContext context, ProjectViewModel projectVM, ProjectListViewModel projectListVM) async {
+  Future<void> _confirmDelete(BuildContext context, String projectId, ProjectListViewModel projectListVM) async {
+    final project = projectListVM.projects.firstWhere((p) => p.id == projectId);
+
     bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Project'),
-        content: Text('Are you sure you want to delete the project "${projectVM.project.name}"?'),
+        content: Text('Are you sure you want to delete the project "${project.name}"?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
@@ -65,9 +67,16 @@ class _ProjectListPageState extends State<ProjectListPage> {
     );
 
     if (confirmed == true) {
-      await projectVM.deleteProject(); // ✅ `ProjectViewModel`을 사용하여 삭제
-      await projectListVM.removeProject(projectVM.project.id);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted project: ${projectVM.project.name}')));
+      final vm = ProjectViewModel(
+        project: project,
+        storageHelper: StorageHelper.instance,
+        shareHelper: getShareHelper(),
+      );
+
+      await vm.deleteProject();
+      await projectListVM.removeProject(project.id);
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted project: ${project.name}')));
     }
   }
 
@@ -129,7 +138,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
                                         create: (_) => ConfigurationViewModel.fromProject(project), child: const ConfigureProjectPage()))),
                             onDownload: () => projectVM.downloadProjectConfig(),
                             onShare: () => projectVM.shareProject(context),
-                            onDelete: () => _confirmDelete(context, projectVM, projectListVM),
+                            onDelete: () => _confirmDelete(context, project.id, projectListVM),
                             onTap: () => Navigator.pushNamed(context, '/labeling', arguments: project),
                           );
                         },
