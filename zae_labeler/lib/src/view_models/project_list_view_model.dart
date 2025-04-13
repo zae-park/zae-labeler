@@ -44,10 +44,10 @@ class ProjectListViewModel extends ChangeNotifier {
 
   /// ✅ 프로젝트 삭제
   Future<void> removeProject(String projectId) async {
+    _projects.removeWhere((p) => p.id == projectId);
     if (storageHelper is CloudStorageHelper) {
       await (storageHelper as CloudStorageHelper).deleteSingleProject(projectId);
     } else {
-      _projects.removeWhere((p) => p.id == projectId);
       await storageHelper.saveProjectList(_projects);
     }
     notifyListeners();
