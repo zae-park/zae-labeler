@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/project_model.dart';
+import '../utils/proxy_storage_helper/cloud_storage_helper.dart';
 import '../utils/storage_helper.dart';
 
 class ProjectListViewModel extends ChangeNotifier {
@@ -33,14 +34,22 @@ class ProjectListViewModel extends ChangeNotifier {
     } else {
       _projects.add(project);
     }
-    await storageHelper.saveProjectList(_projects);
+    if (storageHelper is CloudStorageHelper) {
+      await (storageHelper as CloudStorageHelper).saveSingleProject(project); // ✅ 단일 저장
+    } else {
+      await storageHelper.saveProjectList(_projects); // ✅ 기존 방식 유지
+    }
     notifyListeners();
   }
 
   /// ✅ 프로젝트 삭제
   Future<void> removeProject(String projectId) async {
-    _projects.removeWhere((p) => p.id == projectId);
-    await storageHelper.saveProjectList(_projects);
+    if (storageHelper is CloudStorageHelper) {
+      await (storageHelper as CloudStorageHelper).deleteSingleProject(projectId);
+    } else {
+      _projects.removeWhere((p) => p.id == projectId);
+      await storageHelper.saveProjectList(_projects);
+    }
     notifyListeners();
   }
 
