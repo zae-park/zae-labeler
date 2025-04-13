@@ -29,7 +29,7 @@ class CloudStorageHelper implements StorageHelperInterface {
 
     for (var project in projects) {
       final docRef = projectsRef.doc(project.id);
-      batch.set(docRef, project.toJson());
+      batch.set(docRef, project.toJson(includeLabels: false));
     }
 
     await batch.commit();
@@ -40,6 +40,16 @@ class CloudStorageHelper implements StorageHelperInterface {
   Future<List<Project>> loadProjectList() async {
     final snapshot = await firestore.collection('users').doc(_uid).collection('projects').get();
     return snapshot.docs.map((doc) => Project.fromJson(doc.data())).toList();
+  }
+
+  Future<void> saveSingleProject(Project project) async {
+    final docRef = firestore.collection('users').doc(_uid).collection('projects').doc(project.id);
+    await docRef.set(project.toJson(includeLabels: false), SetOptions(merge: true));
+  }
+
+  Future<void> deleteSingleProject(String projectId) async {
+    final docRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId);
+    await docRef.delete();
   }
 
   // 📌 라벨 저장
