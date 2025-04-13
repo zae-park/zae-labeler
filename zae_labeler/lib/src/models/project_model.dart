@@ -97,14 +97,21 @@ class Project {
   String toJsonString() => jsonEncode(toJson());
 
   /// ✅ `Project` 객체를 JSON 형식으로 변환
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'mode': mode.toString().split('.').last,
-        'classes': classes,
-        'dataPaths': dataPaths.map((e) => e.toJson()).toList(),
-        'labels': labels.map((e) => LabelModelConverter.toJson(e)).toList(),
-      };
+  Map<String, dynamic> toJson({bool includeLabels = true}) {
+    final map = {
+      'id': id,
+      'name': name,
+      'mode': mode.toString().split('.').last,
+      'classes': classes,
+      'dataPaths': dataPaths.map((e) => e.toJson()).toList(),
+    };
+
+    if (includeLabels) {
+      map['labels'] = labels.map((e) => LabelModelConverter.toJson(e)).toList();
+    }
+
+    return map;
+  }
 
   // // ==============================
   // // 📌 **StorageHelper를 활용한 라벨 관리**
