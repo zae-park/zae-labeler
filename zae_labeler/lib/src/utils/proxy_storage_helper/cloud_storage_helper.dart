@@ -55,7 +55,7 @@ class CloudStorageHelper implements StorageHelperInterface {
   // 📌 라벨 저장
   @override
   Future<void> saveLabelData(String projectId, String dataId, String dataPath, LabelModel labelModel) async {
-    final labelRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('labels').doc(dataId);
+    final labelRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('label').doc(dataId);
 
     await labelRef.set({
       'data_id': dataId,
@@ -69,7 +69,7 @@ class CloudStorageHelper implements StorageHelperInterface {
   // 📌 라벨 불러오기
   @override
   Future<LabelModel> loadLabelData(String projectId, String dataId, String dataPath, LabelingMode mode) async {
-    final labelRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('labels').doc(dataId);
+    final labelRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('label').doc(dataId);
 
     final doc = await labelRef.get();
     if (!doc.exists) return LabelModelFactory.createNew(mode);
@@ -81,7 +81,7 @@ class CloudStorageHelper implements StorageHelperInterface {
   @override
   Future<void> saveAllLabels(String projectId, List<LabelModel> labels) async {
     final batch = firestore.batch();
-    final labelsRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('labels');
+    final labelsRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('label');
 
     for (var label in labels) {
       final docRef = labelsRef.doc(); // 또는 dataId 지정
@@ -98,7 +98,7 @@ class CloudStorageHelper implements StorageHelperInterface {
   // 📌 전체 라벨 불러오기
   @override
   Future<List<LabelModel>> loadAllLabels(String projectId) async {
-    final snapshot = await firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('labels').get();
+    final snapshot = await firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('label').get();
     return snapshot.docs.map((doc) {
       final data = doc.data();
       final mode = LabelingMode.values.firstWhere((e) => e.toString() == data['mode']);
@@ -109,7 +109,7 @@ class CloudStorageHelper implements StorageHelperInterface {
   // 📌 삭제
   @override
   Future<void> deleteProjectLabels(String projectId) async {
-    final snapshot = await firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('labels').get();
+    final snapshot = await firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('label').get();
     for (final doc in snapshot.docs) {
       await doc.reference.delete();
     }
