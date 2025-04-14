@@ -66,7 +66,7 @@ class Project {
       mode: mode,
       classes: List<String>.from(json['classes']),
       dataPaths: (json['dataPaths'] as List).map((e) => DataPath.fromJson(e)).toList(),
-      labels: (json['labels'] as List?)?.map((e) => LabelModelConverter.fromJson(mode, e)).toList() ?? [],
+      labels: (json['label'] as List?)?.map((e) => LabelModelConverter.fromJson(mode, e)).toList() ?? [],
     );
   }
 
@@ -83,7 +83,7 @@ class Project {
     };
 
     if (includeLabels) {
-      map['labels'] = labels.map((e) => LabelModelConverter.toJson(e)).toList();
+      map['label'] = labels.map((e) => LabelModelConverter.toJson(e)).toList();
     }
 
     return map;
