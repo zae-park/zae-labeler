@@ -18,9 +18,9 @@ class ClassificationLabelViewModel extends LabelViewModel {
 
   @override
   void updateLabel(dynamic labelData) {
-    debugPrint("[ClsLabelVM.updateLabel] labelModel: $labelModel");
     if (labelModel is ClassificationLabelModel) {
       if (labelData is String || labelData is List<String>) {
+        debugPrint("[ClsLabelVM.updateLabel] labelModel: $labelModel");
         labelModel.updateLabel(labelData);
         notifyListeners();
       } else {
