@@ -10,6 +10,7 @@ abstract class LabelViewModel extends ChangeNotifier {
   final String dataFilename;
   final String dataPath;
   final LabelingMode mode;
+  final StorageHelperInterface storageHelper;
 
   LabelModel labelModel;
 
@@ -20,11 +21,12 @@ abstract class LabelViewModel extends ChangeNotifier {
     required this.dataPath,
     required this.mode,
     required this.labelModel,
+    required this.storageHelper,
   });
 
   Future<void> loadLabel() async {
     debugPrint("[BaseLabelVM.loadLabel] BEFORE: ${labelModel.runtimeType}");
-    labelModel = await StorageHelper.instance.loadLabelData(projectId, dataId, dataPath, mode);
+    labelModel = await storageHelper.loadLabelData(projectId, dataId, dataPath, mode);
     debugPrint("[BaseLabelVM.loadLabel] AFTER: ${labelModel.runtimeType}");
     notifyListeners();
   }
@@ -32,7 +34,7 @@ abstract class LabelViewModel extends ChangeNotifier {
   Future<void> saveLabel() async {
     debugPrint("[BaseLabelVM.saveLabel] labelModel: $labelModel");
     debugPrint("[BaseLabelVM.saveLabel] saving label: ${labelModel.label}");
-    await StorageHelper.instance.saveLabelData(projectId, dataId, dataPath, labelModel);
+    await storageHelper.saveLabelData(projectId, dataId, dataPath, labelModel);
   }
 
   void updateLabel(dynamic labelData);

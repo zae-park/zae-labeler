@@ -102,6 +102,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
         dataFilename: _currentUnifiedData.fileName,
         dataPath: _currentUnifiedData.file?.path ?? '',
         mode: project.mode,
+        storageHelper: storageHelper,
       );
     });
   }

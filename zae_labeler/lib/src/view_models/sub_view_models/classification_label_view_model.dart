@@ -11,6 +11,7 @@ class ClassificationLabelViewModel extends LabelViewModel {
     required super.dataPath,
     required super.mode,
     required super.labelModel,
+    required super.storageHelper,
   });
 
   @override
