@@ -14,7 +14,10 @@ class CloudStorageHelper implements StorageHelperInterface {
 
   String get _uid {
     final user = auth.currentUser;
-    if (user == null) throw Exception("⚠️ 로그인된 사용자가 없습니다.");
+    if (user == null) {
+      debugPrint("❌ FirebaseAuth.currentUser is null");
+      throw FirebaseAuthException(code: 'not-authenticated', message: '로그인이 필요합니다.');
+    }
     return user.uid;
   }
 
