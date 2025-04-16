@@ -1,6 +1,7 @@
 // lib/src/utils/cloud_storage_helper.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../models/project_model.dart';
 import '../../models/data_model.dart';
@@ -56,7 +57,8 @@ class CloudStorageHelper implements StorageHelperInterface {
   @override
   Future<void> saveLabelData(String projectId, String dataId, String dataPath, LabelModel labelModel) async {
     final labelRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('label').doc(dataId);
-
+    debugPrint(
+        "dataId, dataPath, mode, labeled_at, label_data: $dataId, $dataPath, ${labelModel.runtimeType.toString()}, ${labelModel.labeledAt.toIso8601String()}, ${LabelModelConverter.toJson(labelModel)}");
     await labelRef.set({
       'data_id': dataId,
       'data_path': dataPath,
