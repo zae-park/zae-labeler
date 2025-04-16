@@ -30,6 +30,7 @@ class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
 
   @override
   SingleClassificationLabelModel updateLabel(String labelData) {
+    debugPrint("[ClsLabelM.updateLabel] labelData: $labelData");
     return SingleClassificationLabelModel(label: labelData, labeledAt: DateTime.now());
   }
 
