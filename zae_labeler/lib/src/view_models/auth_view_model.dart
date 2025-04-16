@@ -39,6 +39,7 @@ class AuthViewModel extends ChangeNotifier {
         user = userCredential.user;
       }
 
+      debugPrint("[Auth] Logged in UID: ${FirebaseAuth.instance.currentUser?.uid}");
       notifyListeners();
     } catch (e) {
       // final conflict = await getConflictingProvider(e);
