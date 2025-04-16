@@ -47,7 +47,6 @@ class LabelViewModelFactory {
     required LabelingMode mode,
     required StorageHelperInterface storageHelper,
   }) {
-    final model = LabelModelFactory.createNew(mode);
     switch (mode) {
       case LabelingMode.singleClassification:
       case LabelingMode.multiClassification:
@@ -57,7 +56,7 @@ class LabelViewModelFactory {
           dataFilename: dataFilename,
           dataPath: dataPath,
           mode: mode,
-          labelModel: model,
+          labelModel: LabelModelFactory.createNew(mode),
           storageHelper: storageHelper,
         );
 
@@ -69,7 +68,7 @@ class LabelViewModelFactory {
           dataFilename: dataFilename,
           dataPath: dataPath,
           mode: mode,
-          labelModel: model,
+          labelModel: LabelModelFactory.createNew(mode),
           storageHelper: storageHelper,
         );
     }
