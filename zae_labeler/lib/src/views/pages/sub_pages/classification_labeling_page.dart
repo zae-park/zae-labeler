@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../utils/storage_helper.dart';
 import '../../../view_models/labeling_view_model.dart';
@@ -17,7 +18,7 @@ class _ClassificationLabelingPageState extends BaseLabelingPageState<LabelingVie
   Widget buildModeSpecificUI(LabelingViewModel labelingVM) => LabelSelectorWidget(labelingVM: labelingVM);
 
   @override
-  LabelingViewModel createViewModel() => LabelingViewModelFactory.create(project, StorageHelper.instance);
+  LabelingViewModel createViewModel() => LabelingViewModelFactory.create(project, Provider.of<StorageHelperInterface>(context, listen: false));
 
   @override
   void handleNumericKeyInput(LabelingViewModel labelingVM, int index) {
