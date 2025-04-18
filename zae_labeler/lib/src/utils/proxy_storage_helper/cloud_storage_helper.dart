@@ -59,7 +59,7 @@ class CloudStorageHelper implements StorageHelperInterface {
   // 📌 라벨 저장
   @override
   Future<void> saveLabelData(String projectId, String dataId, String dataPath, LabelModel labelModel) async {
-    final labelRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('label').doc(dataId);
+    final labelRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('labels').doc(dataId);
     debugPrint(
         "dataId, dataPath, mode, labeled_at, label_data: $dataId, $dataPath, ${labelModel.runtimeType.toString()}, ${labelModel.labeledAt.toIso8601String()}, ${LabelModelConverter.toJson(labelModel)}");
     await labelRef.set({
