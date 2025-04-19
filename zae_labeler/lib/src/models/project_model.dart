@@ -48,30 +48,6 @@ class Project {
     );
   }
 
-  // // ==============================
-  // // 📌 **라벨 데이터 관리**
-  // // ==============================
-
-  // /// ✅ 특정 데이터의 라벨 추가
-  // void addLabel(String dataPath, LabelModel label) {
-  //   labels.add(label);
-  // }
-
-  // /// ✅ 특정 데이터의 라벨 제거
-  // void removeLabel(String dataPath) {
-  //   labels.removeWhere((label) => label.label == dataPath);
-  // }
-
-  // /// ✅ 특정 데이터의 라벨 업데이트
-  // void updateLabel(String dataPath, LabelModel updatedLabel) {
-  //   int index = labels.indexWhere((label) => label.label == dataPath);
-  //   if (index != -1) {
-  //     labels[index] = updatedLabel;
-  //   } else {
-  //     labels.add(updatedLabel);
-  //   }
-  // }
-
   /// ✅ 모든 라벨 초기화
   void clearLabels() {
     labels.clear();
@@ -90,43 +66,26 @@ class Project {
       mode: mode,
       classes: List<String>.from(json['classes']),
       dataPaths: (json['dataPaths'] as List).map((e) => DataPath.fromJson(e)).toList(),
-      labels: (json['labels'] as List?)?.map((e) => LabelModelConverter.fromJson(mode, e)).toList() ?? [],
+      labels: (json['label'] as List?)?.map((e) => LabelModelConverter.fromJson(mode, e)).toList() ?? [],
     );
   }
 
   String toJsonString() => jsonEncode(toJson());
 
   /// ✅ `Project` 객체를 JSON 형식으로 변환
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'mode': mode.toString().split('.').last,
-        'classes': classes,
-        'dataPaths': dataPaths.map((e) => e.toJson()).toList(),
-        'labels': labels.map((e) => LabelModelConverter.toJson(e)).toList(),
-      };
+  Map<String, dynamic> toJson({bool includeLabels = true}) {
+    final map = {
+      'id': id,
+      'name': name,
+      'mode': mode.toString().split('.').last,
+      'classes': classes,
+      'dataPaths': dataPaths.map((e) => e.toJson()).toList(),
+    };
 
-  // // ==============================
-  // // 📌 **StorageHelper를 활용한 라벨 관리**
-  // // ==============================
+    if (includeLabels) {
+      map['label'] = labels.map((e) => LabelModelConverter.toJson(e)).toList();
+    }
 
-  // /// ✅ StorageHelper를 사용하여 모든 라벨 데이터 로드
-  // Future<void> loadAllLabels() async {
-  //   labels = await StorageHelper.instance.loadAllLabels(id);
-  // }
-
-  // /// ✅ 특정 데이터에 대한 라벨을 불러옴
-  // Future<LabelModel> loadLabel(String dataPath) async {
-  //   return await StorageHelper.instance.loadLabelData(id, dataPath, mode);
-  // }
-
-  // /// ✅ 특정 데이터의 라벨을 저장
-  // Future<void> saveLabel(String dataPath, LabelModel labelModel) async {
-  //   await StorageHelper.instance.saveLabelData(id, dataPath, labelModel);
-  // }
-
-  // /// ✅ 프로젝트의 모든 라벨을 저장
-  // Future<void> saveAllLabels() async {
-  //   await StorageHelper.instance.saveAllLabels(id, labels);
-  // }
+    return map;
+  }
 }

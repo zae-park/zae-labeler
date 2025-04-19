@@ -68,7 +68,7 @@ class LabelModelConverter {
         case LabelingMode.singleClassSegmentation:
           return SingleClassSegmentationLabelModel(labeledAt: DateTime.parse(json['labeled_at']), label: SegmentationData.fromJson(json['label']));
         case LabelingMode.multiClassSegmentation:
-          return MultiClassSegmentationLabelModel(labeledAt: DateTime.parse(json['labeled_at']), label: SegmentationData.fromJson(json['labels']));
+          return MultiClassSegmentationLabelModel(labeledAt: DateTime.parse(json['labeled_at']), label: SegmentationData.fromJson(json['label']));
       }
     } catch (e) {
       return SingleClassificationLabelModel.empty(); // 예외 발생 시 기본값 반환

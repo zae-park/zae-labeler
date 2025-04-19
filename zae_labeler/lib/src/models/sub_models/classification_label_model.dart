@@ -20,17 +20,18 @@ class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
 
   @override
   factory SingleClassificationLabelModel.fromJson(Map<String, dynamic> json) {
-    return SingleClassificationLabelModel(label: json['label'] as String, labeledAt: json['labels']);
+    return SingleClassificationLabelModel(label: json['label'] as String, labeledAt: json['label']);
   }
 
   @override
   factory SingleClassificationLabelModel.empty() {
-    return SingleClassificationLabelModel(labeledAt: DateTime.now(), label: 'empty');
+    return SingleClassificationLabelModel(label: 'empty', labeledAt: DateTime.now());
   }
 
   @override
   SingleClassificationLabelModel updateLabel(String labelData) {
-    return SingleClassificationLabelModel(labeledAt: DateTime.now(), label: labelData);
+    debugPrint("[ClsLabelM.updateLabel] labelData: $labelData");
+    return SingleClassificationLabelModel(label: labelData, labeledAt: DateTime.now());
   }
 
   @override
@@ -53,15 +54,15 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
   /// ✅ `fromJson()` 구현
   @override
   factory MultiClassificationLabelModel.fromJson(Map<String, dynamic> json) {
-    return MultiClassificationLabelModel(label: Set<String>.from(json['labels']), labeledAt: json['labeled_at']);
+    return MultiClassificationLabelModel(label: Set<String>.from(json['label']), labeledAt: json['labeled_at']);
   }
 
   /// ✅ `empty()` 구현
   @override
-  factory MultiClassificationLabelModel.empty() => MultiClassificationLabelModel(labeledAt: DateTime.now(), label: {});
+  factory MultiClassificationLabelModel.empty() => MultiClassificationLabelModel(label: {}, labeledAt: DateTime.now());
 
   @override
-  MultiClassificationLabelModel updateLabel(Set<String> labelData) => MultiClassificationLabelModel(labeledAt: DateTime.now(), label: labelData);
+  MultiClassificationLabelModel updateLabel(Set<String> labelData) => MultiClassificationLabelModel(label: labelData, labeledAt: DateTime.now());
 
   @override
   LabelModel toggleLabel(String labelItem) {

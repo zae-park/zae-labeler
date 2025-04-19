@@ -39,9 +39,11 @@ class AuthViewModel extends ChangeNotifier {
         user = userCredential.user;
       }
 
+      debugPrint("[Auth] Logged in UID: ${FirebaseAuth.instance.currentUser?.uid}");
       notifyListeners();
     } catch (e) {
-      debugPrint('🔥 로그인 실패: $e');
+      // final conflict = await getConflictingProvider(e);
+      debugPrint('❌ Google 로그인 실패: $e');
     }
   }
 
@@ -55,6 +57,7 @@ class AuthViewModel extends ChangeNotifier {
         await FirebaseAuth.instance.signInWithProvider(githubProvider);
       }
     } catch (e) {
+      // final conflict = await getConflictingProvider(e);
       debugPrint('❌ GitHub 로그인 실패: $e');
     }
   }
@@ -64,6 +67,22 @@ class AuthViewModel extends ChangeNotifier {
     await GoogleSignIn().signOut();
     user = null; // ✅ 사용자 정보 초기화
     notifyListeners(); // ✅ UI 갱신 유도
+  }
+
+  Future<String?> getConflictingProvider(FirebaseAuthException e) async {
+    final email = e.email;
+    if (e.code != 'account-exists-with-different-credential' || email == null) return null;
+
+    final methods = await FirebaseAuth.instance.fetchSignInMethodsForEmail(email);
+    if (methods.isEmpty) return null;
+
+    const providerMap = {
+      'google.com': 'Google',
+      'github.com': 'GitHub',
+    };
+
+    final providerId = methods.first; // 가장 우선 provider 반환
+    return providerMap[providerId] ?? providerId;
   }
 
   bool get isSignedIn => user != null;

@@ -22,8 +22,9 @@ class ClassificationLabelingViewModel extends LabelingViewModel {
           ? model.toggleLabel(labelData) // ✅ 다중 선택: toggle
           : model.updateLabel(labelData); // ✅ 단일 선택: 덮어쓰기
 
-      debugPrint("[updateLabel] selected: ${labelVM.labelModel.label}");
+      debugPrint("[ClsLabelingVM.updateLabel] selected: ${labelVM.labelModel.label}");
       await labelVM.saveLabel();
+      debugPrint("[ClsLabelingVM.updateLabel] : label saved with $labelVM");
       notifyListeners();
     } else if (labelVM.labelModel is SegmentationLabelModel) {
       throw UnimplementedError('SegmentationLabelModel은 ClassificationLabelingViewModel에서 지원하지 않습니다.');

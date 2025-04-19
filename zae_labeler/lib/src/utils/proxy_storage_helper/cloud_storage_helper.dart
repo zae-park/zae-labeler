@@ -1,6 +1,7 @@
 // lib/src/utils/cloud_storage_helper.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../models/project_model.dart';
 import '../../models/data_model.dart';
@@ -13,20 +14,28 @@ class CloudStorageHelper implements StorageHelperInterface {
 
   String get _uid {
     final user = auth.currentUser;
-    if (user == null) throw Exception("⚠️ 로그인된 사용자가 없습니다.");
+    if (user == null) {
+      debugPrint("❌ FirebaseAuth.currentUser is null");
+      throw FirebaseAuthException(code: 'not-authenticated', message: '로그인이 필요합니다.');
+    }
     return user.uid;
   }
 
   // 📌 프로젝트 리스트 저장
   @override
   Future<void> saveProjectList(List<Project> projects) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw FirebaseAuthException(code: 'not-authenticated', message: '로그인이 필요합니다.');
+
+    final uid = user.uid;
     final batch = firestore.batch();
-    final projectsRef = firestore.collection('users').doc(_uid).collection('projects');
+    final projectsRef = firestore.collection('users').doc(uid).collection('projects');
 
     for (var project in projects) {
       final docRef = projectsRef.doc(project.id);
-      batch.set(docRef, project.toJson());
+      batch.set(docRef, project.toJson(includeLabels: false));
     }
+
     await batch.commit();
   }
 
@@ -37,11 +46,22 @@ class CloudStorageHelper implements StorageHelperInterface {
     return snapshot.docs.map((doc) => Project.fromJson(doc.data())).toList();
   }
 
+  Future<void> saveSingleProject(Project project) async {
+    final docRef = firestore.collection('users').doc(_uid).collection('projects').doc(project.id);
+    await docRef.set(project.toJson(includeLabels: false), SetOptions(merge: true));
+  }
+
+  Future<void> deleteSingleProject(String projectId) async {
+    final docRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId);
+    await docRef.delete();
+  }
+
   // 📌 라벨 저장
   @override
   Future<void> saveLabelData(String projectId, String dataId, String dataPath, LabelModel labelModel) async {
     final labelRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('labels').doc(dataId);
-
+    debugPrint(
+        "dataId, dataPath, mode, labeled_at, label_data: $dataId, $dataPath, ${labelModel.runtimeType.toString()}, ${labelModel.labeledAt.toIso8601String()}, ${LabelModelConverter.toJson(labelModel)}");
     await labelRef.set({
       'data_id': dataId,
       'data_path': dataPath,
@@ -104,7 +124,21 @@ class CloudStorageHelper implements StorageHelperInterface {
   @override
   Future<String> downloadProjectConfig(Project project) async => throw UnimplementedError();
   @override
-  Future<void> saveProjectConfig(List<Project> projects) async => throw UnimplementedError();
+  Future<void> saveProjectConfig(List<Project> projects) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) throw FirebaseAuthException(code: 'not-authenticated', message: '로그인이 필요합니다.');
+
+    final batch = firestore.batch();
+    final projectsRef = firestore.collection('users').doc(uid).collection('projects');
+
+    for (var project in projects) {
+      final docRef = projectsRef.doc(project.id);
+      batch.set(docRef, project.toJson(includeLabels: false)); // 🔸 label 제외
+    }
+
+    await batch.commit();
+  }
+
   @override
   Future<List<Project>> loadProjectFromConfig(String config) async => throw UnimplementedError();
 

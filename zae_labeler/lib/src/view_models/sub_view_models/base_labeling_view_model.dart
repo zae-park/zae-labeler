@@ -39,6 +39,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
 
   // ✅ 공통 초기화 메서드
   Future<void> initialize() async {
+    debugPrint("[BaseLabelingVM.initialize] : ${project.mode}");
     if (_memoryOptimized) {
       _unifiedDataList.clear();
       _currentUnifiedData = project.dataPaths.isNotEmpty ? await UnifiedData.fromDataPath(project.dataPaths.first) : UnifiedData.empty();
@@ -102,6 +103,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
         dataFilename: _currentUnifiedData.fileName,
         dataPath: _currentUnifiedData.file?.path ?? '',
         mode: project.mode,
+        storageHelper: storageHelper,
       );
     });
   }
