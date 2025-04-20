@@ -10,6 +10,8 @@ import 'dart:io';
 
 import 'package:uuid/uuid.dart';
 
+import 'label_model.dart';
+
 enum FileType { series, object, image, unsupported }
 
 /// Represents file data and its associated content and metadata.
@@ -86,15 +88,17 @@ class UnifiedData {
 
   final String? content; // ✅ Base64 인코딩된 이미지 데이터 추가 (Web 지원)
 
-  UnifiedData({
-    required this.dataId,
-    this.file,
-    this.seriesData,
-    this.objectData,
-    this.content,
-    required this.fileName,
-    required this.fileType,
-  });
+  LabelStatus status;
+
+  UnifiedData(
+      {required this.dataId,
+      this.file,
+      this.seriesData,
+      this.objectData,
+      this.content,
+      required this.fileName,
+      required this.fileType,
+      this.status = LabelStatus.incomplete});
 
   factory UnifiedData.empty() => UnifiedData(dataId: 'empty', fileType: FileType.unsupported, fileName: '');
 
