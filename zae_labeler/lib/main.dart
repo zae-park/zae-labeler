@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -8,7 +7,6 @@ import 'src/utils/proxy_storage_helper/cloud_storage_helper.dart';
 import 'src/utils/storage_helper.dart';
 import 'src/view_models/auth_view_model.dart';
 import 'src/views/pages/auth_gate.dart';
-// import 'src/views/pages/project_list_page.dart';
 import 'src/views/pages/configuration_page.dart';
 import 'src/views/pages/labeling_page.dart';
 import 'src/view_models/project_list_view_model.dart';
@@ -36,7 +34,6 @@ class ZaeLabeler extends StatelessWidget {
     return MultiProvider(
       // Registering providers for state management
       providers: [
-        // ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(storageHelper: StorageHelper.instance)),
         ChangeNotifierProvider<ProjectListViewModel>(
           create: (_) => ProjectListViewModel(storageHelper: isWebProd ? CloudStorageHelper() : StorageHelper.instance),
         ),
