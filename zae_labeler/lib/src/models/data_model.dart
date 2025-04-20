@@ -133,6 +133,28 @@ class UnifiedData {
     return UnifiedData(dataId: id, fileType: FileType.unsupported, fileName: fileName);
   }
 
+  UnifiedData copyWith({
+    String? dataId,
+    String? fileName,
+    FileType? fileType,
+    File? file,
+    List<double>? seriesData,
+    Map<String, dynamic>? objectData,
+    String? content,
+    LabelStatus? status,
+  }) {
+    return UnifiedData(
+      dataId: dataId ?? this.dataId,
+      fileName: fileName ?? this.fileName,
+      fileType: fileType ?? this.fileType,
+      file: file ?? this.file,
+      seriesData: seriesData ?? this.seriesData,
+      objectData: objectData ?? this.objectData,
+      content: content ?? this.content,
+      status: status ?? this.status,
+    );
+  }
+
   /// Parses series data (CSV format) into a list of doubles.
   static List<double> _parseSeriesData(String content) {
     final lines = content.split('\n');
