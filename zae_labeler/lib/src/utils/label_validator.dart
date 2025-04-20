@@ -4,9 +4,6 @@ import '../models/label_model.dart';
 import '../models/sub_models/classification_label_model.dart';
 import '../models/sub_models/segmentation_label_model.dart';
 
-/// ✅ 라벨 상태 종류
-enum LabelStatus { complete, warning, incomplete }
-
 /// ✅ 라벨 유효성 검사기
 class LabelValidator {
   /// ✅ 라벨이 프로젝트 설정에 맞게 유효한지 검사
