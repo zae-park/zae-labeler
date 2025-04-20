@@ -4,13 +4,6 @@ import '../models/label_model.dart';
 import '../models/sub_models/classification_label_model.dart';
 import '../models/sub_models/segmentation_label_model.dart';
 
-/// ✅ 라벨 상태 구분
-enum LabelStatus {
-  complete, // ✅ 정상 라벨
-  warning, // ⚠️ 존재하지만 불완전/오류
-  incomplete, // ❌ 라벨 없음
-}
-
 /// ✅ 라벨 유효성 검사
 bool isLabelValid(LabelModel label, Project project) {
   if (label is SingleClassificationLabelModel) {
