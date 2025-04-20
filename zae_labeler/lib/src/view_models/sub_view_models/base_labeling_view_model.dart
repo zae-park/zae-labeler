@@ -37,9 +37,17 @@ abstract class LabelingViewModel extends ChangeNotifier {
 
   LabelViewModel get currentLabelVM => getOrCreateLabelVM();
 
+  int get totalCount => unifiedDataList.length;
+
+  int get completeCount => unifiedDataList.where((e) => e.status == LabelStatus.complete).length;
+  int get warningCount => unifiedDataList.where((e) => e.status == LabelStatus.warning).length;
+  int get incompleteCount => unifiedDataList.where((e) => e.status == LabelStatus.incomplete).length;
+
+  double get progressRatio => totalCount == 0 ? 0 : completeCount / totalCount;
+
   // ✅ 공통 초기화 메서드
   Future<void> initialize() async {
-    debugPrint("[BaseLabelingVM.initialize] : ${project.mode}");
+    debugPrint("[LabelingVM.initialize] : ${project.mode}");
     if (_memoryOptimized) {
       _unifiedDataList.clear();
       _currentUnifiedData = project.dataPaths.isNotEmpty ? await UnifiedData.fromDataPath(project.dataPaths.first) : UnifiedData.empty();

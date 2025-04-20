@@ -108,6 +108,28 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
     );
   }
 
+  Widget buildProgressBar(LabelingViewModel vm) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LinearProgressIndicator(
+            value: vm.progressRatio,
+            backgroundColor: Colors.grey[300],
+            valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+            minHeight: 10,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "완료: ${vm.completeCount}  |  주의: ${vm.warningCount}  |  미완료: ${vm.incompleteCount}",
+            style: const TextStyle(fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// **모드별 UI 구현 (오버라이드 필요)**
   Widget buildModeSpecificUI(T labelingVM);
 
@@ -130,6 +152,7 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
               child: Column(
                 children: [
                   Expanded(child: buildViewer(labelingVM)),
+                  buildProgressBar(labelingVM),
                   buildModeSpecificUI(labelingVM),
                   buildNavigator(labelingVM),
                 ],
