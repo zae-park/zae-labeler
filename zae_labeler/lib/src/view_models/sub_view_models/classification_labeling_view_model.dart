@@ -41,5 +41,11 @@ class ClassificationLabelingViewModel extends LabelingViewModel {
   }
 
   @override
-  bool isLabelSelected(String labelItem) => currentLabelVM.labelModel.isSelected(labelItem);
+  bool isLabelSelected(String labelItem) {
+    final model = currentLabelVM.labelModel;
+    if (model is ClassificationLabelModel) {
+      return model.isSelected(labelItem);
+    }
+    return false;
+  }
 }

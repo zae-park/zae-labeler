@@ -6,6 +6,7 @@ import 'base_label_model.dart';
 abstract class ClassificationLabelModel<T> extends LabelModel<T> {
   ClassificationLabelModel({required super.label, required super.labeledAt});
   LabelModel toggleLabel(String labelItem);
+  bool isSelected(String labelData);
 }
 
 /// ✅ 단일 분류 (Single Classification)
@@ -14,6 +15,9 @@ class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
 
   @override
   bool get isMultiClass => false;
+
+  @override
+  bool get isLabeled => label?.trim().isNotEmpty == true;
 
   @override
   Map<String, dynamic> toJson() => {'label': label, 'labeled_at': labeledAt.toIso8601String()};
@@ -49,7 +53,10 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
   bool get isMultiClass => true;
 
   @override
-  Map<String, dynamic> toJson() => {'label': label.toList(), 'labeled_at': labeledAt.toIso8601String()};
+  bool get isLabeled => label != null && label!.isNotEmpty;
+
+  @override
+  Map<String, dynamic> toJson() => {'label': label?.toList(), 'labeled_at': labeledAt.toIso8601String()};
 
   /// ✅ `fromJson()` 구현
   @override
@@ -66,7 +73,7 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
 
   @override
   LabelModel toggleLabel(String labelItem) {
-    final updated = Set<String>.from(label);
+    final updated = Set<String>.from(label ?? {});
     if (updated.contains(labelItem)) {
       updated.remove(labelItem);
     } else {
@@ -76,20 +83,20 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
   }
 
   @override
-  // bool isSelected(Set<String> labelData) => labelData.every(label.contains); // ✅ 다중 값 비교
-  bool isSelected(dynamic labelData) {
-    if (labelData is String) {
-      final result = label.contains(labelData);
-      debugPrint("[isSelected] labelItem: $labelData → $result");
-      return result;
-    } else if (labelData is Set<String>) {
-      final result = labelData.every(label.contains);
-      debugPrint("[isSelected] labelItem: $labelData → $result");
-      return result;
-    }
-    debugPrint("[isSelected] labelItem: $labelData → False");
-    return false;
-  }
+  bool isSelected(String labelData) => label?.contains(labelData) ?? false;
+  // bool isSelected(dynamic labelData) {
+  //   if (labelData is String) {
+  //     final result = label.contains(labelData);
+  //     debugPrint("[isSelected] labelItem: $labelData → $result");
+  //     return result;
+  //   } else if (labelData is Set<String>) {
+  //     final result = labelData.every(label.contains);
+  //     debugPrint("[isSelected] labelItem: $labelData → $result");
+  //     return result;
+  //   }
+  //   debugPrint("[isSelected] labelItem: $labelData → False");
+  //   return false;
+  // }
 }
 
 // /// ✅ 크로스 분류 (Cross Classification) - 추후 업데이트

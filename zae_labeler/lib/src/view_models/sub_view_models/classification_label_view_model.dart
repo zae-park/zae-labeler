@@ -38,6 +38,9 @@ class ClassificationLabelViewModel extends LabelViewModel {
   }
 
   bool isLabelSelected(String labelItem) {
-    return labelModel.isSelected(labelItem);
+    if (labelModel is ClassificationLabelModel) {
+      return (labelModel as ClassificationLabelModel).isSelected(labelItem);
+    }
+    return false;
   }
 }

@@ -6,19 +6,20 @@
 
 /// ✅ LabelModel의 최상위 추상 클래스 (Base Model)
 abstract class LabelModel<T> {
-  final T label;
+  final T? label;
   final DateTime labeledAt;
 
   LabelModel({required this.label, required this.labeledAt});
 
   bool get isMultiClass;
-  T get labelData => label;
+  T? get labelData => label;
   String get formattedLabeledAt => labeledAt.toIso8601String();
+
+  bool get isLabeled;
 
   Map<String, dynamic> toJson();
   factory LabelModel.fromJson(Map<String, dynamic> json) => throw UnimplementedError('fromJson() must be implemented in subclasses.');
   factory LabelModel.empty() => throw UnimplementedError('fromJson() must be implemented in subclasses.');
 
   LabelModel updateLabel(T labelData);
-  bool isSelected(T labelData);
 }
