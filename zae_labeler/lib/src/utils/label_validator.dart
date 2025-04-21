@@ -14,10 +14,10 @@ class LabelValidator {
       return lm.label!.isNotEmpty && lm.label!.every(project.classes.contains);
     } else if (lm is SingleClassSegmentationLabelModel) {
       // 🔧 구현 예정 (현재는 기본값 true)
-      return true;
+      return lm.isLabeled;
     } else if (lm is MultiClassSegmentationLabelModel) {
       // 🔧 구현 예정 (현재는 기본값 true)
-      return true;
+      return lm.isLabeled;
     }
     return false;
   }

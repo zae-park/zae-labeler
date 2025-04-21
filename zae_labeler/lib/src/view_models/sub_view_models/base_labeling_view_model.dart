@@ -112,6 +112,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
   // ✅ 라벨 상태 업데이트
   Future<void> refreshStatus(String dataId) async {
     final vm = getOrCreateLabelVM();
+    await vm.loadLabel();
     final status = LabelValidator.getStatus(project, vm.labelModel);
     final index = unifiedDataList.indexWhere((e) => e.dataId == dataId);
     if (index != -1) {
