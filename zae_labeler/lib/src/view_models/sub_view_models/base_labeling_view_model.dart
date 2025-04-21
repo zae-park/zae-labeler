@@ -13,7 +13,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
   final StorageHelperInterface storageHelper;
 
   bool _isInitialized = false;
-  final bool _memoryOptimized = true;
+  final bool _memoryOptimized = false;
 
   int _currentIndex = 0;
   List<UnifiedData> _unifiedDataList = [];
