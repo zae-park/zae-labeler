@@ -5,9 +5,6 @@ import '../../utils/run_length_codec.dart';
 abstract class SegmentationLabelModel<T> extends LabelModel<T> {
   SegmentationLabelModel({required super.label, required super.labeledAt});
 
-  @override
-  bool get isLabeled => (label as SegmentationData).isNotEmpty;
-
   SegmentationLabelModel<T> addPixel(int x, int y, String classLabel);
   SegmentationLabelModel<T> removePixel(int x, int y);
 }
@@ -18,6 +15,9 @@ class SingleClassSegmentationLabelModel extends SegmentationLabelModel<Segmentat
 
   @override
   bool get isMultiClass => false;
+
+  @override
+  bool get isLabeled => label != null && label!.isNotEmpty;
 
   @override
   Map<String, dynamic> toJson() => {'label': label!.toJson(), 'labeled_at': labeledAt.toIso8601String()};
@@ -56,6 +56,9 @@ class MultiClassSegmentationLabelModel extends SegmentationLabelModel<Segmentati
 
   @override
   bool get isMultiClass => true;
+
+  @override
+  bool get isLabeled => label != null && label!.isNotEmpty;
 
   @override
   Map<String, dynamic> toJson() => {'label': label!.toJson(), 'labeled_at': labeledAt.toIso8601String()};
