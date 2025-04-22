@@ -24,7 +24,7 @@ class SingleClassSegmentationLabelModel extends SegmentationLabelModel<Segmentat
 
   @override
   factory SingleClassSegmentationLabelModel.fromJson(Map<String, dynamic> json) {
-    return SingleClassSegmentationLabelModel(label: SegmentationData.fromJson(json['segmentation']), labeledAt: DateTime.parse(json['labeled_at']));
+    return SingleClassSegmentationLabelModel(label: SegmentationData.fromJson(json['label']), labeledAt: DateTime.parse(json['labeled_at']));
   }
 
   factory SingleClassSegmentationLabelModel.empty() =>
@@ -66,7 +66,7 @@ class MultiClassSegmentationLabelModel extends SegmentationLabelModel<Segmentati
 
   @override
   factory MultiClassSegmentationLabelModel.fromJson(Map<String, dynamic> json) {
-    return MultiClassSegmentationLabelModel(label: SegmentationData.fromJson(json['segmentation']), labeledAt: DateTime.parse(json['labeled_at']));
+    return MultiClassSegmentationLabelModel(label: SegmentationData.fromJson(json['label']), labeledAt: DateTime.parse(json['labeled_at']));
   }
 
   factory MultiClassSegmentationLabelModel.empty() =>
