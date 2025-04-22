@@ -50,10 +50,16 @@ void main() {
     test('removePixel removes the pixel from the segment', () {
       viewModel.setSelectedClass('road');
       viewModel.addPixel(10, 10);
-      viewModel.removePixel(10, 10);
+      final label = viewModel.currentLabelVM.labelModel.label;
+      final segment = label.segments['road'];
+      expect(segment?.indices.contains((10, 10)), isTrue);
 
-      final label = viewModel.currentLabelVM.labelModel.label as SegmentationData;
-      expect(label.segments['road']?.indices.contains((10, 10)), isNull);
+      viewModel.setSelectedClass('car');
+      viewModel.removePixel(10, 10);
+      expect(segment?.indices.contains((10, 10)), isTrue);
+      final label_ = viewModel.currentLabelVM.labelModel.label;
+      final segment_ = label_.segments['road'];
+      expect(segment_?.indices.contains((10, 10)), isNull);
     });
 
     test('updateSegmentationGrid replaces the entire grid', () {
@@ -70,7 +76,6 @@ void main() {
       viewModel.updateSegmentationLabel(2, 2, 1);
 
       await viewModel.saveCurrentGridAsLabel();
-
       final label = viewModel.currentLabelVM.labelModel.label as SegmentationData;
       final segment = label.segments['car'];
 
