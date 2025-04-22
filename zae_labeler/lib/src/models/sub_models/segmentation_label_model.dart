@@ -27,7 +27,8 @@ class SingleClassSegmentationLabelModel extends SegmentationLabelModel<Segmentat
     return SingleClassSegmentationLabelModel(label: SegmentationData.fromJson(json['segmentation']), labeledAt: DateTime.parse(json['labeled_at']));
   }
 
-  factory SingleClassSegmentationLabelModel.empty() => SingleClassSegmentationLabelModel(label: null, labeledAt: DateTime.fromMillisecondsSinceEpoch(0));
+  factory SingleClassSegmentationLabelModel.empty() =>
+      SingleClassSegmentationLabelModel(label: SegmentationData(segments: {}), labeledAt: DateTime.fromMillisecondsSinceEpoch(0));
 
   @override
   SingleClassSegmentationLabelModel addPixel(int x, int y, String classLabel) => updateLabel(label!.addPixel(x, y, classLabel));
@@ -68,7 +69,8 @@ class MultiClassSegmentationLabelModel extends SegmentationLabelModel<Segmentati
     return MultiClassSegmentationLabelModel(label: SegmentationData.fromJson(json['segmentation']), labeledAt: DateTime.parse(json['labeled_at']));
   }
 
-  factory MultiClassSegmentationLabelModel.empty() => MultiClassSegmentationLabelModel(label: null, labeledAt: DateTime.fromMillisecondsSinceEpoch(0));
+  factory MultiClassSegmentationLabelModel.empty() =>
+      MultiClassSegmentationLabelModel(label: SegmentationData(segments: {}), labeledAt: DateTime.fromMillisecondsSinceEpoch(0));
 
   @override
   MultiClassSegmentationLabelModel addPixel(int x, int y, String classLabel) => updateLabel(label!.addPixel(x, y, classLabel));
