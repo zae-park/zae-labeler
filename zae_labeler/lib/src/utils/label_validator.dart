@@ -24,7 +24,7 @@ class LabelValidator {
 
   /// ✅ 라벨 상태 (완료, 주의, 미완료) 반환
   static LabelStatus getStatus(Project project, LabelModel? label) {
-    if (label == null) return LabelStatus.incomplete;
+    if (label == null || !label.isLabeled) return LabelStatus.incomplete;
     return isValid(label, project) ? LabelStatus.complete : LabelStatus.warning;
   }
 }
