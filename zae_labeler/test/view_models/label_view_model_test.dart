@@ -3,6 +3,8 @@ import 'package:zae_labeler/src/models/label_model.dart';
 import 'package:zae_labeler/src/models/sub_models/segmentation_label_model.dart';
 import 'package:zae_labeler/src/view_models/sub_view_models/segmentation_label_view_model.dart';
 
+import '../mocks/mock_storage_helper.dart';
+
 void main() {
   group('SegmentationLabelViewModel', () {
     late SegmentationLabelViewModel labelVM;
@@ -15,6 +17,7 @@ void main() {
         dataPath: '/path/image.png',
         mode: LabelingMode.multiClassSegmentation,
         labelModel: MultiClassSegmentationLabelModel.empty(),
+        storageHelper: MockStorageHelper(),
       );
     });
 

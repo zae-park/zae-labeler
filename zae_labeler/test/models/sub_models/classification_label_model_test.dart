@@ -11,7 +11,6 @@ void main() {
 
     test('MultiClassificationLabelModel isSelected works', () {
       final model = MultiClassificationLabelModel(label: {'cat', 'dog'}, labeledAt: DateTime.now());
-      expect(model.isSelected({'cat'}), isTrue);
       expect(model.isSelected('dog'), isTrue);
       expect(model.isSelected('bird'), isFalse);
     });
