@@ -14,23 +14,19 @@ class ClassificationLabelingViewModel extends LabelingViewModel {
   Future<void> updateLabel(dynamic labelData) async {
     final labelVM = currentLabelVM;
 
-    // Classification인 경우
     if (labelVM.labelModel is ClassificationLabelModel) {
       final model = labelVM.labelModel as ClassificationLabelModel;
-
-      labelVM.labelModel = model.isMultiClass
-          ? model.toggleLabel(labelData) // ✅ 다중 선택: toggle
-          : model.updateLabel(labelData); // ✅ 단일 선택: 덮어쓰기
+      labelVM.labelModel = model.isMultiClass ? model.toggleLabel(labelData) : model.updateLabel(labelData);
 
       debugPrint("[ClsLabelingVM.updateLabel] selected: ${labelVM.labelModel.label}");
+
       await labelVM.saveLabel();
-      debugPrint("[ClsLabelingVM.updateLabel] : label saved with $labelVM");
+      await refreshStatus(currentUnifiedData.dataId);
+
       notifyListeners();
     } else if (labelVM.labelModel is SegmentationLabelModel) {
       throw UnimplementedError('SegmentationLabelModel은 ClassificationLabelingViewModel에서 지원하지 않습니다.');
     }
-
-    // (Segmentation 등의 타입은 개별 구현에서 override)
   }
 
   @override
@@ -45,5 +41,11 @@ class ClassificationLabelingViewModel extends LabelingViewModel {
   }
 
   @override
-  bool isLabelSelected(String labelItem) => currentLabelVM.labelModel.isSelected(labelItem);
+  bool isLabelSelected(String labelItem) {
+    final model = currentLabelVM.labelModel;
+    if (model is ClassificationLabelModel) {
+      return model.isSelected(labelItem);
+    }
+    return false;
+  }
 }

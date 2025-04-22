@@ -12,13 +12,15 @@ class DummyLabelModel extends LabelModel<String> {
     return DummyLabelModel(label: labelData, labeledAt: DateTime.now());
   }
 
-  @override
   bool isSelected(String labelData) => label == labelData;
 
   @override
   Map<String, dynamic> toJson() {
     throw UnimplementedError();
   }
+
+  @override
+  bool get isLabeled => throw UnimplementedError();
 }
 
 void main() {
