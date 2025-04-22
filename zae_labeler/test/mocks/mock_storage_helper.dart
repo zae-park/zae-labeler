@@ -6,6 +6,7 @@ import 'package:zae_labeler/src/models/label_model.dart';
 import 'package:zae_labeler/src/models/data_model.dart';
 
 class MockStorageHelper implements StorageHelperInterface {
+  final Map<String, Map<String, LabelModel>> _labelStorage = {}; // 📦 label 저장소
   List<Project> savedProjects = [];
   bool wasSaveProjectCalled = false;
   bool shouldThrowOnSave = false;
@@ -38,15 +39,18 @@ class MockStorageHelper implements StorageHelperInterface {
   Future<List<Project>> loadProjectList() async => [];
 
   @override
-  Future<void> saveLabelData(String projectId, String dataId, String dataPath, LabelModel labelModel) async {}
+  Future<void> saveLabelData(String projectId, String dataId, String dataPath, LabelModel labelModel) async {
+    _labelStorage[projectId] ??= {};
+    _labelStorage[projectId]![dataId] = labelModel;
+  }
 
   @override
-  Future<LabelModel> loadLabelData(
-    String projectId,
-    String dataId,
-    String dataPath,
-    LabelingMode mode,
-  ) async {
+  Future<LabelModel> loadLabelData(String projectId, String dataId, String dataPath, LabelingMode mode) async {
+    final projectMap = _labelStorage[projectId];
+    final label = projectMap?[dataId];
+
+    if (label != null) return label;
+
     switch (mode) {
       case LabelingMode.singleClassification:
         return SingleClassificationLabelModel.empty();
