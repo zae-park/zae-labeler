@@ -11,7 +11,7 @@ abstract class SegmentationLabelModel<T> extends LabelModel<T> {
 
 /// ✅ 단일 클래스 세그멘테이션 (Single-Class Segmentation)
 class SingleClassSegmentationLabelModel extends SegmentationLabelModel<SegmentationData> {
-  SingleClassSegmentationLabelModel({required super.labeledAt, required super.label});
+  SingleClassSegmentationLabelModel({required super.label, required super.labeledAt});
 
   @override
   bool get isMultiClass => false;
@@ -27,7 +27,7 @@ class SingleClassSegmentationLabelModel extends SegmentationLabelModel<Segmentat
     return SingleClassSegmentationLabelModel(label: SegmentationData.fromJson(json['segmentation']), labeledAt: DateTime.parse(json['labeled_at']));
   }
 
-  factory SingleClassSegmentationLabelModel.empty() => SingleClassSegmentationLabelModel(labeledAt: DateTime.now(), label: SegmentationData(segments: {}));
+  factory SingleClassSegmentationLabelModel.empty() => SingleClassSegmentationLabelModel(label: null, labeledAt: DateTime.fromMillisecondsSinceEpoch(0));
 
   @override
   SingleClassSegmentationLabelModel addPixel(int x, int y, String classLabel) => updateLabel(label!.addPixel(x, y, classLabel));
@@ -68,7 +68,7 @@ class MultiClassSegmentationLabelModel extends SegmentationLabelModel<Segmentati
     return MultiClassSegmentationLabelModel(label: SegmentationData.fromJson(json['segmentation']), labeledAt: DateTime.parse(json['labeled_at']));
   }
 
-  factory MultiClassSegmentationLabelModel.empty() => MultiClassSegmentationLabelModel(labeledAt: DateTime.now(), label: SegmentationData(segments: {}));
+  factory MultiClassSegmentationLabelModel.empty() => MultiClassSegmentationLabelModel(label: null, labeledAt: DateTime.fromMillisecondsSinceEpoch(0));
 
   @override
   MultiClassSegmentationLabelModel addPixel(int x, int y, String classLabel) => updateLabel(label!.addPixel(x, y, classLabel));

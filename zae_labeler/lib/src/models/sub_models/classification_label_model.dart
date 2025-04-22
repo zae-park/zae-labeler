@@ -29,7 +29,7 @@ class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
 
   @override
   factory SingleClassificationLabelModel.empty() {
-    return SingleClassificationLabelModel(label: 'empty', labeledAt: DateTime.now());
+    return SingleClassificationLabelModel(label: null, labeledAt: DateTime.fromMillisecondsSinceEpoch(0));
   }
 
   @override
@@ -66,7 +66,7 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
 
   /// ✅ `empty()` 구현
   @override
-  factory MultiClassificationLabelModel.empty() => MultiClassificationLabelModel(label: {}, labeledAt: DateTime.now());
+  factory MultiClassificationLabelModel.empty() => MultiClassificationLabelModel(label: null, labeledAt: DateTime.fromMillisecondsSinceEpoch(0));
 
   @override
   MultiClassificationLabelModel updateLabel(Set<String> labelData) => MultiClassificationLabelModel(label: labelData, labeledAt: DateTime.now());
