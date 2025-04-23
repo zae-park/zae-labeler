@@ -48,7 +48,7 @@ class LoginScreen extends StatelessWidget {
               Column(
                 children: [
                   Text(
-                    "⚠️ ${email ?? '해당 이메일'}은 이미 $provider 계정으로 가입되어 있습니다.",
+                    "⚠️ ${email ?? '이 이메일'}은 이미 $provider 계정으로 가입되어 있습니다.",
                     style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
@@ -59,13 +59,19 @@ class LoginScreen extends StatelessWidget {
             ElevatedButton.icon(
               icon: const Icon(Icons.login),
               label: const Text("Sign in with Google"),
-              onPressed: () => authVM.signInWithGoogle(),
+              onPressed: () {
+                if (hasConflict && provider != "Google") return;
+                authVM.signInWithGoogle();
+              },
               style: hasConflict && provider == "Google" ? ElevatedButton.styleFrom(backgroundColor: Colors.blue.shade700) : null,
             ),
             ElevatedButton.icon(
               icon: const Icon(Icons.code),
               label: const Text("Sign in with GitHub"),
-              onPressed: () => authVM.signInWithGitHub(),
+              onPressed: () {
+                if (hasConflict && provider != "GitHub") return;
+                authVM.signInWithGitHub();
+              },
               style: hasConflict && provider == "GitHub" ? ElevatedButton.styleFrom(backgroundColor: Colors.black87) : null,
             ),
           ],
