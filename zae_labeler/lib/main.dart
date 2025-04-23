@@ -1,28 +1,45 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
-import 'src/views/pages/project_list_page.dart';
+import 'src/utils/proxy_storage_helper/cloud_storage_helper.dart';
+import 'src/utils/storage_helper.dart';
+import 'src/view_models/auth_view_model.dart';
+import 'src/views/pages/auth_gate.dart';
 import 'src/views/pages/configuration_page.dart';
 import 'src/views/pages/labeling_page.dart';
 import 'src/view_models/project_list_view_model.dart';
 import 'src/view_models/locale_view_model.dart';
-import 'src/utils/storage_helper.dart'; // ✅ StorageHelper import 추가
+import 'env.dart';
 
-void main() {
-  runApp(const MyApp());
+import 'firebase_options.dart';
+import 'src/views/pages/project_list_page.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // await FirebaseAuth.instance.authStateChanges().firstWhere((u) => u != null);
+
+  runApp(const ZaeLabeler());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class ZaeLabeler extends StatelessWidget {
+  const ZaeLabeler({super.key});
 
   @override
   Widget build(BuildContext context) {
+    const bool isWebProd = kIsWeb && kReleaseMode;
+
     return MultiProvider(
       // Registering providers for state management
       providers: [
-        ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(storageHelper: StorageHelper.instance)),
+        ChangeNotifierProvider<ProjectListViewModel>(
+          create: (_) => ProjectListViewModel(storageHelper: isWebProd ? CloudStorageHelper() : StorageHelper.instance),
+        ),
         ChangeNotifierProvider<LocaleViewModel>(create: (_) => LocaleViewModel()),
-        Provider<StorageHelperInterface>.value(value: StorageHelper.instance),
+        Provider<StorageHelperInterface>.value(value: isWebProd ? CloudStorageHelper() : StorageHelper.instance),
+        ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel()),
       ],
       child: Consumer<LocaleViewModel>(
         builder: (context, localeVM, child) {
@@ -45,7 +62,8 @@ class MyApp extends StatelessWidget {
             // Initial route when the app is launched
             initialRoute: '/',
             routes: {
-              '/': (context) => const ProjectListPage(),
+              '/': (context) => isProd ? const AuthGate() : const ProjectListPage(),
+              // '/': (context) => const ProjectListPage(),
               '/configuration': (context) => const ConfigureProjectPage(),
               '/labeling': (context) => const LabelingPage(),
             },

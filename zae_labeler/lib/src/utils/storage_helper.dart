@@ -3,7 +3,9 @@ import '../models/data_model.dart';
 import '../models/label_model.dart';
 import '../models/project_model.dart';
 import 'proxy_storage_helper/interface_storage_helper.dart';
-import 'proxy_storage_helper/native_storage_helper.dart' if (dart.library.html) 'proxy_storage_helper/web_storage_helper.dart';
+import 'proxy_storage_helper/stub_storage_helper.dart'
+    if (dart.library.io) 'proxy_storage_helper/native_storage_helper.dart'
+    if (dart.library.html) 'proxy_storage_helper/web_storage_helper.dart';
 export 'proxy_storage_helper/interface_storage_helper.dart';
 
 /// ✅ **StorageHelper: 플랫폼별 StorageHelperImpl을 Wrapping하는 클래스**
@@ -14,7 +16,7 @@ export 'proxy_storage_helper/interface_storage_helper.dart';
 /// - **Web:** `localStorage` 또는 브라우저 다운로드 (ZIP 파일)
 /// - **Native:** `Application Documents Directory` 내 JSON 파일 저장
 class StorageHelper extends StorageHelperInterface {
-  static final _instance = StorageHelperImpl();
+  static final StorageHelperInterface _instance = StorageHelperImpl();
 
   /// ✅ **StorageHelper 인스턴스 반환**
   /// - 플랫폼에 따라 적절한 `StorageHelperImpl`을 반환

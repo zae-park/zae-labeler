@@ -6,6 +6,7 @@ import 'base_label_model.dart';
 abstract class ClassificationLabelModel<T> extends LabelModel<T> {
   ClassificationLabelModel({required super.label, required super.labeledAt});
   LabelModel toggleLabel(String labelItem);
+  bool isSelected(String labelData);
 }
 
 /// ✅ 단일 분류 (Single Classification)
@@ -16,21 +17,25 @@ class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
   bool get isMultiClass => false;
 
   @override
+  bool get isLabeled => label?.trim().isNotEmpty == true;
+
+  @override
   Map<String, dynamic> toJson() => {'label': label, 'labeled_at': labeledAt.toIso8601String()};
 
   @override
   factory SingleClassificationLabelModel.fromJson(Map<String, dynamic> json) {
-    return SingleClassificationLabelModel(label: json['label'] as String, labeledAt: json['labels']);
+    return SingleClassificationLabelModel(label: json['label'] as String, labeledAt: json['label']);
   }
 
   @override
   factory SingleClassificationLabelModel.empty() {
-    return SingleClassificationLabelModel(labeledAt: DateTime.now(), label: 'empty');
+    return SingleClassificationLabelModel(label: null, labeledAt: DateTime.fromMillisecondsSinceEpoch(0));
   }
 
   @override
   SingleClassificationLabelModel updateLabel(String labelData) {
-    return SingleClassificationLabelModel(labeledAt: DateTime.now(), label: labelData);
+    debugPrint("[ClsLabelM.updateLabel] labelData: $labelData");
+    return SingleClassificationLabelModel(label: labelData, labeledAt: DateTime.now());
   }
 
   @override
@@ -48,24 +53,27 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
   bool get isMultiClass => true;
 
   @override
-  Map<String, dynamic> toJson() => {'label': label.toList(), 'labeled_at': labeledAt.toIso8601String()};
+  bool get isLabeled => label != null && label!.isNotEmpty;
+
+  @override
+  Map<String, dynamic> toJson() => {'label': label?.toList(), 'labeled_at': labeledAt.toIso8601String()};
 
   /// ✅ `fromJson()` 구현
   @override
   factory MultiClassificationLabelModel.fromJson(Map<String, dynamic> json) {
-    return MultiClassificationLabelModel(label: Set<String>.from(json['labels']), labeledAt: json['labeled_at']);
+    return MultiClassificationLabelModel(label: Set<String>.from(json['label']), labeledAt: json['labeled_at']);
   }
 
   /// ✅ `empty()` 구현
   @override
-  factory MultiClassificationLabelModel.empty() => MultiClassificationLabelModel(labeledAt: DateTime.now(), label: {});
+  factory MultiClassificationLabelModel.empty() => MultiClassificationLabelModel(label: null, labeledAt: DateTime.fromMillisecondsSinceEpoch(0));
 
   @override
-  MultiClassificationLabelModel updateLabel(Set<String> labelData) => MultiClassificationLabelModel(labeledAt: DateTime.now(), label: labelData);
+  MultiClassificationLabelModel updateLabel(Set<String> labelData) => MultiClassificationLabelModel(label: labelData, labeledAt: DateTime.now());
 
   @override
   LabelModel toggleLabel(String labelItem) {
-    final updated = Set<String>.from(label);
+    final updated = Set<String>.from(label ?? {});
     if (updated.contains(labelItem)) {
       updated.remove(labelItem);
     } else {
@@ -75,20 +83,20 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
   }
 
   @override
-  // bool isSelected(Set<String> labelData) => labelData.every(label.contains); // ✅ 다중 값 비교
-  bool isSelected(dynamic labelData) {
-    if (labelData is String) {
-      final result = label.contains(labelData);
-      debugPrint("[isSelected] labelItem: $labelData → $result");
-      return result;
-    } else if (labelData is Set<String>) {
-      final result = labelData.every(label.contains);
-      debugPrint("[isSelected] labelItem: $labelData → $result");
-      return result;
-    }
-    debugPrint("[isSelected] labelItem: $labelData → False");
-    return false;
-  }
+  bool isSelected(String labelData) => label?.contains(labelData) ?? false;
+  // bool isSelected(dynamic labelData) {
+  //   if (labelData is String) {
+  //     final result = label.contains(labelData);
+  //     debugPrint("[isSelected] labelItem: $labelData → $result");
+  //     return result;
+  //   } else if (labelData is Set<String>) {
+  //     final result = labelData.every(label.contains);
+  //     debugPrint("[isSelected] labelItem: $labelData → $result");
+  //     return result;
+  //   }
+  //   debugPrint("[isSelected] labelItem: $labelData → False");
+  //   return false;
+  // }
 }
 
 // /// ✅ 크로스 분류 (Cross Classification) - 추후 업데이트

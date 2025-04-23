@@ -1,0 +1,40 @@
+name: Deploy to Firebase (Prod)
+
+on:
+  push:
+    branches:
+      - main
+      - firebase
+
+jobs:
+  deploy_prod:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.16.5'
+
+      - run: flutter pub get
+        working-directory: ./zae_labeler
+
+      - name: Insert GA Tag
+        working-directory: ./zae_labeler
+        env:
+          GA_TRACKING_ID: ${{ secrets.GA_TAG_WEB }}
+        run: |
+          cp web/index.template.html web/index.html
+          echo "Injecting GA ID: $GA_TRACKING_ID"
+          GA_SCRIPT="<script async src='https://www.googletagmanager.com/gtag/js?id=$GA_TRACKING_ID'></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','$GA_TRACKING_ID');</script>"
+          awk -v ga_tag="$GA_SCRIPT" '{gsub("<!-- GOOGLE_ANALYTICS -->", ga_tag)}1' web/index.template.html > web/index.html
+
+      - run: flutter build web --release --dart-define=FLAVOR=production
+        working-directory: ./zae_labeler
+
+      - run: npm install -g firebase-tools
+
+      - name: Firebase Deploy (prod)
+        run: firebase deploy --only hosting:prod
+        working-directory: ./zae_labeler
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}

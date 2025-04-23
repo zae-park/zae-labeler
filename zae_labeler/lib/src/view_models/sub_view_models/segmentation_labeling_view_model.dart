@@ -19,11 +19,13 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
     if (_selectedClass == null && project.classes.isNotEmpty) {
       _selectedClass = project.classes.first;
     }
+    await refreshStatus(currentUnifiedData.dataId);
   }
 
   @override
   Future<void> postMove() async {
     restoreGridFromLabel();
+    await refreshStatus(currentUnifiedData.dataId);
   }
 
   // ✅ 1. Grid 상태 관리
@@ -108,6 +110,7 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
   Future<void> updateLabel(dynamic labelData) async {
     currentLabelVM.updateLabel(labelData);
     await currentLabelVM.saveLabel();
+    await refreshStatus(currentUnifiedData.dataId);
     notifyListeners();
   }
 

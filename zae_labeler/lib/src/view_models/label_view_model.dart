@@ -1,3 +1,5 @@
+import 'package:zae_labeler/src/utils/proxy_storage_helper/interface_storage_helper.dart';
+
 import '../models/label_model.dart';
 import 'sub_view_models/base_label_view_model.dart';
 import 'sub_view_models/classification_label_view_model.dart';
@@ -43,8 +45,8 @@ class LabelViewModelFactory {
     required String dataFilename,
     required String dataPath,
     required LabelingMode mode,
+    required StorageHelperInterface storageHelper,
   }) {
-    final model = LabelModelFactory.createNew(mode);
     switch (mode) {
       case LabelingMode.singleClassification:
       case LabelingMode.multiClassification:
@@ -54,7 +56,8 @@ class LabelViewModelFactory {
           dataFilename: dataFilename,
           dataPath: dataPath,
           mode: mode,
-          labelModel: model,
+          labelModel: LabelModelFactory.createNew(mode),
+          storageHelper: storageHelper,
         );
 
       case LabelingMode.singleClassSegmentation:
@@ -65,7 +68,8 @@ class LabelViewModelFactory {
           dataFilename: dataFilename,
           dataPath: dataPath,
           mode: mode,
-          labelModel: model,
+          labelModel: LabelModelFactory.createNew(mode),
+          storageHelper: storageHelper,
         );
     }
   }

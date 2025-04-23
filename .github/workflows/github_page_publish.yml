@@ -1,0 +1,34 @@
+name: Deploy to GitHub Pages (Dev)
+
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  deploy_dev:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.16.5'
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        working-directory: ./zae_labeler
+        run: flutter pub get
+
+      - name: Build web (dev mode)
+        working-directory: ./zae_labeler
+        run: flutter build web --base-href "/${{ github.event.repository.name }}/" --dart-define=FLAVOR=development
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.PAT_LABLER }}
+          publish_branch: docs
+          publish_dir: zae_labeler/build/web
+          destination_dir: dev

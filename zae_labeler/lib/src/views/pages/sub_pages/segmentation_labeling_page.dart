@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../utils/storage_helper.dart';
 import '../../../view_models/labeling_view_model.dart';
 import 'base_labeling_page.dart';
@@ -67,9 +68,8 @@ class _SegmentationLabelingPageState extends BaseLabelingPageState<SegmentationL
   }
 
   @override
-  SegmentationLabelingViewModel createViewModel() {
-    return SegmentationLabelingViewModel(project: project, storageHelper: StorageHelper.instance);
-  }
+  SegmentationLabelingViewModel createViewModel() =>
+      SegmentationLabelingViewModel(project: project, storageHelper: Provider.of<StorageHelperInterface>(context, listen: false));
 
   @override
   void handleNumericKeyInput(SegmentationLabelingViewModel labelingVM, int index) {
