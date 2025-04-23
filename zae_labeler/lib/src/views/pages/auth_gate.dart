@@ -34,10 +34,23 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authVM = context.watch<AuthViewModel>();
-
     final hasConflict = authVM.conflictingProvider != null;
     final provider = authVM.conflictingProvider;
     final email = authVM.conflictingEmail;
+
+    // ✅ conflict 발생 시 SnackBar 한 번만 호출
+    if (hasConflict) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("⚠️ 이미 $provider 계정으로 가입된 ${email ?? '사용자'}입니다."),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      });
+    }
 
     return Scaffold(
       body: Center(
