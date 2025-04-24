@@ -40,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _maybeShowConflictSnackbar();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowConflictSnackbar());
   }
 
   void _maybeShowConflictSnackbar() {
@@ -50,14 +50,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (!_hasShownConflictSnackbar && provider != null && email != null) {
       _hasShownConflictSnackbar = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("⚠️ $email 계정은 $provider 계정으로 가입되어 있습니다."),
-            backgroundColor: Colors.red.shade700,
-          ),
-        );
-      });
+      final msg = "⚠️ $email 계정은 $provider 계정으로 가입되어 있습니다.";
+      debugPrint("[Snackbar] $msg");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
     }
   }
 
