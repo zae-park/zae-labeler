@@ -20,7 +20,7 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await FirebaseAuth.instance.authStateChanges().firstWhere((u) => u != null);
+  // await FirebaseAuth.instance.authStateChanges().firstWhere((u) => u != null);
 
   runApp(const MyApp());
 }
