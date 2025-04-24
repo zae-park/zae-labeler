@@ -66,9 +66,12 @@ class AuthViewModel extends ChangeNotifier {
     if (e.code == 'account-exists-with-different-credential' && e.email != null) {
       conflictingEmail = e.email;
       final methods = await _auth.fetchSignInMethodsForEmail(conflictingEmail!);
-      const map = {'google.com': 'Google', 'github.com': 'GitHub'};
-      conflictingProvider = map[methods.first] ?? methods.first;
-
+      if (methods.isNotEmpty) {
+        const map = {'google.com': 'Google', 'github.com': 'GitHub'};
+        conflictingProvider = map[methods.first] ?? methods.first;
+      } else {
+        conflictingProvider = null;
+      }
       debugPrint("⚠️ 계정 충돌: ${conflictingEmail!} → 이전 로그인 방식은 $conflictingProvider");
     } else {
       debugPrint("❌ 로그인 실패: ${e.code} / ${e.message}");
