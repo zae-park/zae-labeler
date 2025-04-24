@@ -40,14 +40,16 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _maybeShowConflictSnackbar();
+  }
 
-    final authVM = context.watch<AuthViewModel>();
+  void _maybeShowConflictSnackbar() {
+    final authVM = context.read<AuthViewModel>();
     final provider = authVM.conflictingProvider;
     final email = authVM.conflictingEmail;
 
-    if (!_hasShownConflictSnackbar && provider != null) {
+    if (!_hasShownConflictSnackbar && provider != null && email != null) {
       _hasShownConflictSnackbar = true;
-
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -61,6 +63,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    _maybeShowConflictSnackbar(); // 👈 build 중에도 체크
+
     final authVM = context.watch<AuthViewModel>();
     final hasConflict = authVM.conflictingProvider != null;
     final provider = authVM.conflictingProvider;
