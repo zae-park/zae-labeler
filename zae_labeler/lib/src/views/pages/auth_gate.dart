@@ -14,7 +14,7 @@ class AuthGate extends StatelessWidget {
         if (isDev || authVM.isSignedIn) {
           return Scaffold(
             appBar: AppBar(
-              title: Text(authVM.isSignedIn ? "Welcome, ${authVM.userName}" : "Welcome Guest"),
+              title: Text("Welcome, ${authVM.userName.isNotEmpty ? authVM.userName : 'Guest'}"),
               actions: [IconButton(icon: const Icon(Icons.logout), onPressed: () => authVM.signOut())],
             ),
             body: const ProjectListPage(),
@@ -40,33 +40,34 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowConflictSnackbar());
+    _showConflictSnackbarIfNeeded();
   }
 
-  void _maybeShowConflictSnackbar() {
+  void _showConflictSnackbarIfNeeded() {
     final authVM = context.read<AuthViewModel>();
     final provider = authVM.conflictingProvider;
     final email = authVM.conflictingEmail;
 
     if (!_hasShownConflictSnackbar && provider != null && email != null) {
       _hasShownConflictSnackbar = true;
-      final msg = "⚠️ $email 계정은 $provider 계정으로 가입되어 있습니다.";
-      debugPrint("[Snackbar] $msg");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(msg),
-          backgroundColor: Colors.red.shade700,
-        ),
-      );
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final msg = "⚠️ $email 계정은 $provider 계정으로 가입되어 있습니다.\n해당 방법으로 로그인해주세요.";
+        debugPrint("[Snackbar] $msg");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: Colors.red.shade700,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    _maybeShowConflictSnackbar(); // 👈 build 중에도 체크
-
     final authVM = context.watch<AuthViewModel>();
-    final hasConflict = authVM.conflictingProvider != null;
     final provider = authVM.conflictingProvider;
 
     return Scaffold(
@@ -74,20 +75,30 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (hasConflict) ...[
-              Text(
-                "⚠️ 이전에 $provider 로 로그인한 계정입니다.",
-                style: const TextStyle(color: Colors.red),
+            if (provider != null)
+              Column(
+                children: [
+                  Text(
+                    "⚠️ 이전에 $provider 로 로그인한 계정입니다.",
+                    style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  Text("아래의 $provider 버튼을 눌러 다시 로그인해주세요."),
+                  const SizedBox(height: 24),
+                ],
               ),
-              const SizedBox(height: 16),
-            ],
-            ElevatedButton(
+            ElevatedButton.icon(
+              icon: const Icon(Icons.login),
+              label: const Text("Sign in with Google"),
+              style: provider == "Google" ? ElevatedButton.styleFrom(backgroundColor: Colors.blue.shade700) : null,
               onPressed: () => authVM.signInWithGoogle(),
-              child: const Text("Sign in with Google"),
             ),
-            ElevatedButton(
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.code),
+              label: const Text("Sign in with GitHub"),
+              style: provider == "GitHub" ? ElevatedButton.styleFrom(backgroundColor: Colors.black87) : null,
               onPressed: () => authVM.signInWithGitHub(),
-              child: const Text("Sign in with GitHub"),
             ),
           ],
         ),
