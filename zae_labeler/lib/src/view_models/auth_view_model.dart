@@ -75,8 +75,8 @@ class AuthViewModel extends ChangeNotifier {
       } else {
         conflictingProvider = "Unknown Provider";
       }
-
       debugPrint("⚠️ 계정 충돌: $conflictingEmail → 이전 로그인 방식은 $conflictingProvider");
+      debugPrint("⚠️ 계정 인증 방법: $methods");
     } else {
       debugPrint("❌ 로그인 실패: ${e.code} / ${e.message}");
     }
