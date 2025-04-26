@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../view_models/auth_view_model.dart';
 import 'project_list_page.dart';
+import '../../view_models/auth_view_model.dart';
 import '../../../env.dart';
+import '../widgets/buttons/social_login.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -87,19 +88,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 24),
                 ],
               ),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.login),
-              label: const Text("Sign in with Google"),
-              style: provider == "Google" ? ElevatedButton.styleFrom(backgroundColor: Colors.blue.shade700) : null,
-              onPressed: () => authVM.signInWithGoogle(),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.code),
-              label: const Text("Sign in with GitHub"),
-              style: provider == "GitHub" ? ElevatedButton.styleFrom(backgroundColor: Colors.black87) : null,
-              onPressed: () => authVM.signInWithGitHub(),
-            ),
+            SocialLoginButton.google(onPressed: () => authVM.signInWithGoogle()),
+            SocialLoginButton.github(onPressed: () => authVM.signInWithGitHub()),
           ],
         ),
       ),
