@@ -52,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _hasShownConflictSnackbar = true;
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final msg = "⚠️ $email 계정은 $provider 계정으로 가입되어 있습니다.\n해당 방법으로 로그인해주세요.";
+        final msg = "⚠️ $email 계정은 이미 가입되어 있습니다.\n다른 방법으로 로그인해주세요.";
         debugPrint("[Snackbar] $msg");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
