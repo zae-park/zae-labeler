@@ -67,16 +67,21 @@ class AuthViewModel extends ChangeNotifier {
   Future<void> _handleAuthException(FirebaseAuthException e) async {
     if (e.code == 'account-exists-with-different-credential' && e.email != null) {
       conflictingEmail = e.email;
-      final methods = await _auth.fetchSignInMethodsForEmail(conflictingEmail!);
 
-      if (methods.isNotEmpty) {
-        const map = {'google.com': 'Google', 'github.com': 'GitHub'};
-        conflictingProvider = map[methods.first] ?? methods.first;
-      } else {
-        conflictingProvider = "Unknown Provider";
+      try {
+        final methods = await _auth.fetchSignInMethodsForEmail(conflictingEmail!);
+
+        if (methods.isNotEmpty) {
+          const map = {'google.com': 'Google', 'github.com': 'GitHub'};
+          conflictingProvider = map[methods.first] ?? methods.first;
+        } else {
+          conflictingProvider = "Google 또는 GitHub";
+        }
+      } catch (e) {
+        conflictingProvider = "Google 또는 GitHub"; // fetch 실패 시에도 fallback
       }
+
       debugPrint("⚠️ 계정 충돌: $conflictingEmail → 이전 로그인 방식은 $conflictingProvider");
-      debugPrint("⚠️ 계정 인증 방법: $methods");
     } else {
       debugPrint("❌ 로그인 실패: ${e.code} / ${e.message}");
     }
