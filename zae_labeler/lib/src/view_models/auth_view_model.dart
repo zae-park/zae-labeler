@@ -3,6 +3,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+// import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart' as kakao;
 
 class AuthViewModel extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -63,6 +64,28 @@ class AuthViewModel extends ChangeNotifier {
       await _handleAuthException(e);
     }
   }
+
+  // Future<void> signInWithKakao() async {
+  //   try {
+  //     kakao.OAuthToken token;
+
+  //     if (await kakao.isKakaoTalkInstalled()) {
+  //       token = await kakao.UserApi.instance.loginWithKakaoTalk();
+  //     } else {
+  //       token = await kakao.UserApi.instance.loginWithKakaoAccount();
+  //     }
+
+  //     final user = await kakao.UserApi.instance.me();
+  //     debugPrint("✅ Kakao 로그인 성공: ${user.kakaoAccount?.email ?? user.id}");
+
+  //     // TODO: 이후 firebase custom token 사용 가능
+  //     conflictingEmail = null;
+  //     conflictingProvider = null;
+  //     notifyListeners();
+  //   } catch (e) {
+  //     debugPrint('❌ 카카오 로그인 실패: $e');
+  //   }
+  // }
 
   Future<void> _handleAuthException(FirebaseAuthException e) async {
     if (e.code == 'account-exists-with-different-credential' && e.email != null) {
