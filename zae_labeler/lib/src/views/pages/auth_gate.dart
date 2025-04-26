@@ -4,6 +4,7 @@ import 'project_list_page.dart';
 import '../../view_models/auth_view_model.dart';
 import '../../../env.dart';
 import '../widgets/buttons/social_login.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -37,6 +38,21 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _hasShownConflictSnackbar = false;
+
+  Widget createGuestLogInButton() {
+    return ElevatedButton.icon(
+      icon: const Icon(Icons.open_in_new),
+      label: const Text("No Log in"),
+      onPressed: () async {
+        final url = Uri.parse('https://zae-park.github.io/zae-labeler/');
+        if (await canLaunchUrl(url)) {
+          await launchUrl(url, mode: LaunchMode.externalApplication);
+        } else {
+          debugPrint('❌ Could not launch $url');
+        }
+      },
+    );
+  }
 
   @override
   void didChangeDependencies() {
@@ -90,6 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             SocialLoginButton.google(onPressed: () => authVM.signInWithGoogle()),
             SocialLoginButton.github(onPressed: () => authVM.signInWithGitHub()),
+            createGuestLogInButton(),
           ],
         ),
       ),
