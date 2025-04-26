@@ -12,7 +12,7 @@ class SocialLoginButton extends StatelessWidget {
   factory SocialLoginButton.google({required VoidCallback onPressed}) {
     return SocialLoginButton(
       label: "Sign in with Google",
-      logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg',
+      logoUrl: 'http://pngimg.com/uploads/google/google_PNG19635.png',
       backgroundColor: Colors.white,
       onPressed: onPressed,
     );
