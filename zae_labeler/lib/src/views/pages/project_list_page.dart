@@ -12,6 +12,7 @@ import '../../models/project_model.dart';
 import '../pages/configuration_page.dart';
 import '../../utils/storage_helper.dart';
 import '../widgets/project_tile.dart';
+import 'package:zae_labeler/common/common_widgets.dart';
 
 class ProjectListPage extends StatefulWidget {
   const ProjectListPage({Key? key}) : super(key: key);
@@ -84,8 +85,8 @@ class _ProjectListPageState extends State<ProjectListPage> {
     return Consumer2<ProjectListViewModel, LocaleViewModel>(
       builder: (context, projectListVM, localeVM, child) {
         return Scaffold(
-          appBar: AppBar(
-            title: Text(localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 목록' : 'Project List'),
+          appBar: AppHeader(
+            title: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 목록' : 'Project List',
             actions: [
               PopupMenuButton<String>(
                 onSelected: (value) => localeVM.changeLocale(value),

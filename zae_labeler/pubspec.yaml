@@ -28,6 +28,8 @@ dependencies:
   firebase_auth: ^4.17.8
   google_sign_in: ^6.2.1
   cloud_firestore: ^4.15.8
+  kakao_flutter_sdk_user: ^1.9.2
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:

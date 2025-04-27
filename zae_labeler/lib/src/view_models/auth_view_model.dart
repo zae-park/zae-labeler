@@ -1,10 +1,16 @@
+// 📁 lib/src/view_models/auth_view_model.dart
+
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+// import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart' as kakao;
 
 class AuthViewModel extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   User? user;
+
+  String? conflictingEmail;
+  String? conflictingProvider; // ex: "Google", "GitHub"
 
   AuthViewModel() {
     _auth.authStateChanges().listen((User? u) {
@@ -16,18 +22,12 @@ class AuthViewModel extends ChangeNotifier {
   Future<void> signInWithGoogle() async {
     try {
       if (kIsWeb) {
-        // ✅ Web 로그인 방식
-        GoogleAuthProvider authProvider = GoogleAuthProvider();
-
-        final UserCredential userCredential = await FirebaseAuth.instance.signInWithPopup(authProvider);
-        user = userCredential.user;
+        final credential = GoogleAuthProvider();
+        final result = await _auth.signInWithPopup(credential);
+        user = result.user;
       } else {
-        // ✅ Native(Android/iOS) 로그인 방식
         final googleUser = await GoogleSignIn().signIn();
-        if (googleUser == null) {
-          debugPrint('🚫 로그인 취소됨 또는 팝업 차단');
-          return;
-        }
+        if (googleUser == null) return;
 
         final googleAuth = await googleUser.authentication;
         final credential = GoogleAuthProvider.credential(
@@ -35,15 +35,17 @@ class AuthViewModel extends ChangeNotifier {
           idToken: googleAuth.idToken,
         );
 
-        final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-        user = userCredential.user;
+        final result = await _auth.signInWithCredential(credential);
+        user = result.user;
       }
 
-      debugPrint("[Auth] Logged in UID: ${FirebaseAuth.instance.currentUser?.uid}");
+      conflictingEmail = null;
+      conflictingProvider = null;
+
+      debugPrint("[Auth] ✅ 로그인 성공: ${user?.uid}");
       notifyListeners();
-    } catch (e) {
-      // final conflict = await getConflictingProvider(e);
-      debugPrint('❌ Google 로그인 실패: $e');
+    } on FirebaseAuthException catch (e) {
+      await _handleAuthException(e);
     }
   }
 
@@ -51,38 +53,72 @@ class AuthViewModel extends ChangeNotifier {
     try {
       final githubProvider = GithubAuthProvider();
 
-      if (kIsWeb) {
-        await FirebaseAuth.instance.signInWithPopup(githubProvider);
-      } else {
-        await FirebaseAuth.instance.signInWithProvider(githubProvider);
-      }
-    } catch (e) {
-      // final conflict = await getConflictingProvider(e);
-      debugPrint('❌ GitHub 로그인 실패: $e');
+      final result = kIsWeb ? await _auth.signInWithPopup(githubProvider) : await _auth.signInWithProvider(githubProvider);
+      user = result.user;
+
+      conflictingEmail = null;
+      conflictingProvider = null;
+
+      notifyListeners();
+    } on FirebaseAuthException catch (e) {
+      await _handleAuthException(e);
     }
+  }
+
+  // Future<void> signInWithKakao() async {
+  //   try {
+  //     kakao.OAuthToken token;
+
+  //     if (await kakao.isKakaoTalkInstalled()) {
+  //       token = await kakao.UserApi.instance.loginWithKakaoTalk();
+  //     } else {
+  //       token = await kakao.UserApi.instance.loginWithKakaoAccount();
+  //     }
+
+  //     final user = await kakao.UserApi.instance.me();
+  //     debugPrint("✅ Kakao 로그인 성공: ${user.kakaoAccount?.email ?? user.id}");
+
+  //     // TODO: 이후 firebase custom token 사용 가능
+  //     conflictingEmail = null;
+  //     conflictingProvider = null;
+  //     notifyListeners();
+  //   } catch (e) {
+  //     debugPrint('❌ 카카오 로그인 실패: $e');
+  //   }
+  // }
+
+  Future<void> _handleAuthException(FirebaseAuthException e) async {
+    if (e.code == 'account-exists-with-different-credential' && e.email != null) {
+      conflictingEmail = e.email;
+
+      try {
+        final methods = await _auth.fetchSignInMethodsForEmail(conflictingEmail!);
+
+        if (methods.isNotEmpty) {
+          const map = {'google.com': 'Google', 'github.com': 'GitHub'};
+          conflictingProvider = map[methods.first] ?? methods.first;
+        } else {
+          conflictingProvider = "Google 또는 GitHub";
+        }
+      } catch (e) {
+        conflictingProvider = "Google 또는 GitHub"; // fetch 실패 시에도 fallback
+      }
+
+      debugPrint("⚠️ 계정 충돌: $conflictingEmail → 이전 로그인 방식은 $conflictingProvider");
+    } else {
+      debugPrint("❌ 로그인 실패: ${e.code} / ${e.message}");
+    }
+
+    notifyListeners();
   }
 
   Future<void> signOut() async {
     await _auth.signOut();
     await GoogleSignIn().signOut();
-    user = null; // ✅ 사용자 정보 초기화
-    notifyListeners(); // ✅ UI 갱신 유도
-  }
-
-  Future<String?> getConflictingProvider(FirebaseAuthException e) async {
-    final email = e.email;
-    if (e.code != 'account-exists-with-different-credential' || email == null) return null;
-
-    final methods = await FirebaseAuth.instance.fetchSignInMethodsForEmail(email);
-    if (methods.isEmpty) return null;
-
-    const providerMap = {
-      'google.com': 'Google',
-      'github.com': 'GitHub',
-    };
-
-    final providerId = methods.first; // 가장 우선 provider 반환
-    return providerMap[providerId] ?? providerId;
+    user = null;
+    conflictingEmail = null;
+    conflictingProvider = null;
+    notifyListeners();
   }
 
   bool get isSignedIn => user != null;
