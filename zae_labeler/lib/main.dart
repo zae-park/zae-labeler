@@ -14,26 +14,31 @@ import 'src/view_models/locale_view_model.dart';
 import 'src/views/pages/auth_gate.dart';
 import 'src/views/pages/configuration_page.dart';
 import 'src/views/pages/labeling_page.dart';
+import 'src/views/pages/project_list_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // await FirebaseAuth.instance.authStateChanges().firstWhere((u) => u != null);
 
-  runApp(const MyApp());
+  runApp(const ZaeLabeler());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class ZaeLabeler extends StatelessWidget {
+  const ZaeLabeler({super.key});
 
   @override
   Widget build(BuildContext context) {
+    const bool isWebProd = kIsWeb && kReleaseMode;
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<ProjectListViewModel>(
-            create: (_) => ProjectListViewModel(storageHelper: kIsWeb ? CloudStorageHelper() : StorageHelper.instance)),
+          create: (_) => ProjectListViewModel(storageHelper: isWebProd ? CloudStorageHelper() : StorageHelper.instance),
+        ),
         ChangeNotifierProvider<LocaleViewModel>(create: (_) => LocaleViewModel()),
         ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel()),
-        Provider<StorageHelperInterface>.value(value: isProd ? CloudStorageHelper() : StorageHelper.instance),
+        Provider<StorageHelperInterface>.value(value: isWebProd ? CloudStorageHelper() : StorageHelper.instance),
       ],
       child: Consumer<LocaleViewModel>(
         builder: (context, localeVM, child) {
@@ -51,7 +56,7 @@ class MyApp extends StatelessWidget {
             // Initial route when the app is launched
             initialRoute: '/',
             routes: {
-              '/': (context) => const AuthGate(),
+              '/': (context) => isProd ? const AuthGate() : const ProjectListPage(),
               // '/': (context) => const ProjectListPage(),
               '/configuration': (context) => const ConfigureProjectPage(),
               '/labeling': (context) => const LabelingPage(),

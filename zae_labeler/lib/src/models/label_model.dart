@@ -5,6 +5,8 @@ export 'sub_models/base_label_model.dart';
 import 'sub_models/classification_label_model.dart';
 import 'sub_models/segmentation_label_model.dart';
 
+enum LabelStatus { complete, warning, incomplete }
+
 /*
 이 파일은 라벨링 모드를 정의하는 열거형과 매핑을 포함합니다..
 */

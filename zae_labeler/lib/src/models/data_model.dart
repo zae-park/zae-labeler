@@ -10,6 +10,8 @@ import 'dart:io';
 
 import 'package:uuid/uuid.dart';
 
+import 'label_model.dart';
+
 enum FileType { series, object, image, unsupported }
 
 /// Represents file data and its associated content and metadata.
@@ -86,15 +88,17 @@ class UnifiedData {
 
   final String? content; // ✅ Base64 인코딩된 이미지 데이터 추가 (Web 지원)
 
-  UnifiedData({
-    required this.dataId,
-    this.file,
-    this.seriesData,
-    this.objectData,
-    this.content,
-    required this.fileName,
-    required this.fileType,
-  });
+  LabelStatus status;
+
+  UnifiedData(
+      {required this.dataId,
+      this.file,
+      this.seriesData,
+      this.objectData,
+      this.content,
+      required this.fileName,
+      required this.fileType,
+      this.status = LabelStatus.incomplete});
 
   factory UnifiedData.empty() => UnifiedData(dataId: 'empty', fileType: FileType.unsupported, fileName: '');
 
@@ -127,6 +131,28 @@ class UnifiedData {
 
     // 지원되지 않는 파일 형식
     return UnifiedData(dataId: id, fileType: FileType.unsupported, fileName: fileName);
+  }
+
+  UnifiedData copyWith({
+    String? dataId,
+    String? fileName,
+    FileType? fileType,
+    File? file,
+    List<double>? seriesData,
+    Map<String, dynamic>? objectData,
+    String? content,
+    LabelStatus? status,
+  }) {
+    return UnifiedData(
+      dataId: dataId ?? this.dataId,
+      fileName: fileName ?? this.fileName,
+      fileType: fileType ?? this.fileType,
+      file: file ?? this.file,
+      seriesData: seriesData ?? this.seriesData,
+      objectData: objectData ?? this.objectData,
+      content: content ?? this.content,
+      status: status ?? this.status,
+    );
   }
 
   /// Parses series data (CSV format) into a list of doubles.
