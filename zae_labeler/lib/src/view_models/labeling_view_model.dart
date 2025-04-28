@@ -15,6 +15,7 @@ class LabelingViewModelFactory {
     switch (project.mode) {
       case LabelingMode.singleClassification:
       case LabelingMode.multiClassification:
+      case LabelingMode.crossClassification:
         return ClassificationLabelingViewModel(project: project, storageHelper: helper);
 
       case LabelingMode.singleClassSegmentation:

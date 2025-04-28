@@ -50,6 +50,7 @@ class LabelViewModelFactory {
     switch (mode) {
       case LabelingMode.singleClassification:
       case LabelingMode.multiClassification:
+      case LabelingMode.crossClassification:
         return ClassificationLabelViewModel(
           projectId: projectId,
           dataId: dataId,
