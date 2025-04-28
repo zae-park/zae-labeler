@@ -19,7 +19,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
   List<UnifiedData> _unifiedDataList = [];
   UnifiedData _currentUnifiedData = UnifiedData.empty();
 
-  final Map<String, LabelViewModel> _labelCache = {};
+  final Map<String, LabelViewModel> labelCache = {};
 
   // ✅ 생성자
   LabelingViewModel({required this.project, required this.storageHelper});
@@ -97,7 +97,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
   // ✅ 라벨 VM 캐싱
   LabelViewModel getOrCreateLabelVM() {
     final id = _currentUnifiedData.dataId;
-    return _labelCache.putIfAbsent(id, () {
+    return labelCache.putIfAbsent(id, () {
       return LabelViewModelFactory.create(
         projectId: project.id,
         dataId: id,
@@ -140,7 +140,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
 
   // ✅ export
   Future<String> exportAllLabels() async {
-    final allLabels = _labelCache.values.map((vm) => vm.labelModel).toList();
+    final allLabels = labelCache.values.map((vm) => vm.labelModel).toList();
     return await storageHelper.exportAllLabels(project, allLabels, project.dataPaths);
   }
 }
