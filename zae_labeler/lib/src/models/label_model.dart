@@ -57,6 +57,8 @@ extension LabelModelFactory on LabelModel {
         return SingleClassificationLabelModel.empty();
       case LabelingMode.multiClassification:
         return MultiClassificationLabelModel.empty();
+      case LabelingMode.crossClassification:
+        return CrossClassificationLabelModel.empty();
       case LabelingMode.singleClassSegmentation:
         return SingleClassSegmentationLabelModel.empty();
       case LabelingMode.multiClassSegmentation:
