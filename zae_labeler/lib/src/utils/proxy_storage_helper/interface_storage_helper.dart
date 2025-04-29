@@ -49,6 +49,7 @@ class LabelModelConverter {
   static Map<String, dynamic> toJson(LabelModel model) {
     if (model is SingleClassificationLabelModel ||
         model is MultiClassificationLabelModel ||
+        model is CrossClassificationLabelModel ||
         model is SingleClassSegmentationLabelModel ||
         model is MultiClassSegmentationLabelModel) {
       return model.toJson(); // ✅ 각 구현체의 toJson() 사용
