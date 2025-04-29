@@ -65,7 +65,7 @@ class CrossClassificationLabelViewModel extends LabelViewModel {
         );
         notifyListeners();
       } else {
-        throw ArgumentError('labelData must be String for cross classification relation');
+        throw ArgumentError('labelData must be String for CrossClassification');
       }
     }
   }
