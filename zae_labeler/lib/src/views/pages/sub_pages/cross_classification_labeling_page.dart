@@ -26,15 +26,15 @@ class _CrossClassificationLabelingPageState extends BaseLabelingPageState<CrossC
 
   @override
   Widget buildViewer(CrossClassificationLabelingViewModel labelingVM) {
+    if (labelingVM.totalPairCount == 0 || labelingVM.currentPair == null) {
+      return const Center(child: Text('쌍을 초기화하는 중입니다...'));
+    }
+
     return Row(
       children: [
-        Expanded(
-          child: ViewerBuilder(data: labelingVM.currentSourceData),
-        ),
+        Expanded(child: ViewerBuilder(data: labelingVM.currentSourceData)),
         const VerticalDivider(width: 1),
-        Expanded(
-          child: ViewerBuilder(data: labelingVM.currentTargetData),
-        ),
+        Expanded(child: ViewerBuilder(data: labelingVM.currentTargetData)),
       ],
     );
   }
