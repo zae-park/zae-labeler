@@ -3,6 +3,7 @@ import '../../models/label_model.dart';
 import '../../models/project_model.dart';
 import 'sub_pages/classification_labeling_page.dart';
 import 'sub_pages/segmentation_labeling_page.dart';
+import 'sub_pages/cross_classification_labeling_page.dart';
 
 class LabelingPage extends StatefulWidget {
   const LabelingPage({Key? key}) : super(key: key);
@@ -22,12 +23,13 @@ class LabelingPageState extends State<LabelingPage> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Segmentation 모드 여부 확인
-    final bool isSegmentationMode = project.mode == LabelingMode.singleClassSegmentation || project.mode == LabelingMode.multiClassSegmentation;
-
-    return isSegmentationMode
-        ? const SegmentationLabelingPage() // ✅ Segmentation 모드면 해당 페이지 로드
-        : const ClassificationLabelingPage(); // ✅ Classification 모드면 해당 페이지 로드
+    if (project.mode == LabelingMode.singleClassSegmentation || project.mode == LabelingMode.multiClassSegmentation) {
+      return const SegmentationLabelingPage();
+    } else if (project.mode == LabelingMode.crossClassification) {
+      return const CrossClassificationLabelingPage();
+    } else {
+      return const ClassificationLabelingPage();
+    }
   }
 }
 
