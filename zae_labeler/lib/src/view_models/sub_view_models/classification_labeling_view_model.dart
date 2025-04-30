@@ -1,18 +1,38 @@
+// 📁 sub_view_models/base_labeling_view_model.dart
 import 'package:flutter/material.dart';
 
 import '../../models/data_model.dart';
+import '../../models/label_model.dart';
 import '../../utils/cross_pairing.dart';
 import '../label_view_model.dart';
 import 'base_labeling_view_model.dart';
 import '../../models/sub_models/classification_label_model.dart';
 import '../../models/sub_models/segmentation_label_model.dart';
 
+/// ViewModel for single and multi classification labeling modes.
+/// Handles label toggling and status tracking per data item.
 class ClassificationLabelingViewModel extends LabelingViewModel {
   ClassificationLabelingViewModel({
     required super.project,
     required super.storageHelper,
   });
 
+  @override
+  int get totalCount => unifiedDataList.length;
+
+  @override
+  int get completeCount => unifiedDataList.where((e) => e.status == LabelStatus.complete).length;
+
+  @override
+  int get warningCount => unifiedDataList.where((e) => e.status == LabelStatus.warning).length;
+
+  @override
+  int get incompleteCount => totalCount - completeCount;
+
+  @override
+  double get progressRatio => totalCount == 0 ? 0 : completeCount / totalCount;
+
+  /// Updates the current data's label with new input
   @override
   Future<void> updateLabel(dynamic labelData) async {
     final labelVM = currentLabelVM;
@@ -21,7 +41,7 @@ class ClassificationLabelingViewModel extends LabelingViewModel {
       final model = labelVM.labelModel as ClassificationLabelModel;
       labelVM.labelModel = model.isMultiClass ? model.toggleLabel(labelData) : model.updateLabel(labelData);
 
-      debugPrint("[ClsLabelingVM.updateLabel] selected: ${labelVM.labelModel.label}");
+      debugPrint("[ClsLabelingVM.updateLabel] selected: \${labelVM.labelModel.label}");
 
       await labelVM.saveLabel();
       await refreshStatus(currentUnifiedData.dataId);
@@ -37,8 +57,7 @@ class ClassificationLabelingViewModel extends LabelingViewModel {
     final labelVM = currentLabelVM;
 
     if (labelVM.labelModel is ClassificationLabelModel) {
-      final model = labelVM.labelModel as ClassificationLabelModel;
-      labelVM.labelModel = model.toggleLabel(labelItem);
+      labelVM.labelModel = (labelVM.labelModel as ClassificationLabelModel).toggleLabel(labelItem);
       notifyListeners();
     }
   }
@@ -53,6 +72,8 @@ class ClassificationLabelingViewModel extends LabelingViewModel {
   }
 }
 
+/// ViewModel for cross classification mode, labeling pairs of data.
+/// Uses nC2 pairing logic and custom progress tracking per relation.
 class CrossClassificationLabelingViewModel extends LabelingViewModel {
   CrossClassificationLabelingViewModel({
     required super.project,
@@ -65,35 +86,43 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
   List<String> _selectedDataIds = [];
   List<CrossDataPair> _crossPairs = [];
 
+  /// Total number of data pairs to label
   @override
   int get totalCount => totalPairCount;
 
+  /// Number of pairs with a valid relation label
   @override
-  int get completeCount => _crossPairs.where((e) => e.relation.isNotEmpty).length; // ✅ 라벨링 완료된 쌍 수
+  int get completeCount => _crossPairs.where((e) => e.relation.isNotEmpty).length;
 
+  /// Not used in this mode
   @override
-  int get warningCount => 0; // 필요시 별도 정의
+  int get warningCount => 0;
 
+  /// Number of unlabeled pairs
   @override
   int get incompleteCount => totalCount - completeCount;
 
+  /// Progress ratio for labeled pairs
   @override
   double get progressRatio => totalCount == 0 ? 0 : completeCount / totalCount;
 
   int get totalPairCount => _crossPairs.length;
+
   int get currentPairIndex => _sourceIndex * (_selectedDataIds.length - 1) - (_sourceIndex * (_sourceIndex - 1)) ~/ 2 + (_targetIndex - _sourceIndex - 1);
+
   CrossDataPair? get currentPair => (currentPairIndex >= 0 && currentPairIndex < _crossPairs.length) ? _crossPairs[currentPairIndex] : null;
 
+  /// Initializes nC2 data pair structure after loading unified data
   @override
   Future<void> initialize() async {
     await super.initialize();
-
     _selectedDataIds = unifiedDataList.map((e) => e.dataId).toList();
     _crossPairs = generateCrossPairs(_selectedDataIds);
     _sourceIndex = 0;
     _targetIndex = 1;
   }
 
+  /// Updates the current pair's label and saves
   @override
   Future<void> updateLabel(dynamic labelData) async {
     if (currentPair == null) return;
@@ -104,7 +133,7 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
     final labelVM = getOrCreateLabelVMForCrossPair(updatedPair);
     labelVM.labelModel = CrossClassificationLabelModel(label: updatedPair, labeledAt: DateTime.now());
 
-    debugPrint("[CrossClsLabelingVM.updateLabel] source=${updatedPair.sourceId}, target=${updatedPair.targetId}, relation=${updatedPair.relation}");
+    debugPrint("[CrossClsLabelingVM.updateLabel] source=\${updatedPair.sourceId}, target=\${updatedPair.targetId}, relation=\${updatedPair.relation}");
 
     await labelVM.saveLabel();
     notifyListeners();
@@ -120,6 +149,7 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
     return currentPair?.relation == labelItem;
   }
 
+  /// Moves to the next pair in sequence
   @override
   Future<void> moveNext() async {
     if (_targetIndex < _selectedDataIds.length - 1) {
@@ -131,6 +161,7 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
     notifyListeners();
   }
 
+  /// Moves to the previous pair in sequence
   @override
   Future<void> movePrevious() async {
     if (_targetIndex > _sourceIndex + 1) {
@@ -142,8 +173,9 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
     notifyListeners();
   }
 
+  /// Gets or creates a label VM for a specific pair
   LabelViewModel getOrCreateLabelVMForCrossPair(CrossDataPair pair) {
-    final id = "${pair.sourceId}_${pair.targetId}";
+    const id = "\${pair.sourceId}_\${pair.targetId}";
     return labelCache.putIfAbsent(id, () {
       return LabelViewModelFactory.create(
         projectId: project.id,
@@ -156,6 +188,8 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
     });
   }
 
+  /// Access the current pair's data items
   UnifiedData get currentSourceData => unifiedDataList.firstWhere((e) => e.dataId == _selectedDataIds[_sourceIndex]);
+
   UnifiedData get currentTargetData => unifiedDataList.firstWhere((e) => e.dataId == _selectedDataIds[_targetIndex]);
 }
