@@ -10,13 +10,16 @@ Image, Time-series, Object 데이터 등을 위한 직관적인 UI를 web, windo
   - **분류** (Classification) - Data별 지정된 class를 할당
     - **단일 분류** (Single Classification) - 한 가지 class의 할당만 허용
     - **다중 분류** (Multi-class Classification) - 여러 class의 할당 허용
-    - **쌍 분류** (Pairwise Classification) - 두 data 쌍 사이에 class 할당
-  - **세그멘테이션** (Segmentation) - Pixel별 지정된 class를 할당
+    - **쌍 분류** (Cross Classification) - 두 data 쌍 사이에 class 할당
+  - **세그멘테이션** (Segmentation) - Pixel마다 지정된 class를 할당 (개발 중)
     - **단일 분류** (Single Class Segmentation) - 한 가지 class의 할당만 허용
     - **다중 분류** (Multi-class Classification) - 여러 class의 할당 허용
 - **키보드 단축키 지원**: 단축키를 활용하여 빠르게 작업할 수 있어요.
 - **데이터 시각화**: 다양한 형식의 데이터를 쉽게 확인하면서 라벨링 가능!
 - **라벨 내보내기**: 작업한 내용을 JSON 또는 ZIP 파일로 저장해서 활용 가능!
+
+## 회원가입 / 로그인
+Google, Github을 통해 로그인하세요! Labeling 작업이 cloud에 유지됩니다.
 
 ## 🌐 웹에서 바로 사용하기
 설치 없이 웹 브라우저에서 사용할 수 있어요! 

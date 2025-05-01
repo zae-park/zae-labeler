@@ -29,6 +29,7 @@ enum LabelStatus { complete, warning, incomplete }
 enum LabelingMode {
   singleClassification, // 단일 분류 (Single Classification) : 하나의 데이터에 대해 하나의 클래스를 지정
   multiClassification, // 다중 분류 (Multi Classification) : 하나의 데이터에 대해 여러 개의 클래스를 지정
+  crossClassification, // 관계쌍 분류 (Cross Classification) : 두 데이터 쌍에 대해 하나의 클래스를 지정
   singleClassSegmentation, // 단일 클래스 세그멘테이션 (Single Class Segmentation) : 이미지 또는 시계열 데이터 내 특정 역역에 대해 단일 클래스를 지정
   multiClassSegmentation; // 다중 클래스 세그멘테이션 (Multi Class Segmentation) : 이미지 또는 시계열 데이터 내 특정 역역에 대해 다중 클래스를 지정
 
@@ -38,6 +39,8 @@ enum LabelingMode {
         return 'Single Classification';
       case LabelingMode.multiClassification:
         return 'Multi Classification';
+      case LabelingMode.crossClassification:
+        return 'Cross Classification';
       case LabelingMode.singleClassSegmentation:
         return 'Segmentation (Binary)';
       case LabelingMode.multiClassSegmentation:
@@ -54,6 +57,8 @@ extension LabelModelFactory on LabelModel {
         return SingleClassificationLabelModel.empty();
       case LabelingMode.multiClassification:
         return MultiClassificationLabelModel.empty();
+      case LabelingMode.crossClassification:
+        return CrossClassificationLabelModel.empty();
       case LabelingMode.singleClassSegmentation:
         return SingleClassSegmentationLabelModel.empty();
       case LabelingMode.multiClassSegmentation:

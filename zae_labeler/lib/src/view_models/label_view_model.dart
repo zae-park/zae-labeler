@@ -60,6 +60,17 @@ class LabelViewModelFactory {
           storageHelper: storageHelper,
         );
 
+      case LabelingMode.crossClassification:
+        return CrossClassificationLabelViewModel(
+          projectId: projectId,
+          dataId: dataId,
+          dataFilename: dataFilename,
+          dataPath: dataPath,
+          mode: mode,
+          labelModel: LabelModelFactory.createNew(mode),
+          storageHelper: storageHelper,
+        );
+
       case LabelingMode.singleClassSegmentation:
       case LabelingMode.multiClassSegmentation:
         return SegmentationLabelViewModel(
