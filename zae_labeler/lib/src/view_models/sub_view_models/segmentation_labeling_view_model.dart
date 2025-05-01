@@ -1,9 +1,13 @@
 // lib/view_models/sub_view_models/segmentation_labeling_view_model.dart
 import 'package:flutter/material.dart';
+
+import '../../models/label_model.dart';
 import '../../models/sub_models/segmentation_label_model.dart';
 import '../label_view_model.dart';
 import 'base_labeling_view_model.dart';
 
+/// ViewModel for segmentation labeling mode.
+/// Manages pixel-wise label grid, class selection, and grid-to-label conversions.
 class SegmentationLabelingViewModel extends LabelingViewModel {
   String? _selectedClass;
   String? get selectedClass => _selectedClass;
@@ -13,6 +17,7 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
     required super.storageHelper,
   });
 
+  /// Restores grid from saved label and sets default class if needed
   @override
   Future<void> postInitialize() async {
     restoreGridFromLabel();
@@ -28,7 +33,7 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
     await refreshStatus(currentUnifiedData.dataId);
   }
 
-  // ✅ 1. Grid 상태 관리
+  // --- Grid 상태 관리 ---
   int _gridSize = 32;
   int get gridSize => _gridSize;
 
@@ -82,7 +87,7 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
     }
   }
 
-  // ✅ 2. 박스 선택 (UI 상에서 드래그로 선택 영역 표시)
+  // --- 박스 선택 드래그 ---
   Offset? _startDrag;
   Offset? _currentPointerPosition;
 
@@ -105,7 +110,7 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
     notifyListeners();
   }
 
-  // ✅ 3. 세그멘테이션 저장 (일반화된 updateLabel 흐름 유지)
+  /// Applies label model update and status refresh
   @override
   Future<void> updateLabel(dynamic labelData) async {
     currentLabelVM.updateLabel(labelData);
@@ -114,6 +119,7 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
     notifyListeners();
   }
 
+  /// Converts current grid to SegmentationData and saves as label
   Future<void> saveCurrentGridAsLabel() async {
     if (_selectedClass == null) {
       debugPrint("[saveCurrentGridAsLabel] No class selected.");
@@ -129,11 +135,14 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
       }
     }
 
-    final segmentation = SegmentationData(segments: {_selectedClass!: Segment(indices: selectedPixels, classLabel: _selectedClass!)});
+    final segmentation = SegmentationData(
+      segments: {_selectedClass!: Segment(indices: selectedPixels, classLabel: _selectedClass!)},
+    );
 
     await updateLabel(segmentation);
   }
 
+  /// Restores grid state from saved SegmentationData
   void restoreGridFromLabel() {
     final label = currentLabelVM.labelModel.label;
     if (label is! SegmentationData) return;
@@ -150,4 +159,19 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
 
     notifyListeners();
   }
+
+  @override
+  int get totalCount => unifiedDataList.length;
+
+  @override
+  int get completeCount => unifiedDataList.where((e) => e.status == LabelStatus.complete).length;
+
+  @override
+  int get warningCount => unifiedDataList.where((e) => e.status == LabelStatus.warning).length;
+
+  @override
+  int get incompleteCount => totalCount - completeCount;
+
+  @override
+  double get progressRatio => totalCount == 0 ? 0 : completeCount / totalCount;
 }

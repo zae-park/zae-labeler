@@ -49,6 +49,7 @@ class LabelModelConverter {
   static Map<String, dynamic> toJson(LabelModel model) {
     if (model is SingleClassificationLabelModel ||
         model is MultiClassificationLabelModel ||
+        model is CrossClassificationLabelModel ||
         model is SingleClassSegmentationLabelModel ||
         model is MultiClassSegmentationLabelModel) {
       return model.toJson(); // ✅ 각 구현체의 toJson() 사용
@@ -65,6 +66,8 @@ class LabelModelConverter {
           return SingleClassificationLabelModel(labeledAt: DateTime.parse(json['labeled_at']), label: json['label']);
         case LabelingMode.multiClassification:
           return MultiClassificationLabelModel(labeledAt: DateTime.parse(json['labeled_at']), label: Set<String>.from(json['label']));
+        case LabelingMode.crossClassification:
+          return CrossClassificationLabelModel(labeledAt: DateTime.parse(json['labeled_at']), label: json['label']);
         case LabelingMode.singleClassSegmentation:
           return SingleClassSegmentationLabelModel(labeledAt: DateTime.parse(json['labeled_at']), label: SegmentationData.fromJson(json['label']));
         case LabelingMode.multiClassSegmentation:

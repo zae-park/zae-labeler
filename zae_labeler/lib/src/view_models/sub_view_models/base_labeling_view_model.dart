@@ -8,6 +8,9 @@ import '../../models/data_model.dart';
 import '../../models/project_model.dart';
 import '../../utils/proxy_storage_helper/interface_storage_helper.dart';
 
+/// Abstract base class for all LabelingViewModels.
+/// Provides core data loading, navigation, label caching, and progress tracking logic.
+/// Subclasses must override the progress tracking methods to customize behavior for each labeling mode.
 abstract class LabelingViewModel extends ChangeNotifier {
   final Project project;
   final StorageHelperInterface storageHelper;
@@ -19,34 +22,49 @@ abstract class LabelingViewModel extends ChangeNotifier {
   List<UnifiedData> _unifiedDataList = [];
   UnifiedData _currentUnifiedData = UnifiedData.empty();
 
-  final Map<String, LabelViewModel> _labelCache = {};
+  final Map<String, LabelViewModel> labelCache = {};
 
-  // ✅ 생성자
   LabelingViewModel({required this.project, required this.storageHelper});
 
-  // ✅ 상태 getter들
+  /// Indicates whether the ViewModel has completed initialization
   bool get isInitialized => _isInitialized;
+
+  /// Index of the currently selected data item
   int get currentIndex => _currentIndex;
+
+  /// All data items associated with this project
   List<UnifiedData> get unifiedDataList => _unifiedDataList;
+
+  /// The currently active data item
   UnifiedData get currentUnifiedData => _currentUnifiedData;
 
+  /// Returns the LabelViewModel associated with the current data item
   LabelViewModel get currentLabelVM => getOrCreateLabelVM();
 
+  /// Convenience accessors for the current data item
   String get currentDataFileName => _currentUnifiedData.fileName;
   File? get currentImageFile => _currentUnifiedData.file;
   List<double>? get currentSeriesData => _currentUnifiedData.seriesData;
   Map<String, dynamic>? get currentObjectData => _currentUnifiedData.objectData;
 
-  // ✅ 진행률 계산
-  int get totalCount => unifiedDataList.length;
-  int get completeCount => unifiedDataList.where((e) => e.status == LabelStatus.complete).length;
-  int get warningCount => unifiedDataList.where((e) => e.status == LabelStatus.warning).length;
-  int get incompleteCount => unifiedDataList.where((e) => e.status == LabelStatus.incomplete).length;
+  /// Total number of items to label (must be overridden in subclasses)
+  int get totalCount => _unifiedDataList.length;
+
+  /// Number of items that are fully labeled (must be overridden in subclasses)
+  int get completeCount => _unifiedDataList.where((e) => e.status == LabelStatus.complete).length;
+
+  /// Number of items with warnings (optional override)
+  int get warningCount => _unifiedDataList.where((e) => e.status == LabelStatus.warning).length;
+
+  /// Number of incomplete items
+  int get incompleteCount => totalCount - completeCount;
+
+  /// Labeling progress ratio (0.0 ~ 1.0)
   double get progressRatio => totalCount == 0 ? 0 : completeCount / totalCount;
 
-  // ✅ 초기화
+  /// Initializes all unified data and label cache
   Future<void> initialize() async {
-    debugPrint("[LabelingVM.initialize] : ${project.mode}");
+    debugPrint("[LabelingVM.initialize] : \${project.mode}");
     if (_memoryOptimized) {
       _unifiedDataList.clear();
       _currentUnifiedData = project.dataPaths.isNotEmpty ? await UnifiedData.fromDataPath(project.dataPaths.first) : UnifiedData.empty();
@@ -64,11 +82,13 @@ abstract class LabelingViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ 전환 시 라벨 상태 새로고침
+  /// Optional hook for additional logic after initialization
   Future<void> postInitialize() async {}
+
+  /// Optional hook for logic after moving to a new item
   Future<void> postMove() async {}
 
-  // ✅ 라벨 타입 불일치 시 자동 초기화
+  /// Ensures that the current LabelModel type matches the project mode
   Future<void> validateLabelModelType() async {
     final labelVM = currentLabelVM;
     final expected = LabelModelFactory.createNew(project.mode);
@@ -79,9 +99,10 @@ abstract class LabelingViewModel extends ChangeNotifier {
     }
   }
 
-  // ✅ 이동
+  /// Move to the next or previous item
   Future<void> moveNext() async => _move(1);
   Future<void> movePrevious() async => _move(-1);
+
   Future<void> _move(int delta) async {
     final newIndex = _currentIndex + delta;
     if (newIndex >= 0 && newIndex < project.dataPaths.length) {
@@ -94,10 +115,10 @@ abstract class LabelingViewModel extends ChangeNotifier {
     }
   }
 
-  // ✅ 라벨 VM 캐싱
+  /// Returns the LabelViewModel for the current item, or creates one if not cached
   LabelViewModel getOrCreateLabelVM() {
     final id = _currentUnifiedData.dataId;
-    return _labelCache.putIfAbsent(id, () {
+    return labelCache.putIfAbsent(id, () {
       return LabelViewModelFactory.create(
         projectId: project.id,
         dataId: id,
@@ -109,38 +130,42 @@ abstract class LabelingViewModel extends ChangeNotifier {
     });
   }
 
-  // ✅ 라벨 상태 업데이트
+  /// Refreshes the label status of a single data item
   Future<void> refreshStatus(String dataId) async {
     final vm = getOrCreateLabelVM();
     await vm.loadLabel();
     final status = LabelValidator.getStatus(project, vm.labelModel);
-    final index = unifiedDataList.indexWhere((e) => e.dataId == dataId);
+    final index = _unifiedDataList.indexWhere((e) => e.dataId == dataId);
     if (index != -1) {
-      unifiedDataList[index] = unifiedDataList[index].copyWith(status: status);
+      _unifiedDataList[index] = _unifiedDataList[index].copyWith(status: status);
     }
   }
 
-  // ✅ 전체 상태 새로고침
+  /// Refreshes all statuses in the dataset
   Future<void> refreshAllStatuses() async {
-    for (final data in unifiedDataList) {
+    for (final data in _unifiedDataList) {
       final vm = getOrCreateLabelVM();
       await vm.loadLabel();
       final status = LabelValidator.getStatus(project, vm.labelModel);
-      final idx = unifiedDataList.indexWhere((e) => e.dataId == data.dataId);
+      final idx = _unifiedDataList.indexWhere((e) => e.dataId == data.dataId);
       if (idx != -1) {
-        unifiedDataList[idx] = unifiedDataList[idx].copyWith(status: status);
+        _unifiedDataList[idx] = _unifiedDataList[idx].copyWith(status: status);
       }
     }
   }
 
-  // ✅ override 필요
+  /// Applies a new label (must be implemented by subclass)
   Future<void> updateLabel(dynamic labelData);
+
+  /// Toggles label state (optional override)
   void toggleLabel(String labelItem) => throw UnimplementedError();
+
+  /// Checks if a label is selected (optional override)
   bool isLabelSelected(String labelItem) => throw UnimplementedError();
 
-  // ✅ export
+  /// Exports all label models to file via storage helper
   Future<String> exportAllLabels() async {
-    final allLabels = _labelCache.values.map((vm) => vm.labelModel).toList();
+    final allLabels = labelCache.values.map((vm) => vm.labelModel).toList();
     return await storageHelper.exportAllLabels(project, allLabels, project.dataPaths);
   }
 }

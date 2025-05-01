@@ -84,28 +84,85 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
 
   @override
   bool isSelected(String labelData) => label?.contains(labelData) ?? false;
-  // bool isSelected(dynamic labelData) {
-  //   if (labelData is String) {
-  //     final result = label.contains(labelData);
-  //     debugPrint("[isSelected] labelItem: $labelData → $result");
-  //     return result;
-  //   } else if (labelData is Set<String>) {
-  //     final result = labelData.every(label.contains);
-  //     debugPrint("[isSelected] labelItem: $labelData → $result");
-  //     return result;
-  //   }
-  //   debugPrint("[isSelected] labelItem: $labelData → False");
-  //   return false;
-  // }
 }
 
-// /// ✅ 크로스 분류 (Cross Classification) - 추후 업데이트
-// class CrossClassificationLabel extends ClassificationLabel {
-//   CrossClassificationLabel({required super.labeledAt, required List<String> dataPairs}) : super(labelData: dataPairs);
+/// ✅ 크로스 분류 (Cross Classification)
+class CrossClassificationLabelModel extends ClassificationLabelModel<CrossDataPair> {
+  CrossClassificationLabelModel({required super.label, required super.labeledAt});
 
-//   @override
-//   Map<String, dynamic> toJson() => {'labeled_at': labeledAt, 'data_pairs': labelData};
-//   factory CrossClassificationLabel.fromJson(Map<String, dynamic> json) =>
-//       CrossClassificationLabel(labeledAt: json['labeled_at'], dataPairs: List<String>.from(json['data_pairs']));
-//   factory CrossClassificationLabel.empty() => CrossClassificationLabel(labeledAt: '', dataPairs: []);
-// }
+  @override
+  bool get isMultiClass => false; // 관계는 단일 선택
+
+  @override
+  bool get isLabeled => label != null && label!.relation.isNotEmpty;
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'sourceId': label?.sourceId,
+        'targetId': label?.targetId,
+        'relation': label?.relation,
+        'labeled_at': labeledAt.toIso8601String(),
+      };
+
+  @override
+  factory CrossClassificationLabelModel.fromJson(Map<String, dynamic> json) {
+    return CrossClassificationLabelModel(
+      label: CrossDataPair(
+        sourceId: json['sourceId'] ?? '',
+        targetId: json['targetId'] ?? '',
+        relation: json['relation'] ?? '',
+      ),
+      labeledAt: DateTime.parse(json['labeled_at']),
+    );
+  }
+
+  @override
+  factory CrossClassificationLabelModel.empty() {
+    return CrossClassificationLabelModel(
+      label: null,
+      labeledAt: DateTime.fromMillisecondsSinceEpoch(0),
+    );
+  }
+
+  @override
+  CrossClassificationLabelModel updateLabel(CrossDataPair labelData) {
+    return CrossClassificationLabelModel(label: labelData, labeledAt: DateTime.now());
+  }
+
+  @override
+  LabelModel toggleLabel(String labelItem) {
+    // 🔥 Cross에서는 toggle 개념 대신 직접 relation 업데이트
+    if (label == null) return this;
+    return updateLabel(label!.copyWith(relation: labelItem));
+  }
+
+  @override
+  bool isSelected(String labelData) => label?.relation == labelData;
+}
+
+/// ✅ 데이터 쌍 모델
+class CrossDataPair {
+  final String sourceId;
+  final String targetId;
+  final String relation;
+
+  const CrossDataPair({required this.sourceId, required this.targetId, required this.relation});
+
+  CrossDataPair copyWith({String? sourceId, String? targetId, String? relation}) {
+    return CrossDataPair(
+      sourceId: sourceId ?? this.sourceId,
+      targetId: targetId ?? this.targetId,
+      relation: relation ?? this.relation,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {'sourceId': sourceId, 'targetId': targetId, 'relation': relation};
+
+  factory CrossDataPair.fromJson(Map<String, dynamic> json) {
+    return CrossDataPair(
+      sourceId: json['sourceId'] ?? '',
+      targetId: json['targetId'] ?? '',
+      relation: json['relation'] ?? '',
+    );
+  }
+}
