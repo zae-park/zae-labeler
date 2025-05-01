@@ -3,8 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zae_labeler/src/models/data_model.dart';
 import 'package:zae_labeler/src/view_models/project_view_model.dart';
 import 'package:zae_labeler/src/models/label_model.dart';
-import '../mocks/mock_storage_helper.dart';
-import '../mocks/mock_share_helper.dart';
+import '../../mocks/mock_storage_helper.dart';
+import '../../mocks/mock_share_helper.dart';
 
 void main() {
   group('ProjectViewModel', () {
