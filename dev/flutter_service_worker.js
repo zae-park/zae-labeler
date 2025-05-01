@@ -22,14 +22,14 @@ const RESOURCES = {"assets/AssetManifest.json": "813d1ecfb30d2d4f390eb83ec9be2db
 "canvaskit/canvaskit.js": "eb8797020acdbdf96a12fb0405582c1b",
 "canvaskit/canvaskit.wasm": "73584c1a3367e3eaf757647a8f5c5989",
 "canvaskit/skwasm.worker.js": "bfb704a6c714a75da9ef320991e88b03",
-"index.html": "75f4c0e05088fe3c236220a19e1b887f",
-"/": "75f4c0e05088fe3c236220a19e1b887f",
+"index.html": "9e862191d7b0383739caf9aae2fc18aa",
+"/": "9e862191d7b0383739caf9aae2fc18aa",
 "icons/Icon-192.png": "ac9a721a12bbc803b44f645561ecb1e1",
 "icons/Icon-maskable-192.png": "c457ef57daa1d16f64b27b786ec2ea3c",
 "icons/Icon-maskable-512.png": "301a7604d45b3e739efc881eb04896ea",
 "icons/Icon-512.png": "96e752610906ba2a93c65f8abe1645f1",
 "index.template.html": "0c5831040cdc15585a6819201f1a2b44",
-"main.dart.js": "a3788fc419ea2bb70cf6717d160957cf",
+"main.dart.js": "c9059322d092bb9a695433ff5d5650f1",
 "zaevicon.ico": "d156ff90081386987c8a1ee489892f09"};
 // The application shell files that are downloaded before a service worker can
 // start.
