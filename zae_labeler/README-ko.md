@@ -1,4 +1,4 @@
-# Flutter Labeling App - 구조 메뉴에 관한 한국어 설명서
+# Zae-Labeler - Dev Readme
 
 ## 애플 개요
 Flutter 기반의 이 데이터 레이블링 애플은 프로젝트 기본의 연결적 구조에 따른 데이터 포함/수정/삭제 및 레이블링 가능 패턴을 제공합니다. Windows과 Web을 모두 지원하며, MVVM (Model-ViewModel-View) 구조를 기본으로 구현되어 있습니다.

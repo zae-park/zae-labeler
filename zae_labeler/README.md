@@ -1,4 +1,4 @@
-# Zae-Labeler - Technical Readme
+# Zae-Labeler - Dev Readme
 
 ## Overview
 This Flutter-based labeling app supports project-based data annotation with a focus on flexibility, multi-mode labeling, and modern UI/UX. It is designed to work cross-platform (Windows & Web) and uses a modular MVVM (Model-View-ViewModel) architecture.
