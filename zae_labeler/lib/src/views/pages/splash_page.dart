@@ -59,3 +59,35 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     );
   }
 }
+
+class OnboardingPage extends StatelessWidget {
+  const OnboardingPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              "👋 Welcome to ZAE Labeler",
+              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 32),
+            const Text("• 프로젝트를 생성하고\n• 데이터를 업로드하고\n• 라벨링을 시작해보세요!", textAlign: TextAlign.center),
+            const SizedBox(height: 48),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushReplacementNamed(context, '/auth');
+              },
+              child: const Text("시작하기"),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
