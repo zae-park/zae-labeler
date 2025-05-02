@@ -58,6 +58,7 @@ class ZaeLabeler extends StatelessWidget {
             initialRoute: '/',
             routes: {
               '/': (context) => const SplashScreen(),
+              '/onboarding': (context) => const OnboardingPage(),
               '/auth': (context) => isProd ? const AuthGate() : const ProjectListPage(),
               '/project_list': (context) => const ProjectListPage(),
               '/configuration': (context) => const ConfigureProjectPage(),
