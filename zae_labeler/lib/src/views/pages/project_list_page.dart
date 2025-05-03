@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:zae_labeler/src/utils/share_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../view_models/project_list_view_model.dart';
 import '../../view_models/project_view_model.dart';
 import '../../view_models/locale_view_model.dart';
@@ -22,6 +24,43 @@ class ProjectListPage extends StatefulWidget {
 }
 
 class _ProjectListPageState extends State<ProjectListPage> {
+  @override
+  void initState() {
+    super.initState();
+    _checkOnboarding();
+  }
+
+  Future<void> _checkOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+
+    if (!hasSeenOnboarding && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showOnboardingDialogs());
+    }
+  }
+
+  Future<void> _showOnboardingDialogs() async {
+    final pages = [
+      const Text("👋 ZAE Labeler에 오신 걸 환영합니다!"),
+      const Text("📁 프로젝트를 생성하거나 불러오세요."),
+      const Text("🧠 데이터를 업로드하고 라벨링을 시작하세요."),
+    ];
+
+    for (final page in pages) {
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => AlertDialog(
+          content: page,
+          actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text("다음"))],
+        ),
+      );
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasSeenOnboarding', true);
+  }
+
   /// ✅ 프로젝트 가져오기 (Import)
   Future<void> _importProject(BuildContext context) async {
     try {
