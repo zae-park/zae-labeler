@@ -99,36 +99,63 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 ),
               ),
               const Text("ZAE Labeler", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 1),
-              AnimatedOpacity(
-                opacity: _showStartButton ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 600),
-                child: _showLoginButtons ? const SizedBox.shrink() : ElevatedButton(onPressed: _handleUserInteraction, child: const Text("시작하기")),
-              ),
+              SizedBox(
+                height: 200,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // 시작하기 버튼 (fade out → onEnd에서 로그인 버튼 보여주기)
+                    AnimatedOpacity(
+                      opacity: _showLoginButtons ? 0.0 : (_showStartButton ? 1.0 : 0.0),
+                      duration: const Duration(milliseconds: 600),
+                      child: Visibility(
+                        visible: !_showLoginButtons,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent, // 🔍 배경 투명
+                            foregroundColor: Colors.grey[300], // 🔍 글자 회색
+                            elevation: 0,
 
-              /// ✅ 로그인 버튼
-              AnimatedOpacity(
-                opacity: _showLoginButtons ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 600),
-                child: _showLoginButtons
-                    ? AutoSeparatedColumn(
-                        separator: const SizedBox(height: 16),
-                        children: [
-                          if (authVM.conflictingEmail != null)
-                            Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Text(
-                                "⚠️ ${authVM.conflictingEmail} 계정은 이미 가입되어 있었니다. 다른 방법으로 다시 시도해주세요.",
-                                style: const TextStyle(color: Colors.yellow, fontWeight: FontWeight.bold),
-                                textAlign: TextAlign.center,
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                          ),
+                          onPressed: () {
+                            setState(() => _showStartButton = false);
+                            Future.delayed(const Duration(milliseconds: 300), () {
+                              if (mounted) setState(() => _showLoginButtons = true);
+                            });
+                          },
+                          child: const Text("시작하기", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ),
+
+                    // 로그인 버튼들 (fade-in)
+                    AnimatedOpacity(
+                      opacity: _showLoginButtons ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 600),
+                      child: Visibility(
+                        visible: _showLoginButtons,
+                        child: AutoSeparatedColumn(
+                          separator: const SizedBox(height: 16),
+                          children: [
+                            if (authVM.conflictingEmail != null)
+                              Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Text(
+                                  "⚠️ ${authVM.conflictingEmail} 계정은 이미 가입되어 있었습니다. 다른 방법으로 다시 시도해주세요.",
+                                  style: const TextStyle(color: Colors.yellow, fontWeight: FontWeight.bold),
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
-                            ),
-                          ElevatedButton.icon(icon: const Icon(Icons.login), label: const Text("Google로 로그인"), onPressed: () => _signInWithGoogle(context)),
-                          ElevatedButton.icon(icon: const Icon(Icons.code), label: const Text("GitHub로 로그인"), onPressed: () => _signInWithGitHub(context)),
-                          TextButton.icon(icon: const Icon(Icons.open_in_new), label: const Text("비회원으로 이용하기"), onPressed: _handleGuestAccess),
-                        ],
-                      )
-                    : const SizedBox.shrink(),
+                            ElevatedButton.icon(icon: const Icon(Icons.login), label: const Text("Google로 로그인"), onPressed: () => _signInWithGoogle(context)),
+                            ElevatedButton.icon(icon: const Icon(Icons.code), label: const Text("GitHub로 로그인"), onPressed: () => _signInWithGitHub(context)),
+                            TextButton.icon(icon: const Icon(Icons.open_in_new), label: const Text("비회원으로 이용하기"), onPressed: _handleGuestAccess),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
             ],
