@@ -6,15 +6,16 @@ import 'package:file_picker/file_picker.dart';
 import 'package:zae_labeler/src/utils/share_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:zae_labeler/common/common_widgets.dart';
 import '../../view_models/project_list_view_model.dart';
 import '../../view_models/project_view_model.dart';
 import '../../view_models/locale_view_model.dart';
 import '../../view_models/configuration_view_model.dart';
 import '../../models/project_model.dart';
 import '../pages/configuration_page.dart';
+import '../dialogs/onboarding_dialog.dart';
 import '../../utils/storage_helper.dart';
 import '../widgets/project_tile.dart';
-import 'package:zae_labeler/common/common_widgets.dart';
 
 class ProjectListPage extends StatefulWidget {
   const ProjectListPage({Key? key}) : super(key: key);
@@ -35,27 +36,16 @@ class _ProjectListPageState extends State<ProjectListPage> {
     final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
 
     if (!hasSeenOnboarding && mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _showOnboardingDialogs());
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showOnboardingOverlay());
     }
   }
 
-  Future<void> _showOnboardingDialogs() async {
-    final pages = [
-      const Text("👋 ZAE Labeler에 오신 걸 환영합니다!"),
-      const Text("📁 프로젝트를 생성하거나 불러오세요."),
-      const Text("🧠 데이터를 업로드하고 라벨링을 시작하세요."),
-    ];
-
-    for (final page in pages) {
-      await showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => AlertDialog(
-          content: page,
-          actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text("다음"))],
-        ),
-      );
-    }
+  Future<void> _showOnboardingOverlay() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const OnboardingDialog(),
+    );
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('hasSeenOnboarding', true);
@@ -127,6 +117,15 @@ class _ProjectListPageState extends State<ProjectListPage> {
           appBar: AppHeader(
             title: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 목록' : 'Project List',
             actions: [
+              IconButton(
+                icon: const Icon(Icons.question_mark_rounded),
+                tooltip: '온보딩 다시 보기',
+                onPressed: () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.setBool('hasSeenOnboarding', false);
+                  _checkOnboarding(); // 즉시 실행
+                },
+              ),
               PopupMenuButton<String>(
                 onSelected: (value) => localeVM.changeLocale(value),
                 itemBuilder: (context) => [
