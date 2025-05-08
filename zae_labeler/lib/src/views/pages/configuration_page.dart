@@ -102,7 +102,7 @@ class ConfigureProjectPage extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Classes', style: TextStyle(fontSize: 16)),
+                                const Text('Classes :', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                                 IconButton(icon: const Icon(Icons.add), onPressed: () => _addClass(context), tooltip: 'Add Class'),
                               ],
                             ),
@@ -135,7 +135,7 @@ class ConfigureProjectPage extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 const Text('Selected Data:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                                 const SizedBox(height: 8),
