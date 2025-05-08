@@ -1,4 +1,15 @@
 {
+  "headers": [
+    {
+      "source": "**/*.gif",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "image/gif"
+        }
+      ]
+    }
+  ],
   "hosting": [
     {
       "target": "prod",
