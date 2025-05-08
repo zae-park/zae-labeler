@@ -31,4 +31,4 @@ jobs:
           github_token: ${{ secrets.PAT_LABLER }}
           publish_branch: docs
           publish_dir: zae_labeler/build/web
-          destination_dir: dev
+          # destination_dir: dev
