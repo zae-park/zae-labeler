@@ -95,7 +95,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             children: [
               Expanded(
                 child: Center(
-                  child: Image.asset('assets/zae-splash.gif', width: 250, height: 250, fit: BoxFit.contain),
+                  child: Image.asset('assets/zae-splash2.gif', width: 250, height: 250, fit: BoxFit.contain),
                   // child: Lottie.asset('assets/zae-splash.json', width: 250, height: 250, fit: BoxFit.contain),
                 ),
               ),
