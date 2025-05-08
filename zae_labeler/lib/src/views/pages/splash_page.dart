@@ -1,6 +1,6 @@
 // lib/src/views/pages/splash_screen.dart
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
+// import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:zae_labeler/common/common_widgets.dart';
@@ -95,7 +95,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             children: [
               Expanded(
                 child: Center(
-                  child: Lottie.asset('assets/zae-splash.json', width: 250, height: 250, fit: BoxFit.contain),
+                  child: Image.asset('assets/zae-splash.gif', width: 250, height: 250, fit: BoxFit.contain),
+                  // child: Lottie.asset('assets/zae-splash.json', width: 250, height: 250, fit: BoxFit.contain),
                 ),
               ),
               const Text("ZAE Labeler", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
