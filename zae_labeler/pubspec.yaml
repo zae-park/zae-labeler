@@ -42,3 +42,5 @@ flutter:
   assets:
     - assets/zaevicon.png
     - assets/zae-splash.json
+    - assets/zae-splash_15_frame.gif
+    - assets/zae-splash_24_frame.gif
