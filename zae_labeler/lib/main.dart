@@ -12,7 +12,7 @@ import 'src/view_models/auth_view_model.dart';
 import 'src/view_models/project_list_view_model.dart';
 import 'src/view_models/locale_view_model.dart';
 import 'src/views/pages/splash_page.dart';
-import 'src/views/pages/auth_gate.dart';
+// import 'src/views/pages/auth_gate.dart';
 import 'src/views/pages/configuration_page.dart';
 import 'src/views/pages/labeling_page.dart';
 import 'src/views/pages/project_list_page.dart';
@@ -57,9 +57,9 @@ class ZaeLabeler extends StatelessWidget {
             // Initial route when the app is launched
             initialRoute: '/',
             routes: {
-              '/': (context) => const SplashScreen(),
+              '/': (context) => isProd ? const SplashScreen() : const ProjectListPage(),
               // '/onboarding': (context) => const OnboardingPage(),
-              '/auth': (context) => isProd ? const AuthGate() : const ProjectListPage(),
+              // '/auth': (context) => isProd ? const AuthGate() : const ProjectListPage(),
               '/project_list': (context) => const ProjectListPage(),
               '/configuration': (context) => const ConfigureProjectPage(),
               '/labeling': (context) => const LabelingPage(),
