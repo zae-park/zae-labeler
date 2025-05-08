@@ -41,11 +41,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
   }
 
   Future<void> _showOnboardingOverlay() async {
-    await showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) => const OnboardingDialog(),
-    );
+    await showDialog(context: context, barrierDismissible: true, builder: (context) => const OnboardingDialog());
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('hasSeenOnboarding', true);
