@@ -43,7 +43,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
   Future<void> _showOnboardingOverlay() async {
     await showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (context) => const OnboardingDialog(),
     );
 
