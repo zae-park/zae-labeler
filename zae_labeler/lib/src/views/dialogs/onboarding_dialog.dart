@@ -25,13 +25,19 @@ class _OnboardingDialogState extends State<OnboardingDialog> {
     }
   }
 
+  void _previousPage() {
+    if (_currentPage > 0) {
+      _pageController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.ease);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 48, vertical: 64), // 🔧 좌우 여백 확보
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 360), // ✅ 너비 제한
+        constraints: const BoxConstraints(maxWidth: 480), // ✅ 너비 제한
         child: SizedBox(
           height: 280,
           child: Column(
@@ -44,11 +50,7 @@ class _OnboardingDialogState extends State<OnboardingDialog> {
                   itemBuilder: (context, index) => Padding(
                     padding: const EdgeInsets.all(24.0),
                     child: Center(
-                      child: Text(
-                        _pages[index],
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
+                      child: Text(_pages[index], textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ),
@@ -58,13 +60,12 @@ class _OnboardingDialogState extends State<OnboardingDialog> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween, // 또는 spaceEvenly
                   children: [
-                    Text(
-                      "${_currentPage + 1} / ${_pages.length}",
-                      style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
-                    ),
-                    ElevatedButton(
-                      onPressed: _nextPage,
-                      child: Text(_currentPage == _pages.length - 1 ? "시작하기" : "다음"),
+                    Text("${_currentPage + 1} / ${_pages.length}", style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                    Row(
+                      children: [
+                        if (_currentPage != 0) IconButton(icon: const Icon(Icons.arrow_back), onPressed: _previousPage),
+                        IconButton(icon: Icon((_currentPage != _pages.length - 1) ? Icons.arrow_forward : Icons.check), onPressed: _nextPage),
+                      ],
                     ),
                   ],
                 ),
