@@ -114,7 +114,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
             title: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 목록' : 'Project List',
             actions: [
               IconButton(
-                icon: const Icon(Icons.question_mark_rounded),
+                icon: const Icon(Icons.help),
                 tooltip: '온보딩 다시 보기',
                 onPressed: () async {
                   final prefs = await SharedPreferences.getInstance();
