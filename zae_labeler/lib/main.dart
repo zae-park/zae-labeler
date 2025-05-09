@@ -16,6 +16,7 @@ import 'src/views/pages/splash_page.dart';
 import 'src/views/pages/configuration_page.dart';
 import 'src/views/pages/labeling_page.dart';
 import 'src/views/pages/project_list_page.dart';
+import 'src/views/pages/not_found_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,13 +56,24 @@ class ZaeLabeler extends StatelessWidget {
 
             // Initial route when the app is launched
             initialRoute: '/',
-            routes: {
-              '/': (context) => isProd ? const SplashScreen() : const ProjectListPage(),
-              // '/onboarding': (context) => const OnboardingPage(),
-              // '/auth': (context) => isProd ? const AuthGate() : const ProjectListPage(),
-              '/project_list': (context) => const ProjectListPage(),
-              '/configuration': (context) => const ConfigureProjectPage(),
-              '/labeling': (context) => const LabelingPage(),
+            onUnknownRoute: (_) => MaterialPageRoute(builder: (_) => const NotFoundPage()),
+            onGenerateRoute: (RouteSettings settings) {
+              final isSignedIn = context.read<AuthViewModel>().isSignedIn;
+              if (isProd && !isSignedIn && settings.name != '/' && settings.name != '/auth') {
+                return MaterialPageRoute(builder: (_) => const SplashScreen());
+              }
+              switch (settings.name) {
+                case '/':
+                  return MaterialPageRoute(builder: (_) => isProd ? const SplashScreen() : const ProjectListPage());
+                case '/project_list':
+                  return MaterialPageRoute(builder: (_) => const ProjectListPage());
+                case '/configuration':
+                  return MaterialPageRoute(builder: (_) => const ConfigureProjectPage());
+                case '/labeling':
+                  return MaterialPageRoute(builder: (_) => const LabelingPage());
+                default:
+                  return null;
+              }
             },
           );
         },
