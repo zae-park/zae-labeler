@@ -6,21 +6,14 @@ import 'sub_pages/segmentation_labeling_page.dart';
 import 'sub_pages/cross_classification_labeling_page.dart';
 
 class LabelingPage extends StatefulWidget {
-  const LabelingPage({Key? key}) : super(key: key);
+  final Project project;
+  const LabelingPage({Key? key, required this.project}) : super(key: key);
 
   @override
   LabelingPageState createState() => LabelingPageState();
 }
 
 class LabelingPageState extends State<LabelingPage> {
-  late Project project;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    project = ModalRoute.of(context)!.settings.arguments as Project;
-  }
-
   @override
   Widget build(BuildContext context) {
     if (project.mode == LabelingMode.singleClassSegmentation || project.mode == LabelingMode.multiClassSegmentation) {

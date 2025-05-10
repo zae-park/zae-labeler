@@ -65,33 +65,41 @@ class ZaeLabeler extends StatelessWidget {
 
             // Initial route when the app is launched
             initialRoute: '/',
-            routes: {
-              '/': (context) => isProd ? const SplashScreen() : const ProjectListPage(),
-              // '/onboarding': (context) => const OnboardingPage(),
-              // '/auth': (context) => isProd ? const AuthGate() : const ProjectListPage(),
-              '/project_list': (context) => const ProjectListPage(),
-              '/configuration': (context) => const ConfigureProjectPage(),
-              '/labeling': (context) => const LabelingPage(),
-            },
-            onUnknownRoute: (_) => MaterialPageRoute(builder: (_) => const NotFoundPage()),
-            // onGenerateRoute: (RouteSettings settings) {
-            //   final isSignedIn = context.read<AuthViewModel>().isSignedIn;
-            //   if (isProd && !isSignedIn && settings.name != '/' && settings.name != '/auth') {
-            //     return MaterialPageRoute(builder: (_) => const SplashScreen());
-            //   }
-            //   switch (settings.name) {
-            //     case '/':
-            //       return MaterialPageRoute(builder: (_) => isProd ? const SplashScreen() : const ProjectListPage());
-            //     case '/project_list':
-            //       return MaterialPageRoute(builder: (context) => const ProjectListPage());
-            //     case '/configuration':
-            //       return MaterialPageRoute(builder: (_) => const ConfigureProjectPage());
-            //     case '/labeling':
-            //       return MaterialPageRoute(builder: (_) => const LabelingPage());
-            //     default:
-            //       return null;
-            //   }
+            // routes: {
+            //   '/': (context) => isProd ? const SplashScreen() : const ProjectListPage(),
+            //   // '/onboarding': (context) => const OnboardingPage(),
+            //   // '/auth': (context) => isProd ? const AuthGate() : const ProjectListPage(),
+            //   '/project_list': (context) => const ProjectListPage(),
+            //   '/configuration': (context) => const ConfigureProjectPage(),
+            //   '/labeling': (context) => const LabelingPage(),
             // },
+            onUnknownRoute: (_) => MaterialPageRoute(builder: (_) => const NotFoundPage()),
+            onGenerateRoute: (RouteSettings settings) {
+              final isSignedIn = context.read<AuthViewModel>().isSignedIn;
+              if (isProd && !isSignedIn && settings.name != '/' && settings.name != '/auth') {
+                return MaterialPageRoute(builder: (_) => const SplashScreen());
+              }
+              switch (settings.name) {
+                case '/':
+                  return MaterialPageRoute(builder: (_) => isProd ? const SplashScreen() : const ProjectListPage());
+                case '/project_list':
+                  return MaterialPageRoute(builder: (context) => const ProjectListPage());
+                case '/configuration':
+                  return MaterialPageRoute(builder: (_) => const ConfigureProjectPage());
+                case '/labeling':
+                  final args = settings.arguments;
+                  if (args is Project) {
+                    return MaterialPageRoute(
+                      builder: (_) => LabelingPage(project: args),
+                      settings: settings,
+                    );
+                  } else {
+                    return MaterialPageRoute(builder: (_) => const NotFoundPage());
+                  }
+                default:
+                  return null;
+              }
+            },
           );
         },
       ),
