@@ -13,7 +13,9 @@ import '../../widgets/shared/viewer_builder.dart';
 ///   모드별 UI는 `buildModeSpecificUI()`에서 오버라이드.
 /// - ClassificationLabelingPage 및 SegmentationLabelingPage에서 상속받아 사용.
 abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatefulWidget {
-  const BaseLabelingPage({Key? key}) : super(key: key);
+  final Project project;
+
+  const BaseLabelingPage({Key? key, required this.project}) : super(key: key);
 
   @override
   BaseLabelingPageState<T> createState();
@@ -37,7 +39,7 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_isProjectLoaded) {
-      project = ModalRoute.of(context)!.settings.arguments as Project;
+      project = widget.project;  // ✅ 수정: 생성자에서 받은 값 사용
       _isProjectLoaded = true;
       initializeViewModel();
     }
