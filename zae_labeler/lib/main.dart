@@ -32,25 +32,16 @@ class ZaeLabeler extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const bool isWebProd = kIsWeb && kReleaseMode;
     final useCloud = isProd && kIsWeb; // 🔧 dev or local에서는 로컬 저장
     final storageHelper = useCloud ? CloudStorageHelper() : StorageHelper.instance;
 
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<ProjectListViewModel>(
-          create: (_) => ProjectListViewModel(storageHelper: isWebProd ? CloudStorageHelper() : StorageHelper.instance),
-        ),
+        ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(storageHelper: storageHelper)),
         ChangeNotifierProvider<LocaleViewModel>(create: (_) => LocaleViewModel()),
         ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel()),
-        Provider<StorageHelperInterface>.value(value: isWebProd ? CloudStorageHelper() : StorageHelper.instance),
+        Provider<StorageHelperInterface>.value(value: storageHelper),
       ],
-      // providers: [
-      //   ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(storageHelper: storageHelper)),
-      //   ChangeNotifierProvider<LocaleViewModel>(create: (_) => LocaleViewModel()),
-      //   ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel()),
-      //   Provider<StorageHelperInterface>.value(value: storageHelper),
-      // ],
       child: Consumer<LocaleViewModel>(
         builder: (context, localeVM, child) {
           return MaterialApp(
