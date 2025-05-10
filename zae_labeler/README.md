@@ -107,6 +107,7 @@ The app is hosted in two flavors:
 ---
 
 ## Development Tips
+- Use Flutter version 3.16.5
 - Use `flutter test --coverage` to ensure high test quality
 - Keep all mutable state inside ViewModels (not in views)
 - Place platform-specific logic in `utils/` or `helpers/`

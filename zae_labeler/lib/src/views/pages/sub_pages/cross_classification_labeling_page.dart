@@ -1,15 +1,16 @@
-// 📁 views/pages/sub_pages/cross_classification_labeling_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../models/project_model.dart';
 import '../../../view_models/labeling_view_model.dart';
 import '../../../utils/proxy_storage_helper/interface_storage_helper.dart';
 import '../../widgets/shared/viewer_builder.dart';
 import 'base_labeling_page.dart';
 
 class CrossClassificationLabelingPage extends BaseLabelingPage<CrossClassificationLabelingViewModel> {
-  const CrossClassificationLabelingPage({Key? key}) : super(key: key);
+  final Project project;
+
+  const CrossClassificationLabelingPage({Key? key, required this.project}) : super(key: key, project: project);
 
   @override
   BaseLabelingPageState<CrossClassificationLabelingViewModel> createState() => _CrossClassificationLabelingPageState();
