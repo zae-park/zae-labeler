@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import 'firebase_options.dart';
 import 'env.dart';
+import 'src/models/project_model.dart';
 import 'src/utils/storage_helper.dart';
 import 'src/utils/proxy_storage_helper/cloud_storage_helper.dart';
 import 'src/view_models/auth_view_model.dart';
@@ -89,10 +90,7 @@ class ZaeLabeler extends StatelessWidget {
                 case '/labeling':
                   final args = settings.arguments;
                   if (args is Project) {
-                    return MaterialPageRoute(
-                      builder: (_) => LabelingPage(project: args),
-                      settings: settings,
-                    );
+                    return MaterialPageRoute(builder: (_) => LabelingPage(project: args), settings: settings);
                   } else {
                     return MaterialPageRoute(builder: (_) => const NotFoundPage());
                   }
