@@ -151,7 +151,16 @@ class CloudStorageHelper implements StorageHelperInterface {
 
     for (var project in projects) {
       final docRef = projectsRef.doc(project.id);
-      batch.set(docRef, project.toJson(includeLabels: false)); // 🔸 label 제외
+
+      final json = project.toJson(includeLabels: false);
+
+      if (kIsWeb) {
+        json.remove('dataPaths');
+      } else {
+        json['dataPaths'] = project.dataPaths.map((e) => e.toJson()).toList();
+      }
+
+      batch.set(docRef, json);
     }
 
     await batch.commit();
