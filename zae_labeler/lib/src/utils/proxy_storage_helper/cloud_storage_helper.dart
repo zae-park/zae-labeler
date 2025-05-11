@@ -33,7 +33,17 @@ class CloudStorageHelper implements StorageHelperInterface {
 
     for (var project in projects) {
       final docRef = projectsRef.doc(project.id);
-      batch.set(docRef, project.toJson(includeLabels: false));
+
+      final json = project.toJson(includeLabels: false);
+
+      // ✅ Web에서는 dataPaths 제거 또는 비어 있으면 제거
+      if (kIsWeb) {
+        json.remove('dataPaths');
+      } else {
+        json['dataPaths'] = project.dataPaths.map((e) => e.toJson()).toList();
+      }
+
+      batch.set(docRef, json);
     }
 
     await batch.commit();
@@ -48,7 +58,15 @@ class CloudStorageHelper implements StorageHelperInterface {
 
   Future<void> saveSingleProject(Project project) async {
     final docRef = firestore.collection('users').doc(_uid).collection('projects').doc(project.id);
-    await docRef.set(project.toJson(includeLabels: false), SetOptions(merge: true));
+    final json = project.toJson(includeLabels: false);
+
+    if (kIsWeb) {
+      json.remove('dataPaths');
+    } else {
+      json['dataPaths'] = project.dataPaths.map((e) => e.toJson()).toList();
+    }
+
+    await docRef.set(json, SetOptions(merge: true));
   }
 
   Future<void> deleteSingleProject(String projectId) async {
@@ -133,7 +151,16 @@ class CloudStorageHelper implements StorageHelperInterface {
 
     for (var project in projects) {
       final docRef = projectsRef.doc(project.id);
-      batch.set(docRef, project.toJson(includeLabels: false)); // 🔸 label 제외
+
+      final json = project.toJson(includeLabels: false);
+
+      if (kIsWeb) {
+        json.remove('dataPaths');
+      } else {
+        json['dataPaths'] = project.dataPaths.map((e) => e.toJson()).toList();
+      }
+
+      batch.set(docRef, json);
     }
 
     await batch.commit();
