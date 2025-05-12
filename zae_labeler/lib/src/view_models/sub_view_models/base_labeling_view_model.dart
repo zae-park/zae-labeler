@@ -23,6 +23,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
   UnifiedData _currentUnifiedData = UnifiedData.empty();
 
   final Map<String, LabelViewModel> labelCache = {};
+  void clearLabelCache() => labelCache.clear();
 
   LabelingViewModel({required this.project, required this.storageHelper});
 
@@ -96,8 +97,9 @@ abstract class LabelingViewModel extends ChangeNotifier {
   Future<void> validateLabelModelType() async {
     final labelVM = currentLabelVM;
     final expected = LabelModelFactory.createNew(project.mode);
-    if (labelVM.labelModel.runtimeType != expected.runtimeType) {
-      debugPrint("⚠️ 라벨 모델 타입 불일치 → 초기화");
+    if (labelVM.mode != project.mode) {
+      debugPrint("⚠️ 라벨 모델 모드 불일치 → 초기화");
+      labelCache.remove(_currentUnifiedData.dataId);
       labelVM.labelModel = expected;
       await labelVM.saveLabel();
     }
