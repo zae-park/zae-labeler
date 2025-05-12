@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:zae_labeler/common/common_widgets.dart';
 
 import '../../models/project_model.dart';
 import '../../utils/share_helper.dart';
@@ -56,28 +57,38 @@ class ProjectTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => ProjectViewModel(storageHelper: Provider.of(context, listen: false), shareHelper: getShareHelper(), project: project),
+      create: (_) => ProjectViewModel(
+        storageHelper: Provider.of(context, listen: false),
+        shareHelper: getShareHelper(),
+        project: project,
+      ),
       child: Consumer<ProjectViewModel>(
         builder: (context, vm, _) {
-          final actionMap = <String, VoidCallback>{
-            'edit': () => _openEditPage(context, vm.project),
-            'download': () => vm.downloadProjectConfig(),
-            'share': () => vm.shareProject(context),
-            'delete': () => _confirmDelete(context, vm.project, vm),
-          };
-
           return Card(
-            child: ListTile(
-              title: Text(project.name),
-              subtitle: Text(project.mode.displayName),
-              onTap: () => _openLabelingPage(context, vm.project),
-              trailing: PopupMenuButton<String>(
-                onSelected: (value) => actionMap[value]?.call(),
-                itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                  const PopupMenuItem(value: 'download', child: Text('Download')),
-                  const PopupMenuItem(value: 'share', child: Text('Share')),
-                  const PopupMenuItem(value: 'delete', child: Text('Delete')),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: AutoSeparatedColumn(
+                separator: const SizedBox(height: 4),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(project.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text("Mode: ${project.mode.displayName}"),
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: 12,
+                    children: [
+                      ElevatedButton.icon(
+                          onPressed: () => _openLabelingPage(context, vm.project), icon: const Icon(Icons.play_arrow), label: const Text("Label")),
+                      OutlinedButton.icon(onPressed: () => _openEditPage(context, vm.project), icon: const Icon(Icons.edit), label: const Text("Edit")),
+                      OutlinedButton.icon(onPressed: () => vm.downloadProjectConfig(), icon: const Icon(Icons.download), label: const Text("Download")),
+                      OutlinedButton.icon(onPressed: () => vm.shareProject(context), icon: const Icon(Icons.share), label: const Text("Share")),
+                      TextButton.icon(
+                          onPressed: () => _confirmDelete(context, vm.project, vm),
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          label: const Text("Delete", style: TextStyle(color: Colors.red))),
+                    ],
+                  ),
                 ],
               ),
             ),
