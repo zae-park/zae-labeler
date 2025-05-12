@@ -65,6 +65,10 @@ abstract class LabelingViewModel extends ChangeNotifier {
   /// Initializes all unified data and label cache
   Future<void> initialize() async {
     debugPrint("[LabelingVM.initialize] : \${project.mode}");
+    if (_isInitialized && project.mode != currentLabelVM.mode) {
+      debugPrint("[LabelingVM.initialize] : LabelVM mismatch!");
+      labelCache.clear(); // ✅ 라벨 캐시 제거
+    }
     if (_memoryOptimized) {
       _unifiedDataList.clear();
       _currentUnifiedData = project.dataPaths.isNotEmpty ? await UnifiedData.fromDataPath(project.dataPaths.first) : UnifiedData.empty();
