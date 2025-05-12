@@ -148,11 +148,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
             ],
           ),
           body: projectListVM.projects.isEmpty
-              ? Center(
-                  child: Text(
-                    localeVM.currentLocale.languageCode == 'ko' ? '등록된 프로젝트가 없습니다.' : 'No projects available.',
-                  ),
-                )
+              ? Center(child: Text(localeVM.currentLocale.languageCode == 'ko' ? '등록된 프로젝트가 없습니다.' : 'No projects available.'))
               : ListView.builder(
                   itemCount: projectListVM.projects.length,
                   itemBuilder: (context, index) {
@@ -160,23 +156,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
 
                     return ChangeNotifierProvider(
                       create: (context) => ProjectViewModel(storageHelper: StorageHelper.instance, project: project, shareHelper: getShareHelper()),
-                      child: Consumer<ProjectViewModel>(
-                        builder: (context, projectVM, _) {
-                          debugPrint("[LabelingPage 진입] project.mode = ${project.mode}");
-                          return ProjectTile(
-                            project: project,
-                            onEdit: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => ChangeNotifierProvider(
-                                        create: (_) => ConfigurationViewModel.fromProject(project), child: const ConfigureProjectPage()))),
-                            onDownload: () => projectVM.downloadProjectConfig(),
-                            onShare: () => projectVM.shareProject(context),
-                            onDelete: () => _confirmDelete(context, project.id, projectListVM),
-                            onTap: () => Navigator.pushNamed(context, '/labeling', arguments: project),
-                          );
-                        },
-                      ),
+                      child: Consumer<ProjectViewModel>(builder: (context, projectVM, _) => ProjectTile(project: project)),
                     );
                   },
                 ),
