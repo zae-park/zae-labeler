@@ -23,6 +23,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
   UnifiedData _currentUnifiedData = UnifiedData.empty();
 
   final Map<String, LabelViewModel> labelCache = {};
+  void clearLabelCache() => labelCache.clear();
 
   LabelingViewModel({required this.project, required this.storageHelper});
 
@@ -65,6 +66,10 @@ abstract class LabelingViewModel extends ChangeNotifier {
   /// Initializes all unified data and label cache
   Future<void> initialize() async {
     debugPrint("[LabelingVM.initialize] : \${project.mode}");
+    if (_isInitialized && project.mode != currentLabelVM.mode) {
+      debugPrint("[LabelingVM.initialize] : LabelVM mismatch!");
+      labelCache.clear(); // ✅ 라벨 캐시 제거
+    }
     if (_memoryOptimized) {
       _unifiedDataList.clear();
       _currentUnifiedData = project.dataPaths.isNotEmpty ? await UnifiedData.fromDataPath(project.dataPaths.first) : UnifiedData.empty();
@@ -92,8 +97,9 @@ abstract class LabelingViewModel extends ChangeNotifier {
   Future<void> validateLabelModelType() async {
     final labelVM = currentLabelVM;
     final expected = LabelModelFactory.createNew(project.mode);
-    if (labelVM.labelModel.runtimeType != expected.runtimeType) {
-      debugPrint("⚠️ 라벨 모델 타입 불일치 → 초기화");
+    if (labelVM.mode != project.mode) {
+      debugPrint("⚠️ 라벨 모델 모드 불일치 → 초기화");
+      labelCache.remove(_currentUnifiedData.dataId);
       labelVM.labelModel = expected;
       await labelVM.saveLabel();
     }
