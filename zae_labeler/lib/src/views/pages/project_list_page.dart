@@ -151,17 +151,19 @@ class _ProjectListPageState extends State<ProjectListPage> {
                 ? Center(child: Text(localeVM.currentLocale.languageCode == 'ko' ? '등록된 프로젝트가 없습니다.' : 'No projects available.'))
                 : Column(children: [
                     const SizedBox(height: 8),
-                    ListView.builder(
-                      itemCount: projectListVM.projects.length,
-                      itemBuilder: (context, index) {
-                        final project = projectListVM.projects[index];
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: projectListVM.projects.length,
+                        itemBuilder: (context, index) {
+                          final project = projectListVM.projects[index];
 
-                        return ChangeNotifierProvider(
-                          create: (context) => ProjectViewModel(storageHelper: StorageHelper.instance, project: project, shareHelper: getShareHelper()),
-                          child: Consumer<ProjectViewModel>(builder: (context, projectVM, _) => ProjectTile(project: project)),
-                        );
-                      },
-                    ),
+                          return ChangeNotifierProvider(
+                            create: (context) => ProjectViewModel(storageHelper: StorageHelper.instance, project: project, shareHelper: getShareHelper()),
+                            child: Consumer<ProjectViewModel>(builder: (context, projectVM, _) => ProjectTile(project: project)),
+                          );
+                        },
+                      ),
+                    )
                   ]));
       },
     );
