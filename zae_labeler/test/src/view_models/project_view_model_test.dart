@@ -25,8 +25,8 @@ void main() {
       expect(viewModel.project.name, 'New Name');
     });
 
-    test('setLabelingMode updates mode', () {
-      viewModel.setLabelingMode(LabelingMode.multiClassification);
+    test('setLabelingMode updates mode', () async {
+      await viewModel.setLabelingMode(LabelingMode.multiClassification);
       expect(viewModel.project.mode, LabelingMode.multiClassification);
     });
 

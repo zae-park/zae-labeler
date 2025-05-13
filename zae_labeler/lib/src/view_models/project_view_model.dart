@@ -31,7 +31,7 @@ class ProjectViewModel extends ChangeNotifier {
   }
 
   /// ✅ 라벨링 모드 변경
-  void setLabelingMode(LabelingMode mode) async {
+  Future<void> setLabelingMode(LabelingMode mode) async {
     if (project.mode != mode) {
       await storageHelper.deleteProjectLabels(project.id);
     }
