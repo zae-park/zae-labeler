@@ -110,77 +110,61 @@ class _ProjectListPageState extends State<ProjectListPage> {
     return Consumer2<ProjectListViewModel, LocaleViewModel>(
       builder: (context, projectListVM, localeVM, child) {
         return Scaffold(
-          appBar: AppHeader(
-            title: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 목록' : 'Project List',
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.help),
-                tooltip: '온보딩 다시 보기',
-                onPressed: () async {
-                  final prefs = await SharedPreferences.getInstance();
-                  await prefs.setBool('hasSeenOnboarding', false);
-                  _checkOnboarding(); // 즉시 실행
-                },
-              ),
-              PopupMenuButton<String>(
-                onSelected: (value) => localeVM.changeLocale(value),
-                itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'en', child: Text('English')),
-                  const PopupMenuItem(value: 'ko', child: Text('한국어')),
-                ],
-                icon: const Icon(Icons.language),
-              ),
-              IconButton(
-                icon: const Icon(Icons.add),
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ChangeNotifierProvider(create: (_) => ConfigurationViewModel(), child: const ConfigureProjectPage()),
-                  ),
+            appBar: AppHeader(
+              title: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 목록' : 'Project List',
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.help),
+                  tooltip: '온보딩 다시 보기',
+                  onPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('hasSeenOnboarding', false);
+                    _checkOnboarding();
+                  },
                 ),
-                tooltip: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 생성' : 'Create Project',
-              ),
-              IconButton(
-                icon: const Icon(Icons.file_upload),
-                onPressed: () => _importProject(context),
-                tooltip: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 가져오기' : 'Import Project',
-              ),
-            ],
-          ),
-          body: projectListVM.projects.isEmpty
-              ? Center(
-                  child: Text(
-                    localeVM.currentLocale.languageCode == 'ko' ? '등록된 프로젝트가 없습니다.' : 'No projects available.',
+                PopupMenuButton<String>(
+                  onSelected: (value) => localeVM.changeLocale(value),
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(value: 'en', child: Text('English')),
+                    const PopupMenuItem(value: 'ko', child: Text('한국어')),
+                  ],
+                  icon: const Icon(Icons.language),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ChangeNotifierProvider(create: (_) => ConfigurationViewModel(), child: const ConfigureProjectPage()),
+                    ),
                   ),
-                )
-              : ListView.builder(
-                  itemCount: projectListVM.projects.length,
-                  itemBuilder: (context, index) {
-                    final project = projectListVM.projects[index];
+                  tooltip: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 생성' : 'Create Project',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.file_upload),
+                  onPressed: () => _importProject(context),
+                  tooltip: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 가져오기' : 'Import Project',
+                ),
+              ],
+            ),
+            body: projectListVM.projects.isEmpty
+                ? Center(child: Text(localeVM.currentLocale.languageCode == 'ko' ? '등록된 프로젝트가 없습니다.' : 'No projects available.'))
+                : Column(children: [
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: projectListVM.projects.length,
+                        itemBuilder: (context, index) {
+                          final project = projectListVM.projects[index];
 
-                    return ChangeNotifierProvider(
-                      create: (context) => ProjectViewModel(storageHelper: StorageHelper.instance, project: project, shareHelper: getShareHelper()),
-                      child: Consumer<ProjectViewModel>(
-                        builder: (context, projectVM, _) {
-                          debugPrint("[LabelingPage 진입] project.mode = ${project.mode}");
-                          return ProjectTile(
-                            project: project,
-                            onEdit: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => ChangeNotifierProvider(
-                                        create: (_) => ConfigurationViewModel.fromProject(project), child: const ConfigureProjectPage()))),
-                            onDownload: () => projectVM.downloadProjectConfig(),
-                            onShare: () => projectVM.shareProject(context),
-                            onDelete: () => _confirmDelete(context, project.id, projectListVM),
-                            onTap: () => Navigator.pushNamed(context, '/labeling', arguments: project),
+                          return ChangeNotifierProvider(
+                            create: (context) => ProjectViewModel(storageHelper: StorageHelper.instance, project: project, shareHelper: getShareHelper()),
+                            child: Consumer<ProjectViewModel>(builder: (context, projectVM, _) => ProjectTile(project: project)),
                           );
                         },
                       ),
-                    );
-                  },
-                ),
-        );
+                    )
+                  ]));
       },
     );
   }

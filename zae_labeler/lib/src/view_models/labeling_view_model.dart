@@ -9,18 +9,16 @@ export 'sub_view_models/base_labeling_view_model.dart';
 export 'sub_view_models/classification_labeling_view_model.dart';
 export 'sub_view_models/segmentation_labeling_view_model.dart';
 
-/// ✅ 라벨링 모드에 따라 적절한 ViewModel을 생성해주는 팩토리
+final Map<LabelingMode, LabelingViewModel Function(Project, StorageHelperInterface)> labelingViewModelBuilders = {
+  LabelingMode.singleClassification: (p, h) => ClassificationLabelingViewModel(project: p, storageHelper: h),
+  LabelingMode.multiClassification: (p, h) => ClassificationLabelingViewModel(project: p, storageHelper: h),
+  LabelingMode.crossClassification: (p, h) => CrossClassificationLabelingViewModel(project: p, storageHelper: h),
+  LabelingMode.singleClassSegmentation: (p, h) => SegmentationLabelingViewModel(project: p, storageHelper: h),
+  LabelingMode.multiClassSegmentation: (p, h) => SegmentationLabelingViewModel(project: p, storageHelper: h),
+};
+
 class LabelingViewModelFactory {
   static LabelingViewModel create(Project project, StorageHelperInterface helper) {
-    switch (project.mode) {
-      case LabelingMode.singleClassification:
-      case LabelingMode.multiClassification:
-        return ClassificationLabelingViewModel(project: project, storageHelper: helper);
-      case LabelingMode.crossClassification:
-        return CrossClassificationLabelingViewModel(project: project, storageHelper: helper);
-      case LabelingMode.singleClassSegmentation:
-      case LabelingMode.multiClassSegmentation:
-        return SegmentationLabelingViewModel(project: project, storageHelper: helper);
-    }
+    return labelingViewModelBuilders[project.mode]!(project, helper);
   }
 }

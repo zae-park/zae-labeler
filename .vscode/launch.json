@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Flutter Web - Production Flavor",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug", // ✅ 디버그 모드로 실행
+            "args": [
+                "--dart-define=FLAVOR=production", // ✅ flavor 정의
+                "-d",
+                "chrome" // ✅ 웹 브라우저 대상
+            ]
+        }
+    ]
+}

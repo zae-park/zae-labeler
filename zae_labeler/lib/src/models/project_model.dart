@@ -65,7 +65,7 @@ class Project {
       name: json['name'],
       mode: mode,
       classes: List<String>.from(json['classes']),
-      dataPaths: (json['dataPaths'] as List).map((e) => DataPath.fromJson(e)).toList(),
+      dataPaths: (json['dataPaths'] as List?)?.map((e) => DataPath.fromJson(e)).toList() ?? [],
       labels: (json['label'] as List?)?.map((e) => LabelModelConverter.fromJson(mode, e)).toList() ?? [],
     );
   }
