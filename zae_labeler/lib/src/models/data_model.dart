@@ -101,6 +101,7 @@ class UnifiedData {
       this.status = LabelStatus.incomplete});
 
   factory UnifiedData.empty() => UnifiedData(dataId: 'empty', fileType: FileType.unsupported, fileName: '');
+  DataPath toDataPath() => DataPath(id: dataId, fileName: fileName, filePath: file?.path);
 
   /// Creates a UnifiedData instance from a DataPath by determining the file type.
   static Future<UnifiedData> fromDataPath(DataPath dataPath) async {
