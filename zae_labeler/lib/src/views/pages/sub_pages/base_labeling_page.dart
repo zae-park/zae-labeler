@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../models/project_model.dart';
+import '../../../models/data_model.dart';
 import '../../../view_models/labeling_view_model.dart';
 import '../../widgets/navigator.dart';
 import '../../widgets/shared/labeling_progress.dart';
@@ -14,8 +15,9 @@ import '../../widgets/shared/viewer_builder.dart';
 /// - ClassificationLabelingPage 및 SegmentationLabelingPage에서 상속받아 사용.
 abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatefulWidget {
   final Project project;
+  final List<UnifiedData>? fileDataList; // ✅ 외부에서 파일 리스트를 명시적으로 전달
 
-  const BaseLabelingPage({Key? key, required this.project}) : super(key: key);
+  const BaseLabelingPage({Key? key, required this.project, this.fileDataList}) : super(key: key);
 
   @override
   BaseLabelingPageState<T> createState();
@@ -39,13 +41,12 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_isProjectLoaded) {
-      project = widget.project;  // ✅ 수정: 생성자에서 받은 값 사용
+      project = widget.project;
       _isProjectLoaded = true;
       initializeViewModel();
     }
   }
 
-  /// **ViewModel 초기화 로직 분리**
   void initializeViewModel() {
     labelingVM = createViewModel();
     labelingVM!.initialize().then((_) {
@@ -63,15 +64,12 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
     super.dispose();
   }
 
-  /// **공통 키보드 이벤트 핸들러**
   void _handleKeyEvent(KeyEvent event, T labelingVM) {
     if (event is KeyDownEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+      if (event.logicalKey == LogicalKeyboardKey.arrowLeft || event.logicalKey == LogicalKeyboardKey.backspace) {
         labelingVM.movePrevious();
       } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
         labelingVM.moveNext();
-      } else if (event.logicalKey == LogicalKeyboardKey.backspace) {
-        labelingVM.movePrevious();
       } else if (LogicalKeyboardKey.digit0.keyId <= event.logicalKey.keyId && event.logicalKey.keyId <= LogicalKeyboardKey.digit9.keyId) {
         int index = event.logicalKey.keyId - LogicalKeyboardKey.digit0.keyId - 1;
         handleNumericKeyInput(labelingVM, index);
@@ -79,10 +77,8 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
     }
   }
 
-  /// **숫자 키 입력 처리 (각 모드에서 오버라이드 필요)**
   void handleNumericKeyInput(T labelingVM, int index);
 
-  /// **공통 AppBar**
   PreferredSizeWidget buildAppBar(T labelingVM) {
     return AppBar(
       title: Text('${project.name} 라벨링'),
@@ -97,10 +93,8 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
     );
   }
 
-  /// **공통 Viewer**
   Widget buildViewer(T labelingVM) => ViewerBuilder(data: labelingVM.currentUnifiedData);
 
-  /// **공통 Navigator**
   Widget buildNavigator(T labelingVM) {
     return Column(
       children: [
@@ -123,16 +117,12 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
             minHeight: 10,
           ),
           const SizedBox(height: 4),
-          Text(
-            "완료: ${vm.completeCount}  |  주의: ${vm.warningCount}  |  미완료: ${vm.incompleteCount}",
-            style: const TextStyle(fontSize: 12),
-          ),
+          Text("완료: ${vm.completeCount}  |  주의: ${vm.warningCount}  |  미완료: ${vm.incompleteCount}", style: const TextStyle(fontSize: 12)),
         ],
       ),
     );
   }
 
-  /// **모드별 UI 구현 (오버라이드 필요)**
   Widget buildModeSpecificUI(T labelingVM);
 
   @override
@@ -183,14 +173,14 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
     );
 
     try {
-      String filePath = await labelingVM.exportAllLabels();
+      // String filePath = await labelingVM.exportAllLabels();
       if (!context.mounted) return;
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('다운로드 완료: $filePath')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('다운로드 완료: \$filePath')));
     } catch (e) {
       if (!context.mounted) return;
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('다운로드 실패: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('다운로드 실패: \$e')));
     }
   }
 }
