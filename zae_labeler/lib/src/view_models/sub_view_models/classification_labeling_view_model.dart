@@ -12,10 +12,7 @@ import '../../models/sub_models/segmentation_label_model.dart';
 /// ViewModel for single and multi classification labeling modes.
 /// Handles label toggling and status tracking per data item.
 class ClassificationLabelingViewModel extends LabelingViewModel {
-  ClassificationLabelingViewModel({
-    required super.project,
-    required super.storageHelper,
-  });
+  ClassificationLabelingViewModel({required super.project, required super.storageHelper, super.initialDataList});
 
   @override
   int get totalCount => unifiedDataList.length;
@@ -75,10 +72,7 @@ class ClassificationLabelingViewModel extends LabelingViewModel {
 /// ViewModel for cross classification mode, labeling pairs of data.
 /// Uses nC2 pairing logic and custom progress tracking per relation.
 class CrossClassificationLabelingViewModel extends LabelingViewModel {
-  CrossClassificationLabelingViewModel({
-    required super.project,
-    required super.storageHelper,
-  });
+  CrossClassificationLabelingViewModel({required super.project, required super.storageHelper, super.initialDataList});
 
   int _sourceIndex = 0;
   int _targetIndex = 1;
