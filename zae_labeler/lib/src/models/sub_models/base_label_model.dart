@@ -6,10 +6,12 @@
 
 /// ✅ LabelModel의 최상위 추상 클래스 (Base Model)
 abstract class LabelModel<T> {
+  final String dataId;
+  final String? dataPath;
   final T? label;
   final DateTime labeledAt;
 
-  LabelModel({required this.label, required this.labeledAt});
+  LabelModel({required this.dataId, this.dataPath, required this.label, required this.labeledAt});
 
   bool get isMultiClass;
   T? get labelData => label;
