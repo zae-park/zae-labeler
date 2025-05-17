@@ -120,7 +120,7 @@ class CloudStorageHelper implements StorageHelperInterface {
 
   // 📌 전체 라벨 불러오기
   @override
-  Future<List<LabelModel>> loadAllLabels(String projectId) async {
+  Future<List<LabelModel>> loadAllLabelModels(String projectId) async {
     final snapshot = await firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('labels').get();
     return snapshot.docs.map((doc) {
       final data = doc.data();

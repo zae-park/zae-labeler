@@ -71,7 +71,7 @@ class MockStorageHelper implements StorageHelperInterface {
   Future<void> saveAllLabels(String projectId, List<LabelModel> labels) async {}
 
   @override
-  Future<List<LabelModel>> loadAllLabels(String projectId) async => [];
+  Future<List<LabelModel>> loadAllLabelModels(String projectId) async => [];
 
   @override
   Future<void> deleteProjectLabels(String projectId) async {}

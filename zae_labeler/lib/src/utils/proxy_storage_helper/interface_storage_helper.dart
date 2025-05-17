@@ -29,7 +29,7 @@ abstract class StorageHelperInterface {
   // 📌 **Project-wide Label IO**
   // ==============================
   Future<void> saveAllLabels(String projectId, List<LabelModel> labels);
-  Future<List<LabelModel>> loadAllLabels(String projectId);
+  Future<List<LabelModel>> loadAllLabelModels(String projectId);
   Future<void> deleteProjectLabels(String projectId);
 
   // ==============================

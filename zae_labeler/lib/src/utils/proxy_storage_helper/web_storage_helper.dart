@@ -138,7 +138,7 @@ class StorageHelperImpl implements StorageHelperInterface {
 
   // ✅ 모든 Label 불러오기
   @override
-  Future<List<LabelModel>> loadAllLabels(String projectId) async {
+  Future<List<LabelModel>> loadAllLabelModels(String projectId) async {
     final storageKey = 'labels_project_$projectId';
     final labelsJson = html.window.localStorage[storageKey];
 

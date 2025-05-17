@@ -98,7 +98,7 @@ class StorageHelper extends StorageHelperInterface {
   /// - Web: `localStorage`에서 JSON 읽기
   /// - Native: `labels_project_<projectId>.json` 파일에서 JSON 읽기
   @override
-  Future<List<LabelModel>> loadAllLabels(String projectId) => _instance.loadAllLabels(projectId);
+  Future<List<LabelModel>> loadAllLabelModels(String projectId) => _instance.loadAllLabelModels(projectId);
 
   // ==============================
   // 📌 **Label Data Import/Export**

@@ -147,7 +147,7 @@ class StorageHelperImpl implements StorageHelperInterface {
   }
 
   @override
-  Future<List<LabelModel>> loadAllLabels(String projectId) async {
+  Future<List<LabelModel>> loadAllLabelModels(String projectId) async {
     final directory = await getApplicationDocumentsDirectory();
     final file = File('${directory.path}/labels_project_$projectId.json');
 
