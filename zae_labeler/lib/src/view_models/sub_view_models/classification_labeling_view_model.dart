@@ -125,7 +125,8 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
     _crossPairs[currentPairIndex] = updatedPair;
 
     final labelVM = getOrCreateLabelVMForCrossPair(updatedPair);
-    labelVM.labelModel = CrossClassificationLabelModel(label: updatedPair, labeledAt: DateTime.now());
+    labelVM.labelModel =
+        CrossClassificationLabelModel(dataId: '${updatedPair.sourceId}_${updatedPair.targetId}', label: updatedPair, labeledAt: DateTime.now());
 
     debugPrint("[CrossClsLabelingVM.updateLabel] source=\${updatedPair.sourceId}, target=\${updatedPair.targetId}, relation=\${updatedPair.relation}");
 
@@ -169,7 +170,7 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
 
   /// Gets or creates a label VM for a specific pair
   LabelViewModel getOrCreateLabelVMForCrossPair(CrossDataPair pair) {
-    const id = "\${pair.sourceId}_\${pair.targetId}";
+    String id = "\${pair.sourceId}_\${pair.targetId}";
     return labelCache.putIfAbsent(id, () {
       return LabelViewModelFactory.create(
         projectId: project.id,
