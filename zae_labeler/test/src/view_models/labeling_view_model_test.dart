@@ -1,8 +1,10 @@
+// 📁 test/view_models/labeling_view_model_test.dart
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zae_labeler/src/models/label_model.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
+import 'package:zae_labeler/src/models/data_model.dart';
+import 'package:zae_labeler/src/models/label_model.dart';
 import 'package:zae_labeler/src/models/sub_models/segmentation_label_model.dart';
-import 'package:zae_labeler/src/view_models/sub_view_models/segmentation_labeling_view_model.dart';
+import 'package:zae_labeler/src/view_models/labeling_view_model.dart';
 import '../../mocks/mock_storage_helper.dart';
 import '../../mocks/mock_path_provider.dart';
 
@@ -10,6 +12,47 @@ void main() {
   setUpAll(() {
     MockPathProvider.setup();
   });
+
+  group('LabelingViewModelFactory.createAsync', () {
+    final stubStorageHelper = MockStorageHelper();
+
+    Future<void> testCreation(LabelingMode mode, Type expectedType) async {
+      final project = Project(
+        id: 'test_project',
+        name: '테스트 프로젝트',
+        mode: mode,
+        dataPaths: [DataPath(id: '1', fileName: 'dummy.jpg')],
+        classes: ['cat', 'dog'],
+      );
+
+      final viewModel = await LabelingViewModelFactory.createAsync(project, stubStorageHelper);
+
+      expect(viewModel.runtimeType, expectedType);
+      expect(viewModel.project.id, 'test_project');
+      expect(viewModel.unifiedDataList.length, greaterThan(0));
+    }
+
+    test('creates ClassificationLabelingViewModel for singleClassification', () {
+      return testCreation(LabelingMode.singleClassification, ClassificationLabelingViewModel);
+    });
+
+    test('creates ClassificationLabelingViewModel for multiClassification', () {
+      return testCreation(LabelingMode.multiClassification, ClassificationLabelingViewModel);
+    });
+
+    test('creates CrossClassificationLabelingViewModel for crossClassification', () {
+      return testCreation(LabelingMode.crossClassification, CrossClassificationLabelingViewModel);
+    });
+
+    test('creates SegmentationLabelingViewModel for singleClassSegmentation', () {
+      return testCreation(LabelingMode.singleClassSegmentation, SegmentationLabelingViewModel);
+    });
+
+    test('creates SegmentationLabelingViewModel for multiClassSegmentation', () {
+      return testCreation(LabelingMode.multiClassSegmentation, SegmentationLabelingViewModel);
+    });
+  });
+
   group('SegmentationLabelingViewModel', () {
     late SegmentationLabelingViewModel viewModel;
 
