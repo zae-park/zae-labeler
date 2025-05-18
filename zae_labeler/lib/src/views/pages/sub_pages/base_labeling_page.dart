@@ -1,8 +1,9 @@
+// 📁 lib/src/views/pages/sub_pages/base_labeling_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+
 import '../../../models/project_model.dart';
-import '../../../models/data_model.dart';
 import '../../../view_models/labeling_view_model.dart';
 import '../../widgets/navigator.dart';
 import '../../widgets/shared/labeling_progress.dart';
@@ -13,98 +14,57 @@ import '../../widgets/shared/viewer_builder.dart';
 /// - 공통 UI(AppBar, Viewer, Navigator)를 포함하며,
 ///   모드별 UI는 `buildModeSpecificUI()`에서 오버라이드.
 /// - ClassificationLabelingPage 및 SegmentationLabelingPage에서 상속받아 사용.
-abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatefulWidget {
+
+/// Base class for all labeling pages
+abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatelessWidget {
   final Project project;
-  final List<UnifiedData>? fileDataList; // ✅ 외부에서 파일 리스트를 명시적으로 전달
+  final T viewModel;
 
-  const BaseLabelingPage({Key? key, required this.project, this.fileDataList}) : super(key: key);
-
-  @override
-  BaseLabelingPageState<T> createState();
-}
-
-abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<BaseLabelingPage<T>> {
-  late FocusNode _focusNode;
-  late Project project;
-  T? labelingVM;
-  bool _isProjectLoaded = false;
-  bool _isViewModelInitialized = false;
+  const BaseLabelingPage({Key? key, required this.project, required this.viewModel}) : super(key: key);
 
   @override
-  void initState() {
-    super.initState();
-    _focusNode = FocusNode();
-    WidgetsBinding.instance.addPostFrameCallback((_) => FocusScope.of(context).requestFocus(_focusNode));
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider<T>.value(
+      value: viewModel,
+      child: Consumer<T>(
+        builder: (context, vm, child) {
+          return Scaffold(
+            appBar: buildAppBar(vm),
+            body: KeyboardListener(
+              focusNode: FocusNode(),
+              autofocus: true,
+              onKeyEvent: (event) => _handleKeyEvent(event, vm),
+              child: Column(
+                children: [Expanded(child: buildViewer(vm)), buildProgressBar(vm), buildModeSpecificUI(vm), buildNavigator(vm)],
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_isProjectLoaded) {
-      project = widget.project;
-      _isProjectLoaded = true;
-      initializeViewModel();
-    }
-  }
-
-  void initializeViewModel() {
-    labelingVM = createViewModel();
-    labelingVM!.initialize().then((_) {
-      if (mounted) {
-        setState(() {
-          _isViewModelInitialized = true;
-        });
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    super.dispose();
-  }
-
-  void _handleKeyEvent(KeyEvent event, T labelingVM) {
-    if (event is KeyDownEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.arrowLeft || event.logicalKey == LogicalKeyboardKey.backspace) {
-        labelingVM.movePrevious();
-      } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-        labelingVM.moveNext();
-      } else if (LogicalKeyboardKey.digit0.keyId <= event.logicalKey.keyId && event.logicalKey.keyId <= LogicalKeyboardKey.digit9.keyId) {
-        int index = event.logicalKey.keyId - LogicalKeyboardKey.digit0.keyId - 1;
-        handleNumericKeyInput(labelingVM, index);
-      }
-    }
-  }
-
-  void handleNumericKeyInput(T labelingVM, int index);
-
-  PreferredSizeWidget buildAppBar(T labelingVM) {
+  PreferredSizeWidget buildAppBar(T vm) {
     return AppBar(
       title: Text('${project.name} 라벨링'),
       actions: [
         PopupMenuButton<String>(
-          onSelected: (value) => (value == 'zip') ? _downloadLabels(context, labelingVM) : null,
-          itemBuilder: (BuildContext context) => [
-            const PopupMenuItem<String>(value: 'zip', child: Text('ZIP 압축 후 다운로드')),
-          ],
+          onSelected: (value) => (value == 'zip') ? _downloadLabels(viewModel) : null,
+          itemBuilder: (BuildContext context) => [const PopupMenuItem<String>(value: 'zip', child: Text('ZIP 압축 후 다운로드'))],
         ),
       ],
     );
   }
 
-  Widget buildViewer(T labelingVM) => ViewerBuilder(data: labelingVM.currentUnifiedData);
+  Widget buildViewer(T vm) => ViewerBuilder(data: vm.currentUnifiedData);
 
-  Widget buildNavigator(T labelingVM) {
+  Widget buildNavigator(T vm) {
     return Column(
-      children: [
-        LabelingProgress(labelingVM: labelingVM),
-        NavigationButtons(onPrevious: labelingVM.movePrevious, onNext: labelingVM.moveNext),
-      ],
+      children: [LabelingProgress(labelingVM: vm), NavigationButtons(onPrevious: vm.movePrevious, onNext: vm.moveNext)],
     );
   }
 
-  Widget buildProgressBar(LabelingViewModel vm) {
+  Widget buildProgressBar(T vm) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Column(
@@ -123,64 +83,29 @@ abstract class BaseLabelingPageState<T extends LabelingViewModel> extends State<
     );
   }
 
-  Widget buildModeSpecificUI(T labelingVM);
+  Widget buildModeSpecificUI(T vm);
+  void handleNumericKeyInput(T vm, int index);
 
-  @override
-  Widget build(BuildContext context) {
-    if (!_isViewModelInitialized || labelingVM == null) {
-      return const Center(child: CircularProgressIndicator());
+  void _handleKeyEvent(KeyEvent event, T vm) {
+    if (event is KeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.arrowLeft || event.logicalKey == LogicalKeyboardKey.backspace) {
+        vm.movePrevious();
+      } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+        vm.moveNext();
+      } else if (LogicalKeyboardKey.digit0.keyId <= event.logicalKey.keyId && event.logicalKey.keyId <= LogicalKeyboardKey.digit9.keyId) {
+        int index = event.logicalKey.keyId - LogicalKeyboardKey.digit0.keyId - 1;
+        handleNumericKeyInput(vm, index);
+      }
     }
-
-    return ChangeNotifierProvider<T>.value(
-      value: labelingVM!,
-      child: Consumer<T>(
-        builder: (context, labelingVM, child) {
-          return Scaffold(
-            appBar: buildAppBar(labelingVM),
-            body: KeyboardListener(
-              focusNode: _focusNode,
-              autofocus: true,
-              onKeyEvent: (event) => _handleKeyEvent(event, labelingVM),
-              child: Column(
-                children: [
-                  Expanded(child: buildViewer(labelingVM)),
-                  buildProgressBar(labelingVM),
-                  buildModeSpecificUI(labelingVM),
-                  buildNavigator(labelingVM),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
   }
 
-  /// **ViewModel 생성 (각 모드에서 오버라이드 필요)**
-  T createViewModel();
-
-  Future<void> _downloadLabels(BuildContext context, T labelingVM) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const AlertDialog(
-        title: Text('다운로드 중'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [CircularProgressIndicator(), SizedBox(height: 16), Text('라벨링 데이터를 다운로드하고 있습니다...')],
-        ),
-      ),
-    );
-
+  Future<void> _downloadLabels(T vm) async {
     try {
-      // String filePath = await labelingVM.exportAllLabels();
-      if (!context.mounted) return;
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('다운로드 완료: \$filePath')));
+      // 실제 구현 시 exportAllLabels 호출 후 처리 필요
+      final filePath = await vm.exportAllLabels();
+      debugPrint('다운로드 완료: $filePath');
     } catch (e) {
-      if (!context.mounted) return;
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('다운로드 실패: \$e')));
+      debugPrint('다운로드 실패: $e');
     }
   }
 }

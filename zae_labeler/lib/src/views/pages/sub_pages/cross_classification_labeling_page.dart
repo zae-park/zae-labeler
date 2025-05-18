@@ -7,13 +7,16 @@ import '../../../utils/proxy_storage_helper/interface_storage_helper.dart';
 import '../../widgets/shared/viewer_builder.dart';
 import 'base_labeling_page.dart';
 
-class CrossClassificationLabelingPage extends BaseLabelingPage<CrossClassificationLabelingViewModel> {
+class CrossClassificationLabelingPage extends BaseLabelingPage<LabelingViewModel> {
+  @override
   final Project project;
+  @override
+  final LabelingViewModel viewModel;
 
-  const CrossClassificationLabelingPage({Key? key, required this.project}) : super(key: key, project: project);
+  const CrossClassificationLabelingPage({Key? key, required this.project, required this.viewModel}) : super(key: key);
 
   @override
-  BaseLabelingPageState<CrossClassificationLabelingViewModel> createState() => _CrossClassificationLabelingPageState();
+  BaseLabelingPageState<LabelingViewModel> createState() => _CrossClassificationLabelingPageState();
 }
 
 class _CrossClassificationLabelingPageState extends BaseLabelingPageState<CrossClassificationLabelingViewModel> {

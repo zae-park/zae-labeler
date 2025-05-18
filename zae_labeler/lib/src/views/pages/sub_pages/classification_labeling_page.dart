@@ -12,13 +12,9 @@ class ClassificationLabelingPage extends BaseLabelingPage<LabelingViewModel> {
   @override
   final Project project;
   @override
-  final List<UnifiedData>? fileDataList; // ✅ 추가
+  final LabelingViewModel viewModel;
 
-  const ClassificationLabelingPage({
-    Key? key,
-    required this.project,
-    this.fileDataList, // ✅ 생성자에 추가
-  }) : super(key: key, project: project, fileDataList: fileDataList);
+  const ClassificationLabelingPage({Key? key, required this.project, required this.viewModel}) : super(key: key);
 
   @override
   BaseLabelingPageState<LabelingViewModel> createState() => _ClassificationLabelingPageState();
