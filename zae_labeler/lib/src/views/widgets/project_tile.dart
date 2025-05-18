@@ -4,11 +4,9 @@ import 'package:zae_labeler/common/common_widgets.dart';
 
 import '../../models/project_model.dart';
 import '../../utils/share_helper.dart';
-import '../../utils/storage_helper.dart';
 import '../../view_models/project_list_view_model.dart';
 import '../../view_models/project_view_model.dart';
 import '../../view_models/configuration_view_model.dart';
-import '../../view_models/labeling_view_model.dart';
 import '../../views/pages/configuration_page.dart';
 import '../pages/labeling_page.dart';
 
@@ -18,9 +16,8 @@ class ProjectTile extends StatelessWidget {
   const ProjectTile({Key? key, required this.project}) : super(key: key);
 
   void _openLabelingPage(BuildContext context, Project p) async {
-    final viewModel = await LabelingViewModelFactory.createAsync(p, StorageHelper.instance);
     if (!context.mounted) return;
-    Navigator.push(context, MaterialPageRoute(builder: (_) => LabelingPage(project: p, viewModel: viewModel)));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => LabelingPage(project: p)));
   }
 
   void _openEditPage(BuildContext context, Project p) {
