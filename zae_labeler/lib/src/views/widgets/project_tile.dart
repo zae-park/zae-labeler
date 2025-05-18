@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:zae_labeler/common/common_widgets.dart';
 
-import '../../models/data_model.dart';
 import '../../models/project_model.dart';
 import '../../utils/share_helper.dart';
+import '../../utils/storage_helper.dart';
 import '../../view_models/project_list_view_model.dart';
 import '../../view_models/project_view_model.dart';
 import '../../view_models/configuration_view_model.dart';
+import '../../view_models/labeling_view_model.dart';
 import '../../views/pages/configuration_page.dart';
-import '../pages/sub_pages/classification_labeling_page.dart';
+import '../pages/labeling_page.dart';
 
 class ProjectTile extends StatelessWidget {
   final Project project;
@@ -17,9 +18,9 @@ class ProjectTile extends StatelessWidget {
   const ProjectTile({Key? key, required this.project}) : super(key: key);
 
   void _openLabelingPage(BuildContext context, Project p) async {
-    final fileDataList = await Future.wait(p.dataPaths.map(UnifiedData.fromDataPath));
-
-    Navigator.push(context, MaterialPageRoute(builder: (_) => ClassificationLabelingPage(project: p, fileDataList: fileDataList)));
+    final viewModel = await LabelingViewModelFactory.createAsync(p, StorageHelper.instance);
+    if (!context.mounted) return;
+    Navigator.push(context, MaterialPageRoute(builder: (_) => LabelingPage(project: p, viewModel: viewModel)));
   }
 
   void _openEditPage(BuildContext context, Project p) {
