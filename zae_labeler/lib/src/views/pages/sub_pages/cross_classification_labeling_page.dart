@@ -1,50 +1,32 @@
+// 📁 lib/src/views/pages/sub_pages/cross_classification_labeling_page.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../../../models/project_model.dart';
 import '../../../view_models/labeling_view_model.dart';
-import '../../../utils/proxy_storage_helper/interface_storage_helper.dart';
 import '../../widgets/shared/viewer_builder.dart';
 import 'base_labeling_page.dart';
 
-class CrossClassificationLabelingPage extends BaseLabelingPage<LabelingViewModel> {
-  @override
-  final Project project;
-  @override
-  final LabelingViewModel viewModel;
-
-  const CrossClassificationLabelingPage({Key? key, required this.project, required this.viewModel}) : super(key: key);
+class CrossClassificationLabelingPage extends BaseLabelingPage<CrossClassificationLabelingViewModel> {
+  const CrossClassificationLabelingPage({Key? key, required Project project, required CrossClassificationLabelingViewModel viewModel})
+      : super(key: key, project: project, viewModel: viewModel);
 
   @override
-  BaseLabelingPageState<LabelingViewModel> createState() => _CrossClassificationLabelingPageState();
-}
-
-class _CrossClassificationLabelingPageState extends BaseLabelingPageState<CrossClassificationLabelingViewModel> {
-  @override
-  CrossClassificationLabelingViewModel createViewModel() {
-    return LabelingViewModelFactory.create(
-      project,
-      Provider.of<StorageHelperInterface>(context, listen: false),
-    ) as CrossClassificationLabelingViewModel;
-  }
-
-  @override
-  Widget buildViewer(CrossClassificationLabelingViewModel labelingVM) {
-    if (labelingVM.totalPairCount == 0 || labelingVM.currentPair == null) {
+  Widget buildViewer(CrossClassificationLabelingViewModel vm) {
+    if (vm.totalPairCount == 0 || vm.currentPair == null) {
       return const Center(child: Text('쌍을 초기화하는 중입니다...'));
     }
 
     return Row(
       children: [
-        Expanded(child: ViewerBuilder(data: labelingVM.currentSourceData)),
+        Expanded(child: ViewerBuilder(data: vm.currentSourceData)),
         const VerticalDivider(width: 1),
-        Expanded(child: ViewerBuilder(data: labelingVM.currentTargetData)),
+        Expanded(child: ViewerBuilder(data: vm.currentTargetData)),
       ],
     );
   }
 
   @override
-  Widget buildModeSpecificUI(CrossClassificationLabelingViewModel labelingVM) {
+  Widget buildModeSpecificUI(CrossClassificationLabelingViewModel vm) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Wrap(
@@ -53,9 +35,9 @@ class _CrossClassificationLabelingPageState extends BaseLabelingPageState<CrossC
           final label = project.classes[index];
           return ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: labelingVM.isLabelSelected(label) ? Colors.blue : Colors.grey,
+              backgroundColor: vm.isLabelSelected(label) ? Colors.blue : Colors.grey,
             ),
-            onPressed: () => labelingVM.updateLabel(label),
+            onPressed: () => vm.updateLabel(label),
             child: Text(label),
           );
         }),
@@ -64,9 +46,9 @@ class _CrossClassificationLabelingPageState extends BaseLabelingPageState<CrossC
   }
 
   @override
-  void handleNumericKeyInput(CrossClassificationLabelingViewModel labelingVM, int index) {
+  void handleNumericKeyInput(CrossClassificationLabelingViewModel vm, int index) {
     if (index >= 0 && index < project.classes.length) {
-      labelingVM.updateLabel(project.classes[index]);
+      vm.updateLabel(project.classes[index]);
     }
   }
 }
