@@ -10,23 +10,36 @@ import 'sub_pages/cross_classification_labeling_page.dart';
 
 class LabelingPage extends StatelessWidget {
   final Project project;
-  final LabelingViewModel viewModel;
 
-  const LabelingPage({Key? key, required this.project, required this.viewModel}) : super(key: key);
+  const LabelingPage({Key? key, required this.project}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final modeToPageBuilder = {
-      LabelingMode.singleClassification: (Project p, LabelingViewModel vm) => ClassificationLabelingPage(project: p, viewModel: vm),
-      LabelingMode.multiClassification: (Project p, LabelingViewModel vm) => ClassificationLabelingPage(project: p, viewModel: vm),
-      LabelingMode.crossClassification: (Project p, LabelingViewModel vm) => CrossClassificationLabelingPage(project: p, viewModel: vm),
-      LabelingMode.singleClassSegmentation: (Project p, LabelingViewModel vm) => SegmentationLabelingPage(project: p, viewModel: vm),
-      LabelingMode.multiClassSegmentation: (Project p, LabelingViewModel vm) => SegmentationLabelingPage(project: p, viewModel: vm),
-    };
+    return FutureBuilder<LabelingViewModel>(
+      future: LabelingViewModelFactory.createAsync(project, Provider.of(context, listen: false)),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
 
-    final builder = modeToPageBuilder[project.mode];
-    if (builder == null) return const NotFoundPage();
+        final vm = snapshot.data!;
+        final mode = project.mode;
 
-    return ChangeNotifierProvider<LabelingViewModel>.value(value: viewModel, child: builder(project, viewModel));
+        switch (mode) {
+          case LabelingMode.singleClassification:
+          case LabelingMode.multiClassification:
+            return ClassificationLabelingPage(project: project, viewModel: vm as ClassificationLabelingViewModel);
+
+          case LabelingMode.crossClassification:
+            return CrossClassificationLabelingPage(project: project, viewModel: vm as CrossClassificationLabelingViewModel);
+
+          case LabelingMode.singleClassSegmentation:
+          case LabelingMode.multiClassSegmentation:
+            return SegmentationLabelingPage(project: project, viewModel: vm as SegmentationLabelingViewModel);
+          default:
+            return const NotFoundPage();
+        }
+      },
+    );
   }
 }
