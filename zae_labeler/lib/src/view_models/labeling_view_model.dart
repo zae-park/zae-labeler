@@ -2,6 +2,7 @@
 import '../models/data_model.dart';
 import '../models/label_model.dart';
 import '../models/project_model.dart';
+import '../utils/adaptive/adaptive_data_loader.dart';
 import '../utils/proxy_storage_helper/interface_storage_helper.dart';
 import 'sub_view_models/base_labeling_view_model.dart';
 import 'sub_view_models/classification_labeling_view_model.dart';
@@ -21,5 +22,10 @@ final Map<LabelingMode, LabelingViewModel Function(Project, StorageHelperInterfa
 class LabelingViewModelFactory {
   static LabelingViewModel create(Project project, StorageHelperInterface helper, {List<UnifiedData>? initialDataList}) {
     return labelingViewModelBuilders[project.mode]!(project, helper, initialDataList);
+  }
+
+  static Future<LabelingViewModel> createAsync(Project project, StorageHelperInterface helper) async {
+    final data = await loadDataAdaptively(project, helper);
+    return labelingViewModelBuilders[project.mode]!(project, helper, data);
   }
 }
