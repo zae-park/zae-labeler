@@ -5,7 +5,7 @@ import 'package:zae_labeler/src/models/sub_models/segmentation_label_model.dart'
 void main() {
   group('LabelModel', () {
     test('SingleClassificationLabelModel implements LabelModel', () {
-      final model = SingleClassificationLabelModel(label: 'label', labeledAt: DateTime(2024, 1, 1));
+      final model = SingleClassificationLabelModel(dataId: 'test', label: 'label', labeledAt: DateTime(2024, 1, 1));
       expect(model.label, equals('label'));
       expect(model.isMultiClass, isFalse);
     });
