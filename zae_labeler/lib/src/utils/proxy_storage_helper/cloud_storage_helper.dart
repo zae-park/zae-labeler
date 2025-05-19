@@ -69,7 +69,7 @@ class CloudStorageHelper implements StorageHelperInterface {
   /// - 호출 위치: 프로젝트 수정 시 단건 업데이트
   Future<void> saveSingleProject(Project project) async {
     final docRef = firestore.collection('users').doc(_uid).collection('projects').doc(project.id);
-    final json = project.toJson(includeLabels: false);
+    final json = project.toJson(includeLabels: true);
 
     if (kIsWeb) {
       json.remove('dataPaths');
