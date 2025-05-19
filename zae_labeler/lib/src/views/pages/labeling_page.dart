@@ -21,9 +21,20 @@ class LabelingPage extends StatelessWidget {
     return FutureBuilder<LabelingViewModel>(
       future: LabelingViewModelFactory.createAsync(project, helper),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-        final vm = snapshot.data!;
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
 
+        if (snapshot.hasError) {
+          debugPrint('❌ ViewModel init error: ${snapshot.error}');
+          return const Scaffold(body: Center(child: Text('초기화 실패')));
+        }
+
+        if (!snapshot.hasData) {
+          return const Scaffold(body: Center(child: Text('데이터 없음')));
+        }
+        final vm = snapshot.data!;
+        debugPrint('[LabelingPage]: ${vm.runtimeType}');
         switch (project.mode) {
           case LabelingMode.singleClassification:
           case LabelingMode.multiClassification:
