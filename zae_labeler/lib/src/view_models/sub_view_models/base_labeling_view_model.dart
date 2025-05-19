@@ -7,10 +7,22 @@ import '../label_view_model.dart';
 import '../../models/data_model.dart';
 import '../../models/project_model.dart';
 import '../../utils/proxy_storage_helper/interface_storage_helper.dart';
+import '../../utils/adaptive/adaptive_data_loader.dart';
 
 /// Abstract base class for all LabelingViewModels.
-/// Provides core data loading, navigation, label caching, and progress tracking logic.
-/// Subclasses must override the progress tracking methods to customize behavior for each labeling mode.
+///
+/// ✅ 역할:
+/// - 프로젝트 데이터를 불러와 `UnifiedData` 리스트를 구성하고,
+/// - 해당 데이터를 순회하며 라벨을 로드, 저장, 상태 추적을 수행합니다.
+/// - 세부 라벨링 동작은 하위 ViewModel이 override 합니다.
+///
+/// ✅ 플랫폼 대응:
+/// - Web과 Native 간 파일 접근 방식 차이를 `loadDataAdaptively()`로 추상화하여,
+///   플랫폼 독립적인 데이터 로딩 구조를 유지합니다.
+///
+/// ✅ 메모리 최적화 모드:
+/// - `initialDataList`를 주입받은 경우, 미리 주어진 데이터로만 작동하며,
+/// - 디스크 로딩이 제한되거나 느린 환경에서의 성능 향상을 위해 사용됩니다.
 abstract class LabelingViewModel extends ChangeNotifier {
   final Project project;
   final StorageHelperInterface storageHelper;
@@ -45,8 +57,12 @@ abstract class LabelingViewModel extends ChangeNotifier {
   int get incompleteCount => totalCount - completeCount;
   double get progressRatio => totalCount == 0 ? 0 : completeCount / totalCount;
 
+  /// Initializes the ViewModel by loading data and label information.
+  ///
+  /// ✅ memoryOptimized 모드일 경우, 이미 주어진 데이터를 그대로 사용
+  /// ✅ 일반 모드일 경우, 플랫폼에 따라 어댑터를 통해 데이터를 동적으로 로드
   Future<void> initialize() async {
-    debugPrint("[LabelingVM.initialize] : \${project.mode}");
+    debugPrint("[LabelingVM.initialize] : ${project.mode}");
     if (_isInitialized && project.mode != currentLabelVM.mode) {
       debugPrint("[LabelingVM.initialize] : LabelVM mismatch!");
       labelCache.clear();
@@ -59,7 +75,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
       if (initialDataList != null) {
         _unifiedDataList = initialDataList!;
       } else {
-        _unifiedDataList = await Future.wait(project.dataPaths.map(UnifiedData.fromDataPath));
+        _unifiedDataList = await loadDataAdaptively(project, storageHelper); // ✅ 어댑터 사용
       }
       _currentUnifiedData = _unifiedDataList.isNotEmpty ? _unifiedDataList.first : UnifiedData.empty();
     }
