@@ -1,6 +1,4 @@
-import 'package:zae_labeler/src/models/label_model.dart';
-
-import 'base_label_model.dart';
+import '../label_model.dart';
 
 /// ✅ ClassificationLabelModel: 분류(Label) 모델의 상위 클래스
 abstract class ClassificationLabelModel<T> extends LabelModel<T> {
