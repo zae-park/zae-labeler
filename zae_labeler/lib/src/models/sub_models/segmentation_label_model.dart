@@ -1,3 +1,4 @@
+import '../label_model.dart';
 import 'base_label_model.dart';
 import '../../utils/run_length_codec.dart';
 
@@ -46,6 +47,9 @@ class SingleClassSegmentationLabelModel extends SegmentationLabelModel<Segmentat
     return labelData.segments[labelClass]?.indices.any((index) => label!.segments[labelClass]?.indices.contains(index) ?? false) ?? false;
   }
 
+  @override
+  LabelingMode get mode => LabelingMode.singleClassSegmentation;
+
   SingleClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) =>
       SingleClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
 }
@@ -83,6 +87,9 @@ class MultiClassSegmentationLabelModel extends SegmentationLabelModel<Segmentati
         final targetSegment = label!.segments[entry.key];
         return targetSegment != null && entry.value.indices.any((index) => targetSegment.indices.contains(index));
       });
+
+  @override
+  LabelingMode get mode => LabelingMode.multiClassSegmentation;
 
   MultiClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) =>
       MultiClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);

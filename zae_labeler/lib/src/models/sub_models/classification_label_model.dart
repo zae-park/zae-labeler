@@ -1,3 +1,5 @@
+import 'package:zae_labeler/src/models/label_model.dart';
+
 import 'base_label_model.dart';
 
 /// ✅ ClassificationLabelModel: 분류(Label) 모델의 상위 클래스
@@ -6,6 +8,8 @@ abstract class ClassificationLabelModel<T> extends LabelModel<T> {
 
   LabelModel toggleLabel(String labelItem);
   bool isSelected(String labelData);
+  @override
+  LabelingMode get mode => throw UnimplementedError('mode must be implemented in subclasses.');
 }
 
 /// ✅ 단일 분류 (Single Classification)
@@ -42,6 +46,9 @@ class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
 
   @override
   bool isSelected(String labelData) => label == labelData;
+
+  @override
+  LabelingMode get mode => LabelingMode.singleClassification;
 }
 
 /// ✅ 다중 분류 (Multi Classification)
@@ -84,6 +91,9 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
 
   @override
   bool isSelected(String labelData) => label?.contains(labelData) ?? false;
+
+  @override
+  LabelingMode get mode => LabelingMode.multiClassification;
 }
 
 /// ✅ 크로스 분류 (Cross Classification)
@@ -137,6 +147,9 @@ class CrossClassificationLabelModel extends ClassificationLabelModel<CrossDataPa
 
   @override
   bool isSelected(String labelData) => label?.relation == labelData;
+
+  @override
+  LabelingMode get mode => LabelingMode.crossClassification;
 }
 
 class CrossDataPair {
