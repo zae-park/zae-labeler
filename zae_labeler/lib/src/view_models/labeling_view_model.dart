@@ -26,6 +26,8 @@ class LabelingViewModelFactory {
 
   static Future<LabelingViewModel> createAsync(Project project, StorageHelperInterface helper) async {
     final data = await loadDataAdaptively(project, helper);
-    return labelingViewModelBuilders[project.mode]!(project, helper, data);
+    final vm = labelingViewModelBuilders[project.mode]!(project, helper, data);
+    await vm.initialize();
+    return vm; // ✅ 초기화된 인스턴스를 반환
   }
 }
