@@ -90,7 +90,7 @@ class StorageHelperImpl implements StorageHelperInterface {
     Map<String, dynamic> labelEntry = {
       'data_id': dataId,
       'data_path': dataPath,
-      'mode': labelModel.runtimeType.toString(),
+      'mode': labelModel.mode.toString(),
       'labeled_at': labelModel.labeledAt.toIso8601String(),
       'label_data': LabelModelConverter.toJson(labelModel),
     };
@@ -136,7 +136,7 @@ class StorageHelperImpl implements StorageHelperInterface {
     // ✅ LabelModel을 JSON으로 변환 후 저장
     List<Map<String, dynamic>> labelEntries = labels
         .map((label) => {
-              'mode': label.runtimeType.toString(),
+              'mode': label.mode.toString(),
               'labeled_at': label.labeledAt.toIso8601String(),
               'label_data': LabelModelConverter.toJson(label),
             })
@@ -192,7 +192,7 @@ class StorageHelperImpl implements StorageHelperInterface {
     // ✅ JSON 직렬화된 라벨 데이터 추가 (LabelModel.toJson() 사용)
     List<Map<String, dynamic>> labelEntries = labelModels
         .map((label) => {
-              'mode': label.runtimeType.toString(),
+              'mode': label.mode.toString(),
               'labeled_at': label.labeledAt.toIso8601String(),
               'label_data': LabelModelConverter.toJson(label),
             })

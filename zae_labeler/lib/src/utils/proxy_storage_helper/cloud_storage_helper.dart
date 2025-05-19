@@ -79,11 +79,11 @@ class CloudStorageHelper implements StorageHelperInterface {
   Future<void> saveLabelData(String projectId, String dataId, String dataPath, LabelModel labelModel) async {
     final labelRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('labels').doc(dataId);
     debugPrint(
-        "dataId, dataPath, mode, labeled_at, label_data: $dataId, $dataPath, ${labelModel.runtimeType.toString()}, ${labelModel.labeledAt.toIso8601String()}, ${LabelModelConverter.toJson(labelModel)}");
+        "dataId, dataPath, mode, labeled_at, label_data: $dataId, $dataPath, ${labelModel.mode.toString()}, ${labelModel.labeledAt.toIso8601String()}, ${LabelModelConverter.toJson(labelModel)}");
     await labelRef.set({
       'data_id': dataId,
       'data_path': dataPath,
-      'mode': labelModel.runtimeType.toString(),
+      'mode': labelModel.mode.toString(),
       'labeled_at': labelModel.labeledAt.toIso8601String(),
       'label_data': LabelModelConverter.toJson(labelModel),
     });
@@ -109,7 +109,7 @@ class CloudStorageHelper implements StorageHelperInterface {
     for (var label in labels) {
       final docRef = labelsRef.doc(); // 또는 dataId 지정
       batch.set(docRef, {
-        'mode': label.runtimeType.toString(),
+        'mode': label.mode.toString(),
         'labeled_at': label.labeledAt.toIso8601String(),
         'label_data': LabelModelConverter.toJson(label),
       });
