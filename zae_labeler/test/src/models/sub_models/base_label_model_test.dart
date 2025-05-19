@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zae_labeler/src/models/sub_models/base_label_model.dart';
+import 'package:zae_labeler/src/models/label_model.dart';
 
 class DummyLabelModel extends LabelModel<String> {
   DummyLabelModel({required super.dataId, required super.label, required super.labeledAt});
@@ -21,6 +21,9 @@ class DummyLabelModel extends LabelModel<String> {
 
   @override
   bool get isLabeled => throw UnimplementedError();
+
+  @override
+  LabelingMode get mode => throw UnimplementedError();
 }
 
 void main() {
