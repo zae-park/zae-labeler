@@ -1,6 +1,8 @@
 // lib/src/models/project_model.dart
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
+
 import './data_model.dart';
 import './label_model.dart';
 import '../utils/storage_helper.dart';
@@ -59,7 +61,16 @@ class Project {
 
   /// ✅ JSON 데이터를 기반으로 `Project` 객체 생성
   factory Project.fromJson(Map<String, dynamic> json) {
-    final mode = LabelingMode.values.firstWhere((e) => e.toString().split('.').last == json['mode']);
+    final modeStr = json['mode'];
+    late final LabelingMode mode;
+
+    try {
+      mode = LabelingMode.values.byName(modeStr);
+    } catch (_) {
+      debugPrint("⚠️ Invalid labeling mode: $modeStr → fallback to singleClassification");
+      mode = LabelingMode.singleClassification;
+    }
+
     return Project(
       id: json['id'],
       name: json['name'],
@@ -77,7 +88,7 @@ class Project {
     final map = {
       'id': id,
       'name': name,
-      'mode': mode.toString().split('.').last,
+      'mode': mode.name,
       'classes': classes,
       'dataPaths': dataPaths.map((e) => e.toJson()).toList(),
     };
