@@ -30,6 +30,7 @@ class CloudStorageHelper implements StorageHelperInterface {
   /// - 저장 위치: users/{uid}/projects/{project.id}
   @override
   Future<void> saveProjectList(List<Project> projects) async {
+    debugPrint("[CloudStorageHelper] ▶️ saveProjectList 호출됨 - 총 ${projects.length}개 프로젝트");
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) throw FirebaseAuthException(code: 'not-authenticated', message: '로그인이 필요합니다.');
 
@@ -39,20 +40,20 @@ class CloudStorageHelper implements StorageHelperInterface {
 
     for (var project in projects) {
       final docRef = projectsRef.doc(project.id);
-
       final json = project.toJson(includeLabels: false);
 
-      // ✅ Web에서는 dataPaths 제거 또는 비어 있으면 제거
       if (kIsWeb) {
         json.remove('dataPaths');
       } else {
         json['dataPaths'] = project.dataPaths.map((e) => e.toJson()).toList();
       }
 
+      debugPrint("[CloudStorageHelper] 💾 저장할 프로젝트: ${project.id}, ${project.name}");
       batch.set(docRef, json);
     }
 
     await batch.commit();
+    debugPrint("[CloudStorageHelper] ✅ saveProjectList 완료");
   }
 
   /// 📌 [loadProjectList]
@@ -60,14 +61,18 @@ class CloudStorageHelper implements StorageHelperInterface {
   /// - 호출 위치: 앱 초기 로딩 시 프로젝트 리스트 조회용
   @override
   Future<List<Project>> loadProjectList() async {
+    debugPrint("[CloudStorageHelper] 📥 loadProjectList 호출됨");
     final snapshot = await firestore.collection('users').doc(_uid).collection('projects').get();
-    return snapshot.docs.map((doc) => Project.fromJson(doc.data())).toList();
+    final projects = snapshot.docs.map((doc) => Project.fromJson(doc.data())).toList();
+    debugPrint("[CloudStorageHelper] ✅ loadProjectList 완료: ${projects.length}개 로드됨");
+    return projects;
   }
 
   /// 📌 [saveSingleProject]
   /// 단일 프로젝트를 Firestore에 저장합니다 (병합 저장).
   /// - 호출 위치: 프로젝트 수정 시 단건 업데이트
   Future<void> saveSingleProject(Project project) async {
+    debugPrint("[CloudStorageHelper] 💾 saveSingleProject 호출됨: ${project.id}, ${project.name}");
     final docRef = firestore.collection('users').doc(_uid).collection('projects').doc(project.id);
     final json = project.toJson(includeLabels: true);
 
@@ -78,14 +83,17 @@ class CloudStorageHelper implements StorageHelperInterface {
     }
 
     await docRef.set(json, SetOptions(merge: true));
+    debugPrint("[CloudStorageHelper] ✅ saveSingleProject 완료: ${project.id}");
   }
 
   /// 📌 [deleteSingleProject]
   /// Firestore에서 특정 프로젝트 문서를 삭제합니다.
   /// - 호출 위치: 프로젝트 삭제 시
   Future<void> deleteSingleProject(String projectId) async {
+    debugPrint("[CloudStorageHelper] ❌ deleteSingleProject 호출됨: $projectId");
     final docRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId);
     await docRef.delete();
+    debugPrint("[CloudStorageHelper] ✅ deleteSingleProject 완료: $projectId");
   }
 
   /// 📌 [saveLabelData]
@@ -94,6 +102,7 @@ class CloudStorageHelper implements StorageHelperInterface {
   /// - 저장 위치: users/{uid}/projects/{projectId}/labels/{dataId}
   @override
   Future<void> saveLabelData(String projectId, String dataId, String dataPath, LabelModel labelModel) async {
+    debugPrint("[CloudStorageHelper] 💾 saveLabelData 호출됨: $projectId / $dataId");
     final labelRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('labels').doc(dataId);
     debugPrint(
         "dataId, dataPath, mode, labeled_at, label_data: $dataId, $dataPath, ${labelModel.mode.toString()}, ${labelModel.labeledAt.toIso8601String()}, ${LabelModelConverter.toJson(labelModel)}");
@@ -104,6 +113,7 @@ class CloudStorageHelper implements StorageHelperInterface {
       'labeled_at': labelModel.labeledAt.toIso8601String(),
       'label_data': LabelModelConverter.toJson(labelModel),
     });
+    debugPrint("[CloudStorageHelper] ✅ saveLabelData 완료: $projectId / $dataId");
   }
 
   /// 📌 [loadLabelData]
@@ -112,11 +122,14 @@ class CloudStorageHelper implements StorageHelperInterface {
   /// - 없으면 초기 라벨을 생성하여 반환
   @override
   Future<LabelModel> loadLabelData(String projectId, String dataId, String dataPath, LabelingMode mode) async {
+    debugPrint("[CloudStorageHelper] 📥 loadLabelData 호출됨: $projectId / $dataId");
     final labelRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('labels').doc(dataId);
-
     final doc = await labelRef.get();
-    if (!doc.exists) return LabelModelFactory.createNew(mode);
-
+    if (!doc.exists) {
+      debugPrint("[CloudStorageHelper] ⚠️ 라벨 없음 → 초기 라벨 생성");
+      return LabelModelFactory.createNew(mode);
+    }
+    debugPrint("[CloudStorageHelper] ✅ 라벨 로드 완료: $dataId");
     return LabelModelConverter.fromJson(mode, doc.data()!['label_data']);
   }
 
@@ -125,11 +138,12 @@ class CloudStorageHelper implements StorageHelperInterface {
   /// - 호출 위치: 전체 라벨 다운로드 전에 백업 목적 또는 일괄 저장 시
   @override
   Future<void> saveAllLabels(String projectId, List<LabelModel> labels) async {
+    debugPrint("[CloudStorageHelper] 💾 saveAllLabels 호출됨: 총 ${labels.length}개");
     final batch = firestore.batch();
     final labelsRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('labels');
 
     for (var label in labels) {
-      final docRef = labelsRef.doc(label.dataId); // 또는 dataId 지정
+      final docRef = labelsRef.doc(label.dataId);
       batch.set(docRef, {
         'mode': label.mode.toString(),
         'labeled_at': label.labeledAt.toIso8601String(),
@@ -138,6 +152,7 @@ class CloudStorageHelper implements StorageHelperInterface {
     }
 
     await batch.commit();
+    debugPrint("[CloudStorageHelper] ✅ saveAllLabels 완료");
   }
 
   /// 📌 [loadAllLabelModels]
@@ -146,13 +161,16 @@ class CloudStorageHelper implements StorageHelperInterface {
   /// - 내부적으로 LabelingMode 파싱하여 라벨 생성
   @override
   Future<List<LabelModel>> loadAllLabelModels(String projectId) async {
+    debugPrint("[CloudStorageHelper] 📥 loadAllLabelModels 호출됨: $projectId");
     final snapshot = await firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('labels').get();
-    return snapshot.docs.map((doc) {
+    final labels = snapshot.docs.map((doc) {
       final data = doc.data();
       final rawMode = data['mode'];
       final mode = LabelingMode.values.firstWhere((e) => e.toString() == rawMode, orElse: () => throw StateError('Invalid labeling mode: $rawMode'));
       return LabelModelConverter.fromJson(mode, data['label_data']);
     }).toList();
+    debugPrint("[CloudStorageHelper] ✅ loadAllLabelModels 완료: ${labels.length}개 라벨");
+    return labels;
   }
 
   /// 📌 [deleteProjectLabels]
@@ -160,10 +178,12 @@ class CloudStorageHelper implements StorageHelperInterface {
   /// - 호출 위치: 프로젝트 삭제 시 또는 라벨 초기화 시 사용
   @override
   Future<void> deleteProjectLabels(String projectId) async {
+    debugPrint("[CloudStorageHelper] ❌ deleteProjectLabels 호출됨: $projectId");
     final snapshot = await firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('labels').get();
     for (final doc in snapshot.docs) {
       await doc.reference.delete();
     }
+    debugPrint("[CloudStorageHelper] ✅ deleteProjectLabels 완료: $projectId");
   }
 
   /// 📌 [downloadProjectConfig]
@@ -176,6 +196,7 @@ class CloudStorageHelper implements StorageHelperInterface {
   /// - 비회원 모드에서 localStorage에 저장하던 것을 Firebase 방식으로 전환
   @override
   Future<void> saveProjectConfig(List<Project> projects) async {
+    debugPrint("[CloudStorageHelper] 💾 saveProjectConfig 호출됨: ${projects.length}개 프로젝트");
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) throw FirebaseAuthException(code: 'not-authenticated', message: '로그인이 필요합니다.');
 
@@ -184,7 +205,6 @@ class CloudStorageHelper implements StorageHelperInterface {
 
     for (var project in projects) {
       final docRef = projectsRef.doc(project.id);
-
       final json = project.toJson(includeLabels: false);
 
       if (kIsWeb) {
@@ -197,6 +217,7 @@ class CloudStorageHelper implements StorageHelperInterface {
     }
 
     await batch.commit();
+    debugPrint("[CloudStorageHelper] ✅ saveProjectConfig 완료");
   }
 
   /// 📌 [loadProjectFromConfig]
