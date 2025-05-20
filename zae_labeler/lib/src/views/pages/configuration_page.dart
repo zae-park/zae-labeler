@@ -43,7 +43,11 @@ class ConfigureProjectPage extends StatelessWidget {
     final updatedProject = configVM.project;
     final isNewProject = !configVM.isEditing;
 
-    debugPrint("[confirmProject] mode: ${configVM.project.mode} is new? : $isNewProject"); // ✅ 이 로그 추가
+    debugPrint("[confirmProject] mode: ${configVM.project.mode} is new? : $isNewProject");
+    debugPrint("[confirmProject] dataPaths 수: ${updatedProject.dataPaths.length}");
+    for (final dp in updatedProject.dataPaths) {
+      debugPrint("📂 dataPath: dataId=${dp.id}, path=${dp.filePath}, name=${dp.fileName}");
+    }
     if (isNewProject) {
       projectListVM.saveProject(updatedProject);
     } else {
