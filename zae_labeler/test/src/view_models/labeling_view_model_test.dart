@@ -21,7 +21,7 @@ void main() {
         id: 'test_project',
         name: '테스트 프로젝트',
         mode: mode,
-        dataPaths: [DataPath(id: '1', fileName: 'dummy.jpg')],
+        dataInfos: [DataInfo(id: '1', fileName: 'dummy.jpg')],
         classes: ['cat', 'dog'],
       );
 
@@ -61,7 +61,7 @@ void main() {
         id: 'test-project',
         name: 'Test Project',
         mode: LabelingMode.multiClassSegmentation,
-        dataPaths: [],
+        dataInfos: [],
         classes: ['car', 'road'],
       );
 

@@ -160,6 +160,6 @@ abstract class LabelingViewModel extends ChangeNotifier {
 
   Future<String> exportAllLabels() async {
     final allLabels = labelCache.values.map((vm) => vm.labelModel).toList();
-    return await storageHelper.exportAllLabels(project, allLabels, _unifiedDataList.map((e) => e.toDataPath()).toList());
+    return await storageHelper.exportAllLabels(project, allLabels, _unifiedDataList.map((e) => e.toDataInfo()).toList());
   }
 }

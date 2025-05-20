@@ -2,7 +2,7 @@
 
 /*
 이 파일은 데이터 모델을 정의하며, 다양한 데이터 유형(시계열, JSON 오브젝트, 이미지 등)을 다루기 위한 클래스들을 포함합니다.
-FileData, DataPath, UnifiedData 클래스를 사용하여 데이터를 로드, 변환, 직렬화 및 관리할 수 있습니다.
+FileData, DataInfo, UnifiedData 클래스를 사용하여 데이터를 로드, 변환, 직렬화 및 관리할 수 있습니다.
 */
 
 import 'dart:convert';
@@ -34,13 +34,13 @@ class FileData {
 }
 
 /// Represents a data path that can be used to load file content.
-class DataPath {
+class DataInfo {
   final String id; // ✅ 고유 식별자 (uuid)
   final String fileName; // 파일 이름
   final String? base64Content; // Base64 인코딩된 파일 내용 (Web 환경)
   final String? filePath; // 파일 경로 (Native 환경)
 
-  DataPath({String? id, required this.fileName, this.base64Content, this.filePath}) : id = id ?? const Uuid().v4();
+  DataInfo({String? id, required this.fileName, this.base64Content, this.filePath}) : id = id ?? const Uuid().v4();
 
   /// Loads the content of the file based on its environment (Web or Native).
   Future<String?> loadData() async {
@@ -60,15 +60,15 @@ class DataPath {
     return null; // 데이터가 없는 경우
   }
 
-  /// Creates a DataPath instance from a JSON-compatible map.
-  factory DataPath.fromJson(Map<String, dynamic> json) => DataPath(
+  /// Creates a DataInfo instance from a JSON-compatible map.
+  factory DataInfo.fromJson(Map<String, dynamic> json) => DataInfo(
         id: json['id'],
         fileName: json['fileName'],
         base64Content: json['base64Content'],
         filePath: json['filePath'],
       );
 
-  /// Converts the DataPath instance into a JSON-compatible map.
+  /// Converts the DataInfo instance into a JSON-compatible map.
   Map<String, dynamic> toJson() => {
         'id': id,
         'fileName': fileName,
@@ -101,30 +101,30 @@ class UnifiedData {
       this.status = LabelStatus.incomplete});
 
   factory UnifiedData.empty() => UnifiedData(dataId: 'empty', fileType: FileType.unsupported, fileName: '');
-  DataPath toDataPath() => DataPath(id: dataId, fileName: fileName, filePath: file?.path);
+  DataInfo toDataInfo() => DataInfo(id: dataId, fileName: fileName, filePath: file?.path);
 
-  /// Creates a UnifiedData instance from a DataPath by determining the file type.
-  static Future<UnifiedData> fromDataPath(DataPath dataPath) async {
-    final fileName = dataPath.fileName;
-    final id = dataPath.id;
+  /// Creates a UnifiedData instance from a DataInfo by determining the file type.
+  static Future<UnifiedData> fromDataInfo(DataInfo dataInfo) async {
+    final fileName = dataInfo.fileName;
+    final id = dataInfo.id;
 
     if (fileName.endsWith('.csv')) {
       // 시계열 데이터 로드
-      final content = await dataPath.loadData();
+      final content = await dataInfo.loadData();
       final seriesData = _parseSeriesData(content ?? '');
       return UnifiedData(dataId: id, fileName: fileName, seriesData: seriesData, fileType: FileType.series);
     } else if (fileName.endsWith('.json')) {
       // JSON 오브젝트 데이터 로드
-      final content = await dataPath.loadData();
+      final content = await dataInfo.loadData();
       final objectData = _parseObjectData(content ?? '');
       return UnifiedData(dataId: id, fileName: fileName, objectData: objectData, fileType: FileType.object);
     } else if (['.png', '.jpg', '.jpeg'].any((ext) => fileName.endsWith(ext))) {
       // ✅ 이미지 파일 로드 (UTF-8 디코딩 없이 처리)
-      final content = await dataPath.loadData();
+      final content = await dataInfo.loadData();
       return UnifiedData(
         dataId: id,
         fileName: fileName,
-        file: dataPath.filePath != null ? File(dataPath.filePath!) : null,
+        file: dataInfo.filePath != null ? File(dataInfo.filePath!) : null,
         content: content,
         fileType: FileType.image,
       );

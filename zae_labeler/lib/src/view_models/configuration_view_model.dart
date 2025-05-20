@@ -18,7 +18,7 @@ class ConfigurationViewModel extends ChangeNotifier {
 
   // ✅ 새 프로젝트 생성 시 기본값 설정
   ConfigurationViewModel()
-      : _project = Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: ["True", "False"], dataPaths: []),
+      : _project = Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: ["True", "False"], dataInfos: []),
         _isEditing = false;
 
   // ✅ 기존 프로젝트 수정용 생성자
@@ -62,13 +62,13 @@ class ConfigurationViewModel extends ChangeNotifier {
   }
 
   /// ✅ 데이터 경로 추가
-  Future<void> addDataPath() async {
+  Future<void> addDataInfo() async {
     if (kIsWeb) {
       FilePickerResult? result = await FilePicker.platform.pickFiles(allowMultiple: true, withData: true);
 
       if (result != null) {
         for (var file in result.files) {
-          _project = _project.copyWith(dataPaths: [..._project.dataPaths, DataPath(fileName: file.name, base64Content: base64Encode(file.bytes ?? []))]);
+          _project = _project.copyWith(dataInfos: [..._project.dataInfos, DataInfo(fileName: file.name, base64Content: base64Encode(file.bytes ?? []))]);
         }
         notifyListeners();
       }
@@ -78,17 +78,17 @@ class ConfigurationViewModel extends ChangeNotifier {
         final directory = Directory(selectedDirectory);
         final files = directory.listSync().whereType<File>();
         for (var file in files) {
-          _project = _project.copyWith(dataPaths: [..._project.dataPaths, DataPath(fileName: file.uri.pathSegments.last, filePath: file.path)]);
+          _project = _project.copyWith(dataInfos: [..._project.dataInfos, DataInfo(fileName: file.uri.pathSegments.last, filePath: file.path)]);
         }
         notifyListeners();
       }
     }
   }
 
-  /// ✅ 데이터 경로 삭제 기능 추가
-  void removeDataPath(int index) {
-    if (index >= 0 && index < _project.dataPaths.length) {
-      _project = _project.copyWith(dataPaths: List.from(_project.dataPaths)..removeAt(index));
+  /// ✅ 데이터 정보 삭제 기능 추가
+  void removeDataInfo(int index) {
+    if (index >= 0 && index < _project.dataInfos.length) {
+      _project = _project.copyWith(dataInfos: List.from(_project.dataInfos)..removeAt(index));
       notifyListeners();
     }
   }
@@ -98,7 +98,7 @@ class ConfigurationViewModel extends ChangeNotifier {
     if (_isEditing) {
       _project = _project.copyWith(); // ✅ 기존 프로젝트 수정 모드일 경우 초기화하지 않음
     } else {
-      _project = Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: [], dataPaths: []);
+      _project = Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: [], dataInfos: []);
     }
     notifyListeners();
   }

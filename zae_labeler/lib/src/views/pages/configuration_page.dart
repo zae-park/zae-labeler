@@ -44,9 +44,9 @@ class ConfigureProjectPage extends StatelessWidget {
     final isNewProject = !configVM.isEditing;
 
     debugPrint("[confirmProject] mode: ${configVM.project.mode} is new? : $isNewProject");
-    debugPrint("[confirmProject] dataPaths 수: ${updatedProject.dataPaths.length}");
-    for (final dp in updatedProject.dataPaths) {
-      debugPrint("📂 dataPath: dataId=${dp.id}, path=${dp.filePath}, name=${dp.fileName}");
+    debugPrint("[confirmProject] dataInfos 수: ${updatedProject.dataInfos.length}");
+    for (final dp in updatedProject.dataInfos) {
+      debugPrint("📂 dataInfo: dataId=${dp.id}, path=${dp.filePath}, name=${dp.fileName}");
     }
     if (isNewProject) {
       projectListVM.saveProject(updatedProject);
@@ -146,25 +146,25 @@ class ConfigureProjectPage extends StatelessWidget {
                                 ElevatedButton.icon(
                                   icon: const Icon(Icons.folder_open),
                                   label: const Text(kIsWeb ? 'Select Files' : 'Select Data Directory'),
-                                  onPressed: () => configVM.addDataPath(),
+                                  onPressed: () => configVM.addDataInfo(),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 8),
-                            if (configVM.project.dataPaths.isNotEmpty) ...[
+                            if (configVM.project.dataInfos.isNotEmpty) ...[
                               const SizedBox(height: 8),
                               Container(
                                 height: 150,
                                 decoration: BoxDecoration(border: Border.all(color: Colors.grey), borderRadius: BorderRadius.circular(8)),
                                 child: Scrollbar(
                                   child: ListView.builder(
-                                    itemCount: configVM.project.dataPaths.length,
+                                    itemCount: configVM.project.dataInfos.length,
                                     itemBuilder: (context, index) {
                                       return ListTile(
-                                        title: Text(configVM.project.dataPaths[index].fileName),
+                                        title: Text(configVM.project.dataInfos[index].fileName),
                                         trailing: IconButton(
                                           icon: const Icon(Icons.delete, color: Colors.red),
-                                          onPressed: () => configVM.removeDataPath(index),
+                                          onPressed: () => configVM.removeDataInfo(index),
                                         ),
                                       );
                                     },

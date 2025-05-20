@@ -19,7 +19,7 @@ class Project {
   final String name; // 프로젝트 이름
   final LabelingMode mode; // 라벨링 모드
   final List<String> classes; // 설정된 클래스 목록
-  final List<DataPath> dataPaths; // 데이터 경로
+  final List<DataInfo> dataInfos; // 데이터 경로
   List<LabelModel> labels; // ✅ 라벨 데이터 관리
 
   Project({
@@ -27,7 +27,7 @@ class Project {
     required this.name,
     required this.mode,
     required this.classes,
-    this.dataPaths = const [],
+    this.dataInfos = const [],
     this.labels = const [], // ✅ 라벨 데이터를 `LabelModel` 기반으로 관리
   });
 
@@ -39,13 +39,13 @@ class Project {
   factory Project.empty() => Project(id: 'empty', name: '', mode: LabelingMode.singleClassification, classes: const []);
 
   /// ✅ 프로젝트 복사본을 생성하는 `copyWith` 메소드
-  Project copyWith({String? id, String? name, LabelingMode? mode, List<String>? classes, List<DataPath>? dataPaths, List<LabelModel>? labels}) {
+  Project copyWith({String? id, String? name, LabelingMode? mode, List<String>? classes, List<DataInfo>? dataInfos, List<LabelModel>? labels}) {
     return Project(
       id: id ?? this.id,
       name: name ?? this.name,
       mode: mode ?? this.mode,
       classes: classes ?? List.from(this.classes),
-      dataPaths: dataPaths ?? List.from(this.dataPaths),
+      dataInfos: dataInfos ?? List.from(this.dataInfos),
       labels: labels ?? List.from(this.labels),
     );
   }
@@ -76,7 +76,7 @@ class Project {
       name: json['name'],
       mode: mode,
       classes: List<String>.from(json['classes']),
-      dataPaths: (json['dataPaths'] as List?)?.map((e) => DataPath.fromJson(e)).toList() ?? [],
+      dataInfos: (json['dataInfos'] as List?)?.map((e) => DataInfo.fromJson(e)).toList() ?? [],
       labels: (json['label'] as List?)?.map((e) => LabelModelConverter.fromJson(mode, e)).toList() ?? [],
     );
   }
@@ -90,7 +90,7 @@ class Project {
       'name': name,
       'mode': mode.name,
       'classes': classes,
-      'dataPaths': dataPaths.map((e) => e.toJson()).toList(),
+      'dataInfos': dataInfos.map((e) => e.toJson()).toList(),
     };
 
     if (includeLabels) {

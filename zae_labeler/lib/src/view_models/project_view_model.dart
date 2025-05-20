@@ -57,9 +57,9 @@ class ProjectViewModel extends ChangeNotifier {
     }
   }
 
-  /// ✅ 데이터 경로 추가
-  void addDataPath(DataPath dataPath) {
-    project = project.copyWith(dataPaths: [...project.dataPaths, dataPath]);
+  /// ✅ 데이터 정보 추가
+  void addDataInfo(DataInfo dataInfo) {
+    project = project.copyWith(dataInfos: [...project.dataInfos, dataInfo]);
     notifyListeners();
   }
 

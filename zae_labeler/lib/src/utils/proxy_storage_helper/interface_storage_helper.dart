@@ -35,7 +35,7 @@ abstract class StorageHelperInterface {
   // ==============================
   // 📌 **Label Data Import/Export**
   // ==============================
-  Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataPath> fileDataList);
+  Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataInfo> fileDataList);
   Future<List<LabelModel>> importAllLabels();
 
   // ==============================

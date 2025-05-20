@@ -163,15 +163,15 @@ class StorageHelperImpl implements StorageHelperInterface {
   // ==============================
 
   @override
-  Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataPath> fileDataList) async {
+  Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataInfo> fileDataList) async {
     final archive = Archive();
 
-    // ✅ DataPath에서 데이터 로드 및 ZIP 추가
-    for (var dataPath in fileDataList) {
-      final content = await dataPath.loadData();
+    // ✅ DataInfo에서 데이터 로드 및 ZIP 추가
+    for (var dataInfo in fileDataList) {
+      final content = await dataInfo.loadData();
       if (content != null) {
         final fileBytes = utf8.encode(content);
-        archive.addFile(ArchiveFile(dataPath.fileName, fileBytes.length, fileBytes));
+        archive.addFile(ArchiveFile(dataInfo.fileName, fileBytes.length, fileBytes));
       }
     }
 

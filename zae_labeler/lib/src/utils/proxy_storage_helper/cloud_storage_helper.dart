@@ -43,9 +43,9 @@ class CloudStorageHelper implements StorageHelperInterface {
       final json = project.toJson(includeLabels: false);
 
       if (kIsWeb) {
-        json.remove('dataPaths');
+        json.remove('dataInfos');
       } else {
-        json['dataPaths'] = project.dataPaths.map((e) => e.toJson()).toList();
+        json['dataInfos'] = project.dataInfos.map((e) => e.toJson()).toList();
       }
 
       debugPrint("[CloudStorageHelper] 💾 저장할 프로젝트: ${project.id}, ${project.name}");
@@ -77,9 +77,9 @@ class CloudStorageHelper implements StorageHelperInterface {
     final json = project.toJson(includeLabels: true);
 
     if (kIsWeb) {
-      json.remove('dataPaths');
+      json.remove('dataInfos');
     } else {
-      json['dataPaths'] = project.dataPaths.map((e) => e.toJson()).toList();
+      json['dataInfos'] = project.dataInfos.map((e) => e.toJson()).toList();
     }
 
     await docRef.set(json, SetOptions(merge: true));
@@ -208,9 +208,9 @@ class CloudStorageHelper implements StorageHelperInterface {
       final json = project.toJson(includeLabels: false);
 
       if (kIsWeb) {
-        json.remove('dataPaths');
+        json.remove('dataInfos');
       } else {
-        json['dataPaths'] = project.dataPaths.map((e) => e.toJson()).toList();
+        json['dataInfos'] = project.dataInfos.map((e) => e.toJson()).toList();
       }
 
       batch.set(docRef, json);
@@ -228,7 +228,7 @@ class CloudStorageHelper implements StorageHelperInterface {
   /// 📌 [exportAllLabels]
   /// 라벨 데이터를 다운로드 가능한 파일로 내보냅니다 (Firebase에서는 미지원)
   @override
-  Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataPath> fileDataList) async => throw UnimplementedError();
+  Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataInfo> fileDataList) async => throw UnimplementedError();
 
   /// 📌 [importAllLabels]
   /// 외부 JSON 또는 ZIP로부터 라벨 데이터 임포트 (Firebase에서는 미지원)

@@ -11,7 +11,7 @@ import '../proxy_storage_helper/interface_storage_helper.dart';
 /// ✅ 목적:
 /// - `dataId`를 중심으로 모든 UnifiedData를 구성합니다.
 /// - Web은 `LabelModel` 기반으로 복원하며,
-/// - Native는 `project.dataPaths`를 기준으로 `dataId → filePath`를 resolve합니다.
+/// - Native는 `project.dataInfos`를 기준으로 `dataId → filePath`를 resolve합니다.
 ///
 /// ✅ 책임:
 /// - 플랫폼에 따라 라벨 목록 또는 로컬 파일 경로에서 데이터를 적절히 구성합니다.
@@ -56,20 +56,12 @@ Future<List<UnifiedData>> _loadFromLabels(
   }).toList();
 }
 
-/// Native: project.dataPaths에서 dataId → filePath를 resolve하여 구성
+/// Native: project.dataInfos에서 dataId → filePath를 resolve하여 구성
 Future<List<UnifiedData>> _loadFromPaths(Project project) async {
-  if (project.dataPaths.isEmpty) {
-    debugPrint("⚠️ [AdaptiveLoader] No dataPaths found → returning placeholder");
-    return [
-      UnifiedData(
-        dataId: 'placeholder',
-        fileName: 'untitled',
-        fileType: FileType.unsupported,
-        content: null,
-        status: LabelStatus.incomplete,
-      )
-    ];
+  if (project.dataInfos.isEmpty) {
+    debugPrint("⚠️ [AdaptiveLoader] No dataInfos found → returning placeholder");
+    return [UnifiedData(dataId: 'placeholder', fileName: 'untitled', fileType: FileType.unsupported, content: null, status: LabelStatus.incomplete)];
   }
 
-  return Future.wait(project.dataPaths.map(UnifiedData.fromDataPath));
+  return Future.wait(project.dataInfos.map((e) => UnifiedData.fromDataInfo(e)));
 }
