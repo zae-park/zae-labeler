@@ -134,6 +134,11 @@ class UnifiedData {
     return UnifiedData(dataId: id, fileType: FileType.unsupported, fileName: fileName);
   }
 
+  static Future<UnifiedData> fromDataId({required List<DataInfo> dataInfos, required String dataId}) async {
+    final dataInfo = dataInfos.firstWhere((e) => e.id == dataId, orElse: () => throw Exception("dataId not found: $dataId"));
+    return UnifiedData.fromDataInfo(dataInfo);
+  }
+
   UnifiedData copyWith({
     String? dataId,
     String? fileName,
