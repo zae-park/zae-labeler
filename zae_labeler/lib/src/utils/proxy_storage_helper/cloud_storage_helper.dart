@@ -76,10 +76,9 @@ class CloudStorageHelper implements StorageHelperInterface {
     final docRef = firestore.collection('users').doc(_uid).collection('projects').doc(project.id);
     final json = project.toJson(includeLabels: true);
 
-    if (kIsWeb) {
-      json.remove('dataInfos');
-    } else {
-      json['dataInfos'] = project.dataInfos.map((e) => e.toJson()).toList();
+    if (project.dataInfos.isNotEmpty) {
+      debugPrint("[CloudStorageHelper] 💾 dataInfos: ${project.dataInfos}");
+      json['dataPaths'] = project.dataInfos.map((e) => e.toJson()).toList();
     }
 
     await docRef.set(json, SetOptions(merge: true));
