@@ -19,30 +19,29 @@ import '../proxy_storage_helper/interface_storage_helper.dart';
 /// {@endtemplate}
 Future<List<UnifiedData>> loadDataAdaptively(Project project, StorageHelperInterface storageHelper) async {
   if (kIsWeb) {
-    return await _loadFromLabels(project.id, storageHelper);
+    return await _loadFromLabels(project, storageHelper);
   } else {
     return await _loadFromPaths(project);
   }
 }
 
 /// Web: 라벨 목록 기반으로 `dataId`만 사용하여 구성
-Future<List<UnifiedData>> _loadFromLabels(
-  String projectId,
-  StorageHelperInterface storageHelper,
-) async {
-  final List<LabelModel> labels = await storageHelper.loadAllLabelModels(projectId);
+Future<List<UnifiedData>> _loadFromLabels(Project project, StorageHelperInterface storageHelper) async {
+  List<LabelModel> labels = [];
+  try {
+    labels = await storageHelper.loadAllLabelModels(project.id);
+  } catch (e, _) {
+    debugPrint("❌ [AdaptiveLoader] loadAllLabelModels 실패: $e");
+  }
+
+  if (labels.isEmpty && project.dataInfos.isNotEmpty) {
+    debugPrint("✅ [AdaptiveLoader] fallback → UnifiedData from dataInfos");
+    return await Future.wait(project.dataInfos.map(UnifiedData.fromDataInfo));
+  }
 
   if (labels.isEmpty) {
-    debugPrint("⚠️ [AdaptiveLoader] No labels found → returning placeholder");
-    return [
-      UnifiedData(
-        dataId: 'placeholder',
-        fileName: 'untitled',
-        fileType: FileType.unsupported,
-        content: null,
-        status: LabelStatus.incomplete,
-      )
-    ];
+    debugPrint("⚠️ [AdaptiveLoader] No labels and no dataInfos → returning placeholder");
+    return [UnifiedData(dataId: 'placeholder', fileName: 'untitled', fileType: FileType.unsupported)];
   }
 
   return labels.map((label) {
