@@ -44,15 +44,20 @@ Future<List<UnifiedData>> _loadFromLabels(Project project, StorageHelperInterfac
     return [UnifiedData(dataId: 'placeholder', fileName: 'untitled', fileType: FileType.unsupported)];
   }
 
-  return labels.map((label) {
-    return UnifiedData(
-      dataId: label.dataId,
-      fileName: label.dataPath?.split('/').last ?? label.dataId,
-      fileType: FileType.image,
-      content: null,
-      status: label.isLabeled ? LabelStatus.complete : LabelStatus.incomplete,
+  // ✅ 라벨이 존재할 경우 → 각 dataId에 대해 dataInfo를 찾아 실제 데이터도 불러오기
+  return await Future.wait(labels.map((label) async {
+    final info = project.dataInfos.firstWhere(
+      (e) => e.id == label.dataId,
+      orElse: () {
+        debugPrint("⚠️ dataInfo not found for ${label.dataId}, constructing dummy");
+        return DataInfo(id: label.dataId, fileName: label.dataPath?.split('/').last ?? label.dataId);
+      },
     );
-  }).toList();
+
+    final data = await UnifiedData.fromDataInfo(info);
+
+    return data.copyWith(status: label.isLabeled ? LabelStatus.complete : LabelStatus.incomplete);
+  }));
 }
 
 /// Native: project.dataInfos에서 dataId → filePath를 resolve하여 구성
