@@ -122,11 +122,15 @@ class CloudStorageHelper implements StorageHelperInterface {
   @override
   Future<LabelModel> loadLabelData(String projectId, String dataId, String dataPath, LabelingMode mode) async {
     debugPrint("[CloudStorageHelper] 📥 loadLabelData 호출됨: $projectId / $dataId");
+    if (dataId.trim().isEmpty) {
+      throw ArgumentError("❌ dataId가 비어 있어 라벨 문서를 참조할 수 없습니다.");
+    }
+
     final labelRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('labels').doc(dataId);
     final doc = await labelRef.get();
     if (!doc.exists) {
       debugPrint("[CloudStorageHelper] ⚠️ 라벨 없음 → 초기 라벨 생성");
-      return LabelModelFactory.createNew(mode);
+      return LabelModelFactory.createNew(mode, dataId: dataId);
     }
     debugPrint("[CloudStorageHelper] ✅ 라벨 로드 완료: $dataId");
     return LabelModelConverter.fromJson(mode, doc.data()!['label_data']);
