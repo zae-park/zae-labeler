@@ -1,4 +1,6 @@
 // lib/src/utils/cloud_storage_helper.dart
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -78,7 +80,7 @@ class CloudStorageHelper implements StorageHelperInterface {
 
     if (project.dataInfos.isNotEmpty) {
       debugPrint("[CloudStorageHelper] 💾 dataInfos: ${project.dataInfos}");
-      json['dataPaths'] = project.dataInfos.map((e) => e.toJson()).toList();
+      json['dataInfos'] = project.dataInfos.map((e) => e.toJson()).toList();
     }
 
     await docRef.set(json, SetOptions(merge: true));
@@ -190,9 +192,12 @@ class CloudStorageHelper implements StorageHelperInterface {
   }
 
   /// 📌 [downloadProjectConfig]
-  /// Firebase 환경에서는 사용되지 않음. localStorage 전용 메소드
   @override
-  Future<String> downloadProjectConfig(Project project) async => throw UnimplementedError();
+  Future<String> downloadProjectConfig(Project project) async {
+    const encoder = JsonEncoder.withIndent('  ');
+    final json = encoder.convert(project.toJson(includeLabels: true));
+    return json;
+  }
 
   /// 📌 [saveProjectConfig]
   /// 프로젝트 설정 정보를 Firebase에 저장합니다. `saveProjectList`와 기능적으로 동일
