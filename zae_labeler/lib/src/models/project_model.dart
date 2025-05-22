@@ -85,13 +85,7 @@ class Project {
 
   /// ✅ `Project` 객체를 JSON 형식으로 변환
   Map<String, dynamic> toJson({bool includeLabels = true}) {
-    final map = {
-      'id': id,
-      'name': name,
-      'mode': mode.name,
-      'classes': classes,
-      'dataInfos': dataInfos.map((e) => e.toJson()).toList(),
-    };
+    final map = {'id': id, 'name': name, 'mode': mode.name, 'classes': classes, 'dataInfos': dataInfos.map((e) => e.toJson()).toList()};
 
     if (includeLabels) {
       map['label'] = labels.map((e) => LabelModelConverter.toJson(e)).toList();
