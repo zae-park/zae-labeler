@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:universal_html/html.dart' as html;
 
 import '../../models/project_model.dart';
 import '../../models/data_model.dart';
@@ -194,9 +195,22 @@ class CloudStorageHelper implements StorageHelperInterface {
   /// 📌 [downloadProjectConfig]
   @override
   Future<String> downloadProjectConfig(Project project) async {
-    const encoder = JsonEncoder.withIndent('  ');
-    final json = encoder.convert(project.toJson(includeLabels: true));
-    return json;
+    final jsonString = const JsonEncoder.withIndent('  ').convert(project.toJson(includeLabels: true));
+
+    if (kIsWeb) {
+      final blob = html.Blob([jsonString]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+
+      html.AnchorElement(href: url)
+        ..setAttribute('download', '${project.name}_config.json')
+        ..click();
+
+      html.Url.revokeObjectUrl(url);
+      return "${project.name}_config.json (downloaded in browser)";
+    }
+
+    // 🚫 Native에서는 지원하지 않음
+    throw UnimplementedError("downloadProjectConfig()는 Web 플랫폼에서만 지원됩니다.");
   }
 
   /// 📌 [saveProjectConfig]
