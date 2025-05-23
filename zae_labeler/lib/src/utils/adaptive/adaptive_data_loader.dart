@@ -34,30 +34,26 @@ Future<List<UnifiedData>> _loadFromLabels(Project project, StorageHelperInterfac
     debugPrint("❌ [AdaptiveLoader] loadAllLabelModels 실패: $e");
   }
 
-  if (labels.isEmpty && project.dataInfos.isNotEmpty) {
-    debugPrint("✅ [AdaptiveLoader] fallback → UnifiedData from dataInfos");
-    return await Future.wait(project.dataInfos.map(UnifiedData.fromDataInfo));
+  // ✅ 모든 데이터 먼저 변환
+  final allData = await Future.wait(project.dataInfos.map(UnifiedData.fromDataInfo));
+
+  // ✅ 라벨이 존재하면 해당 dataId의 상태만 업데이트
+  for (final label in labels) {
+    final i = allData.indexWhere((d) => d.dataId == label.dataId);
+    if (i != -1) {
+      allData[i] = allData[i].copyWith(
+        status: label.isLabeled ? LabelStatus.complete : LabelStatus.incomplete,
+      );
+    }
   }
 
-  if (labels.isEmpty) {
+  // ✅ 라벨도 없고 데이터도 없을 때는 placeholder
+  if (allData.isEmpty) {
     debugPrint("⚠️ [AdaptiveLoader] No labels and no dataInfos → returning placeholder");
     return [UnifiedData(dataId: 'placeholder', fileName: 'untitled', fileType: FileType.unsupported)];
   }
 
-  // ✅ 라벨이 존재할 경우 → 각 dataId에 대해 dataInfo를 찾아 실제 데이터도 불러오기
-  return await Future.wait(labels.map((label) async {
-    final info = project.dataInfos.firstWhere(
-      (e) => e.id == label.dataId,
-      orElse: () {
-        debugPrint("⚠️ dataInfo not found for ${label.dataId}, constructing dummy");
-        return DataInfo(id: label.dataId, fileName: label.dataPath?.split('/').last ?? label.dataId);
-      },
-    );
-
-    final data = await UnifiedData.fromDataInfo(info);
-
-    return data.copyWith(status: label.isLabeled ? LabelStatus.complete : LabelStatus.incomplete);
-  }));
+  return allData;
 }
 
 /// Native: project.dataInfos에서 dataId → filePath를 resolve하여 구성
