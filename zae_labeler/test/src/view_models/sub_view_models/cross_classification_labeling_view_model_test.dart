@@ -22,7 +22,7 @@ void main() {
         id: 'test-project',
         name: 'Test Project',
         mode: LabelingMode.crossClassification,
-        dataPaths: ['A', 'B', 'C'].map((id) => DataPath(id: id, fileName: '$id.jpg')).toList(),
+        dataInfos: ['A', 'B', 'C'].map((id) => DataInfo(id: id, fileName: '$id.jpg')).toList(),
         classes: ['positive', 'negative'],
       );
 

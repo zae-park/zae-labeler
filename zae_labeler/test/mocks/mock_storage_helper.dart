@@ -71,13 +71,13 @@ class MockStorageHelper implements StorageHelperInterface {
   Future<void> saveAllLabels(String projectId, List<LabelModel> labels) async {}
 
   @override
-  Future<List<LabelModel>> loadAllLabels(String projectId) async => [];
+  Future<List<LabelModel>> loadAllLabelModels(String projectId) async => [];
 
   @override
   Future<void> deleteProjectLabels(String projectId) async {}
 
   @override
-  Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataPath> fileDataList) async => '/mock/path/${project.name}_labels.zip';
+  Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataInfo> fileDataList) async => '/mock/path/${project.name}_labels.zip';
 
   @override
   Future<List<LabelModel>> importAllLabels() async => [];

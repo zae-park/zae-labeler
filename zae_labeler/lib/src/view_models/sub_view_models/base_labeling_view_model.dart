@@ -7,13 +7,26 @@ import '../label_view_model.dart';
 import '../../models/data_model.dart';
 import '../../models/project_model.dart';
 import '../../utils/proxy_storage_helper/interface_storage_helper.dart';
+import '../../utils/adaptive/adaptive_data_loader.dart';
 
 /// Abstract base class for all LabelingViewModels.
-/// Provides core data loading, navigation, label caching, and progress tracking logic.
-/// Subclasses must override the progress tracking methods to customize behavior for each labeling mode.
+///
+/// ✅ 역할:
+/// - 프로젝트 데이터를 불러와 `UnifiedData` 리스트를 구성하고,
+/// - 해당 데이터를 순회하며 라벨을 로드, 저장, 상태 추적을 수행합니다.
+/// - 세부 라벨링 동작은 하위 ViewModel이 override 합니다.
+///
+/// ✅ 플랫폼 대응:
+/// - Web과 Native 간 파일 접근 방식 차이를 `loadDataAdaptively()`로 추상화하여,
+///   플랫폼 독립적인 데이터 로딩 구조를 유지합니다.
+///
+/// ✅ 메모리 최적화 모드:
+/// - `initialDataList`를 주입받은 경우, 미리 주어진 데이터로만 작동하며,
+/// - 디스크 로딩이 제한되거나 느린 환경에서의 성능 향상을 위해 사용됩니다.
 abstract class LabelingViewModel extends ChangeNotifier {
   final Project project;
   final StorageHelperInterface storageHelper;
+  final List<UnifiedData>? initialDataList; // ✅ 외부에서 주입된 데이터 목록 (cloud 등)
 
   bool _isInitialized = false;
   final bool _memoryOptimized = false;
@@ -25,56 +38,45 @@ abstract class LabelingViewModel extends ChangeNotifier {
   final Map<String, LabelViewModel> labelCache = {};
   void clearLabelCache() => labelCache.clear();
 
-  LabelingViewModel({required this.project, required this.storageHelper});
+  LabelingViewModel({required this.project, required this.storageHelper, this.initialDataList});
 
-  /// Indicates whether the ViewModel has completed initialization
   bool get isInitialized => _isInitialized;
-
-  /// Index of the currently selected data item
   int get currentIndex => _currentIndex;
-
-  /// All data items associated with this project
   List<UnifiedData> get unifiedDataList => _unifiedDataList;
-
-  /// The currently active data item
   UnifiedData get currentUnifiedData => _currentUnifiedData;
-
-  /// Returns the LabelViewModel associated with the current data item
   LabelViewModel get currentLabelVM => getOrCreateLabelVM();
 
-  /// Convenience accessors for the current data item
   String get currentDataFileName => _currentUnifiedData.fileName;
   File? get currentImageFile => _currentUnifiedData.file;
   List<double>? get currentSeriesData => _currentUnifiedData.seriesData;
   Map<String, dynamic>? get currentObjectData => _currentUnifiedData.objectData;
 
-  /// Total number of items to label (must be overridden in subclasses)
   int get totalCount => _unifiedDataList.length;
-
-  /// Number of items that are fully labeled (must be overridden in subclasses)
   int get completeCount => _unifiedDataList.where((e) => e.status == LabelStatus.complete).length;
-
-  /// Number of items with warnings (optional override)
   int get warningCount => _unifiedDataList.where((e) => e.status == LabelStatus.warning).length;
-
-  /// Number of incomplete items
   int get incompleteCount => totalCount - completeCount;
-
-  /// Labeling progress ratio (0.0 ~ 1.0)
   double get progressRatio => totalCount == 0 ? 0 : completeCount / totalCount;
 
-  /// Initializes all unified data and label cache
+  /// Initializes the ViewModel by loading data and label information.
+  ///
+  /// ✅ memoryOptimized 모드일 경우, 이미 주어진 데이터를 그대로 사용
+  /// ✅ 일반 모드일 경우, 플랫폼에 따라 어댑터를 통해 데이터를 동적으로 로드
   Future<void> initialize() async {
-    debugPrint("[LabelingVM.initialize] : \${project.mode}");
+    debugPrint("[LabelingVM.initialize] : ${project.mode}");
     if (_isInitialized && project.mode != currentLabelVM.mode) {
       debugPrint("[LabelingVM.initialize] : LabelVM mismatch!");
-      labelCache.clear(); // ✅ 라벨 캐시 제거
+      labelCache.clear();
     }
+
     if (_memoryOptimized) {
-      _unifiedDataList.clear();
-      _currentUnifiedData = project.dataPaths.isNotEmpty ? await UnifiedData.fromDataPath(project.dataPaths.first) : UnifiedData.empty();
+      _unifiedDataList = initialDataList ?? [];
+      _currentUnifiedData = _unifiedDataList.isNotEmpty ? _unifiedDataList.first : UnifiedData.empty();
     } else {
-      _unifiedDataList = await Future.wait(project.dataPaths.map(UnifiedData.fromDataPath));
+      if (initialDataList != null) {
+        _unifiedDataList = initialDataList!;
+      } else {
+        _unifiedDataList = await loadDataAdaptively(project, storageHelper); // ✅ 어댑터 사용
+      }
       _currentUnifiedData = _unifiedDataList.isNotEmpty ? _unifiedDataList.first : UnifiedData.empty();
     }
 
@@ -87,33 +89,27 @@ abstract class LabelingViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Optional hook for additional logic after initialization
   Future<void> postInitialize() async {}
-
-  /// Optional hook for logic after moving to a new item
   Future<void> postMove() async {}
 
-  /// Ensures that the current LabelModel type matches the project mode
   Future<void> validateLabelModelType() async {
     final labelVM = currentLabelVM;
-    final expected = LabelModelFactory.createNew(project.mode);
     if (labelVM.mode != project.mode) {
       debugPrint("⚠️ 라벨 모델 모드 불일치 → 초기화");
       labelCache.remove(_currentUnifiedData.dataId);
-      labelVM.labelModel = expected;
+      labelVM.labelModel = LabelModelFactory.createNew(project.mode, dataId: _currentUnifiedData.dataId);
       await labelVM.saveLabel();
     }
   }
 
-  /// Move to the next or previous item
   Future<void> moveNext() async => _move(1);
   Future<void> movePrevious() async => _move(-1);
 
   Future<void> _move(int delta) async {
     final newIndex = _currentIndex + delta;
-    if (newIndex >= 0 && newIndex < project.dataPaths.length) {
+    if (newIndex >= 0 && newIndex < _unifiedDataList.length) {
       _currentIndex = newIndex;
-      _currentUnifiedData = await UnifiedData.fromDataPath(project.dataPaths[_currentIndex]);
+      _currentUnifiedData = _unifiedDataList[newIndex];
       await getOrCreateLabelVM().loadLabel();
       await refreshStatus(currentUnifiedData.dataId);
       await postMove();
@@ -121,7 +117,6 @@ abstract class LabelingViewModel extends ChangeNotifier {
     }
   }
 
-  /// Returns the LabelViewModel for the current item, or creates one if not cached
   LabelViewModel getOrCreateLabelVM() {
     final id = _currentUnifiedData.dataId;
     return labelCache.putIfAbsent(id, () {
@@ -136,7 +131,6 @@ abstract class LabelingViewModel extends ChangeNotifier {
     });
   }
 
-  /// Refreshes the label status of a single data item
   Future<void> refreshStatus(String dataId) async {
     final vm = getOrCreateLabelVM();
     await vm.loadLabel();
@@ -147,7 +141,6 @@ abstract class LabelingViewModel extends ChangeNotifier {
     }
   }
 
-  /// Refreshes all statuses in the dataset
   Future<void> refreshAllStatuses() async {
     for (final data in _unifiedDataList) {
       final vm = getOrCreateLabelVM();
@@ -160,18 +153,12 @@ abstract class LabelingViewModel extends ChangeNotifier {
     }
   }
 
-  /// Applies a new label (must be implemented by subclass)
   Future<void> updateLabel(dynamic labelData);
-
-  /// Toggles label state (optional override)
   void toggleLabel(String labelItem) => throw UnimplementedError();
-
-  /// Checks if a label is selected (optional override)
   bool isLabelSelected(String labelItem) => throw UnimplementedError();
 
-  /// Exports all label models to file via storage helper
   Future<String> exportAllLabels() async {
     final allLabels = labelCache.values.map((vm) => vm.labelModel).toList();
-    return await storageHelper.exportAllLabels(project, allLabels, project.dataPaths);
+    return await storageHelper.exportAllLabels(project, allLabels, _unifiedDataList.map((e) => e.toDataInfo()).toList());
   }
 }

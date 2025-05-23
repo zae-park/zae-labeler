@@ -8,14 +8,16 @@ import '../../view_models/project_list_view_model.dart';
 import '../../view_models/project_view_model.dart';
 import '../../view_models/configuration_view_model.dart';
 import '../../views/pages/configuration_page.dart';
+import '../pages/labeling_page.dart';
 
 class ProjectTile extends StatelessWidget {
   final Project project;
 
   const ProjectTile({Key? key, required this.project}) : super(key: key);
 
-  void _openLabelingPage(BuildContext context, Project p) {
-    Navigator.pushNamed(context, '/labeling', arguments: p);
+  void _openLabelingPage(BuildContext context, Project p) async {
+    if (!context.mounted) return;
+    Navigator.push(context, MaterialPageRoute(builder: (_) => LabelingPage(project: p)));
   }
 
   void _openEditPage(BuildContext context, Project p) {

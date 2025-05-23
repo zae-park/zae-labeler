@@ -4,6 +4,7 @@ import '../models/label_model.dart';
 import '../models/project_model.dart';
 import '../models/data_model.dart';
 import '../utils/proxy_share_helper/interface_share_helper.dart';
+import '../utils/proxy_storage_helper/cloud_storage_helper.dart';
 import '../utils/storage_helper.dart';
 
 class ProjectViewModel extends ChangeNotifier {
@@ -56,9 +57,9 @@ class ProjectViewModel extends ChangeNotifier {
     }
   }
 
-  /// ✅ 데이터 경로 추가
-  void addDataPath(DataPath dataPath) {
-    project = project.copyWith(dataPaths: [...project.dataPaths, dataPath]);
+  /// ✅ 데이터 정보 추가
+  void addDataInfo(DataInfo dataInfo) {
+    project = project.copyWith(dataInfos: [...project.dataInfos, dataInfo]);
     notifyListeners();
   }
 
@@ -94,10 +95,17 @@ class ProjectViewModel extends ChangeNotifier {
 
   /// ✅ 프로젝트 삭제
   Future<void> deleteProject() async {
-    List<Project> projects = await storageHelper.loadProjectFromConfig("projects");
-    projects.removeWhere((p) => p.id == project.id);
+    List<Project> projects;
 
+    if (storageHelper is CloudStorageHelper) {
+      projects = await (storageHelper as CloudStorageHelper).loadProjectList();
+    } else {
+      projects = await storageHelper.loadProjectFromConfig("projects");
+    }
+
+    projects.removeWhere((p) => p.id == project.id);
     await storageHelper.saveProjectConfig(projects);
+
     notifyListeners();
   }
 

@@ -56,7 +56,7 @@ class LabelViewModelFactory {
           dataFilename: dataFilename,
           dataPath: dataPath,
           mode: mode,
-          labelModel: LabelModelFactory.createNew(mode),
+          labelModel: LabelModelFactory.createNew(mode, dataId: dataId),
           storageHelper: storageHelper,
         );
 
@@ -67,7 +67,7 @@ class LabelViewModelFactory {
           dataFilename: dataFilename,
           dataPath: dataPath,
           mode: mode,
-          labelModel: LabelModelFactory.createNew(mode),
+          labelModel: LabelModelFactory.createNew(mode, dataId: dataId),
           storageHelper: storageHelper,
         );
 
@@ -79,7 +79,7 @@ class LabelViewModelFactory {
           dataFilename: dataFilename,
           dataPath: dataPath,
           mode: mode,
-          labelModel: LabelModelFactory.createNew(mode),
+          labelModel: LabelModelFactory.createNew(mode, dataId: dataId),
           storageHelper: storageHelper,
         );
     }

@@ -90,7 +90,7 @@ class StorageHelperImpl implements StorageHelperInterface {
     Map<String, dynamic> labelEntry = {
       'data_id': dataId,
       'data_path': dataPath,
-      'mode': labelModel.runtimeType.toString(),
+      'mode': labelModel.mode.toString(),
       'labeled_at': labelModel.labeledAt.toIso8601String(),
       'label_data': LabelModelConverter.toJson(labelModel),
     };
@@ -136,7 +136,7 @@ class StorageHelperImpl implements StorageHelperInterface {
     // ✅ LabelModel을 JSON으로 변환 후 저장
     List<Map<String, dynamic>> labelEntries = labels
         .map((label) => {
-              'mode': label.runtimeType.toString(),
+              'mode': label.mode.toString(),
               'labeled_at': label.labeledAt.toIso8601String(),
               'label_data': LabelModelConverter.toJson(label),
             })
@@ -147,7 +147,7 @@ class StorageHelperImpl implements StorageHelperInterface {
   }
 
   @override
-  Future<List<LabelModel>> loadAllLabels(String projectId) async {
+  Future<List<LabelModel>> loadAllLabelModels(String projectId) async {
     final directory = await getApplicationDocumentsDirectory();
     final file = File('${directory.path}/labels_project_$projectId.json');
 
@@ -177,22 +177,22 @@ class StorageHelperImpl implements StorageHelperInterface {
   // ==============================
 
   @override
-  Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataPath> fileDataList) async {
+  Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataInfo> fileDataList) async {
     final archive = Archive();
 
     // ✅ DataPath에서 데이터 로드 및 ZIP 추가
-    for (var dataPath in fileDataList) {
-      final content = await dataPath.loadData();
+    for (var dataInfo in fileDataList) {
+      final content = await dataInfo.loadData();
       if (content != null) {
         final fileBytes = utf8.encode(content);
-        archive.addFile(ArchiveFile(dataPath.fileName, fileBytes.length, fileBytes));
+        archive.addFile(ArchiveFile(dataInfo.fileName, fileBytes.length, fileBytes));
       }
     }
 
     // ✅ JSON 직렬화된 라벨 데이터 추가 (LabelModel.toJson() 사용)
     List<Map<String, dynamic>> labelEntries = labelModels
         .map((label) => {
-              'mode': label.runtimeType.toString(),
+              'mode': label.mode.toString(),
               'labeled_at': label.labeledAt.toIso8601String(),
               'label_data': LabelModelConverter.toJson(label),
             })

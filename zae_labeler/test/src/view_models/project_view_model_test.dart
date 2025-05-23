@@ -43,9 +43,9 @@ void main() {
       expect(viewModel.project.classes.length, 1);
     });
 
-    test('addDataPath adds data path', () {
-      viewModel.addDataPath(DataPath(fileName: 'test.txt', filePath: '/test'));
-      expect(viewModel.project.dataPaths.length, 1);
+    test('addDataInfo adds data path', () {
+      viewModel.addDataInfo(DataInfo(fileName: 'test.txt', filePath: '/test'));
+      expect(viewModel.project.dataInfos.length, 1);
     });
 
     test('saveProject triggers storage saveProjectConfig', () async {

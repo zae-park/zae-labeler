@@ -28,6 +28,7 @@ class ProjectListViewModel extends ChangeNotifier {
 
   /// ✅ 프로젝트 저장
   Future<void> saveProject(Project project) async {
+    debugPrint("[ProjectListVM] 💾 saveProject 호출됨: ${project.id}, ${project.name}");
     int index = _projects.indexWhere((p) => p.id == project.id);
     if (index != -1) {
       _projects[index] = project.copyWith(id: project.id);
@@ -35,9 +36,11 @@ class ProjectListViewModel extends ChangeNotifier {
       _projects.add(project);
     }
     if (storageHelper is CloudStorageHelper) {
-      await (storageHelper as CloudStorageHelper).saveSingleProject(project); // ✅ 단일 저장
+      debugPrint("[ProjectListVM] 💾 CloudStorageHelper.saveSingleProject 호출");
+      await (storageHelper as CloudStorageHelper).saveSingleProject(project);
     } else {
-      await storageHelper.saveProjectList(_projects); // ✅ 기존 방식 유지
+      debugPrint("[ProjectListVM] 💾 NativeStorageHelper.saveProjectList 호출");
+      await storageHelper.saveProjectList(_projects);
     }
     notifyListeners();
   }
@@ -55,10 +58,17 @@ class ProjectListViewModel extends ChangeNotifier {
 
   /// ✅ 프로젝트 업데이트
   Future<void> updateProject(Project updatedProject) async {
+    debugPrint("[ProjectListVM] 💾 updateProject 호출됨: ${updatedProject.id}, ${updatedProject.name}");
     int index = _projects.indexWhere((project) => project.id == updatedProject.id);
     if (index != -1) {
       _projects[index] = updatedProject;
-      await storageHelper.saveProjectConfig(_projects);
+      if (storageHelper is CloudStorageHelper) {
+        debugPrint("[ProjectListVM] 💾 CloudStorageHelper.saveSingleProject 호출 (update)");
+        await (storageHelper as CloudStorageHelper).saveSingleProject(updatedProject);
+      } else {
+        await storageHelper.saveProjectConfig(_projects);
+      }
+      debugPrint("[ProjectListVM] 💾 Project Updated");
       notifyListeners();
     }
   }

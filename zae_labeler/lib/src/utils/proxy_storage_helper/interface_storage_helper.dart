@@ -29,13 +29,13 @@ abstract class StorageHelperInterface {
   // 📌 **Project-wide Label IO**
   // ==============================
   Future<void> saveAllLabels(String projectId, List<LabelModel> labels);
-  Future<List<LabelModel>> loadAllLabels(String projectId);
+  Future<List<LabelModel>> loadAllLabelModels(String projectId);
   Future<void> deleteProjectLabels(String projectId);
 
   // ==============================
   // 📌 **Label Data Import/Export**
   // ==============================
-  Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataPath> fileDataList);
+  Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataInfo> fileDataList);
   Future<List<LabelModel>> importAllLabels();
 
   // ==============================
@@ -46,35 +46,29 @@ abstract class StorageHelperInterface {
 
 class LabelModelConverter {
   /// ✅ `LabelModel`을 JSON으로 변환하는 메서드
-  static Map<String, dynamic> toJson(LabelModel model) {
-    if (model is SingleClassificationLabelModel ||
-        model is MultiClassificationLabelModel ||
-        model is CrossClassificationLabelModel ||
-        model is SingleClassSegmentationLabelModel ||
-        model is MultiClassSegmentationLabelModel) {
-      return model.toJson(); // ✅ 각 구현체의 toJson() 사용
-    } else {
-      throw UnimplementedError("toJson() not implemented for ${model.runtimeType}");
-    }
-  }
+  static Map<String, dynamic> toJson(LabelModel model) => model.toJson();
 
   /// ✅ JSON 데이터를 `LabelModel` 객체로 변환하는 메서드
   static LabelModel fromJson(LabelingMode mode, Map<String, dynamic> json) {
     try {
+      final dataId = json['data_id'] ?? '';
+      final dataPath = json['data_path'];
+      final labeledAt = DateTime.parse(json['labeled_at']);
+
       switch (mode) {
         case LabelingMode.singleClassification:
-          return SingleClassificationLabelModel(labeledAt: DateTime.parse(json['labeled_at']), label: json['label']);
+          return SingleClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: json['label'], labeledAt: labeledAt);
         case LabelingMode.multiClassification:
-          return MultiClassificationLabelModel(labeledAt: DateTime.parse(json['labeled_at']), label: Set<String>.from(json['label']));
+          return MultiClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: Set<String>.from(json['label']), labeledAt: labeledAt);
         case LabelingMode.crossClassification:
-          return CrossClassificationLabelModel(labeledAt: DateTime.parse(json['labeled_at']), label: json['label']);
+          return CrossClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: CrossDataPair.fromJson(json), labeledAt: labeledAt);
         case LabelingMode.singleClassSegmentation:
-          return SingleClassSegmentationLabelModel(labeledAt: DateTime.parse(json['labeled_at']), label: SegmentationData.fromJson(json['label']));
+          return SingleClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: SegmentationData.fromJson(json['label']), labeledAt: labeledAt);
         case LabelingMode.multiClassSegmentation:
-          return MultiClassSegmentationLabelModel(labeledAt: DateTime.parse(json['labeled_at']), label: SegmentationData.fromJson(json['label']));
+          return MultiClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: SegmentationData.fromJson(json['label']), labeledAt: labeledAt);
       }
     } catch (e) {
-      return SingleClassificationLabelModel.empty(); // 예외 발생 시 기본값 반환
+      return SingleClassificationLabelModel.empty();
     }
   }
 }

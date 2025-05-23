@@ -12,10 +12,7 @@ import '../../models/sub_models/segmentation_label_model.dart';
 /// ViewModel for single and multi classification labeling modes.
 /// Handles label toggling and status tracking per data item.
 class ClassificationLabelingViewModel extends LabelingViewModel {
-  ClassificationLabelingViewModel({
-    required super.project,
-    required super.storageHelper,
-  });
+  ClassificationLabelingViewModel({required super.project, required super.storageHelper, super.initialDataList});
 
   @override
   int get totalCount => unifiedDataList.length;
@@ -75,10 +72,7 @@ class ClassificationLabelingViewModel extends LabelingViewModel {
 /// ViewModel for cross classification mode, labeling pairs of data.
 /// Uses nC2 pairing logic and custom progress tracking per relation.
 class CrossClassificationLabelingViewModel extends LabelingViewModel {
-  CrossClassificationLabelingViewModel({
-    required super.project,
-    required super.storageHelper,
-  });
+  CrossClassificationLabelingViewModel({required super.project, required super.storageHelper, super.initialDataList});
 
   int _sourceIndex = 0;
   int _targetIndex = 1;
@@ -131,7 +125,8 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
     _crossPairs[currentPairIndex] = updatedPair;
 
     final labelVM = getOrCreateLabelVMForCrossPair(updatedPair);
-    labelVM.labelModel = CrossClassificationLabelModel(label: updatedPair, labeledAt: DateTime.now());
+    labelVM.labelModel =
+        CrossClassificationLabelModel(dataId: '${updatedPair.sourceId}_${updatedPair.targetId}', label: updatedPair, labeledAt: DateTime.now());
 
     debugPrint("[CrossClsLabelingVM.updateLabel] source=\${updatedPair.sourceId}, target=\${updatedPair.targetId}, relation=\${updatedPair.relation}");
 
@@ -175,7 +170,7 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
 
   /// Gets or creates a label VM for a specific pair
   LabelViewModel getOrCreateLabelVMForCrossPair(CrossDataPair pair) {
-    const id = "\${pair.sourceId}_\${pair.targetId}";
+    String id = "\${pair.sourceId}_\${pair.targetId}";
     return labelCache.putIfAbsent(id, () {
       return LabelViewModelFactory.create(
         projectId: project.id,
