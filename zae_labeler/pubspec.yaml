@@ -32,6 +32,7 @@ dependencies:
   url_launcher: ^6.3.0
   lottie: ^2.6.0
   universal_html: ^2.2.4
+  flutter_gen: ^5.9.0
 
 dev_dependencies:
   flutter_test:
@@ -40,6 +41,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
   assets:
     - assets/zaevicon.png
     - assets/zae-splash.json
