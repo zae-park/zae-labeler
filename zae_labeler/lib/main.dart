@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'firebase_options.dart';
 import 'env.dart';
@@ -45,11 +46,12 @@ class ZaeLabeler extends StatelessWidget {
       child: Consumer<LocaleViewModel>(
         builder: (context, localeVM, child) {
           return MaterialApp(
-            title: 'Data Labeling App for YOU!',
+            title: AppLocalizations.of(context)!.app_title,
             theme: ThemeData(primarySwatch: Colors.blue),
             locale: localeVM.currentLocale,
             supportedLocales: const [Locale('en'), Locale('ko')],
             localizationsDelegates: const [
+              AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
