@@ -143,7 +143,17 @@ abstract class LabelingViewModel extends ChangeNotifier {
 
   Future<void> refreshAllStatuses() async {
     for (final data in _unifiedDataList) {
-      final vm = getOrCreateLabelVM();
+      final vm = labelCache.putIfAbsent(data.dataId, () {
+        return LabelViewModelFactory.create(
+          projectId: project.id,
+          dataId: data.dataId,
+          dataFilename: data.fileName,
+          dataPath: data.file?.path ?? '',
+          mode: project.mode,
+          storageHelper: storageHelper,
+        );
+      });
+
       await vm.loadLabel();
       final status = LabelValidator.getStatus(project, vm.labelModel);
       final idx = _unifiedDataList.indexWhere((e) => e.dataId == data.dataId);
