@@ -34,20 +34,17 @@ Future<List<UnifiedData>> _loadFromLabels(Project project, StorageHelperInterfac
     debugPrint("❌ [AdaptiveLoader] loadAllLabelModels 실패: $e");
   }
 
-  // ✅ 모든 데이터 먼저 변환
-  final allData = await Future.wait(project.dataInfos.map(UnifiedData.fromDataInfo));
+  // ✅ 라벨을 Map으로 만들어서 빠르게 매칭 가능하게
+  final Map<String, LabelModel> labelMap = {for (var label in labels) label.dataId: label};
 
-  // ✅ 라벨이 존재하면 해당 dataId의 상태만 업데이트
-  for (final label in labels) {
-    final i = allData.indexWhere((d) => d.dataId == label.dataId);
-    if (i != -1) {
-      allData[i] = allData[i].copyWith(
-        status: label.isLabeled ? LabelStatus.complete : LabelStatus.incomplete,
-      );
-    }
-  }
+  // ✅ 모든 데이터 변환 + 라벨 여부에 따라 상태 설정
+  final allData = await Future.wait(project.dataInfos.map((info) async {
+    final label = labelMap[info.id];
+    final status = label?.isLabeled == true ? LabelStatus.complete : LabelStatus.incomplete;
+    final data = await UnifiedData.fromDataInfo(info);
+    return data.copyWith(status: status);
+  }));
 
-  // ✅ 라벨도 없고 데이터도 없을 때는 placeholder
   if (allData.isEmpty) {
     debugPrint("⚠️ [AdaptiveLoader] No labels and no dataInfos → returning placeholder");
     return [UnifiedData(dataId: 'placeholder', fileName: 'untitled', fileType: FileType.unsupported)];
