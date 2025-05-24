@@ -25,11 +25,15 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   // await FirebaseAuth.instance.authStateChanges().firstWhere((u) => u != null);
 
-  runApp(const ZaeLabeler());
+  runApp(ZaeLabeler(
+    systemLocale: WidgetsBinding.instance.platformDispatcher.locales.first,
+    // systemLocale: WidgetsBinding.instance.platformDispatcher.locale,
+  ));
 }
 
 class ZaeLabeler extends StatelessWidget {
-  const ZaeLabeler({super.key});
+  final Locale systemLocale;
+  const ZaeLabeler({super.key, required this.systemLocale});
 
   @override
   Widget build(BuildContext context) {
@@ -59,14 +63,6 @@ class ZaeLabeler extends StatelessWidget {
 
             // Initial route when the app is launched
             initialRoute: '/',
-            // routes: {
-            //   '/': (context) => isProd ? const SplashScreen() : const ProjectListPage(),
-            //   // '/onboarding': (context) => const OnboardingPage(),
-            //   // '/auth': (context) => isProd ? const AuthGate() : const ProjectListPage(),
-            //   '/project_list': (context) => const ProjectListPage(),
-            //   '/configuration': (context) => const ConfigureProjectPage(),
-            //   '/labeling': (context) => const LabelingPage(),
-            // },
             onUnknownRoute: (_) => MaterialPageRoute(builder: (_) => const NotFoundPage()),
             onGenerateRoute: (RouteSettings settings) {
               final isSignedIn = context.read<AuthViewModel>().isSignedIn;
