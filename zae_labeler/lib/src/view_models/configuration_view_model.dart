@@ -23,10 +23,10 @@ class ConfigurationViewModel extends ChangeNotifier {
 
   // ✅ 기존 프로젝트 수정용 생성자
   ConfigurationViewModel.fromProject(Project existingProject)
-      : _project = existingProject,
+      : _project = existingProject.copyWith(),
         _isEditing = true;
 
-  Project get project => _project;
+  Project get project => _project.copyWith();
   bool get isEditing => _isEditing; // ✅ 수정 모드 여부 반환
 
   /// ✅ 프로젝트 이름 설정

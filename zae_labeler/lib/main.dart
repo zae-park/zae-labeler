@@ -7,7 +7,6 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'firebase_options.dart';
 import 'env.dart';
-import 'common/i18n.dart';
 import 'src/models/project_model.dart';
 import 'src/utils/storage_helper.dart';
 import 'src/utils/proxy_storage_helper/cloud_storage_helper.dart';
@@ -51,7 +50,7 @@ class ZaeLabeler extends StatelessWidget {
       child: Consumer<LocaleViewModel>(
         builder: (context, localeVM, child) {
           return MaterialApp(
-            title: context.l10n.app_title,
+            title: "ZAE Labeler",
             theme: ThemeData(primarySwatch: Colors.blue),
             locale: localeVM.currentLocale,
             supportedLocales: const [Locale('en'), Locale('ko')],
