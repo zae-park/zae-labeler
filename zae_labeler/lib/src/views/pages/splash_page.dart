@@ -1,8 +1,9 @@
 // lib/src/views/pages/splash_screen.dart
 import 'package:flutter/material.dart';
-// import 'package:lottie/lottie.dart';
+
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:zae_labeler/common/i18n.dart';
 import 'package:zae_labeler/common/common_widgets.dart';
 import 'dart:async';
 
@@ -48,10 +49,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("비회원 안내"),
-        content: const Text("비회원 모드 이용 시 진행 사항이 저장되지 않습니다.\n외부 링크로 이동할까요?"),
+        title: Text(context.l10n.splashPage_guest_guide),
+        content: Text(context.l10n.splashPage_guest_message),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("취소")),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(context.l10n.splashPage_guest_cancel)),
           TextButton(
               onPressed: () async {
                 Navigator.pop(context);
@@ -59,7 +60,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   await launchUrl(url, mode: LaunchMode.externalApplication);
                 }
               },
-              child: const Text("이동")),
+              child: Text(context.l10n.splashPage_guest_confirm)),
         ],
       ),
     );
@@ -125,7 +126,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                               if (mounted) setState(() => _showLoginButtons = true);
                             });
                           },
-                          child: const Text("시작하기", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                          child: Text(context.l10n.splashPage_start, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                         ),
                       ),
                     ),
@@ -143,14 +144,16 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                               Padding(
                                 padding: const EdgeInsets.all(12.0),
                                 child: Text(
-                                  "⚠️ ${authVM.conflictingEmail} 계정은 이미 가입되어 있었습니다. 다른 방법으로 다시 시도해주세요.",
+                                  "⚠️ ${authVM.conflictingEmail} ${context.l10n.splashPage_error}",
                                   style: const TextStyle(color: Colors.yellow, fontWeight: FontWeight.bold),
                                   textAlign: TextAlign.center,
                                 ),
                               ),
-                            ElevatedButton.icon(icon: const Icon(Icons.login), label: const Text("Google로 로그인"), onPressed: () => _signInWithGoogle(context)),
-                            ElevatedButton.icon(icon: const Icon(Icons.code), label: const Text("GitHub로 로그인"), onPressed: () => _signInWithGitHub(context)),
-                            TextButton.icon(icon: const Icon(Icons.open_in_new), label: const Text("비회원으로 이용하기"), onPressed: _handleGuestAccess),
+                            ElevatedButton.icon(
+                                icon: const Icon(Icons.login), label: Text(context.l10n.splashPage_google), onPressed: () => _signInWithGoogle(context)),
+                            ElevatedButton.icon(
+                                icon: const Icon(Icons.code), label: Text(context.l10n.splashPage_github), onPressed: () => _signInWithGitHub(context)),
+                            TextButton.icon(icon: const Icon(Icons.open_in_new), label: Text(context.l10n.splashPage_guest), onPressed: _handleGuestAccess),
                           ],
                         ),
                       ),

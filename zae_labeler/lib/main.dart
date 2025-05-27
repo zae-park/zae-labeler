@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'firebase_options.dart';
 import 'env.dart';
@@ -24,11 +25,15 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   // await FirebaseAuth.instance.authStateChanges().firstWhere((u) => u != null);
 
-  runApp(const ZaeLabeler());
+  runApp(ZaeLabeler(
+    systemLocale: WidgetsBinding.instance.platformDispatcher.locales.first,
+    // systemLocale: WidgetsBinding.instance.platformDispatcher.locale,
+  ));
 }
 
 class ZaeLabeler extends StatelessWidget {
-  const ZaeLabeler({super.key});
+  final Locale systemLocale;
+  const ZaeLabeler({super.key, required this.systemLocale});
 
   @override
   Widget build(BuildContext context) {
@@ -45,11 +50,12 @@ class ZaeLabeler extends StatelessWidget {
       child: Consumer<LocaleViewModel>(
         builder: (context, localeVM, child) {
           return MaterialApp(
-            title: 'Data Labeling App for YOU!',
+            title: "ZAE Labeler",
             theme: ThemeData(primarySwatch: Colors.blue),
             locale: localeVM.currentLocale,
             supportedLocales: const [Locale('en'), Locale('ko')],
             localizationsDelegates: const [
+              AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
@@ -57,14 +63,6 @@ class ZaeLabeler extends StatelessWidget {
 
             // Initial route when the app is launched
             initialRoute: '/',
-            // routes: {
-            //   '/': (context) => isProd ? const SplashScreen() : const ProjectListPage(),
-            //   // '/onboarding': (context) => const OnboardingPage(),
-            //   // '/auth': (context) => isProd ? const AuthGate() : const ProjectListPage(),
-            //   '/project_list': (context) => const ProjectListPage(),
-            //   '/configuration': (context) => const ConfigureProjectPage(),
-            //   '/labeling': (context) => const LabelingPage(),
-            // },
             onUnknownRoute: (_) => MaterialPageRoute(builder: (_) => const NotFoundPage()),
             onGenerateRoute: (RouteSettings settings) {
               final isSignedIn = context.read<AuthViewModel>().isSignedIn;
