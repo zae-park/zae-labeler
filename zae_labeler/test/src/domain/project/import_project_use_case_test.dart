@@ -17,19 +17,15 @@ void main() {
     });
 
     test('imports project list and saves them', () async {
-      // given
       final importedProjects = [
         Project.empty().copyWith(id: 'p1', name: 'Imported One'),
         Project.empty().copyWith(id: 'p2', name: 'Imported Two'),
       ];
 
-      // mockStorage.loadProjectFromConfig는 내부적으로 mockStorage.savedProjects 반환
       mockStorage.savedProjects = importedProjects;
 
-      // when
-      // await importUseCase();
+      await importUseCase.call(); // ✅ 여기 수정 필수
 
-      // then
       expect(mockStorage.savedProjects.length, 2);
       expect(mockStorage.savedProjects.first.name, 'Imported One');
       expect(mockStorage.wasSaveProjectCalled, isTrue);
