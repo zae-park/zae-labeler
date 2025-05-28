@@ -19,21 +19,18 @@ void main() {
       );
     });
 
-    test('imports project list and saves them', () async {
+    test('imports a single project and saves it', () async {
       // given
-      final importedProjects = [
-        Project.empty().copyWith(id: 'p1', name: 'Imported One'),
-        Project.empty().copyWith(id: 'p2', name: 'Imported Two'),
-      ];
+      final importedProject = Project.empty().copyWith(id: 'p1', name: 'Imported One');
 
-      // set mock return value
-      mockStorage.savedProjects = importedProjects;
+      // set mock return value (단일 프로젝트 설정)
+      mockStorage.mockImportedProject = importedProject;
 
       // when
       await importUseCase.call();
 
       // then
-      expect(mockStorage.savedProjects.length, 2);
+      expect(mockStorage.savedProjects.length, 1);
       expect(mockStorage.savedProjects.first.name, 'Imported One');
       expect(mockStorage.wasSaveProjectCalled, isTrue);
     });

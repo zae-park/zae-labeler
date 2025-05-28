@@ -10,6 +10,7 @@ class MockStorageHelper implements StorageHelperInterface {
   List<Project> savedProjects = [];
   bool wasSaveProjectCalled = false;
   bool shouldThrowOnSave = false;
+  Project? mockImportedProject;
 
   @override
   Future<void> saveProjectConfig(List<Project> project) async {
@@ -20,7 +21,10 @@ class MockStorageHelper implements StorageHelperInterface {
 
   @override
   Future<List<Project>> loadProjectFromConfig(String config) async {
-    return [...savedProjects];
+    if (mockImportedProject != null) {
+      return [mockImportedProject!]; // 단일 Project → List<Project>로 래핑해서 넘김
+    }
+    return [];
   }
 
   @override
