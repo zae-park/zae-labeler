@@ -2,6 +2,7 @@
 
 import '../../models/project_model.dart';
 import '../../utils/storage_helper.dart';
+import '../validator/project_validator.dart';
 
 /// ✅ UseCase: 프로젝트 불러오기
 /// - 전체 목록 불러오기
@@ -20,7 +21,9 @@ class LoadProjectsUseCase {
   Future<Project?> loadById(String projectId) async {
     final all = await loadAll();
     try {
-      return all.firstWhere((p) => p.id == projectId);
+      final findProject = all.firstWhere((p) => p.id == projectId);
+      ProjectValidator.validate(findProject);
+      return findProject;
     } catch (_) {
       return null;
     }
