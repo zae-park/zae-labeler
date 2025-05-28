@@ -10,17 +10,7 @@ class ExportProjectUseCase {
 
   ExportProjectUseCase({required this.storageHelper});
 
-  Future<void> call(BuildContext context, Project project) async {
-    try {
-      final path = await storageHelper.downloadProjectConfig(project);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('📦 설정 파일이 저장되었습니다: $path')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('❌ 내보내기 실패: $e')),
-      );
-    }
+  Future<String> call(BuildContext context, Project project) async {
+    return await storageHelper.downloadProjectConfig(project);
   }
 }

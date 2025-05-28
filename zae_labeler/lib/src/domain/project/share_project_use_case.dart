@@ -15,14 +15,7 @@ class ShareProjectUseCase {
 
   Future<void> call(BuildContext context, Project project) async {
     ProjectValidator.validate(project);
-    try {
-      final jsonString = jsonEncode(project.toJson());
-
-      await shareHelper.shareProject(name: project.name, jsonString: jsonString, getFilePath: () async => '${project.name}.json');
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('❌ 공유 실패: $e')),
-      );
-    }
+    final jsonString = jsonEncode(project.toJson());
+    await shareHelper.shareProject(name: project.name, jsonString: jsonString, getFilePath: () async => '${project.name}.json');
   }
 }
