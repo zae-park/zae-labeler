@@ -1,11 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
 import 'package:flutter/material.dart';
 import 'package:zae_labeler/src/domain/project/share_project_use_case.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
-import 'package:zae_labeler/src/utils/proxy_share_helper/interface_share_helper.dart';
-
-class MockShareHelper extends Mock implements ShareHelperInterface {}
+import '../../../mocks/mock_share_helper.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -21,13 +18,16 @@ void main() {
       testProject = Project.empty().copyWith(id: 'p1', name: 'Shared Project');
     });
 
-    testWidgets('calls shareJson with encoded project', (tester) async {
-      await tester.pumpWidget(const MaterialApp(home: SizedBox())); // mount to get context
-      final realContext = tester.element(find.byType(SizedBox));
+    testWidgets('calls shareProject and sets state', (tester) async {
+      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      final context = tester.element(find.byType(SizedBox));
 
-      await useCase.call(realContext, testProject);
+      await useCase.call(context, testProject);
 
-      verify(mockHelper.shareJson(any, any)).called(1);
+      expect(mockHelper.wasCalled, isTrue);
+      expect(mockHelper.sharedName, equals('Shared Project'));
+      expect(mockHelper.sharedJson, contains('"id":"p1"'));
+      expect(mockHelper.resolvedFilePath, endsWith('.json'));
     });
   });
 }
