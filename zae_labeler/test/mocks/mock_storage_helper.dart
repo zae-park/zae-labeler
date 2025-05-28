@@ -14,17 +14,13 @@ class MockStorageHelper implements StorageHelperInterface {
   @override
   Future<void> saveProjectConfig(List<Project> project) async {
     wasSaveProjectCalled = true;
-
-    if (shouldThrowOnSave) {
-      throw Exception('Failed to save');
-    }
-
-    savedProjects = project; // 단일 저장 후 리스트 유지
+    if (shouldThrowOnSave) throw Exception('Failed to save');
+    savedProjects = [...project];
   }
 
   @override
   Future<List<Project>> loadProjectFromConfig(String config) async {
-    return savedProjects;
+    return [...savedProjects];
   }
 
   @override
@@ -33,10 +29,16 @@ class MockStorageHelper implements StorageHelperInterface {
   }
 
   @override
-  Future<void> saveProjectList(List<Project> projects) async {}
+  Future<void> saveProjectList(List<Project> projects) async {
+    wasSaveProjectCalled = true;
+    if (shouldThrowOnSave) throw Exception('Failed to save');
+    savedProjects = [...projects];
+  }
 
   @override
-  Future<List<Project>> loadProjectList() async => [];
+  Future<List<Project>> loadProjectList() async {
+    return [...savedProjects];
+  }
 
   @override
   Future<void> saveLabelData(String projectId, String dataId, String dataPath, LabelModel labelModel) async {
@@ -46,9 +48,7 @@ class MockStorageHelper implements StorageHelperInterface {
 
   @override
   Future<LabelModel> loadLabelData(String projectId, String dataId, String dataPath, LabelingMode mode) async {
-    final projectMap = _labelStorage[projectId];
-    final label = projectMap?[dataId];
-
+    final label = _labelStorage[projectId]?[dataId];
     if (label != null) return label;
 
     switch (mode) {
@@ -61,7 +61,7 @@ class MockStorageHelper implements StorageHelperInterface {
       case LabelingMode.singleClassSegmentation:
         return SingleClassSegmentationLabelModel.empty();
       case LabelingMode.multiClassSegmentation:
-        return MultiClassSegmentationLabelModel.empty(); // ✅ 올바른 타입 반환
+        return MultiClassSegmentationLabelModel.empty();
       default:
         throw UnimplementedError("Mock for $mode not implemented.");
     }
