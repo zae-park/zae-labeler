@@ -1,13 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
 import 'package:zae_labeler/src/domain/project/save_project_use_case.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
-import 'package:zae_labeler/src/utils/storage_helper.dart';
-
-class MockStorageHelper extends Mock implements StorageHelperInterface {}
+import '../../../mocks/mock_storage_helper.dart';
 
 void main() {
-  group('SaveProjectUseCase', () {
+  group('SaveProjectUseCase (with stub helper)', () {
     late MockStorageHelper mockHelper;
     late SaveProjectUseCase useCase;
 
@@ -16,34 +13,45 @@ void main() {
       useCase = SaveProjectUseCase(storageHelper: mockHelper);
     });
 
-    test('saveOne adds new project and saves list', () async {
-      final current = <Project>[];
+    test('saveOne adds new project and saves updated list', () async {
       final newProject = Project.empty().copyWith(id: '123', name: 'New Project');
 
-      await useCase.saveOne(newProject, current);
+      // 🔹 savedProjects 초기값은 비어 있음
+      mockHelper.savedProjects = [];
 
-      expect(current.length, 1);
-      expect(current[0].id, '123');
-      verify(mockHelper.saveProjectList(current)).called(1);
+      await useCase.saveOne(newProject);
+
+      expect(mockHelper.savedProjects.length, 1);
+      expect(mockHelper.savedProjects.first.id, '123');
+      expect(mockHelper.savedProjects.first.name, 'New Project');
+      expect(mockHelper.wasSaveProjectCalled, isTrue);
     });
 
-    test('saveOne updates existing project and saves list', () async {
-      final current = [Project.empty().copyWith(id: '123', name: 'Old')];
+    test('saveOne updates existing project in list', () async {
+      final old = Project.empty().copyWith(id: '123', name: 'Old');
       final updated = Project.empty().copyWith(id: '123', name: 'Updated');
 
-      await useCase.saveOne(updated, current);
+      mockHelper.savedProjects = [old];
 
-      expect(current.length, 1);
-      expect(current[0].name, 'Updated');
-      verify(mockHelper.saveProjectList(current)).called(1);
+      await useCase.saveOne(updated);
+
+      expect(mockHelper.savedProjects.length, 1);
+      expect(mockHelper.savedProjects.first.id, '123');
+      expect(mockHelper.savedProjects.first.name, 'Updated');
+      expect(mockHelper.wasSaveProjectCalled, isTrue);
     });
 
-    test('saveAll calls saveProjectList with full list', () async {
-      final list = [Project.empty().copyWith(id: '1', name: 'A'), Project.empty().copyWith(id: '2', name: 'B')];
+    test('saveAll directly saves full list', () async {
+      final list = [
+        Project.empty().copyWith(id: '1', name: 'A'),
+        Project.empty().copyWith(id: '2', name: 'B'),
+      ];
 
       await useCase.saveAll(list);
 
-      verify(mockHelper.saveProjectList(list)).called(1);
+      expect(mockHelper.savedProjects.length, 2);
+      expect(mockHelper.savedProjects[1].name, 'B');
+      expect(mockHelper.wasSaveProjectCalled, isTrue);
     });
   });
 }
