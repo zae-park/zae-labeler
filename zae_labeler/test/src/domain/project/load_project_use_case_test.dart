@@ -10,6 +10,7 @@ void main() {
   group('LoadProjectsUseCase', () {
     late MockStorageHelper mockHelper;
     late LoadProjectsUseCase useCase;
+
     final mockProjects = [
       Project.empty().copyWith(id: 'p1', name: 'Alpha'),
       Project.empty().copyWith(id: 'p2', name: 'Beta'),
@@ -21,29 +22,40 @@ void main() {
     });
 
     test('loadAll returns all projects', () async {
+      // arrange
       when(mockHelper.loadProjectList()).thenAnswer((_) async => mockProjects);
 
+      // act
       final result = await useCase.loadAll();
 
-      expect(result.length, 2);
-      expect(result[0].name, 'Alpha');
+      // assert
+      expect(result, hasLength(2));
+      expect(result[0].id, 'p1');
+      expect(result[1].name, 'Beta');
       verify(mockHelper.loadProjectList()).called(1);
     });
 
     test('loadById returns correct project if exists', () async {
+      // arrange
       when(mockHelper.loadProjectList()).thenAnswer((_) async => mockProjects);
 
+      // act
       final result = await useCase.loadById('p2');
 
+      // assert
       expect(result, isNotNull);
-      expect(result!.name, 'Beta');
+      expect(result!.id, 'p2');
+      expect(result.name, 'Beta');
     });
 
     test('loadById returns null if not found', () async {
+      // arrange
       when(mockHelper.loadProjectList()).thenAnswer((_) async => mockProjects);
 
+      // act
       final result = await useCase.loadById('not_exist');
 
+      // assert
       expect(result, isNull);
     });
   });
