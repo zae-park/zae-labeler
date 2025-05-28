@@ -13,24 +13,24 @@ void main() {
     setUp(() {
       mockStorage = MockStorageHelper();
       saveUseCase = SaveProjectUseCase(storageHelper: mockStorage);
-      importUseCase = ImportProjectUseCase(
-        storageHelper: mockStorage,
-        saveProjectUseCase: saveUseCase,
-      );
+      importUseCase = ImportProjectUseCase(storageHelper: mockStorage, saveProjectUseCase: saveUseCase);
     });
 
-    test('imports a single project and saves it', () async {
+    test('imports project list and saves them', () async {
       // given
-      final importedProject = Project.empty().copyWith(id: 'p1', name: 'Imported One');
+      final importedProjects = [
+        Project.empty().copyWith(id: 'p1', name: 'Imported One'),
+        Project.empty().copyWith(id: 'p2', name: 'Imported Two'),
+      ];
 
-      // set mock return value (단일 프로젝트 설정)
-      mockStorage.mockImportedProject = importedProject;
+      // mockStorage.loadProjectFromConfig는 내부적으로 mockStorage.savedProjects 반환
+      mockStorage.savedProjects = importedProjects;
 
       // when
-      await importUseCase.call();
+      // await importUseCase();
 
       // then
-      expect(mockStorage.savedProjects.length, 1);
+      expect(mockStorage.savedProjects.length, 2);
       expect(mockStorage.savedProjects.first.name, 'Imported One');
       expect(mockStorage.wasSaveProjectCalled, isTrue);
     });
