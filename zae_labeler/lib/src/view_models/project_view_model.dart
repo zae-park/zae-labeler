@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart'; // For generating unique project IDs
+import 'package:uuid/uuid.dart';
+
+import '../models/data_model.dart';
 import '../models/label_model.dart';
 import '../models/project_model.dart';
-import '../models/data_model.dart';
+import '../repositories/project_repository.dart';
 import '../utils/proxy_share_helper/interface_share_helper.dart';
-import '../utils/proxy_storage_helper/cloud_storage_helper.dart';
-import '../utils/storage_helper.dart';
 
 class ProjectViewModel extends ChangeNotifier {
   Project project;
-  final StorageHelperInterface storageHelper;
+  final ProjectRepository repository;
   final ShareHelperInterface shareHelper;
 
-  ProjectViewModel({required this.storageHelper, required this.shareHelper, Project? project})
-      : project = project ??
+  ProjectViewModel({
+    required this.repository,
+    required this.shareHelper,
+    Project? project,
+  }) : project = project ??
             Project(
               id: project?.id ?? const Uuid().v4(),
               name: project?.name ?? '',
@@ -34,7 +37,7 @@ class ProjectViewModel extends ChangeNotifier {
   /// ✅ 라벨링 모드 변경
   Future<void> setLabelingMode(LabelingMode mode) async {
     if (project.mode != mode) {
-      await storageHelper.deleteProjectLabels(project.id);
+      await repository.storageHelper.deleteProjectLabels(project.id);
     }
     project = project.copyWith(mode: mode);
     notifyListeners();
@@ -78,34 +81,22 @@ class ProjectViewModel extends ChangeNotifier {
 
   /// ✅ 프로젝트 저장 (신규/업데이트)
   Future<void> saveProject(bool isNew) async {
-    List<Project> projects = await storageHelper.loadProjectFromConfig("projects");
+    final current = await repository.fetchAllProjects();
+    final index = current.indexWhere((p) => p.id == project.id);
 
     if (isNew) {
-      projects.add(project);
-    } else {
-      int index = projects.indexWhere((p) => p.id == project.id);
-      if (index != -1) {
-        projects[index] = project;
-      }
+      current.add(project);
+    } else if (index != -1) {
+      current[index] = project;
     }
 
-    await storageHelper.saveProjectConfig(projects);
+    await repository.saveAll(current);
     notifyListeners();
   }
 
   /// ✅ 프로젝트 삭제
   Future<void> deleteProject() async {
-    List<Project> projects;
-
-    if (storageHelper is CloudStorageHelper) {
-      projects = await (storageHelper as CloudStorageHelper).loadProjectList();
-    } else {
-      projects = await storageHelper.loadProjectFromConfig("projects");
-    }
-
-    projects.removeWhere((p) => p.id == project.id);
-    await storageHelper.saveProjectConfig(projects);
-
+    await repository.deleteById(project.id);
     notifyListeners();
   }
 
@@ -115,7 +106,7 @@ class ProjectViewModel extends ChangeNotifier {
 
   /// ✅ 프로젝트의 기존 데이터 제거
   Future<void> clearProjectData() async {
-    await storageHelper.deleteProjectLabels(project.id);
+    await repository.storageHelper.deleteProjectLabels(project.id);
     notifyListeners();
   }
 
@@ -125,7 +116,7 @@ class ProjectViewModel extends ChangeNotifier {
 
   /// ✅ 프로젝트 설정 다운로드
   Future<void> downloadProjectConfig() async {
-    await storageHelper.downloadProjectConfig(project);
+    await repository.exportConfig(project);
   }
 
   /// ✅ 프로젝트 공유
@@ -135,7 +126,7 @@ class ProjectViewModel extends ChangeNotifier {
       await shareHelper.shareProject(
         name: project.name,
         jsonString: jsonString,
-        getFilePath: () => storageHelper.downloadProjectConfig(project),
+        getFilePath: () => repository.exportConfig(project),
       );
     } catch (e) {
       if (context.mounted) {
