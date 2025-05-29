@@ -1,5 +1,3 @@
-// lib/src/repositories/project_repository.dart
-
 import '../models/project_model.dart';
 import '../utils/storage_helper.dart';
 
@@ -31,7 +29,7 @@ class ProjectRepository {
       current.add(project);
     }
 
-    await storageHelper.saveProjectList(current);
+    await saveAll(current);
   }
 
   /// 프로젝트 저장 (전체)
@@ -43,8 +41,13 @@ class ProjectRepository {
   Future<void> deleteById(String id) async {
     final list = await fetchAllProjects();
     final updated = list.where((p) => p.id != id).toList();
-    await storageHelper.saveProjectList(updated);
+    await saveAll(updated);
     await storageHelper.deleteProjectLabels(id);
+  }
+
+  /// 전체 프로젝트 삭제
+  Future<void> deleteAll() async {
+    await saveAll([]);
   }
 
   /// 프로젝트 가져오기 (외부 import용)
