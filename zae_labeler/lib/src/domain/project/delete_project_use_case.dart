@@ -1,22 +1,20 @@
-// lib/src/domain/project/delete_project_use_case.dart
-
-import '../../models/project_model.dart';
-import '../../utils/storage_helper.dart';
+import '../../repositories/project_repository.dart';
 
 /// ✅ UseCase: 프로젝트 삭제 (단일 or 전체)
 class DeleteProjectUseCase {
-  final StorageHelperInterface storageHelper;
+  final ProjectRepository repository;
 
-  DeleteProjectUseCase({required this.storageHelper});
+  DeleteProjectUseCase({required this.repository});
 
-  /// 🔹 단일 프로젝트 삭제 (ID 기준 → 전체 저장)
-  Future<void> deleteById(String projectId, List<Project> currentList) async {
-    currentList.removeWhere((p) => p.id == projectId);
-    await deleteAll(currentList);
+  /// 🔹 단일 프로젝트 삭제 (저장소 내부에서 삭제 처리)
+  Future<void> deleteById(String projectId) async {
+    await repository.deleteById(projectId);
   }
 
-  /// 🔹 전체 프로젝트 리스트 저장 (삭제 후 결과 반영)
-  Future<void> deleteAll(List<Project> projects) async {
-    await storageHelper.saveProjectList(projects);
+  /// 🔹 전체 프로젝트 리스트 저장 (외부에서 필터링 후 일괄 저장)
+  Future<void> deleteAll(List<String> projectIds) async {
+    final all = await repository.fetchAllProjects();
+    final filtered = all.where((p) => !projectIds.contains(p.id)).toList();
+    await repository.saveAll(filtered);
   }
 }
