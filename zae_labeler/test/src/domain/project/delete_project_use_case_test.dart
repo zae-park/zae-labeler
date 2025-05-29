@@ -2,47 +2,39 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:zae_labeler/src/domain/project/delete_project_use_case.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
-import 'package:zae_labeler/src/utils/storage_helper.dart';
 
-class MockStorageHelper extends Mock implements StorageHelperInterface {}
+import '../../../mocks/mock_project_repository.dart';
 
 void main() {
   group('DeleteProjectUseCase', () {
-    late MockStorageHelper mockHelper;
+    late MockProjectRepository mockRepository;
     late DeleteProjectUseCase useCase;
-    late List<Project> mockProjects;
 
     setUp(() {
-      mockHelper = MockStorageHelper();
-      useCase = DeleteProjectUseCase(storageHelper: mockHelper);
-      mockProjects = [
-        Project.empty().copyWith(id: 'p1', name: 'Alpha'),
-        Project.empty().copyWith(id: 'p2', name: 'Beta'),
-        Project.empty().copyWith(id: 'p3', name: 'Gamma'),
+      mockRepository = MockProjectRepository();
+      useCase = DeleteProjectUseCase(repository: mockRepository);
+    });
+
+    test('deleteById delegates to repository.deleteById()', () async {
+      await useCase.deleteById('p2');
+      verify(mockRepository.deleteById('p2')).called(1);
+      verifyNoMoreInteractions(mockRepository);
+    });
+
+    test('deleteAll filters projectIds and calls saveAll()', () async {
+      final all = [
+        Project.empty().copyWith(id: 'p1'),
+        Project.empty().copyWith(id: 'p2'),
+        Project.empty().copyWith(id: 'p3'),
       ];
-    });
+      when(mockRepository.fetchAllProjects()).thenAnswer((_) async => all);
 
-    test('deleteById removes matching project and saves list', () async {
-      await useCase.deleteById('p2', mockProjects);
+      await useCase.deleteAll(['p2', 'p3']);
 
-      expect(mockProjects.length, 2);
-      expect(mockProjects.any((p) => p.id == 'p2'), false);
-      verify(mockHelper.saveProjectList(mockProjects)).called(1);
-    });
-
-    test('deleteById does nothing if project ID not found', () async {
-      await useCase.deleteById('not_found', mockProjects);
-
-      expect(mockProjects.length, 3);
-      verify(mockHelper.saveProjectList(mockProjects)).called(1);
-    });
-
-    test('deleteAll saves given list directly', () async {
-      final remaining = [mockProjects[0], mockProjects[2]];
-
-      await useCase.deleteAll(remaining);
-
-      verify(mockHelper.saveProjectList(remaining)).called(1);
+      final expected = [all[0]];
+      verify(mockRepository.fetchAllProjects()).called(1);
+      verify(mockRepository.saveAll(expected)).called(1);
+      verifyNoMoreInteractions(mockRepository);
     });
   });
 }
