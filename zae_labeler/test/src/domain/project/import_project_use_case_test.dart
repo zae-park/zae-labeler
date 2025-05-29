@@ -1,34 +1,40 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/mockito.dart';
 import 'package:zae_labeler/src/domain/project/import_project_use_case.dart';
-import 'package:zae_labeler/src/domain/project/save_project_use_case.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
-import '../../../mocks/mock_storage_helper.dart';
+import '../../../mocks/mock_project_repository.dart';
 
 void main() {
   group('ImportProjectUseCase', () {
-    late MockStorageHelper mockStorage;
-    late SaveProjectUseCase saveUseCase;
+    late MockProjectRepository mockRepository;
     late ImportProjectUseCase importUseCase;
 
     setUp(() {
-      mockStorage = MockStorageHelper();
-      saveUseCase = SaveProjectUseCase(storageHelper: mockStorage);
-      importUseCase = ImportProjectUseCase(storageHelper: mockStorage, saveProjectUseCase: saveUseCase);
+      mockRepository = MockProjectRepository();
+      importUseCase = ImportProjectUseCase(repository: mockRepository);
     });
 
-    test('imports project list and saves them', () async {
+    test('imports project from repository and saves it', () async {
+      // given
       final importedProjects = [
         Project.empty().copyWith(id: 'p1', name: 'Imported One'),
         Project.empty().copyWith(id: 'p2', name: 'Imported Two'),
       ];
+      when(mockRepository.importFromExternal()).thenAnswer((_) async => importedProjects);
 
-      mockStorage.savedProjects = importedProjects;
+      // when
+      await importUseCase.call();
 
-      await importUseCase.call(); // ✅ 여기 수정 필수
+      // then
+      verify(mockRepository.importFromExternal()).called(1);
+      verify(mockRepository.saveProject(importedProjects.first)).called(1);
+    });
 
-      expect(mockStorage.savedProjects.length, 2);
-      expect(mockStorage.savedProjects.first.name, 'Imported One');
-      expect(mockStorage.wasSaveProjectCalled, isTrue);
+    test('throws StateError if no projects are imported', () async {
+      when(mockRepository.importFromExternal()).thenAnswer((_) async => []);
+
+      // when/then
+      expect(() async => await importUseCase.call(), throwsA(isA<StateError>()));
     });
   });
 }
