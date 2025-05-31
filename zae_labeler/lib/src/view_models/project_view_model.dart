@@ -12,6 +12,8 @@ class ProjectViewModel extends ChangeNotifier {
   final ProjectRepository repository;
   final ShareHelperInterface shareHelper;
 
+  late final LabelingMode _initialMode;
+
   ProjectViewModel({
     required this.repository,
     required this.shareHelper,
@@ -22,7 +24,9 @@ class ProjectViewModel extends ChangeNotifier {
               name: project?.name ?? '',
               mode: project?.mode ?? LabelingMode.singleClassification,
               classes: project?.classes ?? [],
-            );
+            ) {
+    _initialMode = this.project.mode;
+  }
 
   // ==============================
   // 📌 **프로젝트 기본 정보 관리**
@@ -37,10 +41,10 @@ class ProjectViewModel extends ChangeNotifier {
   /// ✅ 라벨링 모드 변경
   Future<void> setLabelingMode(LabelingMode mode) async {
     if (project.mode != mode) {
-      await repository.storageHelper.deleteProjectLabels(project.id);
+      await repository.clearLabels(project.id);
+      project = project.copyWith(mode: mode);
+      notifyListeners();
     }
-    project = project.copyWith(mode: mode);
-    notifyListeners();
   }
 
   /// ✅ 클래스 추가
@@ -54,7 +58,7 @@ class ProjectViewModel extends ChangeNotifier {
   /// ✅ 클래스 제거
   void removeClass(int index) {
     if (index >= 0 && index < project.classes.length) {
-      List<String> updatedClasses = List.from(project.classes)..removeAt(index);
+      final updatedClasses = List<String>.from(project.classes)..removeAt(index);
       project = project.copyWith(classes: updatedClasses);
       notifyListeners();
     }
@@ -72,7 +76,7 @@ class ProjectViewModel extends ChangeNotifier {
 
   /// ✅ 기존 프로젝트와 라벨링 모드가 변경되었는지 확인
   bool isLabelingModeChanged() {
-    return project.mode != project.mode;
+    return project.mode != _initialMode;
   }
 
   // ==============================
@@ -106,7 +110,7 @@ class ProjectViewModel extends ChangeNotifier {
 
   /// ✅ 프로젝트의 기존 데이터 제거
   Future<void> clearProjectData() async {
-    await repository.storageHelper.deleteProjectLabels(project.id);
+    await repository.clearLabels(project.id);
     notifyListeners();
   }
 
@@ -131,7 +135,7 @@ class ProjectViewModel extends ChangeNotifier {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to share project: $e')),
+          SnackBar(content: Text('⚠️ 프로젝트 공유에 실패했습니다: $e')),
         );
       }
     }

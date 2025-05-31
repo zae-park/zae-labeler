@@ -60,6 +60,12 @@ class MockProjectRepository implements ProjectRepository {
     return '/mock/path/${project.name}.json';
   }
 
+  @override
+  Future<void> clearLabels(String projectId) {
+    // TODO: implement clearLabels
+    throw UnimplementedError();
+  }
+
   // @override
   // Future<void> deleteProjectLabels(String projectId) async {
   //   wasLabelDeleted = true;

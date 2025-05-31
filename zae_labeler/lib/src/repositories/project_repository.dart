@@ -74,4 +74,8 @@ class ProjectRepository {
   Future<String> exportConfig(Project project) async {
     return await storageHelper.downloadProjectConfig(project);
   }
+
+  Future<void> clearLabels(String projectId) async {
+    await storageHelper.deleteProjectLabels(projectId);
+  }
 }
