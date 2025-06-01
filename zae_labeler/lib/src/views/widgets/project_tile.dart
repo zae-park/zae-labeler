@@ -9,6 +9,7 @@ import '../../view_models/project_view_model.dart';
 import '../../view_models/configuration_view_model.dart';
 import '../../views/pages/configuration_page.dart';
 import '../pages/labeling_page.dart';
+import '../../repositories/project_repository.dart';
 
 class ProjectTile extends StatelessWidget {
   final Project project;
@@ -60,7 +61,7 @@ class ProjectTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => ProjectViewModel(
-        storageHelper: Provider.of(context, listen: false),
+        repository: Provider.of<ProjectRepository>(context, listen: false),
         shareHelper: getShareHelper(),
         project: project,
       ),
