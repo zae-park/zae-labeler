@@ -142,6 +142,10 @@ abstract class LabelingViewModel extends ChangeNotifier {
   }
 
   Future<void> refreshAllStatuses() async {
+    if (project.labels.isEmpty) {
+      project.labels = await storageHelper.loadAllLabelModels(project.id);
+    }
+
     for (final data in _unifiedDataList) {
       final vm = labelCache.putIfAbsent(data.dataId, () {
         return LabelViewModelFactory.create(
