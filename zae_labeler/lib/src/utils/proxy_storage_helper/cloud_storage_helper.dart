@@ -45,11 +45,7 @@ class CloudStorageHelper implements StorageHelperInterface {
       final docRef = projectsRef.doc(project.id);
       final json = project.toJson(includeLabels: false);
 
-      if (kIsWeb) {
-        json.remove('dataInfos');
-      } else {
-        json['dataInfos'] = project.dataInfos.map((e) => e.toJson()).toList();
-      }
+      json['dataInfos'] = project.dataInfos.map((e) => e.toJson()).toList();
 
       debugPrint("[CloudStorageHelper] 💾 저장할 프로젝트: ${project.id}, ${project.name}");
       batch.set(docRef, json);
@@ -79,11 +75,12 @@ class CloudStorageHelper implements StorageHelperInterface {
     final docRef = firestore.collection('users').doc(_uid).collection('projects').doc(project.id);
     final json = project.toJson(includeLabels: true);
 
-    if (project.dataInfos.isNotEmpty) {
-      debugPrint("[CloudStorageHelper] 💾 dataInfos: ${project.dataInfos}");
-      json['dataInfos'] = project.dataInfos.map((e) => e.toJson()).toList();
-    }
+    // if (project.dataInfos.isNotEmpty) {
 
+    //   json['dataInfos'] = project.dataInfos.map((e) => e.toJson()).toList();
+    // }
+    debugPrint("[CloudStorageHelper] 💾 dataInfos: ${project.dataInfos}");
+    json['dataInfos'] = project.dataInfos.map((e) => e.toJson()).toList();
     await docRef.set(json, SetOptions(merge: true));
     debugPrint("[CloudStorageHelper] ✅ saveSingleProject 완료: ${project.id}");
   }
@@ -229,11 +226,7 @@ class CloudStorageHelper implements StorageHelperInterface {
       final docRef = projectsRef.doc(project.id);
       final json = project.toJson(includeLabels: false);
 
-      if (kIsWeb) {
-        json.remove('dataInfos');
-      } else {
-        json['dataInfos'] = project.dataInfos.map((e) => e.toJson()).toList();
-      }
+      json['dataInfos'] = project.dataInfos.map((e) => e.toJson()).toList();
 
       batch.set(docRef, json);
     }
