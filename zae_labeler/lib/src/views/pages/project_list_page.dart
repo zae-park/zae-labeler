@@ -16,6 +16,7 @@ import '../pages/configuration_page.dart';
 import '../dialogs/onboarding_dialog.dart';
 import '../../utils/storage_helper.dart';
 import '../widgets/project_tile.dart';
+import '../../repositories/project_repository.dart';
 
 class ProjectListPage extends StatefulWidget {
   const ProjectListPage({Key? key}) : super(key: key);
@@ -93,7 +94,8 @@ class _ProjectListPageState extends State<ProjectListPage> {
     );
 
     if (confirmed == true) {
-      final vm = ProjectViewModel(project: project, storageHelper: StorageHelper.instance, shareHelper: getShareHelper());
+      final repository = ProjectRepository(storageHelper: StorageHelper.instance);
+      final vm = ProjectViewModel(project: project, repository: repository, shareHelper: getShareHelper());
 
       await vm.deleteProject();
       await projectListVM.removeProject(project.id);
@@ -156,9 +158,10 @@ class _ProjectListPageState extends State<ProjectListPage> {
                         itemCount: projectListVM.projects.length,
                         itemBuilder: (context, index) {
                           final project = projectListVM.projects[index];
+                          final repository = ProjectRepository(storageHelper: StorageHelper.instance);
 
                           return ChangeNotifierProvider(
-                            create: (context) => ProjectViewModel(storageHelper: StorageHelper.instance, project: project, shareHelper: getShareHelper()),
+                            create: (context) => ProjectViewModel(repository: repository, project: project, shareHelper: getShareHelper()),
                             child: Consumer<ProjectViewModel>(builder: (context, projectVM, _) => ProjectTile(project: projectVM.project)),
                           );
                         },
