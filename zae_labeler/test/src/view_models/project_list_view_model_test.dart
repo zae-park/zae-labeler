@@ -1,45 +1,56 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zae_labeler/src/models/label_model.dart';
-import 'package:zae_labeler/src/view_models/project_list_view_model.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
-import '../../mocks/mock_storage_helper.dart';
+import 'package:zae_labeler/src/view_models/project_list_view_model.dart';
+import '../../mocks/mock_project_repository.dart';
 
 void main() {
   group('ProjectListViewModel', () {
     late ProjectListViewModel vm;
-    late MockStorageHelper mock;
+    late MockProjectRepository mockRepository;
+
+    final sampleProject = Project(
+      id: 'test1',
+      name: 'Sample Project',
+      mode: LabelingMode.singleClassification,
+      classes: [],
+    );
 
     setUp(() {
-      mock = MockStorageHelper();
-      vm = ProjectListViewModel(storageHelper: mock);
+      mockRepository = MockProjectRepository();
+      vm = ProjectListViewModel(repository: mockRepository);
     });
 
     test('saveProject adds new project', () async {
-      final project = Project(id: 'id1', name: 'test', mode: LabelingMode.singleClassification, classes: []);
-      await vm.saveProject(project);
+      await vm.saveProject(sampleProject);
+
       expect(vm.projects.length, 1);
-      expect(vm.projects.first.name, 'test');
+      expect(vm.projects.first.name, 'Sample Project');
+      expect(mockRepository.wasSaveAllCalled, true);
     });
 
     test('removeProject deletes a project', () async {
-      final project = Project(id: 'id2', name: 'to delete', mode: LabelingMode.singleClassification, classes: []);
-      await vm.saveProject(project);
-      await vm.removeProject('id2');
-      expect(vm.projects.any((p) => p.id == 'id2'), false);
+      await vm.saveProject(sampleProject);
+      await vm.removeProject('test1');
+
+      expect(vm.projects.any((p) => p.id == 'test1'), false);
+      expect(mockRepository.wasSaveAllCalled, true);
     });
 
     test('updateProject modifies project data', () async {
-      final project = Project(id: 'id3', name: 'old', mode: LabelingMode.singleClassification, classes: []);
-      await vm.saveProject(project);
-      final updated = project.copyWith(name: 'updated');
+      await vm.saveProject(sampleProject);
+
+      final updated = sampleProject.copyWith(name: 'Updated Name');
       await vm.updateProject(updated);
-      expect(vm.projects.first.name, 'updated');
+
+      expect(vm.projects.first.name, 'Updated Name');
+      expect(mockRepository.wasSaveAllCalled, true);
     });
 
     test('clearAllProjectsCache clears everything', () async {
-      final project = Project(id: 'id4', name: 'will be cleared', mode: LabelingMode.singleClassification, classes: []);
-      await vm.saveProject(project);
+      await vm.saveProject(sampleProject);
       await vm.clearAllProjectsCache();
+
       expect(vm.projects.isEmpty, true);
     });
   });
