@@ -90,8 +90,17 @@ class CloudStorageHelper implements StorageHelperInterface {
   /// - 호출 위치: 프로젝트 삭제 시
   Future<void> deleteSingleProject(String projectId) async {
     debugPrint("[CloudStorageHelper] ❌ deleteSingleProject 호출됨: $projectId");
+
+    // 🔥 먼저 labels 서브컬렉션 삭제
+    final labelsSnapshot = await firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('labels').get();
+    for (final labelDoc in labelsSnapshot.docs) {
+      await labelDoc.reference.delete();
+    }
+
+    // 📦 프로젝트 문서 삭제
     final docRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId);
     await docRef.delete();
+
     debugPrint("[CloudStorageHelper] ✅ deleteSingleProject 완료: $projectId");
   }
 
