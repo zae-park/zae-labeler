@@ -135,6 +135,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
         dataPath: _currentUnifiedData.file?.path ?? '',
         mode: project.mode,
         storageHelper: storageHelper,
+        labelRepository: labelRepository,
       );
     });
   }
@@ -163,6 +164,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
           dataPath: data.file?.path ?? '',
           mode: project.mode,
           storageHelper: storageHelper,
+          labelRepository: labelRepository,
         );
       });
 
