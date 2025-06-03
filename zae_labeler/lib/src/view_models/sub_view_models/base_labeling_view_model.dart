@@ -2,12 +2,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../models/label_model.dart';
-import '../../utils/label_validator.dart';
 import '../label_view_model.dart';
 import '../../models/data_model.dart';
 import '../../models/project_model.dart';
 import '../../utils/proxy_storage_helper/interface_storage_helper.dart';
 import '../../utils/adaptive/adaptive_data_loader.dart';
+import '../../repositories/label_repository.dart';
 
 /// Abstract base class for all LabelingViewModels.
 ///
@@ -26,7 +26,8 @@ import '../../utils/adaptive/adaptive_data_loader.dart';
 abstract class LabelingViewModel extends ChangeNotifier {
   final Project project;
   final StorageHelperInterface storageHelper;
-  final List<UnifiedData>? initialDataList; // ✅ 외부에서 주입된 데이터 목록 (cloud 등)
+  final List<UnifiedData>? initialDataList;
+  final LabelRepository labelRepository;
 
   bool _isInitialized = false;
   final bool _memoryOptimized = false;
@@ -38,7 +39,12 @@ abstract class LabelingViewModel extends ChangeNotifier {
   final Map<String, LabelViewModel> labelCache = {};
   void clearLabelCache() => labelCache.clear();
 
-  LabelingViewModel({required this.project, required this.storageHelper, this.initialDataList});
+  LabelingViewModel({
+    required this.project,
+    required this.storageHelper,
+    required this.labelRepository,
+    this.initialDataList,
+  });
 
   bool get isInitialized => _isInitialized;
   int get currentIndex => _currentIndex;
@@ -58,9 +64,6 @@ abstract class LabelingViewModel extends ChangeNotifier {
   double get progressRatio => totalCount == 0 ? 0 : completeCount / totalCount;
 
   /// Initializes the ViewModel by loading data and label information.
-  ///
-  /// ✅ memoryOptimized 모드일 경우, 이미 주어진 데이터를 그대로 사용
-  /// ✅ 일반 모드일 경우, 플랫폼에 따라 어댑터를 통해 데이터를 동적으로 로드
   Future<void> initialize() async {
     debugPrint("[LabelingVM.initialize] : ${project.mode}");
     if (_isInitialized && project.mode != currentLabelVM.mode) {
@@ -75,7 +78,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
       if (initialDataList != null) {
         _unifiedDataList = initialDataList!;
       } else {
-        _unifiedDataList = await loadDataAdaptively(project, storageHelper); // ✅ 어댑터 사용
+        _unifiedDataList = await loadDataAdaptively(project, storageHelper);
       }
       _currentUnifiedData = _unifiedDataList.isNotEmpty ? _unifiedDataList.first : UnifiedData.empty();
     }
@@ -98,7 +101,12 @@ abstract class LabelingViewModel extends ChangeNotifier {
       debugPrint("⚠️ 라벨 모델 모드 불일치 → 초기화");
       labelCache.remove(_currentUnifiedData.dataId);
       labelVM.labelModel = LabelModelFactory.createNew(project.mode, dataId: _currentUnifiedData.dataId);
-      await labelVM.saveLabel();
+      await labelRepository.saveLabel(
+        projectId: project.id,
+        dataId: _currentUnifiedData.dataId,
+        dataPath: _currentUnifiedData.file?.path ?? '',
+        labelModel: labelVM.labelModel,
+      );
     }
   }
 
@@ -134,7 +142,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
   Future<void> refreshStatus(String dataId) async {
     final vm = getOrCreateLabelVM();
     await vm.loadLabel();
-    final status = LabelValidator.getStatus(project, vm.labelModel);
+    final status = labelRepository.getStatus(project, vm.labelModel);
     final index = _unifiedDataList.indexWhere((e) => e.dataId == dataId);
     if (index != -1) {
       _unifiedDataList[index] = _unifiedDataList[index].copyWith(status: status);
@@ -143,7 +151,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
 
   Future<void> refreshAllStatuses() async {
     if (project.labels.isEmpty) {
-      project.labels = await storageHelper.loadAllLabelModels(project.id);
+      project.labels = await labelRepository.loadAllLabels(project.id);
     }
 
     for (final data in _unifiedDataList) {
@@ -159,7 +167,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
       });
 
       await vm.loadLabel();
-      final status = LabelValidator.getStatus(project, vm.labelModel);
+      final status = labelRepository.getStatus(project, vm.labelModel);
       final idx = _unifiedDataList.indexWhere((e) => e.dataId == data.dataId);
       if (idx != -1) {
         _unifiedDataList[idx] = _unifiedDataList[idx].copyWith(status: status);
@@ -173,6 +181,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
 
   Future<String> exportAllLabels() async {
     final allLabels = labelCache.values.map((vm) => vm.labelModel).toList();
-    return await storageHelper.exportAllLabels(project, allLabels, _unifiedDataList.map((e) => e.toDataInfo()).toList());
+    final dataInfos = _unifiedDataList.map((e) => e.toDataInfo()).toList();
+    return await labelRepository.exportLabelsWithData(project, allLabels, dataInfos);
   }
 }
