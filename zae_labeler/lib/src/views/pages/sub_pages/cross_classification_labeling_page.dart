@@ -12,7 +12,7 @@ class CrossClassificationLabelingPage extends BaseLabelingPage<CrossClassificati
 
   @override
   Widget buildViewer(CrossClassificationLabelingViewModel vm) {
-    if (vm.totalPairCount == 0 || vm.currentPair == null) {
+    if (vm.totalCount == 0 || vm.currentPair == null) {
       return const Center(child: Text('쌍을 초기화하는 중입니다...'));
     }
 
