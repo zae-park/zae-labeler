@@ -6,6 +6,7 @@ import 'package:zae_labeler/src/models/label_model.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
 import 'package:zae_labeler/src/view_models/sub_view_models/classification_labeling_view_model.dart';
 
+import '../../../mocks/mock_label_repository.dart';
 import '../../../mocks/mock_storage_helper.dart';
 import '../../../mocks/mock_path_provider.dart';
 
@@ -16,8 +17,13 @@ void main() {
 
   group('CrossClassificationLabelingViewModel', () {
     late CrossClassificationLabelingViewModel viewModel;
+    late MockLabelRepository mockLabelRepo;
+    late MockStorageHelper mockStorage;
 
     setUp(() async {
+      mockStorage = MockStorageHelper();
+      mockLabelRepo = MockLabelRepository(storageHelper: mockStorage);
+
       final project = Project(
         id: 'test-project',
         name: 'Test Project',
@@ -26,13 +32,13 @@ void main() {
         classes: ['positive', 'negative'],
       );
 
-      viewModel = CrossClassificationLabelingViewModel(project: project, storageHelper: MockStorageHelper());
+      viewModel = CrossClassificationLabelingViewModel(project: project, storageHelper: mockStorage, labelRepository: mockLabelRepo);
 
       await viewModel.initialize();
     });
 
     test('totalPairCount is correct for 3 data items', () {
-      expect(viewModel.totalPairCount, 3); // (A,B), (A,C), (B,C)
+      expect(viewModel.totalCount, 3); // (A,B), (A,C), (B,C)
     });
 
     test('currentPair returns correct initial pair', () {
