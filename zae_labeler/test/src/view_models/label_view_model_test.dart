@@ -9,8 +9,13 @@ import '../../mocks/mock_label_repository.dart';
 void main() {
   group('SegmentationLabelViewModel', () {
     late SegmentationLabelViewModel labelVM;
+    late MockLabelRepository mockLabelRepo;
+    late MockStorageHelper mockStorage;
 
     setUp(() {
+      mockStorage = MockStorageHelper();
+      mockLabelRepo = MockLabelRepository(storageHelper: mockStorage);
+
       labelVM = SegmentationLabelViewModel(
         projectId: 'proj-123',
         dataId: 'data-001',
@@ -18,7 +23,8 @@ void main() {
         dataPath: '/path/image.png',
         mode: LabelingMode.multiClassSegmentation,
         labelModel: MultiClassSegmentationLabelModel.empty(),
-        storageHelper: MockStorageHelper(),
+        storageHelper: mockStorage,
+        labelRepository: mockLabelRepo,
       );
     });
 
@@ -40,7 +46,7 @@ void main() {
       labelVM.removePixel(5, 5);
 
       final label = labelVM.labelModel.label as SegmentationData;
-      expect(label.segments['sky']?.indices.contains((5, 5)), isNull);
+      expect(label.segments['sky']?.indices.contains((5, 5)), isFalse);
     });
 
     test('updateLabel replaces the labelModel content', () {
