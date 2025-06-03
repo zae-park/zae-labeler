@@ -12,7 +12,7 @@ import '../../models/sub_models/segmentation_label_model.dart';
 /// ViewModel for single and multi classification labeling modes.
 /// Handles label toggling and status tracking per data item.
 class ClassificationLabelingViewModel extends LabelingViewModel {
-  ClassificationLabelingViewModel({required super.project, required super.storageHelper, super.initialDataList});
+  ClassificationLabelingViewModel({required super.project, required super.storageHelper, required super.labelRepository, super.initialDataList});
 
   @override
   int get totalCount => unifiedDataList.length;
@@ -72,7 +72,7 @@ class ClassificationLabelingViewModel extends LabelingViewModel {
 /// ViewModel for cross classification mode, labeling pairs of data.
 /// Uses nC2 pairing logic and custom progress tracking per relation.
 class CrossClassificationLabelingViewModel extends LabelingViewModel {
-  CrossClassificationLabelingViewModel({required super.project, required super.storageHelper, super.initialDataList});
+  CrossClassificationLabelingViewModel({required super.project, required super.storageHelper, required super.labelRepository, super.initialDataList});
 
   int _sourceIndex = 0;
   int _targetIndex = 1;
@@ -82,7 +82,7 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
 
   /// Total number of data pairs to label
   @override
-  int get totalCount => totalPairCount;
+  int get totalCount => _crossPairs.length;
 
   /// Number of pairs with a valid relation label
   @override
@@ -99,8 +99,6 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
   /// Progress ratio for labeled pairs
   @override
   double get progressRatio => totalCount == 0 ? 0 : completeCount / totalCount;
-
-  int get totalPairCount => _crossPairs.length;
 
   int get currentPairIndex => _sourceIndex * (_selectedDataIds.length - 1) - (_sourceIndex * (_sourceIndex - 1)) ~/ 2 + (_targetIndex - _sourceIndex - 1);
 
@@ -179,6 +177,7 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
         dataPath: '',
         mode: project.mode,
         storageHelper: storageHelper,
+        labelRepository: labelRepository,
       );
     });
   }
