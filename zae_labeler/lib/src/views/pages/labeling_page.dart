@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/label_model.dart';
 import '../../models/project_model.dart';
+import '../../repositories/label_repository.dart';
 import '../../utils/storage_helper.dart';
 import '../../view_models/labeling_view_model.dart';
 import 'not_found_page.dart';
@@ -17,9 +18,10 @@ class LabelingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final helper = Provider.of<StorageHelperInterface>(context, listen: false);
+    final labelRepo = LabelRepository(storageHelper: helper);
 
     return FutureBuilder<LabelingViewModel>(
-      future: LabelingViewModelFactory.createAsync(project, helper),
+      future: LabelingViewModelFactory.createAsync(project, helper, labelRepo),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(body: Center(child: CircularProgressIndicator()));
