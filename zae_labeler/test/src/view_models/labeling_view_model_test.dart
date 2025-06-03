@@ -1,11 +1,12 @@
-// 📁 test/view_models/labeling_view_model_test.dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
 import 'package:zae_labeler/src/models/data_model.dart';
 import 'package:zae_labeler/src/models/label_model.dart';
 import 'package:zae_labeler/src/models/sub_models/segmentation_label_model.dart';
 import 'package:zae_labeler/src/view_models/labeling_view_model.dart';
+
 import '../../mocks/mock_storage_helper.dart';
+import '../../mocks/mock_label_repository.dart';
 import '../../mocks/mock_path_provider.dart';
 
 void main() {
@@ -14,7 +15,13 @@ void main() {
   });
 
   group('LabelingViewModelFactory.createAsync', () {
-    final stubStorageHelper = MockStorageHelper();
+    late MockLabelRepository mockLabelRepo;
+    late MockStorageHelper mockStorage;
+
+    setUp(() {
+      mockStorage = MockStorageHelper();
+      mockLabelRepo = MockLabelRepository(storageHelper: mockStorage);
+    });
 
     Future<void> testCreation(LabelingMode mode, Type expectedType) async {
       final project = Project(
@@ -25,7 +32,7 @@ void main() {
         classes: ['cat', 'dog'],
       );
 
-      final viewModel = await LabelingViewModelFactory.createAsync(project, stubStorageHelper);
+      final viewModel = await LabelingViewModelFactory.createAsync(project, mockStorage, mockLabelRepo);
 
       expect(viewModel.runtimeType, expectedType);
       expect(viewModel.project.id, 'test_project');
@@ -54,9 +61,14 @@ void main() {
   });
 
   group('SegmentationLabelingViewModel', () {
-    late SegmentationLabelingViewModel viewModel;
+    late MockLabelRepository mockLabelRepo;
+    late MockStorageHelper mockStorage;
+    late SegmentationLabelingViewModel segVM;
 
     setUp(() {
+      mockStorage = MockStorageHelper();
+      mockLabelRepo = MockLabelRepository(storageHelper: mockStorage);
+
       final project = Project(
         id: 'test-project',
         name: 'Test Project',
@@ -65,61 +77,34 @@ void main() {
         classes: ['car', 'road'],
       );
 
-      viewModel = SegmentationLabelingViewModel(
-        project: project,
-        storageHelper: MockStorageHelper(), // ✅ 실제 저장은 Mock
-      );
+      segVM = SegmentationLabelingViewModel(project: project, storageHelper: mockStorage, labelRepository: mockLabelRepo);
     });
 
     test('initial selected class is first in project.classes', () async {
-      await viewModel.postInitialize();
-      expect(viewModel.selectedClass, equals('car'));
+      await segVM.postInitialize();
+      expect(segVM.selectedClass, equals('car'));
     });
 
     test('setSelectedClass changes the selected class', () {
-      viewModel.setSelectedClass('road');
-      expect(viewModel.selectedClass, equals('road'));
+      segVM.setSelectedClass('road');
+      expect(segVM.selectedClass, equals('road'));
     });
-
-    // test('addPixel updates label model and grid state', () {
-    //   viewModel.setSelectedClass('car');
-    //   viewModel.addPixel(5, 5);
-
-    //   final label = viewModel.currentLabelVM.labelModel.label as SegmentationData;
-    //   expect(label.segments.containsKey('car'), isTrue);
-    //   expect(label.segments['car']!.indices.contains((5, 5)), isTrue);
-    // });
-
-    // test('removePixel removes the pixel from the segment', () {
-    //   viewModel.setSelectedClass('road');
-    //   viewModel.addPixel(10, 10);
-    //   final label = viewModel.currentLabelVM.labelModel.label;
-    //   final segment = label.segments['road'];
-    //   expect(segment?.indices.contains((10, 10)), isTrue);
-
-    //   viewModel.setSelectedClass('car');
-    //   viewModel.removePixel(10, 10);
-    //   expect(segment?.indices.contains((10, 10)), isTrue);
-    //   final label_ = viewModel.currentLabelVM.labelModel.label;
-    //   final segment_ = label_.segments['road'];
-    //   expect(segment_?.indices.contains((10, 10)), isNull);
-    // });
 
     test('updateSegmentationGrid replaces the entire grid', () {
       final newGrid = List.generate(32, (_) => List.filled(32, 0));
       newGrid[3][4] = 1;
 
-      viewModel.updateSegmentationGrid(newGrid);
-      expect(viewModel.labelGrid[3][4], equals(1));
+      segVM.updateSegmentationGrid(newGrid);
+      expect(segVM.labelGrid[3][4], equals(1));
     });
 
     test('saveCurrentGridAsLabel stores grid into labelModel', () async {
-      viewModel.setSelectedClass('car');
-      viewModel.updateSegmentationLabel(1, 2, 1);
-      viewModel.updateSegmentationLabel(2, 2, 1);
+      segVM.setSelectedClass('car');
+      segVM.updateSegmentationLabel(1, 2, 1);
+      segVM.updateSegmentationLabel(2, 2, 1);
 
-      await viewModel.saveCurrentGridAsLabel();
-      final label = viewModel.currentLabelVM.labelModel.label as SegmentationData;
+      await segVM.saveCurrentGridAsLabel();
+      final label = segVM.currentLabelVM.labelModel.label as SegmentationData;
       final segment = label.segments['car'];
 
       expect(segment, isNotNull);
@@ -128,16 +113,15 @@ void main() {
     });
 
     test('restoreGridFromLabel reconstructs grid from label', () async {
-      // 가짜 세그먼트 구성
       final fakeLabel = SegmentationData(segments: {
         'car': Segment(indices: {(1, 1), (2, 2)}, classLabel: 'car'),
       });
 
-      viewModel.currentLabelVM.updateLabel(fakeLabel);
-      viewModel.restoreGridFromLabel();
+      segVM.currentLabelVM.updateLabel(fakeLabel);
+      segVM.restoreGridFromLabel();
 
-      expect(viewModel.labelGrid[1][1], equals(1));
-      expect(viewModel.labelGrid[2][2], equals(1));
+      expect(segVM.labelGrid[1][1], equals(1));
+      expect(segVM.labelGrid[2][2], equals(1));
     });
   });
 }
