@@ -14,26 +14,15 @@ Project 클래스는 프로젝트 ID, 이름, 라벨링 모드, 클래스 목록
 */
 
 /// ✅ 프로젝트 정보를 저장하는 클래스
-class Project {
-  final String id; // 프로젝트 고유 ID
-  final String name; // 프로젝트 이름
-  final LabelingMode mode; // 라벨링 모드
-  final List<String> classes; // 설정된 클래스 목록
-  final List<DataInfo> dataInfos; // 데이터 경로
+class Project extends ChangeNotifier {
+  String id; // 프로젝트 고유 ID
+  String name; // 프로젝트 이름
+  LabelingMode mode; // 라벨링 모드
+  List<String> classes; // 설정된 클래스 목록
+  List<DataInfo> dataInfos; // 데이터 경로
   List<LabelModel> labels; // ✅ 라벨 데이터 관리
 
-  Project({
-    required this.id,
-    required this.name,
-    required this.mode,
-    required this.classes,
-    this.dataInfos = const [],
-    this.labels = const [], // ✅ 라벨 데이터를 `LabelModel` 기반으로 관리
-  });
-
-  // ==============================
-  // 📌 **프로젝트 정보 관리**
-  // ==============================
+  Project({required this.id, required this.name, required this.mode, required this.classes, this.dataInfos = const [], this.labels = const []});
 
   /// ✅ 테스트 및 초기화용 빈 프로젝트 생성자
   factory Project.empty() => Project(id: 'empty', name: '', mode: LabelingMode.singleClassification, classes: const []);
@@ -50,14 +39,45 @@ class Project {
     );
   }
 
-  /// ✅ 모든 라벨 초기화
-  void clearLabels() {
-    labels.clear();
+  void updateName(String newName) {
+    name = newName;
+    notifyListeners();
   }
 
-  // ==============================
-  // 📌 **JSON 변환**
-  // ==============================
+  void updateMode(LabelingMode newMode) {
+    mode = newMode;
+    notifyListeners();
+  }
+
+  void updateClasses(List<String> newClasses) {
+    classes = newClasses;
+    notifyListeners();
+  }
+
+  void updateDataInfos(List<DataInfo> newDataInfos) {
+    dataInfos = newDataInfos;
+    notifyListeners();
+  }
+
+  void addDataInfo(DataInfo newDataInfo) {
+    dataInfos = [...dataInfos, newDataInfo];
+    notifyListeners();
+  }
+
+  void removeDataInfoById(String dataId) {
+    dataInfos = dataInfos.where((d) => d.id != dataId).toList();
+    notifyListeners();
+  }
+
+  void resetLabels() {
+    labels = [];
+    notifyListeners();
+  }
+
+  void clearLabels() {
+    labels.clear();
+    notifyListeners();
+  }
 
   /// ✅ JSON 데이터를 기반으로 `Project` 객체 생성
   factory Project.fromJson(Map<String, dynamic> json) {
