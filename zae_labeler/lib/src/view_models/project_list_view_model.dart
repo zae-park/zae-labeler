@@ -25,15 +25,21 @@ class ProjectListViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// ✅ 프로젝트 저장
+  /// ✅ 프로젝트 저장 (mode/class 변경 반영 포함)
   Future<void> saveProject(Project project) async {
-    debugPrint("[ProjectListVM] 💾 saveProject 호출됨: \${project.id}, \${project.name}");
-    int index = _projects.indexWhere((p) => p.id == project.id);
-    if (index != -1) {
-      _projects[index] = project.copyWith(id: project.id);
+    debugPrint("[ProjectListVM] 💾 saveProject 호출됨: ${project.id}, ${project.name}");
+
+    final existing = _projects.where((p) => p.id == project.id).firstOrNull;
+    if (existing != null) {
+      // 기존 프로젝트에 값 복사
+      existing.name = project.name;
+      existing.updateMode(project.mode);
+      existing.updateClasses(project.classes);
+      existing.updateDataInfos(project.dataInfos);
     } else {
       _projects.add(project);
     }
+
     await repository.saveAll(_projects);
     notifyListeners();
   }
@@ -45,9 +51,10 @@ class ProjectListViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// ✅ 프로젝트 업데이트
+  /// ✅ 프로젝트 강제 업데이트 (외부에서 설정 전체 덮어쓰기)
   Future<void> updateProject(Project updatedProject) async {
-    debugPrint("[ProjectListVM] 💾 updateProject 호출됨: \${updatedProject.id}, \${updatedProject.name}");
+    debugPrint("[ProjectListVM] 💾 updateProject 호출됨: ${updatedProject.id}, ${updatedProject.name}");
+
     int index = _projects.indexWhere((project) => project.id == updatedProject.id);
     if (index != -1) {
       _projects[index] = updatedProject;
