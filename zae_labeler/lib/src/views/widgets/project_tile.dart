@@ -75,8 +75,8 @@ class ProjectTile extends StatelessWidget {
                 separator: const SizedBox(height: 4),
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(project.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  Text("Mode: ${project.mode.displayName}"),
+                  Text(vm.project.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text("Mode: ${vm.project.mode.displayName}"),
                   const SizedBox(height: 4),
                   Wrap(
                     spacing: 12,
@@ -89,7 +89,7 @@ class ProjectTile extends StatelessWidget {
                       TextButton.icon(
                           onPressed: () => _confirmDelete(context, vm.project, vm),
                           icon: const Icon(Icons.delete, color: Colors.red),
-                          label: const Text("Delete", style: TextStyle(color: Colors.red))),
+                          label: const Text("Delete", style: TextStyle(color: Colors.red)))
                     ],
                   ),
                 ],
