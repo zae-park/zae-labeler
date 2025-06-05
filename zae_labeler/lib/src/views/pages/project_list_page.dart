@@ -124,6 +124,10 @@ class _ProjectListPageState extends State<ProjectListPage> {
                     _checkOnboarding();
                   },
                 ),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () => Provider.of<ProjectListViewModel>(context, listen: false).loadProjects(),
+                ),
                 PopupMenuButton<String>(
                   onSelected: (value) => localeVM.changeLocale(value),
                   itemBuilder: (context) => [
@@ -136,17 +140,14 @@ class _ProjectListPageState extends State<ProjectListPage> {
                   icon: const Icon(Icons.add),
                   onPressed: () => Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => ChangeNotifierProvider(create: (_) => ConfigurationViewModel(), child: const ConfigureProjectPage()),
-                    ),
+                    MaterialPageRoute(builder: (_) => ChangeNotifierProvider(create: (_) => ConfigurationViewModel(), child: const ConfigureProjectPage())),
                   ),
                   tooltip: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 생성' : 'Create Project',
                 ),
                 IconButton(
-                  icon: const Icon(Icons.file_upload),
-                  onPressed: () => _importProject(context),
-                  tooltip: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 가져오기' : 'Import Project',
-                ),
+                    icon: const Icon(Icons.file_upload),
+                    onPressed: () => _importProject(context),
+                    tooltip: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 가져오기' : 'Import Project'),
               ],
             ),
             body: projectListVM.projects.isEmpty
