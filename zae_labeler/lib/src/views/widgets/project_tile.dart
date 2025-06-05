@@ -21,16 +21,15 @@ class ProjectTile extends StatelessWidget {
     Navigator.push(context, MaterialPageRoute(builder: (_) => LabelingPage(project: p)));
   }
 
-  void _openEditPage(BuildContext context, Project p) {
+  void _openEditPage(BuildContext context, Project p) async {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => ChangeNotifierProvider(
-          create: (_) => ConfigurationViewModel.fromProject(p),
-          child: const ConfigureProjectPage(),
-        ),
-      ),
+      MaterialPageRoute(builder: (_) => ChangeNotifierProvider(create: (_) => ConfigurationViewModel.fromProject(p), child: const ConfigureProjectPage())),
     );
+
+    // ⏪ 돌아온 후 갱신
+    final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
+    await projectListVM.loadProjects();
   }
 
   Future<void> _confirmDelete(BuildContext context, Project project, ProjectViewModel vm) async {
