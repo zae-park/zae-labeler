@@ -3,7 +3,14 @@ import '../models/project_model.dart';
 import '../repositories/project_repository.dart';
 
 /// 🔧 ViewModel: 전체 프로젝트 리스트를 관리
-/// - 저장소로부터 프로젝트를 불러오고, 상태를 관리하며, View와 연결됨
+/// - 저장소로부터 프로젝트를 불러오고, 상태를 관리하며 View와 연결됨
+/// ProjectListViewModel
+/// ├── loadProjects()               // 저장소에서 전체 프로젝트 목록을 불러옴
+/// ├── saveProject(Project)         // 기존 리스트에 있으면 갱신, 없으면 추가
+/// ├── updateProject(Project)       // 리스트 내 기존 항목을 외부 변경 사항으로 덮어쓰기
+/// ├── removeProject(String)        // ID 기준으로 삭제 및 리스트 재로드
+/// └── clearAllProjectsCache()      // 캐시 비우고 리스트 초기화
+
 class ProjectListViewModel extends ChangeNotifier {
   final ProjectRepository repository;
 
@@ -17,8 +24,8 @@ class ProjectListViewModel extends ChangeNotifier {
     loadProjects();
   }
 
-  /// ✅ 모든 프로젝트 불러오기
-  /// - 로딩 상태를 관리하며 저장소에서 프로젝트 목록을 불러옴
+  /// ✅ 전체 프로젝트 불러오기
+  /// - 로딩 상태 관리 포함
   Future<void> loadProjects() async {
     _isLoading = true;
     notifyListeners();
@@ -29,18 +36,15 @@ class ProjectListViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// ✅ 프로젝트 저장
-  /// - 동일 ID가 있으면 덮어쓰고 없으면 추가
-  /// - mode/class/dataInfo 등 변경도 즉시 반영
+  /// ✅ 프로젝트 저장 (추가 또는 갱신)
+  /// - 동일 ID가 존재하면 속성만 갱신
   Future<void> saveProject(Project project) async {
     debugPrint("[ProjectListVM] 💾 saveProject 호출됨: ${project.id}, ${project.name}");
 
-    final existing = _projects.where((p) => p.id == project.id).firstOrNull;
-    if (existing != null) {
-      existing.name = project.name;
-      existing.updateMode(project.mode);
-      existing.updateClasses(project.classes);
-      existing.updateDataInfos(project.dataInfos);
+    final index = _projects.indexWhere((p) => p.id == project.id);
+    if (index != -1) {
+      final updated = _projects[index].copyWith(name: project.name, mode: project.mode, classes: project.classes, dataInfos: project.dataInfos);
+      _projects[index] = updated;
     } else {
       _projects.add(project);
     }
@@ -50,13 +54,15 @@ class ProjectListViewModel extends ChangeNotifier {
   }
 
   /// ✅ 프로젝트 삭제
-  /// - 저장소에서 실제 삭제 후 전체 프로젝트를 새로 로드
+  /// - 저장소에서도 삭제 후, 전체 목록을 다시 로드
   Future<void> removeProject(String projectId) async {
     await repository.deleteById(projectId);
-    await loadProjects(); // 내부에서 notifyListeners 호출함
+    await loadProjects(); // 내부적으로 notifyListeners 호출
   }
 
-  /// ✅ 프로젝트 덮어쓰기 (외부에서 전체 설정 변경 시 사용)
+  /// ✅ 프로젝트 강제 업데이트
+  /// - 외부에서 전체 변경된 값을 반영하고 싶을 때 사용
+  /// - 일반적으로는 saveProject로 통합 가능
   Future<void> updateProject(Project updatedProject) async {
     debugPrint("[ProjectListVM] 💾 updateProject 호출됨: ${updatedProject.id}, ${updatedProject.name}");
 
@@ -69,8 +75,7 @@ class ProjectListViewModel extends ChangeNotifier {
     }
   }
 
-  /// ✅ 프로젝트 캐시 초기화
-  /// - 저장된 프로젝트 데이터 및 내부 리스트 초기화
+  /// ✅ 프로젝트 캐시 비우기
   Future<void> clearAllProjectsCache() async {
     await repository.storageHelper.clearAllCache();
     _projects.clear();
