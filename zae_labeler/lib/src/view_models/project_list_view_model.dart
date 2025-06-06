@@ -46,6 +46,7 @@ class ProjectListViewModel extends ChangeNotifier {
 
   /// ✅ 프로젝트 삭제
   Future<void> removeProject(String projectId) async {
+    await repository.deleteById(projectId);
     _projects.removeWhere((p) => p.id == projectId);
     await repository.saveAll(_projects);
     notifyListeners();
