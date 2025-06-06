@@ -162,9 +162,8 @@ class _ProjectListPageState extends State<ProjectListPage> {
                           final repository = ProjectRepository(storageHelper: StorageHelper.instance);
 
                           return ChangeNotifierProvider(
-                            create: (context) => ProjectViewModel(repository: repository, project: project, shareHelper: getShareHelper()),
-                            child: Consumer<ProjectViewModel>(builder: (context, projectVM, _) => ProjectTile(project: projectVM.project)),
-                          );
+                              create: (ctx) => ProjectViewModel(repository: repository, project: project, shareHelper: getShareHelper()),
+                              child: Consumer<ProjectViewModel>(builder: (ctx, pjtVM, _) => ProjectTile(key: ValueKey(project.id), project: pjtVM.project)));
                         },
                       ),
                     )
