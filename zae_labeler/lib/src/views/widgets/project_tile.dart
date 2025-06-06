@@ -18,13 +18,15 @@ class ProjectTile extends StatelessWidget {
 
   void _openLabelingPage(BuildContext context, Project p) async {
     if (!context.mounted) return;
-    Navigator.push(context, MaterialPageRoute(builder: (_) => LabelingPage(project: p)));
+    Navigator.push(context, MaterialPageRoute(settings: const RouteSettings(name: '/labeling'), builder: (_) => LabelingPage(project: p)));
   }
 
   void _openEditPage(BuildContext context, Project p) async {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => ChangeNotifierProvider(create: (_) => ConfigurationViewModel.fromProject(p), child: const ConfigureProjectPage())),
+      MaterialPageRoute(
+          settings: const RouteSettings(name: '/configuration'),
+          builder: (_) => ChangeNotifierProvider(create: (_) => ConfigurationViewModel.fromProject(p), child: const ConfigureProjectPage())),
     );
 
     // ⏪ 돌아온 후 갱신
