@@ -84,6 +84,9 @@ class StorageHelper extends StorageHelperInterface {
   @override
   Future<void> deleteProjectLabels(String projectId) => _instance.deleteProjectLabels(projectId);
 
+  @override
+  Future<void> deleteProject(String projectId) => _instance.deleteProject(projectId);
+
   // ==============================
   // 📌 **Project-wide Label IO**
   // ==============================
