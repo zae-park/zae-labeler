@@ -31,6 +31,7 @@ abstract class StorageHelperInterface {
   Future<void> saveAllLabels(String projectId, List<LabelModel> labels);
   Future<List<LabelModel>> loadAllLabelModels(String projectId);
   Future<void> deleteProjectLabels(String projectId);
+  Future<void> deleteProject(String projectId);
 
   // ==============================
   // 📌 **Label Data Import/Export**

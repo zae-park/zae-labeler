@@ -198,6 +198,24 @@ class CloudStorageHelper implements StorageHelperInterface {
     debugPrint("[CloudStorageHelper] ✅ deleteProjectLabels 완료: $projectId");
   }
 
+  /// 📌 [deleteProject]
+  /// 프로젝트 전체를 삭제합니다.
+  /// - 내부적으로 `deleteProjectLabels()`를 호출하여 라벨을 먼저 삭제한 뒤,
+  ///   프로젝트 문서 자체를 Firestore에서 제거합니다.
+  @override
+  Future<void> deleteProject(String projectId) async {
+    debugPrint("[CloudStorageHelper] ❌ deleteProject 호출됨: $projectId");
+
+    // 1️⃣ 라벨 데이터 삭제 (재사용)
+    await deleteProjectLabels(projectId);
+
+    // 2️⃣ 프로젝트 문서 삭제
+    final docRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId);
+    await docRef.delete();
+
+    debugPrint("[CloudStorageHelper] ✅ deleteProject 완료: $projectId");
+  }
+
   /// 📌 [downloadProjectConfig]
   @override
   Future<String> downloadProjectConfig(Project project) async {
