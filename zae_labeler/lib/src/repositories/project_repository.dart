@@ -50,7 +50,7 @@ class ProjectRepository {
     final list = await fetchAllProjects();
     final updated = list.where((p) => p.id != id).toList();
     await saveAll(updated);
-    await storageHelper.deleteProjectLabels(id);
+    await storageHelper.deleteProject(id);
   }
 
   /// 🔹 모든 프로젝트 삭제 (주의: 라벨은 별도 삭제 필요)
