@@ -88,4 +88,10 @@ class MockStorageHelper implements StorageHelperInterface {
 
   @override
   Future<void> clearAllCache() async {}
+
+  @override
+  Future<void> deleteProject(String projectId) {
+    // TODO: implement deleteProject
+    throw UnimplementedError();
+  }
 }

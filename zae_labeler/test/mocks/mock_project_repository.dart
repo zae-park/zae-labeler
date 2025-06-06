@@ -1,3 +1,5 @@
+import 'package:zae_labeler/src/models/data_model.dart';
+import 'package:zae_labeler/src/models/label_model.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
 import 'package:zae_labeler/src/utils/storage_helper.dart';
 import 'package:zae_labeler/src/repositories/project_repository.dart';
@@ -63,6 +65,42 @@ class MockProjectRepository implements ProjectRepository {
   @override
   Future<void> clearLabels(String projectId) {
     // TODO: implement clearLabels
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> addDataInfo(String id, DataInfo newDataInfo) {
+    // TODO: implement addDataInfo
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> removeDataInfoById(String id, String dataInfoId) {
+    // TODO: implement removeDataInfoById
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> updateDataInfos(String id, List<DataInfo> newDataInfos) {
+    // TODO: implement updateDataInfos
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> updateProjectClasses(String id, List<String> newClasses) {
+    // TODO: implement updateProjectClasses
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> updateProjectMode(String id, LabelingMode newMode) {
+    // TODO: implement updateProjectMode
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> updateProjectName(String id, String newName) {
+    // TODO: implement updateProjectName
     throw UnimplementedError();
   }
 
