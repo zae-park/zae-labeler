@@ -47,7 +47,6 @@ class ProjectTile extends StatelessWidget {
 
     if (confirmed == true) {
       final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
-      await vm.deleteProject();
       await projectListVM.removeProject(project.id);
 
       if (context.mounted) {
