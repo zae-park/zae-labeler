@@ -3,6 +3,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../models/project_model.dart';
+import '../../repositories/project_repository.dart';
 import '../../utils/proxy_share_helper/interface_share_helper.dart';
 import '../validator/project_validator.dart';
 
@@ -10,12 +11,19 @@ import '../validator/project_validator.dart';
 /// - JSON으로 직렬화한 프로젝트를 플랫폼별 공유 방식으로 전달
 class ShareProjectUseCase {
   final ShareHelperInterface shareHelper;
+  final ProjectRepository repository;
 
-  ShareProjectUseCase({required this.shareHelper});
+  ShareProjectUseCase({required this.shareHelper, required this.repository});
 
   Future<void> call(BuildContext context, Project project) async {
     ProjectValidator.validate(project);
     final jsonString = jsonEncode(project.toJson());
-    await shareHelper.shareProject(name: project.name, jsonString: jsonString, getFilePath: () async => '${project.name}.json');
+
+    final filePath = await repository.exportConfig(project);
+    await shareHelper.shareProject(
+      name: project.name,
+      jsonString: jsonString,
+      getFilePath: () async => filePath,
+    );
   }
 }

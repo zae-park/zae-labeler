@@ -16,9 +16,10 @@ class ImportProjectUseCase {
       throw StateError('⚠️ 가져온 프로젝트가 없습니다.');
     }
 
-    final project = imported.first; // 단일 프로젝트만 가져온다고 가정
-    ProjectValidator.validate(project);
-
-    await repository.saveProject(project);
+    // 🔄 다수의 프로젝트 지원
+    for (final project in imported) {
+      ProjectValidator.validate(project);
+      await repository.saveProject(project);
+    }
   }
 }
