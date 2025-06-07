@@ -3,20 +3,16 @@ import 'dart:io' as io;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:zae_labeler/src/utils/share_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:zae_labeler/common/common_widgets.dart';
 import '../../view_models/project_list_view_model.dart';
-import '../../view_models/project_view_model.dart';
 import '../../view_models/locale_view_model.dart';
 import '../../view_models/configuration_view_model.dart';
 import '../../models/project_model.dart';
 import '../pages/configuration_page.dart';
 import '../dialogs/onboarding_dialog.dart';
-import '../../utils/storage_helper.dart';
 import '../widgets/project_tile.dart';
-import '../../repositories/project_repository.dart';
 
 class ProjectListPage extends StatefulWidget {
   const ProjectListPage({Key? key}) : super(key: key);
@@ -94,11 +90,8 @@ class _ProjectListPageState extends State<ProjectListPage> {
     );
 
     if (confirmed == true) {
-      final repository = ProjectRepository(storageHelper: StorageHelper.instance);
-      final vm = ProjectViewModel(project: project, repository: repository, shareHelper: getShareHelper());
-
-      await vm.deleteProject();
-      await projectListVM.removeProject(project.id);
+      await projectListVM.useCases.io.deleteById(project.id);
+      await projectListVM.loadProjects();
 
       if (mounted) {
         setState(() {}); // ✅ 강제 UI 갱신
@@ -126,7 +119,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.refresh),
-                  onPressed: () => Provider.of<ProjectListViewModel>(context, listen: false).loadProjects(),
+                  onPressed: () => projectListVM.loadProjects(),
                 ),
                 PopupMenuButton<String>(
                   onSelected: (value) => localeVM.changeLocale(value),
