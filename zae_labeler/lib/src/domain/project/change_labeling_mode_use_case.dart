@@ -10,7 +10,6 @@ class ChangeLabelingModeUseCase {
 
   Future<Project?> call(String projectId, LabelingMode newMode) async {
     await repository.clearLabels(projectId);
-    final updated = await repository.updateProjectMode(projectId, newMode);
-    return updated;
+    return await repository.updateProjectMode(projectId, newMode);
   }
 }
