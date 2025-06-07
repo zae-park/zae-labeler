@@ -14,12 +14,24 @@ class ProjectUseCases {
   final ManageProjectIOUseCase io;
   final ShareProjectUseCase share;
 
-  const ProjectUseCases({
+  ProjectUseCases._({
+    required this.repository,
     required this.edit,
     required this.classList,
     required this.dataInfo,
     required this.io,
     required this.share,
-    required this.repository,
   });
+
+  /// 생성자 단일화
+  factory ProjectUseCases.from(ProjectRepository repository, ShareProjectUseCase shareUseCase) {
+    return ProjectUseCases._(
+      repository: repository,
+      edit: EditProjectMetaUseCase(repository: repository),
+      classList: ManageClassListUseCase(repository: repository),
+      dataInfo: ManageDataInfoUseCase(repository: repository),
+      io: ManageProjectIOUseCase(repository: repository),
+      share: shareUseCase,
+    );
+  }
 }
