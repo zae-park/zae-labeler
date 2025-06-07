@@ -68,12 +68,13 @@ class ProjectRepository {
   // =========================
 
   /// 🔹 라벨링 모드 변경 후 저장
-  Future<void> updateProjectMode(String id, LabelingMode newMode) async {
+  Future<Project?> updateProjectMode(String id, LabelingMode newMode) async {
     final project = await findById(id);
     if (project != null) {
       project.updateMode(newMode);
       await saveProject(project);
     }
+    return project;
   }
 
   /// 🔹 클래스 목록 변경 후 저장
