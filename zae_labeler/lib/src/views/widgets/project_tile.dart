@@ -7,16 +7,16 @@ import '../../utils/share_helper.dart';
 import '../../view_models/project_list_view_model.dart';
 import '../../view_models/project_view_model.dart';
 import '../../view_models/configuration_view_model.dart';
+import '../../domain/project/project_use_cases.dart';
 import '../../views/pages/configuration_page.dart';
 import '../pages/labeling_page.dart';
-import '../../repositories/project_repository.dart';
 
 class ProjectTile extends StatelessWidget {
   final Project project;
 
   const ProjectTile({Key? key, required this.project}) : super(key: key);
 
-  void _openLabelingPage(BuildContext context, Project p) async {
+  void _openLabelingPage(BuildContext context, Project p) {
     if (!context.mounted) return;
     Navigator.push(context, MaterialPageRoute(settings: const RouteSettings(name: '/labeling'), builder: (_) => LabelingPage(project: p)));
   }
@@ -25,17 +25,17 @@ class ProjectTile extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-          settings: const RouteSettings(name: '/configuration'),
-          builder: (_) => ChangeNotifierProvider(create: (_) => ConfigurationViewModel.fromProject(p), child: const ConfigureProjectPage())),
+        settings: const RouteSettings(name: '/configuration'),
+        builder: (_) => ChangeNotifierProvider(create: (_) => ConfigurationViewModel.fromProject(p), child: const ConfigureProjectPage()),
+      ),
     );
 
-    // ⏪ 돌아온 후 갱신
     final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
     await projectListVM.loadProjects();
   }
 
-  Future<void> _confirmDelete(BuildContext context, Project project, ProjectViewModel vm) async {
-    bool? confirmed = await showDialog<bool>(
+  Future<void> _confirmDelete(BuildContext context, Project project, ProjectListViewModel projectListVM) async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Project'),
@@ -48,9 +48,7 @@ class ProjectTile extends StatelessWidget {
     );
 
     if (confirmed == true) {
-      final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
       await projectListVM.removeProject(project.id);
-
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted project: ${project.name}')));
       }
@@ -59,12 +57,11 @@ class ProjectTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final useCases = Provider.of<ProjectUseCases>(context, listen: false);
+    final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
+
     return ChangeNotifierProvider(
-      create: (_) => ProjectViewModel(
-        repository: Provider.of<ProjectRepository>(context, listen: false),
-        shareHelper: getShareHelper(),
-        project: project,
-      ),
+      create: (_) => ProjectViewModel(project: project, shareHelper: getShareHelper(), useCases: useCases),
       child: Consumer<ProjectViewModel>(
         builder: (context, vm, _) {
           return Card(
@@ -87,9 +84,10 @@ class ProjectTile extends StatelessWidget {
                       OutlinedButton.icon(onPressed: () => vm.downloadProjectConfig(), icon: const Icon(Icons.download), label: const Text("Download")),
                       OutlinedButton.icon(onPressed: () => vm.shareProject(context), icon: const Icon(Icons.share), label: const Text("Share")),
                       TextButton.icon(
-                          onPressed: () => _confirmDelete(context, vm.project, vm),
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          label: const Text("Delete", style: TextStyle(color: Colors.red)))
+                        onPressed: () => _confirmDelete(context, vm.project, projectListVM),
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        label: const Text("Delete", style: TextStyle(color: Colors.red)),
+                      ),
                     ],
                   ),
                 ],
