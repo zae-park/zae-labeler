@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
 import 'package:zae_labeler/src/domain/project/delete_project_use_case.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
 
@@ -7,34 +6,36 @@ import '../../../mocks/mock_project_repository.dart';
 
 void main() {
   group('DeleteProjectUseCase', () {
-    late MockProjectRepository mockRepository;
+    late MockProjectRepository repository;
     late DeleteProjectUseCase useCase;
 
     setUp(() {
-      mockRepository = MockProjectRepository();
-      useCase = DeleteProjectUseCase(repository: mockRepository);
+      repository = MockProjectRepository();
+      useCase = DeleteProjectUseCase(repository: repository);
     });
 
-    test('deleteById delegates to repository.deleteById()', () async {
-      await useCase.deleteById('p2');
-      verify(mockRepository.deleteById('p2')).called(1);
-      verifyNoMoreInteractions(mockRepository);
+    test('deleteById removes project from list', () async {
+      final project = Project.empty().copyWith(id: 'p1');
+      await repository.saveProject(project);
+
+      await useCase.deleteById('p1');
+      final result = await repository.findById('p1');
+
+      expect(result, isNull);
+      expect(repository.wasDeleteCalled, true);
     });
 
-    test('deleteAll filters projectIds and calls saveAll()', () async {
-      final all = [
-        Project.empty().copyWith(id: 'p1'),
-        Project.empty().copyWith(id: 'p2'),
-        Project.empty().copyWith(id: 'p3'),
-      ];
-      when(mockRepository.fetchAllProjects()).thenAnswer((_) async => all);
+    test('deleteAll removes only specified projects', () async {
+      await repository.saveProject(Project.empty().copyWith(id: 'p1'));
+      await repository.saveProject(Project.empty().copyWith(id: 'p2'));
+      await repository.saveProject(Project.empty().copyWith(id: 'p3'));
 
       await useCase.deleteAll(['p2', 'p3']);
+      final remaining = await repository.fetchAllProjects();
 
-      final expected = [all[0]];
-      verify(mockRepository.fetchAllProjects()).called(1);
-      verify(mockRepository.saveAll(expected)).called(1);
-      verifyNoMoreInteractions(mockRepository);
+      expect(remaining.map((e) => e.id), contains('p1'));
+      expect(remaining.map((e) => e.id), isNot(contains('p2')));
+      expect(remaining.map((e) => e.id), isNot(contains('p3')));
     });
   });
 }

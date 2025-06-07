@@ -1,40 +1,35 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
 import 'package:zae_labeler/src/domain/project/import_project_use_case.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
+
 import '../../../mocks/mock_project_repository.dart';
 
 void main() {
   group('ImportProjectUseCase', () {
-    late MockProjectRepository mockRepository;
-    late ImportProjectUseCase importUseCase;
+    late MockProjectRepository repository;
+    late ImportProjectUseCase useCase;
 
     setUp(() {
-      mockRepository = MockProjectRepository();
-      importUseCase = ImportProjectUseCase(repository: mockRepository);
+      repository = MockProjectRepository();
+      useCase = ImportProjectUseCase(repository: repository);
     });
 
-    test('imports project from repository and saves it', () async {
-      // given
-      final importedProjects = [
-        Project.empty().copyWith(id: 'p1', name: 'Imported One'),
-        Project.empty().copyWith(id: 'p2', name: 'Imported Two'),
-      ];
-      when(mockRepository.importFromExternal()).thenAnswer((_) async => importedProjects);
+    test('imports and saves the first external project', () async {
+      final imported = Project.empty().copyWith(id: 'p1', name: 'Imported Project');
+      // ✅ importFromExternal()에서 반환할 데이터를 설정
+      repository.projects = [imported];
 
-      // when
-      await importUseCase.call();
+      await useCase.call();
 
-      // then
-      verify(mockRepository.importFromExternal()).called(1);
-      verify(mockRepository.saveProject(importedProjects.first)).called(1);
+      final result = await repository.findById('p1');
+      expect(result?.name, 'Imported Project');
+      expect(repository.wasSaveProjectCalled, true);
     });
 
     test('throws StateError if no projects are imported', () async {
-      when(mockRepository.importFromExternal()).thenAnswer((_) async => []);
+      repository.projects = [];
 
-      // when/then
-      expect(() async => await importUseCase.call(), throwsA(isA<StateError>()));
+      expect(() async => await useCase.call(), throwsA(isA<StateError>()));
     });
   });
 }
