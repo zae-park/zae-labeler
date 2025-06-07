@@ -30,4 +30,14 @@ class ManageProjectIOUseCase {
       await repository.deleteById(id);
     }
   }
+
+  /// 🔹 전체 프로젝트 불러오기
+  Future<List<Project>> fetchAll() async {
+    return await repository.fetchAllProjects();
+  }
+
+  /// 🔹 캐시 초기화
+  Future<void> clearCache() async {
+    await repository.storageHelper.clearAllCache();
+  }
 }
