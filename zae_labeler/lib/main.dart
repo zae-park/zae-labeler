@@ -45,16 +45,16 @@ class ZaeLabeler extends StatelessWidget {
     final storageHelper = useCloud ? CloudStorageHelper() : StorageHelper.instance;
     final projectRepository = ProjectRepository(storageHelper: storageHelper);
     final shareHelper = getShareHelper();
-
+    final shareUseCase = ShareProjectUseCase(shareHelper: shareHelper, repository: projectRepository);
+    final projectUseCases = ProjectUseCases.from(projectRepository, shareUseCase);
     final pjtUseCases = ProjectUseCases.from(projectRepository, ShareProjectUseCase(shareHelper: shareHelper, repository: projectRepository));
 
     return MultiProvider(
       providers: [
         Provider<StorageHelperInterface>.value(value: storageHelper),
         Provider<ProjectRepository>.value(value: projectRepository),
-        ChangeNotifierProvider<ProjectListViewModel>(
-          create: (_) => ProjectListViewModel(useCases: pjtUseCases),
-        ),
+        Provider<ProjectUseCases>.value(value: projectUseCases),
+        ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(useCases: pjtUseCases)),
         ChangeNotifierProvider<LocaleViewModel>(create: (_) => LocaleViewModel()),
         ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel()),
       ],
