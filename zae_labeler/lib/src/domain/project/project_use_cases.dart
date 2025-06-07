@@ -11,14 +11,14 @@ class ProjectUseCases {
   final EditProjectMetaUseCase edit;
   final ManageClassListUseCase classList;
   final ManageDataInfoUseCase dataInfo;
-  final ManageProjectIOUseCase projectIO;
+  final ManageProjectIOUseCase io;
   final ShareProjectUseCase share;
 
   const ProjectUseCases({
     required this.edit,
     required this.classList,
     required this.dataInfo,
-    required this.projectIO,
+    required this.io,
     required this.share,
     required this.repository,
   });
