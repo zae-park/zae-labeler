@@ -129,4 +129,12 @@ class ProjectViewModel extends ChangeNotifier {
       }
     }
   }
+
+  Future<void> downloadProjectConfig() async {
+    try {
+      await useCases.repository.exportConfig(project);
+    } catch (e) {
+      debugPrint("❌ Failed to download config: $e");
+    }
+  }
 }
