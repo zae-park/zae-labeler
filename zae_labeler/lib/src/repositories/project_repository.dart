@@ -87,12 +87,13 @@ class ProjectRepository {
   }
 
   /// 🔹 이름 변경 후 저장
-  Future<void> updateProjectName(String id, String newName) async {
+  Future<Project?> updateProjectName(String id, String newName) async {
     final project = await findById(id);
     if (project != null) {
       project.updateName(newName);
       await saveProject(project);
     }
+    return project;
   }
 
   // =========================
