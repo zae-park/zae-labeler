@@ -6,11 +6,7 @@ import '../models/label_model.dart';
 import '../models/project_model.dart';
 import '../utils/proxy_share_helper/interface_share_helper.dart';
 
-import '../domain/project/edit_project_meta_use_case.dart';
-import '../domain/project/manage_class_list_use_case.dart';
-import '../domain/project/manage_data_info_use_case.dart';
-import '../domain/project/save_project_use_case.dart';
-import '../domain/project/share_project_use_case.dart';
+import '../domain/project//project_use_cases.dart';
 
 /// 🔧 ViewModel: 단일 프로젝트를 관리
 /// ProjectViewModel
@@ -32,22 +28,13 @@ import '../domain/project/share_project_use_case.dart';
 class ProjectViewModel extends ChangeNotifier {
   Project project;
   final ShareHelperInterface shareHelper;
-
-  final EditProjectMetaUseCase editProjectMetaUseCase;
-  final ManageClassListUseCase manageClassList;
-  final ManageDataInfoUseCase manageDataInfo;
-  final SaveProjectUseCase saveProjectUseCase;
-  final ShareProjectUseCase shareProjectUseCase;
+  final ProjectUseCases useCases;
 
   late final LabelingMode _initialMode;
 
   ProjectViewModel({
     required this.shareHelper,
-    required this.editProjectMetaUseCase,
-    required this.manageClassList,
-    required this.manageDataInfo,
-    required this.saveProjectUseCase,
-    required this.shareProjectUseCase,
+    required this.useCases,
     Project? project,
   }) : project = project ??
             Project(
@@ -64,7 +51,7 @@ class ProjectViewModel extends ChangeNotifier {
   // ==============================
 
   Future<void> setName(String name) async {
-    final updated = await editProjectMetaUseCase.rename(project.id, name);
+    final updated = await useCases.edit.rename(project.id, name);
     if (updated != null) {
       project = updated;
       notifyListeners();
@@ -73,34 +60,34 @@ class ProjectViewModel extends ChangeNotifier {
 
   Future<void> setLabelingMode(LabelingMode mode) async {
     if (project.mode != mode) {
-      project = (await editProjectMetaUseCase.changeLabelingMode(project.id, mode))!;
+      project = (await useCases.edit.changeLabelingMode(project.id, mode))!;
       notifyListeners();
     }
   }
 
   Future<void> addClass(String className) async {
-    project = await manageClassList.addClass(project.id, className);
+    project = await useCases.classList.addClass(project.id, className);
     notifyListeners();
   }
 
   Future<void> editClass(int index, String newName) async {
-    manageClassList.editClass(project.id, index, newName);
+    useCases.classList.editClass(project.id, index, newName);
   }
 
   Future<void> removeClass(int index) async {
-    project = await manageClassList.removeClass(project.id, index);
+    project = await useCases.classList.removeClass(project.id, index);
     notifyListeners();
   }
 
   Future<void> addDataInfo(DataInfo dataInfo) async {
-    project = await manageDataInfo.addData(projectId: project.id, dataPath: dataInfo);
+    project = await useCases.dataInfo.addData(projectId: project.id, dataPath: dataInfo);
     notifyListeners();
   }
 
   Future<void> removeDataInfo(String dataId) async {
     final index = project.dataInfos.indexWhere((e) => e.id == dataId);
     if (index != -1) {
-      project = await manageDataInfo.removeData(projectId: project.id, dataIndex: index);
+      project = await useCases.dataInfo.removeData(projectId: project.id, dataIndex: index);
       notifyListeners();
     }
   }
@@ -118,12 +105,12 @@ class ProjectViewModel extends ChangeNotifier {
   // ==============================
 
   Future<void> saveProject(bool isNew) async {
-    await saveProjectUseCase.saveOne(project);
+    await useCases.projectIO.saveOne(project);
     notifyListeners();
   }
 
   Future<void> clearProjectLabels() async {
-    await editProjectMetaUseCase.clearLabels(project.id);
+    await useCases.edit.clearLabels(project.id);
     notifyListeners();
   }
 
@@ -133,7 +120,7 @@ class ProjectViewModel extends ChangeNotifier {
 
   Future<void> shareProject(BuildContext context) async {
     try {
-      await shareProjectUseCase.call(context, project);
+      await useCases.share.call(context, project);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
