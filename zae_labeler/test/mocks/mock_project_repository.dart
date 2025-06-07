@@ -63,49 +63,45 @@ class MockProjectRepository implements ProjectRepository {
   }
 
   @override
-  Future<void> clearLabels(String projectId) {
-    // TODO: implement clearLabels
-    throw UnimplementedError();
+  Future<void> clearLabels(String projectId) async {
+    wasLabelDeleted = true;
+    final project = _projects.firstWhere((p) => p.id == projectId, orElse: () => Project.empty());
+    project.clearLabels();
   }
 
   @override
-  Future<void> addDataInfo(String id, DataInfo newDataInfo) {
-    // TODO: implement addDataInfo
-    throw UnimplementedError();
+  Future<void> addDataInfo(String id, DataInfo newDataInfo) async {
+    final project = _projects.firstWhere((p) => p.id == id, orElse: () => Project.empty());
+    project.addDataInfo(newDataInfo);
   }
 
   @override
-  Future<void> removeDataInfoById(String id, String dataInfoId) {
-    // TODO: implement removeDataInfoById
-    throw UnimplementedError();
+  Future<void> removeDataInfoById(String id, String dataInfoId) async {
+    final project = _projects.firstWhere((p) => p.id == id, orElse: () => Project.empty());
+    project.removeDataInfoById(dataInfoId);
   }
 
   @override
-  Future<void> updateDataInfos(String id, List<DataInfo> newDataInfos) {
-    // TODO: implement updateDataInfos
-    throw UnimplementedError();
+  Future<void> updateDataInfos(String id, List<DataInfo> newDataInfos) async {
+    final project = _projects.firstWhere((p) => p.id == id, orElse: () => Project.empty());
+    project.updateDataInfos(newDataInfos);
   }
 
   @override
-  Future<void> updateProjectClasses(String id, List<String> newClasses) {
-    // TODO: implement updateProjectClasses
-    throw UnimplementedError();
+  Future<void> updateProjectClasses(String id, List<String> newClasses) async {
+    final project = _projects.firstWhere((p) => p.id == id, orElse: () => Project.empty());
+    project.updateClasses(newClasses);
   }
 
   @override
-  Future<void> updateProjectMode(String id, LabelingMode newMode) {
-    // TODO: implement updateProjectMode
-    throw UnimplementedError();
+  Future<void> updateProjectMode(String id, LabelingMode newMode) async {
+    final project = _projects.firstWhere((p) => p.id == id, orElse: () => Project.empty());
+    project.updateMode(newMode);
   }
 
   @override
-  Future<void> updateProjectName(String id, String newName) {
-    // TODO: implement updateProjectName
-    throw UnimplementedError();
+  Future<void> updateProjectName(String id, String newName) async {
+    final project = _projects.firstWhere((p) => p.id == id, orElse: () => Project.empty());
+    project.updateName(newName);
   }
-
-  // @override
-  // Future<void> deleteProjectLabels(String projectId) async {
-  //   wasLabelDeleted = true;
-  // }
 }
