@@ -1,4 +1,5 @@
 // 📁 Rename project
+import '../../models/project_model.dart';
 import '../../repositories/project_repository.dart';
 
 class RenameProjectUseCase {
@@ -6,7 +7,7 @@ class RenameProjectUseCase {
 
   RenameProjectUseCase({required this.repository});
 
-  Future<void> call(String projectId, String newName) async {
-    await repository.updateProjectName(projectId, newName);
+  Future<Project?> call(String projectId, String newName) async {
+    return await repository.updateProjectName(projectId, newName);
   }
 }
