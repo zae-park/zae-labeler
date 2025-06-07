@@ -12,6 +12,8 @@ class MockProjectRepository implements ProjectRepository {
   bool wasDeleteCalled = false;
   bool wasLabelDeleted = false;
 
+  set projects(List<Project> value) => _projects = value;
+
   @override
   final StorageHelperInterface storageHelper = MockStorageHelper();
 
