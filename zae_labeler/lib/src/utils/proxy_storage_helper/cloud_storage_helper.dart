@@ -45,11 +45,7 @@ class CloudStorageHelper implements StorageHelperInterface {
       final docRef = projectsRef.doc(project.id);
       final json = project.toJson(includeLabels: false);
 
-      if (kIsWeb) {
-        json.remove('dataInfos');
-      } else {
-        json['dataInfos'] = project.dataInfos.map((e) => e.toJson()).toList();
-      }
+      json['dataInfos'] = project.dataInfos.map((e) => e.toJson()).toList();
 
       debugPrint("[CloudStorageHelper] 💾 저장할 프로젝트: ${project.id}, ${project.name}");
       batch.set(docRef, json);
@@ -79,11 +75,12 @@ class CloudStorageHelper implements StorageHelperInterface {
     final docRef = firestore.collection('users').doc(_uid).collection('projects').doc(project.id);
     final json = project.toJson(includeLabels: true);
 
-    if (project.dataInfos.isNotEmpty) {
-      debugPrint("[CloudStorageHelper] 💾 dataInfos: ${project.dataInfos}");
-      json['dataInfos'] = project.dataInfos.map((e) => e.toJson()).toList();
-    }
+    // if (project.dataInfos.isNotEmpty) {
 
+    //   json['dataInfos'] = project.dataInfos.map((e) => e.toJson()).toList();
+    // }
+    debugPrint("[CloudStorageHelper] 💾 dataInfos: ${project.dataInfos}");
+    json['dataInfos'] = project.dataInfos.map((e) => e.toJson()).toList();
     await docRef.set(json, SetOptions(merge: true));
     debugPrint("[CloudStorageHelper] ✅ saveSingleProject 완료: ${project.id}");
   }
@@ -93,8 +90,17 @@ class CloudStorageHelper implements StorageHelperInterface {
   /// - 호출 위치: 프로젝트 삭제 시
   Future<void> deleteSingleProject(String projectId) async {
     debugPrint("[CloudStorageHelper] ❌ deleteSingleProject 호출됨: $projectId");
+
+    // 🔥 먼저 labels 서브컬렉션 삭제
+    final labelsSnapshot = await firestore.collection('users').doc(_uid).collection('projects').doc(projectId).collection('labels').get();
+    for (final labelDoc in labelsSnapshot.docs) {
+      await labelDoc.reference.delete();
+    }
+
+    // 📦 프로젝트 문서 삭제
     final docRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId);
     await docRef.delete();
+
     debugPrint("[CloudStorageHelper] ✅ deleteSingleProject 완료: $projectId");
   }
 
@@ -192,6 +198,24 @@ class CloudStorageHelper implements StorageHelperInterface {
     debugPrint("[CloudStorageHelper] ✅ deleteProjectLabels 완료: $projectId");
   }
 
+  /// 📌 [deleteProject]
+  /// 프로젝트 전체를 삭제합니다.
+  /// - 내부적으로 `deleteProjectLabels()`를 호출하여 라벨을 먼저 삭제한 뒤,
+  ///   프로젝트 문서 자체를 Firestore에서 제거합니다.
+  @override
+  Future<void> deleteProject(String projectId) async {
+    debugPrint("[CloudStorageHelper] ❌ deleteProject 호출됨: $projectId");
+
+    // 1️⃣ 라벨 데이터 삭제 (재사용)
+    await deleteProjectLabels(projectId);
+
+    // 2️⃣ 프로젝트 문서 삭제
+    final docRef = firestore.collection('users').doc(_uid).collection('projects').doc(projectId);
+    await docRef.delete();
+
+    debugPrint("[CloudStorageHelper] ✅ deleteProject 완료: $projectId");
+  }
+
   /// 📌 [downloadProjectConfig]
   @override
   Future<String> downloadProjectConfig(Project project) async {
@@ -229,11 +253,7 @@ class CloudStorageHelper implements StorageHelperInterface {
       final docRef = projectsRef.doc(project.id);
       final json = project.toJson(includeLabels: false);
 
-      if (kIsWeb) {
-        json.remove('dataInfos');
-      } else {
-        json['dataInfos'] = project.dataInfos.map((e) => e.toJson()).toList();
-      }
+      json['dataInfos'] = project.dataInfos.map((e) => e.toJson()).toList();
 
       batch.set(docRef, json);
     }

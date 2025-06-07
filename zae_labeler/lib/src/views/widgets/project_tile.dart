@@ -9,6 +9,7 @@ import '../../view_models/project_view_model.dart';
 import '../../view_models/configuration_view_model.dart';
 import '../../views/pages/configuration_page.dart';
 import '../pages/labeling_page.dart';
+import '../../repositories/project_repository.dart';
 
 class ProjectTile extends StatelessWidget {
   final Project project;
@@ -17,19 +18,20 @@ class ProjectTile extends StatelessWidget {
 
   void _openLabelingPage(BuildContext context, Project p) async {
     if (!context.mounted) return;
-    Navigator.push(context, MaterialPageRoute(builder: (_) => LabelingPage(project: p)));
+    Navigator.push(context, MaterialPageRoute(settings: const RouteSettings(name: '/labeling'), builder: (_) => LabelingPage(project: p)));
   }
 
-  void _openEditPage(BuildContext context, Project p) {
+  void _openEditPage(BuildContext context, Project p) async {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ChangeNotifierProvider(
-          create: (_) => ConfigurationViewModel.fromProject(p),
-          child: const ConfigureProjectPage(),
-        ),
-      ),
+          settings: const RouteSettings(name: '/configuration'),
+          builder: (_) => ChangeNotifierProvider(create: (_) => ConfigurationViewModel.fromProject(p), child: const ConfigureProjectPage())),
     );
+
+    // ⏪ 돌아온 후 갱신
+    final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
+    await projectListVM.loadProjects();
   }
 
   Future<void> _confirmDelete(BuildContext context, Project project, ProjectViewModel vm) async {
@@ -47,7 +49,6 @@ class ProjectTile extends StatelessWidget {
 
     if (confirmed == true) {
       final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
-      await vm.deleteProject();
       await projectListVM.removeProject(project.id);
 
       if (context.mounted) {
@@ -60,7 +61,7 @@ class ProjectTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => ProjectViewModel(
-        storageHelper: Provider.of(context, listen: false),
+        repository: Provider.of<ProjectRepository>(context, listen: false),
         shareHelper: getShareHelper(),
         project: project,
       ),
@@ -74,8 +75,8 @@ class ProjectTile extends StatelessWidget {
                 separator: const SizedBox(height: 4),
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(project.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  Text("Mode: ${project.mode.displayName}"),
+                  Text(vm.project.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text("Mode: ${vm.project.mode.displayName}"),
                   const SizedBox(height: 4),
                   Wrap(
                     spacing: 12,
@@ -88,7 +89,7 @@ class ProjectTile extends StatelessWidget {
                       TextButton.icon(
                           onPressed: () => _confirmDelete(context, vm.project, vm),
                           icon: const Icon(Icons.delete, color: Colors.red),
-                          label: const Text("Delete", style: TextStyle(color: Colors.red))),
+                          label: const Text("Delete", style: TextStyle(color: Colors.red)))
                     ],
                   ),
                 ],

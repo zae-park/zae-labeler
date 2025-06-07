@@ -158,6 +158,11 @@ class StorageHelperImpl implements StorageHelperInterface {
     html.window.localStorage.remove(storageKey); // ✅ localStorage에서 삭제
   }
 
+  @override
+  Future<void> deleteProject(String projectId) async {
+    await deleteProjectLabels(projectId); // ✅ 라벨 삭제
+  }
+
   // ==============================
   // 📌 **Label Data Import/Export**
   // ==============================

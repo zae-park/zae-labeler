@@ -30,14 +30,14 @@ Future<List<UnifiedData>> _loadFromLabels(Project project, StorageHelperInterfac
   List<LabelModel> labels = [];
   try {
     labels = await storageHelper.loadAllLabelModels(project.id);
-  } catch (e, _) {
-    debugPrint("❌ [AdaptiveLoader] loadAllLabelModels 실패: $e");
+  } catch (e) {
+    debugPrint("❌ [AdaptiveLoader] Failed to load label models for projectId=${project.id} : $e");
   }
 
-  // ✅ 라벨을 Map으로 만들어서 빠르게 매칭 가능하게
-  final Map<String, LabelModel> labelMap = {for (var label in labels) label.dataId: label};
+  final Map<String, LabelModel> labelMap = {
+    for (var label in labels) label.dataId: label,
+  };
 
-  // ✅ 모든 데이터 변환 + 라벨 여부에 따라 상태 설정
   final allData = await Future.wait(project.dataInfos.map((info) async {
     final label = labelMap[info.id];
     final status = label?.isLabeled == true ? LabelStatus.complete : LabelStatus.incomplete;
@@ -47,7 +47,9 @@ Future<List<UnifiedData>> _loadFromLabels(Project project, StorageHelperInterfac
 
   if (allData.isEmpty) {
     debugPrint("⚠️ [AdaptiveLoader] No labels and no dataInfos → returning placeholder");
-    return [UnifiedData(dataId: 'placeholder', fileName: 'untitled', fileType: FileType.unsupported)];
+    final placeholderInfo = DataInfo(id: 'placeholder', fileName: 'untitled');
+    final placeholderData = await UnifiedData.fromDataInfo(placeholderInfo);
+    return [placeholderData.copyWith(status: LabelStatus.incomplete)];
   }
 
   return allData;
@@ -57,7 +59,9 @@ Future<List<UnifiedData>> _loadFromLabels(Project project, StorageHelperInterfac
 Future<List<UnifiedData>> _loadFromPaths(Project project) async {
   if (project.dataInfos.isEmpty) {
     debugPrint("⚠️ [AdaptiveLoader] No dataInfos found → returning placeholder");
-    return [UnifiedData(dataId: 'placeholder', fileName: 'untitled', fileType: FileType.unsupported, content: null, status: LabelStatus.incomplete)];
+    final placeholderInfo = DataInfo(id: 'placeholder', fileName: 'untitled');
+    final placeholderData = await UnifiedData.fromDataInfo(placeholderInfo);
+    return [placeholderData.copyWith(status: LabelStatus.incomplete)];
   }
 
   return Future.wait(project.dataInfos.map((e) => UnifiedData.fromDataInfo(e)));

@@ -172,6 +172,23 @@ class StorageHelperImpl implements StorageHelperInterface {
     }
   }
 
+  /// 📌 [deleteProject]
+  /// 프로젝트 전체를 삭제합니다.
+  /// - 내부적으로 `deleteProjectLabels()`를 호출하여 라벨을 먼저 삭제한 뒤,
+  ///   프로젝트 문서 자체를 Firestore에서 제거합니다.
+  @override
+  Future<void> deleteProject(String projectId) async {
+    // 1️⃣ 라벨 데이터 삭제 (재사용)
+    await deleteProjectLabels(projectId);
+
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File(directory.path);
+
+    if (await file.exists()) {
+      await file.delete(); // ✅ 파일 삭제
+    }
+  }
+
   // ==============================
   // 📌 **Label Data Import/Export**
   // ==============================

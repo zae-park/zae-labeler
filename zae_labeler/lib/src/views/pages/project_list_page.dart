@@ -16,6 +16,7 @@ import '../pages/configuration_page.dart';
 import '../dialogs/onboarding_dialog.dart';
 import '../../utils/storage_helper.dart';
 import '../widgets/project_tile.dart';
+import '../../repositories/project_repository.dart';
 
 class ProjectListPage extends StatefulWidget {
   const ProjectListPage({Key? key}) : super(key: key);
@@ -93,7 +94,8 @@ class _ProjectListPageState extends State<ProjectListPage> {
     );
 
     if (confirmed == true) {
-      final vm = ProjectViewModel(project: project, storageHelper: StorageHelper.instance, shareHelper: getShareHelper());
+      final repository = ProjectRepository(storageHelper: StorageHelper.instance);
+      final vm = ProjectViewModel(project: project, repository: repository, shareHelper: getShareHelper());
 
       await vm.deleteProject();
       await projectListVM.removeProject(project.id);
@@ -122,6 +124,10 @@ class _ProjectListPageState extends State<ProjectListPage> {
                     _checkOnboarding();
                   },
                 ),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () => Provider.of<ProjectListViewModel>(context, listen: false).loadProjects(),
+                ),
                 PopupMenuButton<String>(
                   onSelected: (value) => localeVM.changeLocale(value),
                   itemBuilder: (context) => [
@@ -134,17 +140,14 @@ class _ProjectListPageState extends State<ProjectListPage> {
                   icon: const Icon(Icons.add),
                   onPressed: () => Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => ChangeNotifierProvider(create: (_) => ConfigurationViewModel(), child: const ConfigureProjectPage()),
-                    ),
+                    MaterialPageRoute(builder: (_) => ChangeNotifierProvider(create: (_) => ConfigurationViewModel(), child: const ConfigureProjectPage())),
                   ),
                   tooltip: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 생성' : 'Create Project',
                 ),
                 IconButton(
-                  icon: const Icon(Icons.file_upload),
-                  onPressed: () => _importProject(context),
-                  tooltip: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 가져오기' : 'Import Project',
-                ),
+                    icon: const Icon(Icons.file_upload),
+                    onPressed: () => _importProject(context),
+                    tooltip: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 가져오기' : 'Import Project'),
               ],
             ),
             body: projectListVM.projects.isEmpty
@@ -156,11 +159,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
                         itemCount: projectListVM.projects.length,
                         itemBuilder: (context, index) {
                           final project = projectListVM.projects[index];
-
-                          return ChangeNotifierProvider(
-                            create: (context) => ProjectViewModel(storageHelper: StorageHelper.instance, project: project, shareHelper: getShareHelper()),
-                            child: Consumer<ProjectViewModel>(builder: (context, projectVM, _) => ProjectTile(project: projectVM.project)),
-                          );
+                          return ProjectTile(key: ValueKey(project.id), project: project);
                         },
                       ),
                     )
