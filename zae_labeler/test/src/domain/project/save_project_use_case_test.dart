@@ -1,17 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
-import 'package:zae_labeler/src/domain/project/save_project_use_case.dart';
+import 'package:zae_labeler/src/domain/project/manage_project_io_use_case.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
 import '../../../mocks/mock_project_repository.dart';
 
 void main() {
   group('SaveProjectUseCase (with repository)', () {
     late MockProjectRepository mockRepository;
-    late SaveProjectUseCase useCase;
+    late ManageProjectIOUseCase useCase;
 
     setUp(() {
       mockRepository = MockProjectRepository();
-      useCase = SaveProjectUseCase(repository: mockRepository);
+      useCase = ManageProjectIOUseCase(repository: mockRepository);
     });
 
     test('saveOne validates and delegates to repository', () async {
