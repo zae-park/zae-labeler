@@ -105,7 +105,7 @@ class ProjectViewModel extends ChangeNotifier {
   // ==============================
 
   Future<void> saveProject(bool isNew) async {
-    await useCases.projectIO.saveOne(project);
+    await useCases.io.saveOne(project);
     notifyListeners();
   }
 

@@ -30,7 +30,7 @@ class ProjectListViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    _projects = await useCases.save.fetchAll();
+    _projects = await useCases.io.fetchAll();
 
     _isLoading = false;
     notifyListeners();
@@ -54,14 +54,14 @@ class ProjectListViewModel extends ChangeNotifier {
       _projects.add(project);
     }
 
-    await useCases.save.saveAll(_projects);
+    await useCases.io.saveAll(_projects);
     notifyListeners();
   }
 
   /// ✅ 프로젝트 삭제
   /// - 저장소에서도 삭제 후, 전체 목록을 다시 로드
   Future<void> removeProject(String projectId) async {
-    await useCases.edit.delete(projectId);
+    await useCases.io.deleteById(projectId);
     await loadProjects(); // 내부적으로 notifyListeners 호출
   }
 
@@ -74,7 +74,7 @@ class ProjectListViewModel extends ChangeNotifier {
     final index = _projects.indexWhere((p) => p.id == updatedProject.id);
     if (index != -1) {
       _projects[index] = updatedProject;
-      await useCases.save.saveAll(_projects);
+      await useCases.io.saveAll(_projects);
       debugPrint("[ProjectListVM] 💾 Project Updated");
       notifyListeners();
     }
@@ -82,7 +82,7 @@ class ProjectListViewModel extends ChangeNotifier {
 
   /// ✅ 프로젝트 캐시 비우기
   Future<void> clearAllProjectsCache() async {
-    await useCases.save.storageHelper.clearAllCache();
+    await useCases.io.clearCache();
     _projects.clear();
     notifyListeners();
   }
