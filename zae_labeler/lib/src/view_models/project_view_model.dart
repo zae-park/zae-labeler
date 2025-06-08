@@ -4,8 +4,9 @@ import 'package:uuid/uuid.dart';
 import '../models/data_model.dart';
 import '../models/label_model.dart';
 import '../models/project_model.dart';
-import '../repositories/project_repository.dart';
 import '../utils/proxy_share_helper/interface_share_helper.dart';
+
+import '../domain/project/project_use_cases.dart';
 
 /// 🔧 ViewModel: 단일 프로젝트를 관리
 /// ProjectViewModel
@@ -19,23 +20,23 @@ import '../utils/proxy_share_helper/interface_share_helper.dart';
 /// │
 /// ├── isLabelingModeChanged()               // 모드 변경 여부 확인
 /// │
-/// ├── saveProject(bool)                     // 프로젝트 저장 (신규/업데이트)
-/// ├── deleteProject()                       // 프로젝트 삭제
-/// ├── clearProjectData()                    // 라벨 초기화
+/// ├── clearProjectLabels()                    // 라벨 초기화
 /// │
 /// ├── downloadProjectConfig()               // 설정 다운로드
 /// └── shareProject(BuildContext)            // 프로젝트 공유
 
 class ProjectViewModel extends ChangeNotifier {
   Project project;
-  final ProjectRepository repository;
   final ShareHelperInterface shareHelper;
+  final ProjectUseCases useCases;
 
+  final void Function(Project updated)? onChanged;
   late final LabelingMode _initialMode;
 
   ProjectViewModel({
-    required this.repository,
     required this.shareHelper,
+    required this.useCases,
+    this.onChanged,
     Project? project,
   }) : project = project ??
             Project(
@@ -51,51 +52,52 @@ class ProjectViewModel extends ChangeNotifier {
   // 📌 프로젝트 정보 수정
   // ==============================
 
-  void setName(String name) {
-    project = project.copyWith(name: name);
-    notifyListeners();
+  Future<void> setName(String name) async {
+    final updated = await useCases.edit.rename(project.id, name);
+    if (updated != null) {
+      project = updated;
+      notifyListeners();
+      onChanged?.call(project);
+    }
   }
 
   Future<void> setLabelingMode(LabelingMode mode) async {
     if (project.mode != mode) {
-      await repository.clearLabels(project.id);
-      project = project.copyWith(mode: mode);
+      project = (await useCases.edit.changeLabelingMode(project.id, mode))!;
       notifyListeners();
+      onChanged?.call(project);
     }
   }
 
-  void addClass(String className) {
-    if (!project.classes.contains(className)) {
-      project = project.copyWith(classes: [...project.classes, className]);
-      notifyListeners();
-    }
-  }
-
-  void editClass(int index, String newName) {
-    if (index >= 0 && index < project.classes.length) {
-      final updated = List<String>.from(project.classes)..[index] = newName;
-      project = project.copyWith(classes: updated);
-      notifyListeners();
-    }
-  }
-
-  void removeClass(int index) {
-    if (index >= 0 && index < project.classes.length) {
-      final updatedClasses = List<String>.from(project.classes)..removeAt(index);
-      project = project.copyWith(classes: updatedClasses);
-      notifyListeners();
-    }
-  }
-
-  void addDataInfo(DataInfo dataInfo) {
-    project = project.copyWith(dataInfos: [...project.dataInfos, dataInfo]);
+  Future<void> addClass(String className) async {
+    project = await useCases.classList.addClass(project.id, className);
     notifyListeners();
+    onChanged?.call(project);
   }
 
-  void removeDataInfo(String dataId) {
-    final updated = project.dataInfos.where((e) => e.id != dataId).toList();
-    project = project.copyWith(dataInfos: updated);
+  Future<void> editClass(int index, String newName) async {
+    useCases.classList.editClass(project.id, index, newName);
+  }
+
+  Future<void> removeClass(int index) async {
+    project = await useCases.classList.removeClass(project.id, index);
     notifyListeners();
+    onChanged?.call(project);
+  }
+
+  Future<void> addDataInfo(DataInfo dataInfo) async {
+    project = await useCases.dataInfo.addData(projectId: project.id, dataPath: dataInfo);
+    notifyListeners();
+    onChanged?.call(project);
+  }
+
+  Future<void> removeDataInfo(String dataId) async {
+    final index = project.dataInfos.indexWhere((e) => e.id == dataId);
+    if (index != -1) {
+      project = await useCases.dataInfo.removeData(projectId: project.id, dataIndex: index);
+      notifyListeners();
+      onChanged?.call(project);
+    }
   }
 
   // ==============================
@@ -111,51 +113,38 @@ class ProjectViewModel extends ChangeNotifier {
   // ==============================
 
   Future<void> saveProject(bool isNew) async {
-    final current = await repository.fetchAllProjects();
-    final index = current.indexWhere((p) => p.id == project.id);
-
-    if (isNew) {
-      current.add(project);
-    } else if (index != -1) {
-      current[index] = project;
-    }
-
-    await repository.saveAll(current);
+    await useCases.io.saveOne(project);
     notifyListeners();
+    onChanged?.call(project);
   }
 
-  Future<void> deleteProject() async {
-    await repository.deleteById(project.id);
+  Future<void> clearProjectLabels() async {
+    await useCases.edit.clearLabels(project.id);
     notifyListeners();
-  }
-
-  Future<void> clearProjectData() async {
-    await repository.clearLabels(project.id);
-    notifyListeners();
+    onChanged?.call(project);
   }
 
   // ==============================
   // 📌 다운로드 및 공유
   // ==============================
 
-  Future<void> downloadProjectConfig() async {
-    await repository.exportConfig(project);
-  }
-
   Future<void> shareProject(BuildContext context) async {
     try {
-      final jsonString = project.toJsonString();
-      await shareHelper.shareProject(
-        name: project.name,
-        jsonString: jsonString,
-        getFilePath: () => repository.exportConfig(project),
-      );
+      await useCases.share.call(context, project);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('⚠️ 프로젝트 공유에 실패했습니다: $e')),
         );
       }
+    }
+  }
+
+  Future<void> downloadProjectConfig() async {
+    try {
+      await useCases.repository.exportConfig(project);
+    } catch (e) {
+      debugPrint("❌ Failed to download config: $e");
     }
   }
 }

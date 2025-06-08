@@ -1,45 +1,46 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:zae_labeler/common/common_widgets.dart';
-
-import '../../models/project_model.dart';
-import '../../utils/share_helper.dart';
-import '../../view_models/project_list_view_model.dart';
 import '../../view_models/project_view_model.dart';
 import '../../view_models/configuration_view_model.dart';
-import '../../views/pages/configuration_page.dart';
 import '../pages/labeling_page.dart';
-import '../../repositories/project_repository.dart';
+import '../../views/pages/configuration_page.dart';
+import 'package:provider/provider.dart';
+import '../../view_models/project_list_view_model.dart';
 
 class ProjectTile extends StatelessWidget {
-  final Project project;
+  final ProjectViewModel vm;
 
-  const ProjectTile({Key? key, required this.project}) : super(key: key);
+  const ProjectTile({Key? key, required this.vm}) : super(key: key);
 
-  void _openLabelingPage(BuildContext context, Project p) async {
-    if (!context.mounted) return;
-    Navigator.push(context, MaterialPageRoute(settings: const RouteSettings(name: '/labeling'), builder: (_) => LabelingPage(project: p)));
+  void _openLabelingPage(BuildContext context) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          settings: const RouteSettings(name: '/labeling'),
+          builder: (_) => LabelingPage(project: vm.project),
+        ));
   }
 
-  void _openEditPage(BuildContext context, Project p) async {
-    Navigator.push(
+  void _openEditPage(BuildContext context) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
-          settings: const RouteSettings(name: '/configuration'),
-          builder: (_) => ChangeNotifierProvider(create: (_) => ConfigurationViewModel.fromProject(p), child: const ConfigureProjectPage())),
+        settings: const RouteSettings(name: '/configuration'),
+        builder: (_) => ChangeNotifierProvider(
+          create: (_) => ConfigurationViewModel.fromProject(vm.project),
+          child: const ConfigureProjectPage(),
+        ),
+      ),
     );
-
-    // ⏪ 돌아온 후 갱신
-    final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
-    await projectListVM.loadProjects();
+    vm.onChanged?.call(vm.project);
   }
 
-  Future<void> _confirmDelete(BuildContext context, Project project, ProjectViewModel vm) async {
-    bool? confirmed = await showDialog<bool>(
+  Future<void> _confirmDelete(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Project'),
-        content: Text('Are you sure you want to delete the project "${project.name}"?'),
+        content: Text('Are you sure you want to delete the project "${vm.project.name}"?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
@@ -49,54 +50,43 @@ class ProjectTile extends StatelessWidget {
 
     if (confirmed == true) {
       final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
-      await projectListVM.removeProject(project.id);
+      await projectListVM.removeProject(vm.project.id);
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted project: ${project.name}')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted project: ${vm.project.name}')));
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ProjectViewModel(
-        repository: Provider.of<ProjectRepository>(context, listen: false),
-        shareHelper: getShareHelper(),
-        project: project,
-      ),
-      child: Consumer<ProjectViewModel>(
-        builder: (context, vm, _) {
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: AutoSeparatedColumn(
-                separator: const SizedBox(height: 4),
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(vm.project.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  Text("Mode: ${vm.project.mode.displayName}"),
-                  const SizedBox(height: 4),
-                  Wrap(
-                    spacing: 12,
-                    children: [
-                      ElevatedButton.icon(
-                          onPressed: () => _openLabelingPage(context, vm.project), icon: const Icon(Icons.play_arrow), label: const Text("Label")),
-                      OutlinedButton.icon(onPressed: () => _openEditPage(context, vm.project), icon: const Icon(Icons.edit), label: const Text("Edit")),
-                      OutlinedButton.icon(onPressed: () => vm.downloadProjectConfig(), icon: const Icon(Icons.download), label: const Text("Download")),
-                      OutlinedButton.icon(onPressed: () => vm.shareProject(context), icon: const Icon(Icons.share), label: const Text("Share")),
-                      TextButton.icon(
-                          onPressed: () => _confirmDelete(context, vm.project, vm),
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          label: const Text("Delete", style: TextStyle(color: Colors.red)))
-                    ],
-                  ),
-                ],
-              ),
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: AutoSeparatedColumn(
+          separator: const SizedBox(height: 4),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(vm.project.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text("Mode: ${vm.project.mode.displayName}"),
+            const SizedBox(height: 4),
+            Wrap(
+              spacing: 12,
+              children: [
+                ElevatedButton.icon(onPressed: () => _openLabelingPage(context), icon: const Icon(Icons.play_arrow), label: const Text("Label")),
+                OutlinedButton.icon(onPressed: () => _openEditPage(context), icon: const Icon(Icons.edit), label: const Text("Edit")),
+                OutlinedButton.icon(onPressed: () => vm.downloadProjectConfig(), icon: const Icon(Icons.download), label: const Text("Download")),
+                OutlinedButton.icon(onPressed: () => vm.shareProject(context), icon: const Icon(Icons.share), label: const Text("Share")),
+                TextButton.icon(
+                  onPressed: () => _confirmDelete(context),
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  label: const Text("Delete", style: TextStyle(color: Colors.red)),
+                ),
+              ],
             ),
-          );
-        },
+          ],
+        ),
       ),
     );
   }

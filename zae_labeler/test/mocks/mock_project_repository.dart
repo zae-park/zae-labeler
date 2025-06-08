@@ -96,14 +96,16 @@ class MockProjectRepository implements ProjectRepository {
   }
 
   @override
-  Future<void> updateProjectMode(String id, LabelingMode newMode) async {
+  Future<Project?> updateProjectMode(String id, LabelingMode newMode) async {
     final project = _projects.firstWhere((p) => p.id == id, orElse: () => Project.empty());
     project.updateMode(newMode);
+    return project;
   }
 
   @override
-  Future<void> updateProjectName(String id, String newName) async {
+  Future<Project?> updateProjectName(String id, String newName) async {
     final project = _projects.firstWhere((p) => p.id == id, orElse: () => Project.empty());
     project.updateName(newName);
+    return project;
   }
 }

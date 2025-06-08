@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zae_labeler/src/domain/project/delete_project_use_case.dart';
+import 'package:zae_labeler/src/domain/project/manage_project_io_use_case.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
 
 import '../../../mocks/mock_project_repository.dart';
@@ -7,11 +7,11 @@ import '../../../mocks/mock_project_repository.dart';
 void main() {
   group('DeleteProjectUseCase', () {
     late MockProjectRepository repository;
-    late DeleteProjectUseCase useCase;
+    late ManageProjectIOUseCase useCase;
 
     setUp(() {
       repository = MockProjectRepository();
-      useCase = DeleteProjectUseCase(repository: repository);
+      useCase = ManageProjectIOUseCase(repository: repository);
     });
 
     test('deleteById removes project from list', () async {
