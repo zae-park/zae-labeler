@@ -6,13 +6,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:zae_labeler/common/common_widgets.dart';
-import '../../domain/project/project_use_cases.dart';
 import '../../view_models/project_list_view_model.dart';
-import '../../view_models/project_view_model.dart';
 import '../../view_models/locale_view_model.dart';
 import '../../view_models/configuration_view_model.dart';
 import '../../models/project_model.dart';
-import '../../utils/share_helper.dart';
 import '../pages/configuration_page.dart';
 import '../dialogs/onboarding_dialog.dart';
 import '../widgets/project_tile.dart';
@@ -79,7 +76,6 @@ class _ProjectListPageState extends State<ProjectListPage> {
   Widget build(BuildContext context) {
     return Consumer2<ProjectListViewModel, LocaleViewModel>(
       builder: (context, projectListVM, localeVM, child) {
-        final useCases = Provider.of<ProjectUseCases>(context, listen: false);
         return Scaffold(
           appBar: AppHeader(
             title: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 목록' : 'Project List',
@@ -93,12 +89,12 @@ class _ProjectListPageState extends State<ProjectListPage> {
                   _checkOnboarding();
                 },
               ),
-              IconButton(icon: const Icon(Icons.refresh), onPressed: () => Provider.of<ProjectListViewModel>(context, listen: false).loadProjects()),
+              IconButton(icon: const Icon(Icons.refresh), onPressed: () => projectListVM.loadProjects()),
               PopupMenuButton<String>(
                 onSelected: (value) => localeVM.changeLocale(value),
-                itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'en', child: Text('English')),
-                  const PopupMenuItem(value: 'ko', child: Text('한국어')),
+                itemBuilder: (context) => const [
+                  PopupMenuItem(value: 'en', child: Text('English')),
+                  PopupMenuItem(value: 'ko', child: Text('한국어')),
                 ],
                 icon: const Icon(Icons.language),
               ),
@@ -106,9 +102,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
                 icon: const Icon(Icons.add),
                 onPressed: () => Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => ChangeNotifierProvider(create: (_) => ConfigurationViewModel(), child: const ConfigureProjectPage()),
-                  ),
+                  MaterialPageRoute(builder: (_) => ChangeNotifierProvider(create: (_) => ConfigurationViewModel(), child: const ConfigureProjectPage())),
                 ),
                 tooltip: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 생성' : 'Create Project',
               ),
@@ -119,19 +113,13 @@ class _ProjectListPageState extends State<ProjectListPage> {
               ),
             ],
           ),
-          body: projectListVM.projects.isEmpty
+          body: projectListVM.projectVMList.isEmpty
               ? Center(child: Text(localeVM.currentLocale.languageCode == 'ko' ? '등록된 프로젝트가 없습니다.' : 'No projects available.'))
               : ListView.builder(
-                  itemCount: projectListVM.projects.length,
+                  itemCount: projectListVM.projectVMList.length,
                   itemBuilder: (context, index) {
-                    final project = projectListVM.projects[index];
-                    final vm = ProjectViewModel(
-                      project: project,
-                      shareHelper: getShareHelper(),
-                      useCases: useCases,
-                      onChanged: (updated) => projectListVM.upsertProject(updated),
-                    );
-                    return ProjectTile(key: ValueKey(project.id), vm: vm);
+                    final vm = projectListVM.projectVMList[index];
+                    return ProjectTile(key: ValueKey(vm.project.id), vm: vm);
                   },
                 ),
         );
