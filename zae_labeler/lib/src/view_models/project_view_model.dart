@@ -30,11 +30,13 @@ class ProjectViewModel extends ChangeNotifier {
   final ShareHelperInterface shareHelper;
   final ProjectUseCases useCases;
 
+  final void Function(Project updated)? onChanged;
   late final LabelingMode _initialMode;
 
   ProjectViewModel({
     required this.shareHelper,
     required this.useCases,
+    this.onChanged,
     Project? project,
   }) : project = project ??
             Project(
@@ -55,6 +57,7 @@ class ProjectViewModel extends ChangeNotifier {
     if (updated != null) {
       project = updated;
       notifyListeners();
+      onChanged?.call(project);
     }
   }
 
@@ -62,12 +65,14 @@ class ProjectViewModel extends ChangeNotifier {
     if (project.mode != mode) {
       project = (await useCases.edit.changeLabelingMode(project.id, mode))!;
       notifyListeners();
+      onChanged?.call(project);
     }
   }
 
   Future<void> addClass(String className) async {
     project = await useCases.classList.addClass(project.id, className);
     notifyListeners();
+    onChanged?.call(project);
   }
 
   Future<void> editClass(int index, String newName) async {
@@ -77,11 +82,13 @@ class ProjectViewModel extends ChangeNotifier {
   Future<void> removeClass(int index) async {
     project = await useCases.classList.removeClass(project.id, index);
     notifyListeners();
+    onChanged?.call(project);
   }
 
   Future<void> addDataInfo(DataInfo dataInfo) async {
     project = await useCases.dataInfo.addData(projectId: project.id, dataPath: dataInfo);
     notifyListeners();
+    onChanged?.call(project);
   }
 
   Future<void> removeDataInfo(String dataId) async {
@@ -89,6 +96,7 @@ class ProjectViewModel extends ChangeNotifier {
     if (index != -1) {
       project = await useCases.dataInfo.removeData(projectId: project.id, dataIndex: index);
       notifyListeners();
+      onChanged?.call(project);
     }
   }
 
@@ -107,11 +115,13 @@ class ProjectViewModel extends ChangeNotifier {
   Future<void> saveProject(bool isNew) async {
     await useCases.io.saveOne(project);
     notifyListeners();
+    onChanged?.call(project);
   }
 
   Future<void> clearProjectLabels() async {
     await useCases.edit.clearLabels(project.id);
     notifyListeners();
+    onChanged?.call(project);
   }
 
   // ==============================

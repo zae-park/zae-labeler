@@ -61,7 +61,8 @@ class ProjectTile extends StatelessWidget {
     final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
 
     return ChangeNotifierProvider(
-      create: (_) => ProjectViewModel(project: project, shareHelper: getShareHelper(), useCases: useCases),
+      create: (_) =>
+          ProjectViewModel(project: project, shareHelper: getShareHelper(), useCases: useCases, onChanged: (updated) => projectListVM.updateProject(updated)),
       child: Consumer<ProjectViewModel>(
         builder: (context, vm, _) {
           return Card(
