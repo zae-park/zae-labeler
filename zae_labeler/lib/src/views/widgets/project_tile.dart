@@ -22,7 +22,7 @@ class ProjectTile extends StatelessWidget {
   }
 
   void _openEditPage(BuildContext context, Project p) async {
-    Navigator.push(
+    final updated = await Navigator.push<Project>(
       context,
       MaterialPageRoute(
         settings: const RouteSettings(name: '/configuration'),
@@ -30,8 +30,10 @@ class ProjectTile extends StatelessWidget {
       ),
     );
 
-    final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
-    await projectListVM.loadProjects();
+    if (updated != null && context.mounted) {
+      final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
+      projectListVM.upsertProject(updated); // 🔁 변경 즉시 반영
+    }
   }
 
   Future<void> _confirmDelete(BuildContext context, Project project, ProjectListViewModel projectListVM) async {
