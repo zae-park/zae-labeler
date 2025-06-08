@@ -60,7 +60,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
 
         if (!mounted) return;
         final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
-        await projectListVM.saveProject(project);
+        await projectListVM.upsertProject(project);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Imported project: ${project.name}')));

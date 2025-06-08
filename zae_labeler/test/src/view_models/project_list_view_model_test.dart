@@ -20,7 +20,7 @@ void main() {
     });
 
     test('saveProject adds new project', () async {
-      await vm.saveProject(sampleProject);
+      await vm.upsertProject(sampleProject);
 
       expect(vm.projects.length, 1);
       expect(vm.projects.first.name, 'Sample Project');
@@ -28,7 +28,7 @@ void main() {
     });
 
     test('removeProject deletes a project', () async {
-      await vm.saveProject(sampleProject);
+      await vm.upsertProject(sampleProject);
       await vm.removeProject('test1');
 
       expect(vm.projects.any((p) => p.id == 'test1'), false);
@@ -36,17 +36,17 @@ void main() {
     });
 
     test('updateProject modifies project data', () async {
-      await vm.saveProject(sampleProject);
+      await vm.upsertProject(sampleProject);
 
       final updated = sampleProject.copyWith(name: 'Updated Name');
-      await vm.updateProject(updated);
+      await vm.upsertProject(updated);
 
       expect(vm.projects.first.name, 'Updated Name');
       // expect(mockRepository.wasSaveAllCalled, true);
     });
 
     test('clearAllProjectsCache clears everything', () async {
-      await vm.saveProject(sampleProject);
+      await vm.upsertProject(sampleProject);
       await vm.clearAllProjectsCache();
 
       expect(vm.projects.isEmpty, true);

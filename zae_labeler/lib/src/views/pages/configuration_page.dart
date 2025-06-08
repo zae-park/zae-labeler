@@ -48,11 +48,7 @@ class ConfigureProjectPage extends StatelessWidget {
     for (final dp in updatedProject.dataInfos) {
       debugPrint("📂 dataInfo: dataId=${dp.id}, path=${dp.filePath}, name=${dp.fileName}");
     }
-    if (isNewProject) {
-      projectListVM.saveProject(updatedProject);
-    } else {
-      projectListVM.updateProject(updatedProject);
-    }
+    projectListVM.upsertProject(updatedProject);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('${updatedProject.name} project has been ${isNewProject ? "created" : "updated"}.')),
