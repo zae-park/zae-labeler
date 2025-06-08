@@ -55,7 +55,7 @@ class ConfigureProjectPage extends StatelessWidget {
     );
 
     configVM.reset();
-    Navigator.pop(context);
+    Navigator.pop(context, updatedProject);
   }
 
   @override
