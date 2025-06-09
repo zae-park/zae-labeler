@@ -1,24 +1,20 @@
 // 📁 sub_view_models/base_labeling_view_model.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../domain/label/label_use_cases.dart';
 import '../../models/label_model.dart';
 import '../label_view_model.dart';
 import '../../models/data_model.dart';
 import '../../models/project_model.dart';
 import '../../utils/proxy_storage_helper/interface_storage_helper.dart';
 import '../../utils/adaptive/adaptive_data_loader.dart';
-import '../../domain/label/batch_label_use_case.dart';
-import '../../domain/label/validate_label_use_case.dart';
-import '../../domain/label/label_io_use_case.dart';
 
 /// Abstract base class for all LabelingViewModels.
 abstract class LabelingViewModel extends ChangeNotifier {
   final Project project;
   final StorageHelperInterface storageHelper;
   final List<UnifiedData>? initialDataList;
-  final BatchLabelUseCases batchLabelUseCases;
-  final LabelValidationUseCases validationUseCases;
-  final LabelIOUseCases ioUseCases;
+  final LabelUseCases useCases;
 
   bool _isInitialized = false;
   final bool _memoryOptimized = false;
@@ -30,14 +26,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
   final Map<String, LabelViewModel> labelCache = {};
   void clearLabelCache() => labelCache.clear();
 
-  LabelingViewModel({
-    required this.project,
-    required this.storageHelper,
-    required this.batchLabelUseCases,
-    required this.validationUseCases,
-    required this.ioUseCases,
-    this.initialDataList,
-  });
+  LabelingViewModel(this.project, this.storageHelper, this.initialDataList, this.useCases);
 
   bool get isInitialized => _isInitialized;
   int get currentIndex => _currentIndex;
@@ -121,7 +110,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
         dataFilename: _currentUnifiedData.fileName,
         dataPath: _currentUnifiedData.file?.path ?? '',
         mode: project.mode,
-        singleLabelUseCases: throw UnimplementedError("singleLabelUseCases가 주입되어야 합니다"),
+        singleLabelUseCases: useCases.single,
       );
     });
   }
@@ -129,7 +118,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
   Future<void> refreshStatus(String dataId) async {
     final vm = getOrCreateLabelVM();
     await vm.loadLabel();
-    final status = validationUseCases.getStatus(project, vm.labelModel);
+    final status = useCases.validation.getStatus(project, vm.labelModel);
     final index = _unifiedDataList.indexWhere((e) => e.dataId == dataId);
     if (index != -1) {
       _unifiedDataList[index] = _unifiedDataList[index].copyWith(status: status);
@@ -138,7 +127,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
 
   Future<void> refreshAllStatuses() async {
     if (project.labels.isEmpty) {
-      project.labels = await batchLabelUseCases.loadAllLabels(project.id);
+      project.labels = await useCases.batch.loadAllLabels(project.id);
     }
 
     for (final data in _unifiedDataList) {
@@ -149,12 +138,12 @@ abstract class LabelingViewModel extends ChangeNotifier {
           dataFilename: data.fileName,
           dataPath: data.file?.path ?? '',
           mode: project.mode,
-          singleLabelUseCases: throw UnimplementedError("singleLabelUseCases가 주입되어야 합니다"),
+          singleLabelUseCases: useCases.single,
         );
       });
 
       await vm.loadLabel();
-      final status = validationUseCases.getStatus(project, vm.labelModel);
+      final status = useCases.validation.getStatus(project, vm.labelModel);
       final idx = _unifiedDataList.indexWhere((e) => e.dataId == data.dataId);
       if (idx != -1) {
         _unifiedDataList[idx] = _unifiedDataList[idx].copyWith(status: status);
@@ -169,6 +158,6 @@ abstract class LabelingViewModel extends ChangeNotifier {
   Future<String> exportAllLabels() async {
     final allLabels = labelCache.values.map((vm) => vm.labelModel).toList();
     final dataInfos = _unifiedDataList.map((e) => e.toDataInfo()).toList();
-    return await ioUseCases.exportLabelsWithData(project, allLabels, dataInfos);
+    return await useCases.io.exportLabelsWithData(project, allLabels, dataInfos);
   }
 }
