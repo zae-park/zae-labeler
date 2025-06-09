@@ -7,27 +7,18 @@ import '../../models/data_model.dart';
 import '../../models/project_model.dart';
 import '../../utils/proxy_storage_helper/interface_storage_helper.dart';
 import '../../utils/adaptive/adaptive_data_loader.dart';
-import '../../repositories/label_repository.dart';
+import '../../domain/label/batch_label_use_case.dart';
+import '../../domain/label/validate_label_use_case.dart';
+import '../../domain/label/label_io_use_case.dart';
 
 /// Abstract base class for all LabelingViewModels.
-///
-/// ✅ 역할:
-/// - 프로젝트 데이터를 불러와 `UnifiedData` 리스트를 구성하고,
-/// - 해당 데이터를 순회하며 라벨을 로드, 저장, 상태 추적을 수행합니다.
-/// - 세부 라벨링 동작은 하위 ViewModel이 override 합니다.
-///
-/// ✅ 플랫폼 대응:
-/// - Web과 Native 간 파일 접근 방식 차이를 `loadDataAdaptively()`로 추상화하여,
-///   플랫폼 독립적인 데이터 로딩 구조를 유지합니다.
-///
-/// ✅ 메모리 최적화 모드:
-/// - `initialDataList`를 주입받은 경우, 미리 주어진 데이터로만 작동하며,
-/// - 디스크 로딩이 제한되거나 느린 환경에서의 성능 향상을 위해 사용됩니다.
 abstract class LabelingViewModel extends ChangeNotifier {
   final Project project;
   final StorageHelperInterface storageHelper;
   final List<UnifiedData>? initialDataList;
-  final LabelRepository labelRepository;
+  final BatchLabelUseCases batchLabelUseCases;
+  final LabelValidationUseCases validationUseCases;
+  final LabelIOUseCases ioUseCases;
 
   bool _isInitialized = false;
   final bool _memoryOptimized = false;
@@ -42,7 +33,9 @@ abstract class LabelingViewModel extends ChangeNotifier {
   LabelingViewModel({
     required this.project,
     required this.storageHelper,
-    required this.labelRepository,
+    required this.batchLabelUseCases,
+    required this.validationUseCases,
+    required this.ioUseCases,
     this.initialDataList,
   });
 
@@ -63,7 +56,6 @@ abstract class LabelingViewModel extends ChangeNotifier {
   int get incompleteCount => totalCount - completeCount;
   double get progressRatio => totalCount == 0 ? 0 : completeCount / totalCount;
 
-  /// Initializes the ViewModel by loading data and label information.
   Future<void> initialize() async {
     debugPrint("[LabelingVM.initialize] : ${project.mode}");
     if (_isInitialized && project.mode != currentLabelVM.mode) {
@@ -101,12 +93,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
       debugPrint("⚠️ 라벨 모델 모드 불일치 → 초기화");
       labelCache.remove(_currentUnifiedData.dataId);
       labelVM.labelModel = LabelModelFactory.createNew(project.mode, dataId: _currentUnifiedData.dataId);
-      await labelRepository.saveLabel(
-        projectId: project.id,
-        dataId: _currentUnifiedData.dataId,
-        dataPath: _currentUnifiedData.file?.path ?? '',
-        labelModel: labelVM.labelModel,
-      );
+      await labelVM.saveLabel();
     }
   }
 
@@ -134,8 +121,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
         dataFilename: _currentUnifiedData.fileName,
         dataPath: _currentUnifiedData.file?.path ?? '',
         mode: project.mode,
-        storageHelper: storageHelper,
-        labelRepository: labelRepository,
+        singleLabelUseCases: throw UnimplementedError("singleLabelUseCases가 주입되어야 합니다"),
       );
     });
   }
@@ -143,7 +129,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
   Future<void> refreshStatus(String dataId) async {
     final vm = getOrCreateLabelVM();
     await vm.loadLabel();
-    final status = labelRepository.getStatus(project, vm.labelModel);
+    final status = validationUseCases.getStatus(project, vm.labelModel);
     final index = _unifiedDataList.indexWhere((e) => e.dataId == dataId);
     if (index != -1) {
       _unifiedDataList[index] = _unifiedDataList[index].copyWith(status: status);
@@ -152,7 +138,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
 
   Future<void> refreshAllStatuses() async {
     if (project.labels.isEmpty) {
-      project.labels = await labelRepository.loadAllLabels(project.id);
+      project.labels = await batchLabelUseCases.loadAllLabels(project.id);
     }
 
     for (final data in _unifiedDataList) {
@@ -163,13 +149,12 @@ abstract class LabelingViewModel extends ChangeNotifier {
           dataFilename: data.fileName,
           dataPath: data.file?.path ?? '',
           mode: project.mode,
-          storageHelper: storageHelper,
-          labelRepository: labelRepository,
+          singleLabelUseCases: throw UnimplementedError("singleLabelUseCases가 주입되어야 합니다"),
         );
       });
 
       await vm.loadLabel();
-      final status = labelRepository.getStatus(project, vm.labelModel);
+      final status = validationUseCases.getStatus(project, vm.labelModel);
       final idx = _unifiedDataList.indexWhere((e) => e.dataId == data.dataId);
       if (idx != -1) {
         _unifiedDataList[idx] = _unifiedDataList[idx].copyWith(status: status);
@@ -184,6 +169,6 @@ abstract class LabelingViewModel extends ChangeNotifier {
   Future<String> exportAllLabels() async {
     final allLabels = labelCache.values.map((vm) => vm.labelModel).toList();
     final dataInfos = _unifiedDataList.map((e) => e.toDataInfo()).toList();
-    return await labelRepository.exportLabelsWithData(project, allLabels, dataInfos);
+    return await ioUseCases.exportLabelsWithData(project, allLabels, dataInfos);
   }
 }
