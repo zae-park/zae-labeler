@@ -4,8 +4,7 @@ export 'sub_view_models/base_label_view_model.dart';
 export 'sub_view_models/classification_label_view_model.dart';
 export 'sub_view_models/segmentation_label_view_model.dart';
 
-import '../utils/proxy_storage_helper/interface_storage_helper.dart';
-import '../repositories/label_repository.dart';
+import '../domain/label/single_label_use_case.dart';
 
 class LabelViewModelFactory {
   static LabelViewModel create({
@@ -14,8 +13,7 @@ class LabelViewModelFactory {
     required String dataFilename,
     required String dataPath,
     required LabelingMode mode,
-    required StorageHelperInterface storageHelper,
-    required LabelRepository labelRepository,
+    required SingleLabelUseCases singleLabelUseCases,
   }) {
     final baseArgs = (
       projectId: projectId,
@@ -23,8 +21,8 @@ class LabelViewModelFactory {
       dataFilename: dataFilename,
       dataPath: dataPath,
       mode: mode,
-      storageHelper: storageHelper,
-      labelRepository: labelRepository,
+      labelModel: LabelModelFactory.createNew(mode, dataId: dataId),
+      singleLabelUseCases: singleLabelUseCases,
     );
 
     switch (mode) {
@@ -36,9 +34,8 @@ class LabelViewModelFactory {
           dataFilename: baseArgs.dataFilename,
           dataPath: baseArgs.dataPath,
           mode: baseArgs.mode,
-          labelModel: LabelModelFactory.createNew(mode, dataId: dataId),
-          storageHelper: baseArgs.storageHelper,
-          labelRepository: baseArgs.labelRepository,
+          labelModel: baseArgs.labelModel,
+          singleLabelUseCases: baseArgs.singleLabelUseCases,
         );
 
       case LabelingMode.crossClassification:
@@ -48,9 +45,8 @@ class LabelViewModelFactory {
           dataFilename: baseArgs.dataFilename,
           dataPath: baseArgs.dataPath,
           mode: baseArgs.mode,
-          labelModel: LabelModelFactory.createNew(mode, dataId: dataId),
-          storageHelper: baseArgs.storageHelper,
-          labelRepository: baseArgs.labelRepository,
+          labelModel: baseArgs.labelModel,
+          singleLabelUseCases: baseArgs.singleLabelUseCases,
         );
 
       case LabelingMode.singleClassSegmentation:
@@ -61,9 +57,8 @@ class LabelViewModelFactory {
           dataFilename: baseArgs.dataFilename,
           dataPath: baseArgs.dataPath,
           mode: baseArgs.mode,
-          labelModel: LabelModelFactory.createNew(mode, dataId: dataId),
-          storageHelper: baseArgs.storageHelper,
-          labelRepository: baseArgs.labelRepository,
+          labelModel: baseArgs.labelModel,
+          singleLabelUseCases: baseArgs.singleLabelUseCases,
         );
     }
   }
