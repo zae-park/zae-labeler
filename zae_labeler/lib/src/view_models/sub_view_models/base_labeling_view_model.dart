@@ -26,7 +26,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
   final Map<String, LabelViewModel> labelCache = {};
   void clearLabelCache() => labelCache.clear();
 
-  LabelingViewModel(this.project, this.storageHelper, this.initialDataList, this.useCases);
+  LabelingViewModel({required this.project, required this.storageHelper, required this.initialDataList, required this.useCases});
 
   bool get isInitialized => _isInitialized;
   int get currentIndex => _currentIndex;
