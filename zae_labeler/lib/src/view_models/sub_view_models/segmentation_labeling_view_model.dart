@@ -111,7 +111,7 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
   @override
   Future<void> updateLabel(dynamic labelData) async {
     currentLabelVM.updateLabel(labelData);
-    await labelRepository.saveLabel(
+    await useCases.single.saveLabel(
       projectId: project.id,
       dataId: currentUnifiedData.dataId,
       dataPath: currentUnifiedData.file?.path ?? '',
