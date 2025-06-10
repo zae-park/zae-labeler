@@ -7,18 +7,11 @@ import '../label_view_model.dart';
 import 'base_labeling_view_model.dart';
 import '../../models/sub_models/classification_label_model.dart';
 import '../../models/sub_models/segmentation_label_model.dart';
-import '../../domain/label/label_use_cases.dart';
 
 /// ViewModel for single and multi classification labeling modes.
 /// Handles label toggling and status tracking per data item.
 class ClassificationLabelingViewModel extends LabelingViewModel {
-  ClassificationLabelingViewModel({
-    required super.project,
-    required super.storageHelper,
-    required super.labelRepository,
-    required super.useCases,
-    super.initialDataList,
-  });
+  ClassificationLabelingViewModel({required super.project, required super.storageHelper, required super.useCases, super.initialDataList});
 
   @override
   Future<void> updateLabel(dynamic labelData) async {
@@ -62,13 +55,7 @@ class ClassificationLabelingViewModel extends LabelingViewModel {
 /// ViewModel for cross classification mode, labeling pairs of data.
 /// Uses nC2 pairing logic and custom progress tracking per relation.
 class CrossClassificationLabelingViewModel extends LabelingViewModel {
-  CrossClassificationLabelingViewModel({
-    required super.project,
-    required super.storageHelper,
-    required super.labelRepository,
-    required super.useCases,
-    super.initialDataList,
-  });
+  CrossClassificationLabelingViewModel({required super.project, required super.storageHelper, required super.useCases, super.initialDataList});
 
   int _sourceIndex = 0;
   int _targetIndex = 1;
@@ -165,8 +152,6 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
         dataFilename: id,
         dataPath: '',
         mode: project.mode,
-        storageHelper: storageHelper,
-        labelRepository: labelRepository,
         singleLabelUseCases: useCases.single,
       );
     });

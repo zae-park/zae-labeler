@@ -12,7 +12,7 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
   String? _selectedClass;
   String? get selectedClass => _selectedClass;
 
-  SegmentationLabelingViewModel({required super.project, required super.storageHelper, required super.labelRepository, super.initialDataList});
+  SegmentationLabelingViewModel({required super.project, required super.storageHelper, required super.useCases, super.initialDataList});
 
   /// Restores grid from saved label and sets default class if needed
   @override
