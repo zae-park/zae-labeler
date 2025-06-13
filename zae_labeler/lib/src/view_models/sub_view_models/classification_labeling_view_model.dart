@@ -11,7 +11,7 @@ import '../../models/sub_models/segmentation_label_model.dart';
 /// ViewModel for single and multi classification labeling modes.
 /// Handles label toggling and status tracking per data item.
 class ClassificationLabelingViewModel extends LabelingViewModel {
-  ClassificationLabelingViewModel({required super.project, required super.storageHelper, required super.useCases, super.initialDataList});
+  ClassificationLabelingViewModel({required super.project, required super.storageHelper, required super.appUseCases, super.initialDataList});
 
   @override
   Future<void> updateLabel(dynamic labelData) async {
@@ -55,7 +55,7 @@ class ClassificationLabelingViewModel extends LabelingViewModel {
 /// ViewModel for cross classification mode, labeling pairs of data.
 /// Uses nC2 pairing logic and custom progress tracking per relation.
 class CrossClassificationLabelingViewModel extends LabelingViewModel {
-  CrossClassificationLabelingViewModel({required super.project, required super.storageHelper, required super.useCases, super.initialDataList});
+  CrossClassificationLabelingViewModel({required super.project, required super.storageHelper, required super.appUseCases, super.initialDataList});
 
   int _sourceIndex = 0;
   int _targetIndex = 1;
@@ -99,11 +99,8 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
     _crossPairs[currentPairIndex] = updatedPair;
 
     final labelVM = getOrCreateLabelVMForCrossPair(updatedPair);
-    labelVM.labelModel = CrossClassificationLabelModel(
-      dataId: '${updatedPair.sourceId}_${updatedPair.targetId}',
-      label: updatedPair,
-      labeledAt: DateTime.now(),
-    );
+    labelVM.labelModel =
+        CrossClassificationLabelModel(dataId: '${updatedPair.sourceId}_${updatedPair.targetId}', label: updatedPair, labeledAt: DateTime.now());
 
     debugPrint("[CrossClsLabelingVM.updateLabel] source=\${updatedPair.sourceId}, target=\${updatedPair.targetId}, relation=\${updatedPair.relation}");
 
@@ -145,16 +142,8 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
 
   LabelViewModel getOrCreateLabelVMForCrossPair(CrossDataPair pair) {
     String id = "\${pair.sourceId}_\${pair.targetId}";
-    return labelCache.putIfAbsent(id, () {
-      return LabelViewModelFactory.create(
-        projectId: project.id,
-        dataId: id,
-        dataFilename: id,
-        dataPath: '',
-        mode: project.mode,
-        singleLabelUseCases: useCases.label.single,
-      );
-    });
+    return labelCache.putIfAbsent(id,
+        () => LabelViewModelFactory.create(projectId: project.id, dataId: id, dataFilename: id, dataPath: '', mode: project.mode, appUseCases: appUseCases));
   }
 
   UnifiedData get currentSourceData => unifiedDataList.firstWhere((e) => e.dataId == _selectedDataIds[_sourceIndex]);

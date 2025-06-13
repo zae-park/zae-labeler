@@ -15,11 +15,11 @@ export 'sub_view_models/segmentation_labeling_view_model.dart';
 
 /// ✅ LabelingMode에 따른 ViewModel 빌더 매핑
 final Map<LabelingMode, LabelingViewModel Function(Project, StorageHelperInterface, AppUseCases, List<UnifiedData>?)> labelingViewModelBuilders = {
-  LabelingMode.singleClassification: (p, h, u, dl) => ClassificationLabelingViewModel(project: p, storageHelper: h, useCases: u, initialDataList: dl),
-  LabelingMode.multiClassification: (p, h, u, dl) => ClassificationLabelingViewModel(project: p, storageHelper: h, useCases: u, initialDataList: dl),
-  LabelingMode.crossClassification: (p, h, u, dl) => CrossClassificationLabelingViewModel(project: p, storageHelper: h, useCases: u, initialDataList: dl),
-  LabelingMode.singleClassSegmentation: (p, h, u, dl) => SegmentationLabelingViewModel(project: p, storageHelper: h, useCases: u, initialDataList: dl),
-  LabelingMode.multiClassSegmentation: (p, h, u, dl) => SegmentationLabelingViewModel(project: p, storageHelper: h, useCases: u, initialDataList: dl),
+  LabelingMode.singleClassification: (p, h, u, dl) => ClassificationLabelingViewModel(project: p, storageHelper: h, appUseCases: u, initialDataList: dl),
+  LabelingMode.multiClassification: (p, h, u, dl) => ClassificationLabelingViewModel(project: p, storageHelper: h, appUseCases: u, initialDataList: dl),
+  LabelingMode.crossClassification: (p, h, u, dl) => CrossClassificationLabelingViewModel(project: p, storageHelper: h, appUseCases: u, initialDataList: dl),
+  LabelingMode.singleClassSegmentation: (p, h, u, dl) => SegmentationLabelingViewModel(project: p, storageHelper: h, appUseCases: u, initialDataList: dl),
+  LabelingMode.multiClassSegmentation: (p, h, u, dl) => SegmentationLabelingViewModel(project: p, storageHelper: h, appUseCases: u, initialDataList: dl),
 };
 
 /// ✅ LabelingViewModelFactory
