@@ -152,7 +152,7 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
         dataFilename: id,
         dataPath: '',
         mode: project.mode,
-        singleLabelUseCases: useCases.single,
+        singleLabelUseCases: useCases.label.single,
       );
     });
   }
