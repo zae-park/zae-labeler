@@ -24,14 +24,14 @@ class ProjectUseCases {
   });
 
   /// 생성자 단일화
-  factory ProjectUseCases.from(ProjectRepository repository, ShareProjectUseCase shareUseCase) {
+  factory ProjectUseCases.from(ProjectRepository repository) {
     return ProjectUseCases._(
       repository: repository,
       edit: EditProjectMetaUseCase(repository: repository),
       classList: ManageClassListUseCase(repository: repository),
       dataInfo: ManageDataInfoUseCase(repository: repository),
       io: ManageProjectIOUseCase(repository: repository),
-      share: shareUseCase,
+      share: ShareProjectUseCase(repository: repository),
     );
   }
 }
