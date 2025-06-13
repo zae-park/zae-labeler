@@ -13,27 +13,29 @@ class ClassificationLabelViewModel extends LabelViewModel {
     required super.dataPath,
     required super.mode,
     required super.labelModel,
-    required super.singleLabelUseCases,
+    required super.appUseCases,
   });
 
   @override
-  void updateLabel(dynamic labelData) {
+  Future<void> updateLabel(dynamic labelData) async {
     if (labelModel is ClassificationLabelModel) {
       if (labelData is String || labelData is List<String>) {
         debugPrint("[ClsLabelVM.updateLabel] labelModel: $labelModel");
         labelModel.updateLabel(labelData);
         notifyListeners();
+        await appUseCases.label.single.saveLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, labelModel: labelModel);
       } else {
         throw ArgumentError('labelData must be String or List<String> for classification');
       }
     }
   }
 
-  void toggleLabel(String labelItem) {
+  Future<void> toggleLabel(String labelItem) async {
     debugPrint("[ClsLabelVM.toggleLabel] labelModel: $labelModel");
     if (labelModel is ClassificationLabelModel) {
       labelModel = (labelModel as ClassificationLabelModel).toggleLabel(labelItem);
       notifyListeners();
+      await appUseCases.label.single.saveLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, labelModel: labelModel);
     }
   }
 
@@ -54,27 +56,29 @@ class CrossClassificationLabelViewModel extends LabelViewModel {
     required super.dataPath,
     required super.mode,
     required super.labelModel,
-    required super.singleLabelUseCases,
+    required super.appUseCases,
   });
 
   @override
-  void updateLabel(dynamic labelData) {
+  Future<void> updateLabel(dynamic labelData) async {
     if (labelModel is CrossClassificationLabelModel) {
       if (labelData is String) {
         labelModel = (labelModel as CrossClassificationLabelModel).updateLabel(
           (labelModel as CrossClassificationLabelModel).label!.copyWith(relation: labelData),
         );
         notifyListeners();
+        await appUseCases.label.single.saveLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, labelModel: labelModel);
       } else {
         throw ArgumentError('labelData must be String for CrossClassification');
       }
     }
   }
 
-  void toggleLabel(String labelItem) {
+  Future<void> toggleLabel(String labelItem) async {
     if (labelModel is CrossClassificationLabelModel) {
       labelModel = (labelModel as CrossClassificationLabelModel).toggleLabel(labelItem);
       notifyListeners();
+      await appUseCases.label.single.saveLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, labelModel: labelModel);
     }
   }
 

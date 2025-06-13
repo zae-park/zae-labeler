@@ -13,7 +13,7 @@ class SegmentationLabelViewModel extends LabelViewModel {
     required super.dataPath,
     required super.mode,
     required super.labelModel,
-    required super.singleLabelUseCases,
+    required super.appUseCases,
   });
 
   /// Updates the entire segmentation label with a new label object.

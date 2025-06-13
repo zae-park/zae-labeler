@@ -13,7 +13,7 @@ import '../label_view_model.dart';
 abstract class LabelingViewModel extends ChangeNotifier {
   final Project project;
   final StorageHelperInterface storageHelper;
-  final AppUseCases useCases;
+  final AppUseCases appUseCases;
   final List<UnifiedData>? initialDataList;
 
   bool _isInitialized = false;
@@ -26,12 +26,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
   final Map<String, LabelViewModel> labelCache = {};
   void clearLabelCache() => labelCache.clear();
 
-  LabelingViewModel({
-    required this.project,
-    required this.storageHelper,
-    required this.useCases,
-    this.initialDataList,
-  });
+  LabelingViewModel({required this.project, required this.storageHelper, required this.appUseCases, this.initialDataList});
 
   bool get isInitialized => _isInitialized;
   int get currentIndex => _currentIndex;
@@ -110,7 +105,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
         dataFilename: _currentUnifiedData.fileName,
         dataPath: _currentUnifiedData.dataPath ?? '',
         mode: project.mode,
-        singleLabelUseCases: useCases.label.single,
+        appUseCases: appUseCases,
       );
     });
   }
@@ -118,7 +113,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
   Future<void> refreshStatus(String dataId) async {
     final vm = getOrCreateLabelVM();
     await vm.loadLabel();
-    final status = useCases.label.validation.getStatus(project, vm.labelModel);
+    final status = appUseCases.label.validation.getStatus(project, vm.labelModel);
     final index = _unifiedDataList.indexWhere((e) => e.dataId == dataId);
     if (index != -1) {
       _unifiedDataList[index] = _unifiedDataList[index].copyWith(status: status);
@@ -127,7 +122,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
 
   Future<void> refreshAllStatuses() async {
     if (project.labels.isEmpty) {
-      project.labels = await useCases.label.batch.loadAllLabels(project.id);
+      project.labels = await appUseCases.label.batch.loadAllLabels(project.id);
     }
 
     for (final data in _unifiedDataList) {
@@ -138,12 +133,12 @@ abstract class LabelingViewModel extends ChangeNotifier {
           dataFilename: data.fileName,
           dataPath: data.dataPath ?? '',
           mode: project.mode,
-          singleLabelUseCases: useCases.label.single,
+          appUseCases: appUseCases,
         );
       });
 
       await vm.loadLabel();
-      final status = useCases.label.validation.getStatus(project, vm.labelModel);
+      final status = appUseCases.label.validation.getStatus(project, vm.labelModel);
       final idx = _unifiedDataList.indexWhere((e) => e.dataId == data.dataId);
       if (idx != -1) {
         _unifiedDataList[idx] = _unifiedDataList[idx].copyWith(status: status);
@@ -158,6 +153,6 @@ abstract class LabelingViewModel extends ChangeNotifier {
   Future<String> exportAllLabels() async {
     final allLabels = labelCache.values.map((vm) => vm.labelModel).toList();
     final dataInfos = _unifiedDataList.map((e) => e.toDataInfo()).toList();
-    return await useCases.label.io.exportLabelsWithData(project, allLabels, dataInfos);
+    return await appUseCases.label.io.exportLabelsWithData(project, allLabels, dataInfos);
   }
 }

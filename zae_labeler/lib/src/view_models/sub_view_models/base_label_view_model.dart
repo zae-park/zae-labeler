@@ -2,7 +2,7 @@
 
 import 'package:flutter/foundation.dart';
 import '../../models/label_model.dart';
-import '../../domain/label/single_label_use_case.dart';
+import '../../domain/app_use_cases.dart';
 
 abstract class LabelViewModel extends ChangeNotifier {
   final String projectId;
@@ -10,7 +10,7 @@ abstract class LabelViewModel extends ChangeNotifier {
   final String dataFilename;
   final String dataPath;
   final LabelingMode mode;
-  final SingleLabelUseCases singleLabelUseCases;
+  final AppUseCases appUseCases;
 
   LabelModel labelModel;
 
@@ -21,12 +21,12 @@ abstract class LabelViewModel extends ChangeNotifier {
     required this.dataPath,
     required this.mode,
     required this.labelModel,
-    required this.singleLabelUseCases,
+    required this.appUseCases,
   });
 
   Future<void> loadLabel() async {
     debugPrint("[BaseLabelVM.loadLabel] BEFORE: ${labelModel.runtimeType}");
-    labelModel = await singleLabelUseCases.loadLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, mode: mode);
+    labelModel = await appUseCases.label.single.loadLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, mode: mode);
     debugPrint("[BaseLabelVM.loadLabel] AFTER: ${labelModel.runtimeType}");
     notifyListeners();
   }
@@ -34,7 +34,7 @@ abstract class LabelViewModel extends ChangeNotifier {
   Future<void> saveLabel() async {
     debugPrint("[BaseLabelVM.saveLabel] labelModel: $labelModel");
     debugPrint("[BaseLabelVM.saveLabel] saving label: ${labelModel.label}");
-    await singleLabelUseCases.saveLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, labelModel: labelModel);
+    await appUseCases.label.single.saveLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, labelModel: labelModel);
   }
 
   void updateLabel(dynamic labelData);
