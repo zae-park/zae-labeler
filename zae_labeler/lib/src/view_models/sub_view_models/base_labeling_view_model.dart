@@ -105,7 +105,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
         dataFilename: _currentUnifiedData.fileName,
         dataPath: _currentUnifiedData.dataPath ?? '',
         mode: project.mode,
-        appUseCases: appUseCases,
+        labelUseCases: appUseCases.label,
       );
     });
   }
@@ -133,7 +133,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
           dataFilename: data.fileName,
           dataPath: data.dataPath ?? '',
           mode: project.mode,
-          appUseCases: appUseCases,
+          labelUseCases: appUseCases.label,
         );
       });
 

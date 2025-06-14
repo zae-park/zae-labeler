@@ -13,7 +13,7 @@ class ClassificationLabelViewModel extends LabelViewModel {
     required super.dataPath,
     required super.mode,
     required super.labelModel,
-    required super.appUseCases,
+    required super.labelUseCases,
   });
 
   @override
@@ -23,7 +23,7 @@ class ClassificationLabelViewModel extends LabelViewModel {
         debugPrint("[ClsLabelVM.updateLabel] labelModel: $labelModel");
         labelModel.updateLabel(labelData);
         notifyListeners();
-        await appUseCases.label.single.saveLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, labelModel: labelModel);
+        await labelUseCases.single.saveLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, labelModel: labelModel);
       } else {
         throw ArgumentError('labelData must be String or List<String> for classification');
       }
@@ -35,7 +35,7 @@ class ClassificationLabelViewModel extends LabelViewModel {
     if (labelModel is ClassificationLabelModel) {
       labelModel = (labelModel as ClassificationLabelModel).toggleLabel(labelItem);
       notifyListeners();
-      await appUseCases.label.single.saveLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, labelModel: labelModel);
+      await labelUseCases.single.saveLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, labelModel: labelModel);
     }
   }
 
@@ -56,7 +56,7 @@ class CrossClassificationLabelViewModel extends LabelViewModel {
     required super.dataPath,
     required super.mode,
     required super.labelModel,
-    required super.appUseCases,
+    required super.labelUseCases,
   });
 
   @override
@@ -67,7 +67,7 @@ class CrossClassificationLabelViewModel extends LabelViewModel {
           (labelModel as CrossClassificationLabelModel).label!.copyWith(relation: labelData),
         );
         notifyListeners();
-        await appUseCases.label.single.saveLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, labelModel: labelModel);
+        await labelUseCases.single.saveLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, labelModel: labelModel);
       } else {
         throw ArgumentError('labelData must be String for CrossClassification');
       }
@@ -78,7 +78,7 @@ class CrossClassificationLabelViewModel extends LabelViewModel {
     if (labelModel is CrossClassificationLabelModel) {
       labelModel = (labelModel as CrossClassificationLabelModel).toggleLabel(labelItem);
       notifyListeners();
-      await appUseCases.label.single.saveLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, labelModel: labelModel);
+      await labelUseCases.single.saveLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, labelModel: labelModel);
     }
   }
 

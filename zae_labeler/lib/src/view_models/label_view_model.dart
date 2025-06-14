@@ -1,5 +1,5 @@
 import '../models/label_model.dart';
-import '../domain/app_use_cases.dart';
+import '../domain/label/label_use_cases.dart';
 import 'label_view_model.dart';
 export 'sub_view_models/base_label_view_model.dart';
 export 'sub_view_models/classification_label_view_model.dart';
@@ -12,7 +12,7 @@ class LabelViewModelFactory {
     required String dataFilename,
     required String dataPath,
     required LabelingMode mode,
-    required AppUseCases appUseCases,
+    required LabelUseCases labelUseCases,
   }) {
     final baseArgs = (
       projectId: projectId,
@@ -21,7 +21,7 @@ class LabelViewModelFactory {
       dataPath: dataPath,
       mode: mode,
       labelModel: LabelModelFactory.createNew(mode, dataId: dataId),
-      appUseCases: appUseCases,
+      labelUseCases: labelUseCases,
     );
 
     switch (mode) {
@@ -34,7 +34,7 @@ class LabelViewModelFactory {
           dataPath: baseArgs.dataPath,
           mode: baseArgs.mode,
           labelModel: baseArgs.labelModel,
-          appUseCases: baseArgs.appUseCases,
+          labelUseCases: baseArgs.labelUseCases,
         );
 
       case LabelingMode.crossClassification:
@@ -45,7 +45,7 @@ class LabelViewModelFactory {
           dataPath: baseArgs.dataPath,
           mode: baseArgs.mode,
           labelModel: baseArgs.labelModel,
-          appUseCases: baseArgs.appUseCases,
+          labelUseCases: baseArgs.labelUseCases,
         );
 
       case LabelingMode.singleClassSegmentation:
@@ -57,7 +57,7 @@ class LabelViewModelFactory {
           dataPath: baseArgs.dataPath,
           mode: baseArgs.mode,
           labelModel: baseArgs.labelModel,
-          appUseCases: baseArgs.appUseCases,
+          labelUseCases: baseArgs.labelUseCases,
         );
     }
   }

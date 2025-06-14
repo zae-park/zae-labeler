@@ -142,8 +142,10 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
 
   LabelViewModel getOrCreateLabelVMForCrossPair(CrossDataPair pair) {
     String id = "\${pair.sourceId}_\${pair.targetId}";
-    return labelCache.putIfAbsent(id,
-        () => LabelViewModelFactory.create(projectId: project.id, dataId: id, dataFilename: id, dataPath: '', mode: project.mode, appUseCases: appUseCases));
+    return labelCache.putIfAbsent(
+        id,
+        () => LabelViewModelFactory.create(
+            projectId: project.id, dataId: id, dataFilename: id, dataPath: '', mode: project.mode, labelUseCases: appUseCases.label));
   }
 
   UnifiedData get currentSourceData => unifiedDataList.firstWhere((e) => e.dataId == _selectedDataIds[_sourceIndex]);
