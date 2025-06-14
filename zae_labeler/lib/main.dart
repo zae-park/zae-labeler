@@ -53,7 +53,7 @@ class ZaeLabeler extends StatelessWidget {
       providers: [
         Provider<StorageHelperInterface>.value(value: storageHelper),
         Provider<AppUseCases>.value(value: appUseCases),
-        ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(appUseCases: appUseCases)),
+        ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(projectUseCases: appUseCases.project)),
         ChangeNotifierProvider<LocaleViewModel>(create: (_) => LocaleViewModel()),
         ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel()),
       ],
