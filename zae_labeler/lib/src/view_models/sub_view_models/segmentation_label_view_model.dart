@@ -16,32 +16,35 @@ class SegmentationLabelViewModel extends LabelViewModel {
     required super.labelUseCases,
   });
 
-  /// Updates the entire segmentation label with a new label object.
   @override
   void updateLabel(dynamic labelData) {
-    if (labelData is SegmentationData) {
-      labelModel = labelModel.updateLabel(labelData);
-      notifyListeners();
-    } else {
-      throw ArgumentError('labelData must be SegmentationData for segmentation');
+    if (labelModel is SegmentationLabelModel) {
+      if (labelData is SegmentationData) {
+        labelModel = (labelModel as SegmentationLabelModel).copyWith(label: labelData);
+        notifyListeners();
+      } else {
+        throw ArgumentError('labelData must be SegmentationLabelData');
+      }
     }
   }
 
-  /// Adds a pixel at (x, y) for the given classLabel.
-  void addPixel(int x, int y, String classLabel) {
-    if (labelModel is MultiClassSegmentationLabelModel) {
-      final updated = (labelModel as MultiClassSegmentationLabelModel).addPixel(x, y, classLabel);
-      labelModel = updated;
-      notifyListeners();
-    }
+  @override
+  Future<void> addPixel(int x, int y, String classLabel) async {
+    final prev = labelModel as SegmentationLabelModel;
+    final newModel = prev.copyWith(labeledAt: DateTime.now(), label: prev.label?.addPixel(x, y, classLabel));
+
+    labelModel = newModel;
+    await saveLabel();
+    notifyListeners();
   }
 
-  /// Removes a pixel at (x, y).
-  void removePixel(int x, int y) {
-    if (labelModel is MultiClassSegmentationLabelModel) {
-      final updated = (labelModel as MultiClassSegmentationLabelModel).removePixel(x, y);
-      labelModel = updated;
-      notifyListeners();
-    }
+  @override
+  Future<void> removePixel(int x, int y) async {
+    final prev = labelModel as SegmentationLabelModel;
+    final newModel = prev.copyWith(labeledAt: DateTime.now(), label: prev.label?.removePixel(x, y));
+
+    labelModel = newModel;
+    await saveLabel();
+    notifyListeners();
   }
 }
