@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/project_model.dart';
-import '../domain/project/project_use_cases.dart';
+import '../domain/app_use_cases.dart';
 import '../utils/share_helper.dart';
 import 'project_view_model.dart';
 
@@ -13,7 +13,7 @@ import 'project_view_model.dart';
 /// └── clearAllProjectsCache()      // 캐시 비우고 리스트 초기화
 
 class ProjectListViewModel extends ChangeNotifier {
-  final ProjectUseCases useCases;
+  final AppUseCases appUseCases;
 
   final Map<String, ProjectViewModel> _projectVMs = {};
   bool _isLoading = false;
@@ -21,7 +21,7 @@ class ProjectListViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   List<ProjectViewModel> get projectVMList => _projectVMs.values.toList();
 
-  ProjectListViewModel({required this.useCases}) {
+  ProjectListViewModel({required this.appUseCases}) {
     loadProjects();
   }
 
@@ -33,12 +33,12 @@ class ProjectListViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final loadedProjects = await useCases.io.fetchAll();
+    final loadedProjects = await appUseCases.project.io.fetchAll();
     _projectVMs
       ..clear()
       ..addEntries(loadedProjects.map((p) => MapEntry(
             p.id,
-            ProjectViewModel(project: p, useCases: useCases, shareHelper: getShareHelper(), onChanged: (updated) => upsertProject(updated)),
+            ProjectViewModel(project: p, useCases: appUseCases.project, shareHelper: getShareHelper(), onChanged: (updated) => upsertProject(updated)),
           )));
 
     _isLoading = false;
@@ -53,25 +53,25 @@ class ProjectListViewModel extends ChangeNotifier {
     } else {
       _projectVMs[project.id] = ProjectViewModel(
         project: project,
-        useCases: useCases,
+        useCases: appUseCases.project,
         shareHelper: getShareHelper(),
         onChanged: (updated) => upsertProject(updated),
       );
     }
-    await useCases.io.saveAll(_projectVMs.values.map((vm) => vm.project).toList());
+    await appUseCases.project.io.saveAll(_projectVMs.values.map((vm) => vm.project).toList());
     notifyListeners();
   }
 
   /// ✅ 프로젝트 삭제
   /// - 저장소에서도 삭제 후, 전체 목록을 다시 로드
   Future<void> removeProject(String projectId) async {
-    await useCases.io.deleteById(projectId);
+    await appUseCases.project.io.deleteById(projectId);
     await loadProjects(); // 내부적으로 notifyListeners 호출
   }
 
   /// ✅ 프로젝트 캐시 비우기
   Future<void> clearAllProjectsCache() async {
-    await useCases.io.clearCache();
+    await appUseCases.project.io.clearCache();
     _projectVMs.clear();
     notifyListeners();
   }
