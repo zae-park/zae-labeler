@@ -2,13 +2,10 @@
 
 import 'base_label_view_model.dart';
 import '../../models/sub_models/segmentation_label_model.dart';
-import '../../repositories/label_repository.dart';
 
 /// ViewModel for segmentation labeling.
 /// Handles pixel-level updates and repository-backed I/O.
 class SegmentationLabelViewModel extends LabelViewModel {
-  final LabelRepository labelRepository;
-
   SegmentationLabelViewModel({
     required super.projectId,
     required super.dataId,
@@ -16,8 +13,7 @@ class SegmentationLabelViewModel extends LabelViewModel {
     required super.dataPath,
     required super.mode,
     required super.labelModel,
-    required super.storageHelper,
-    required this.labelRepository,
+    required super.labelUseCases,
   });
 
   /// Updates the entire segmentation label with a new label object.
@@ -47,18 +43,5 @@ class SegmentationLabelViewModel extends LabelViewModel {
       labelModel = updated;
       notifyListeners();
     }
-  }
-
-  /// Loads a segmentation label from the repository.
-  @override
-  Future<void> loadLabel() async {
-    labelModel = await labelRepository.loadLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, mode: mode);
-    notifyListeners();
-  }
-
-  /// Saves the current segmentation label to the repository.
-  @override
-  Future<void> saveLabel() async {
-    await labelRepository.saveLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, labelModel: labelModel);
   }
 }

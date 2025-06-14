@@ -64,6 +64,7 @@ class UnifiedData {
   LabelStatus status;
 
   String get dataId => dataInfo.id;
+  String? get dataPath => file?.path;
   String get fileName => dataInfo.fileName;
 
   UnifiedData({

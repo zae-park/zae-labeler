@@ -1,5 +1,3 @@
-// lib/src/repositories/label_repository.dart
-
 import 'package:zae_labeler/src/models/project_model.dart';
 import 'package:zae_labeler/src/models/label_model.dart';
 import 'package:zae_labeler/src/models/data_model.dart';
@@ -20,7 +18,10 @@ class LabelRepository {
 
   LabelRepository({required this.storageHelper});
 
-  /// 📌 단일 라벨 저장
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 📌 단일 라벨 처리
+  // ─────────────────────────────────────────────────────────────────────────────
+
   Future<void> saveLabel({
     required String projectId,
     required String dataId,
@@ -30,7 +31,6 @@ class LabelRepository {
     await storageHelper.saveLabelData(projectId, dataId, dataPath, labelModel);
   }
 
-  /// 📌 단일 라벨 로드
   Future<LabelModel> loadLabel({
     required String projectId,
     required String dataId,
@@ -40,9 +40,6 @@ class LabelRepository {
     return await storageHelper.loadLabelData(projectId, dataId, dataPath, mode);
   }
 
-  /// 📌 라벨 로드 or 생성
-  ///
-  /// - 저장된 라벨이 없으면 기본 라벨 생성
   Future<LabelModel> loadOrCreateLabel({
     required String projectId,
     required String dataId,
@@ -61,61 +58,59 @@ class LabelRepository {
     }
   }
 
-  /// 📌 모든 라벨 로드 (리스트 반환)
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 📌 일괄 처리
+  // ─────────────────────────────────────────────────────────────────────────────
+
   Future<List<LabelModel>> loadAllLabels(String projectId) async {
     return await storageHelper.loadAllLabelModels(projectId);
   }
 
-  /// 📌 모든 라벨 로드 (Map 반환)
-  ///
-  /// - dataId → LabelModel 매핑
   Future<Map<String, LabelModel>> loadLabelMap(String projectId) async {
     final labels = await loadAllLabels(projectId);
     return {for (var label in labels) label.dataId: label};
   }
 
-  /// 📌 모든 라벨 저장
   Future<void> saveAllLabels(String projectId, List<LabelModel> labels) async {
     await storageHelper.saveAllLabels(projectId, labels);
   }
 
-  /// 📌 프로젝트의 모든 라벨 삭제
   Future<void> deleteAllLabels(String projectId) async {
     await storageHelper.deleteProjectLabels(projectId);
   }
 
-  /// 📌 외부로 라벨만 export (파일 저장)
-  ///
-  /// - Data는 포함하지 않음
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 📌 Import / Export
+  // ─────────────────────────────────────────────────────────────────────────────
+
   Future<String> exportLabels(Project project, List<LabelModel> labels) async {
     return await storageHelper.exportAllLabels(project, labels, []);
   }
 
-  /// 📌 외부로 라벨 + 데이터 정보 함께 export
-  Future<String> exportLabelsWithData(Project project, List<LabelModel> labels, List<DataInfo> dataInfos) async {
+  Future<String> exportLabelsWithData(
+    Project project,
+    List<LabelModel> labels,
+    List<DataInfo> dataInfos,
+  ) async {
     return await storageHelper.exportAllLabels(project, labels, dataInfos);
   }
 
-  /// 📌 외부에서 라벨 import
-  ///
-  /// - JSON or ZIP
   Future<List<LabelModel>> importLabels() async {
     return await storageHelper.importAllLabels();
   }
 
-  /// 📌 라벨이 유효한지 검사
-  ///
-  /// - 프로젝트의 클래스 기준으로 판단
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 📌 유효성 검사
+  // ─────────────────────────────────────────────────────────────────────────────
+
   bool isValid(Project project, LabelModel labelModel) {
     return LabelValidator.isValid(labelModel, project);
   }
 
-  /// 📌 라벨 상태를 반환 (완료/주의/미완료)
   LabelStatus getStatus(Project project, LabelModel? labelModel) {
     return LabelValidator.getStatus(project, labelModel);
   }
 
-  /// 📌 해당 라벨이 완전히 작성되었는지 여부
   bool isLabeled(LabelModel labelModel) {
     return labelModel.isLabeled;
   }

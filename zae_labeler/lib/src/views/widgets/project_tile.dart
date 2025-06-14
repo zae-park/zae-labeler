@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:zae_labeler/common/common_widgets.dart';
+import '../../models/project_model.dart';
 import '../../view_models/project_view_model.dart';
 import '../../view_models/configuration_view_model.dart';
 import '../pages/labeling_page.dart';
@@ -22,7 +23,7 @@ class ProjectTile extends StatelessWidget {
   }
 
   void _openEditPage(BuildContext context) async {
-    await Navigator.push(
+    final updated = await Navigator.push<Project?>(
       context,
       MaterialPageRoute(
         settings: const RouteSettings(name: '/configuration'),
@@ -32,7 +33,10 @@ class ProjectTile extends StatelessWidget {
         ),
       ),
     );
-    vm.onChanged?.call(vm.project);
+
+    if (updated != null) {
+      vm.onChanged?.call(updated);
+    }
   }
 
   Future<void> _confirmDelete(BuildContext context) async {

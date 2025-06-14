@@ -124,6 +124,11 @@ class ProjectViewModel extends ChangeNotifier {
     onChanged?.call(project);
   }
 
+  void updateFrom(Project updated) {
+    project = updated;
+    notifyListeners();
+  }
+
   // ==============================
   // 📌 다운로드 및 공유
   // ==============================

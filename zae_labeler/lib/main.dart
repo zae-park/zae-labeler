@@ -7,11 +7,12 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'firebase_options.dart';
 import 'env.dart';
+import 'src/domain/app_use_cases.dart';
+import 'src/domain/label/label_use_cases.dart';
 import 'src/domain/project/project_use_cases.dart';
-import 'src/domain/project/share_project_use_case.dart';
 import 'src/models/project_model.dart';
+import 'src/repositories/label_repository.dart';
 import 'src/repositories/project_repository.dart';
-import 'src/utils/share_helper.dart';
 import 'src/utils/storage_helper.dart';
 import 'src/utils/proxy_storage_helper/cloud_storage_helper.dart';
 import 'src/view_models/auth_view_model.dart';
@@ -43,18 +44,16 @@ class ZaeLabeler extends StatelessWidget {
   Widget build(BuildContext context) {
     final useCloud = isProd && kIsWeb; // 🔧 dev or local에서는 로컬 저장
     final storageHelper = useCloud ? CloudStorageHelper() : StorageHelper.instance;
-    final projectRepository = ProjectRepository(storageHelper: storageHelper);
-    final shareHelper = getShareHelper();
-    final shareUseCase = ShareProjectUseCase(shareHelper: shareHelper, repository: projectRepository);
-    final projectUseCases = ProjectUseCases.from(projectRepository, shareUseCase);
-    final pjtUseCases = ProjectUseCases.from(projectRepository, ShareProjectUseCase(shareHelper: shareHelper, repository: projectRepository));
+    final projectRepo = ProjectRepository(storageHelper: storageHelper);
+    final labelRepo = LabelRepository(storageHelper: storageHelper);
+
+    final appUseCases = AppUseCases(project: ProjectUseCases.from(projectRepo), label: LabelUseCases.from(labelRepo));
 
     return MultiProvider(
       providers: [
         Provider<StorageHelperInterface>.value(value: storageHelper),
-        Provider<ProjectRepository>.value(value: projectRepository),
-        Provider<ProjectUseCases>.value(value: projectUseCases),
-        ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(useCases: pjtUseCases)),
+        Provider<AppUseCases>.value(value: appUseCases),
+        ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(projectUseCases: appUseCases.project)),
         ChangeNotifierProvider<LocaleViewModel>(create: (_) => LocaleViewModel()),
         ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel()),
       ],

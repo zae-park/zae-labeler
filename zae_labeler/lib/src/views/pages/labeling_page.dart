@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../../domain/label/label_use_cases.dart';
+import '../../domain/project/project_use_cases.dart';
 import '../../models/label_model.dart';
 import '../../models/project_model.dart';
-import '../../repositories/label_repository.dart';
 import '../../utils/storage_helper.dart';
 import '../../view_models/labeling_view_model.dart';
+
+import '../../domain/app_use_cases.dart';
+import '../../repositories/label_repository.dart';
+import '../../repositories/project_repository.dart';
+
 import 'not_found_page.dart';
 import 'sub_pages/classification_labeling_page.dart';
 import 'sub_pages/segmentation_labeling_page.dart';
@@ -18,10 +25,16 @@ class LabelingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final helper = Provider.of<StorageHelperInterface>(context, listen: false);
+
+    // ✅ Repository 준비
     final labelRepo = LabelRepository(storageHelper: helper);
+    final projectRepo = ProjectRepository(storageHelper: helper);
+
+    // ✅ AppUseCases 구성
+    final appUseCases = AppUseCases.from(project: ProjectUseCases.from(projectRepo), label: LabelUseCases.from(labelRepo));
 
     return FutureBuilder<LabelingViewModel>(
-      future: LabelingViewModelFactory.createAsync(project, helper, labelRepo),
+      future: LabelingViewModelFactory.createAsync(project, helper, appUseCases),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -35,8 +48,10 @@ class LabelingPage extends StatelessWidget {
         if (!snapshot.hasData) {
           return const Scaffold(body: Center(child: Text('데이터 없음')));
         }
+
         final vm = snapshot.data!;
         debugPrint('[LabelingPage]: ${vm.runtimeType}');
+
         switch (project.mode) {
           case LabelingMode.singleClassification:
           case LabelingMode.multiClassification:
@@ -48,6 +63,7 @@ class LabelingPage extends StatelessWidget {
           case LabelingMode.singleClassSegmentation:
           case LabelingMode.multiClassSegmentation:
             return SegmentationLabelingPage(project: project, viewModel: vm as SegmentationLabelingViewModel);
+
           default:
             return const NotFoundPage();
         }
