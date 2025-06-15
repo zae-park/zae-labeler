@@ -66,4 +66,21 @@ extension LabelModelFactory on LabelModel {
         return MultiClassSegmentationLabelModel(dataId: dataId, labeledAt: now, label: null);
     }
   }
+
+  static Type expectedType(LabelingMode mode) {
+    switch (mode) {
+      case LabelingMode.singleClassification:
+        return SingleClassificationLabelModel;
+      case LabelingMode.multiClassification:
+        return MultiClassificationLabelModel;
+      case LabelingMode.crossClassification:
+        return CrossClassificationLabelModel;
+      case LabelingMode.singleClassSegmentation:
+        return SingleClassSegmentationLabelModel;
+      case LabelingMode.multiClassSegmentation:
+        return MultiClassSegmentationLabelModel;
+      default:
+        throw UnimplementedError("Unsupported mode: $mode");
+    }
+  }
 }
