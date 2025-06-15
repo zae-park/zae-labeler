@@ -90,6 +90,10 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
   @override
   Future<void> toggleLabel(String labelItem) async {
     if (currentPair == null) return;
+
+    final updatedPair = currentPair!.copyWith(relation: labelItem);
+    _crossPairs[currentPairIndex] = updatedPair;
+
     final labelVM = getOrCreateLabelVMForCrossPair(currentPair!);
     labelVM.toggleLabel(labelItem);
     await refreshStatus("${currentPair!.sourceId}_${currentPair!.targetId}");
@@ -98,9 +102,10 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
 
   @override
   bool isLabelSelected(String labelItem) {
-    if (currentPair == null) return false;
-    final labelVM = getOrCreateLabelVMForCrossPair(currentPair!);
-    return labelVM.isLabelSelected(labelItem);
+    return getOrCreateLabelVMForCrossPair(currentPair!).isLabelSelected(labelItem);
+    // if (currentPair == null) return false;
+    // final labelVM = getOrCreateLabelVMForCrossPair(currentPair!);
+    // return labelVM.isLabelSelected(labelItem);
   }
 
   @override
