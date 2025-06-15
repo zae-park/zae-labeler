@@ -1,9 +1,27 @@
 import '../models/label_model.dart';
 import '../domain/label/label_use_cases.dart';
 import 'label_view_model.dart';
+import 'managers/label_input_mapper.dart';
 export 'sub_view_models/base_label_view_model.dart';
 export 'sub_view_models/classification_label_view_model.dart';
 export 'sub_view_models/segmentation_label_view_model.dart';
+
+class LabelInputMapperFactory {
+  static LabelInputMapper create(LabelingMode mode) {
+    switch (mode) {
+      case LabelingMode.singleClassification:
+        return SingleClassificationInputMapper();
+      case LabelingMode.multiClassification:
+        return MultiClassificationInputMapper();
+      case LabelingMode.singleClassSegmentation:
+        return SingleSegmentationInputMapper();
+      case LabelingMode.multiClassSegmentation:
+        return MultiSegmentationInputMapper();
+      default:
+        throw UnsupportedError('Unsupported LabelingMode: $mode');
+    }
+  }
+}
 
 class LabelViewModelFactory {
   static LabelViewModel create({
@@ -22,6 +40,7 @@ class LabelViewModelFactory {
       mode: mode,
       labelModel: LabelModelFactory.createNew(mode, dataId: dataId),
       labelUseCases: labelUseCases,
+      labelInputMapper: LabelInputMapperFactory.create(mode),
     );
 
     switch (mode) {
@@ -35,6 +54,7 @@ class LabelViewModelFactory {
           mode: baseArgs.mode,
           labelModel: baseArgs.labelModel,
           labelUseCases: baseArgs.labelUseCases,
+          labelInputMapper: baseArgs.labelInputMapper,
         );
 
       case LabelingMode.crossClassification:
@@ -46,6 +66,7 @@ class LabelViewModelFactory {
           mode: baseArgs.mode,
           labelModel: baseArgs.labelModel,
           labelUseCases: baseArgs.labelUseCases,
+          labelInputMapper: baseArgs.labelInputMapper,
         );
 
       case LabelingMode.singleClassSegmentation:
@@ -58,6 +79,7 @@ class LabelViewModelFactory {
           mode: baseArgs.mode,
           labelModel: baseArgs.labelModel,
           labelUseCases: baseArgs.labelUseCases,
+          labelInputMapper: baseArgs.labelInputMapper,
         );
     }
   }
