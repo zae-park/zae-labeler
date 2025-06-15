@@ -15,7 +15,7 @@ class ClassificationLabelingViewModel extends LabelingViewModel {
   @override
   Future<void> updateLabel(dynamic labelData) async {
     final labelVM = currentLabelVM;
-    labelVM.updateLabel(labelData); // ✅ LabelViewModel 내부 책임으로 위임
+    await labelVM.updateLabelFromInput(labelData); // ✅ LabelViewModel 내부 책임으로 위임
     await refreshStatus(currentUnifiedData.dataId);
     notifyListeners();
   }
@@ -79,7 +79,7 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
     _crossPairs[currentPairIndex] = updatedPair;
 
     final labelVM = getOrCreateLabelVMForCrossPair(updatedPair);
-    labelVM.updateLabel(updatedPair);
+    labelVM.updateLabelFromInput(updatedPair);
 
     debugPrint("[CrossClsLabelingVM.updateLabel] source=\${updatedPair.sourceId}, target=\${updatedPair.targetId}, relation=\${updatedPair.relation}");
 
