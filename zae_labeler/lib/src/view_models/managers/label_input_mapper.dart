@@ -1,5 +1,6 @@
 import '../../models/label_model.dart';
 import '../../models/sub_models/classification_label_model.dart';
+import '../../models/sub_models/segmentation_label_model.dart';
 
 abstract class LabelInputMapper {
   LabelModel map(dynamic labelData, {required String dataId, required String dataPath});
@@ -35,5 +36,27 @@ class CrossClassificationInputMapper extends LabelInputMapper {
       labeledAt: DateTime.now(),
       label: CrossDataPair(sourceId: '', targetId: '', relation: labelData),
     );
+  }
+}
+
+/// ✅ Single-Class Segmentation 용
+class SingleSegmentationInputMapper extends LabelInputMapper {
+  @override
+  LabelModel map(dynamic labelData, {required String dataId, required String dataPath}) {
+    if (labelData is! SegmentationData) {
+      throw ArgumentError('Expected SegmentationData');
+    }
+    return SingleClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, labeledAt: DateTime.now(), label: labelData);
+  }
+}
+
+/// ✅ Multi-Class Segmentation 용
+class MultiSegmentationInputMapper extends LabelInputMapper {
+  @override
+  LabelModel map(dynamic labelData, {required String dataId, required String dataPath}) {
+    if (labelData is! SegmentationData) {
+      throw ArgumentError('Expected SegmentationData');
+    }
+    return MultiClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, labeledAt: DateTime.now(), label: labelData);
   }
 }
