@@ -99,7 +99,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
   LabelViewModel getOrCreateLabelVM() {
     final id = _currentUnifiedData.dataId;
     return labelCache.putIfAbsent(id, () {
-      return LabelViewModelFactory.create(
+      final vm = LabelViewModelFactory.create(
         projectId: project.id,
         dataId: id,
         dataFilename: _currentUnifiedData.fileName,
@@ -107,6 +107,9 @@ abstract class LabelingViewModel extends ChangeNotifier {
         mode: project.mode,
         labelUseCases: appUseCases.label,
       );
+
+      vm.addListener(notifyListeners);
+      return vm;
     });
   }
 
@@ -154,5 +157,14 @@ abstract class LabelingViewModel extends ChangeNotifier {
     final allLabels = labelCache.values.map((vm) => vm.labelModel).toList();
     final dataInfos = _unifiedDataList.map((e) => e.toDataInfo()).toList();
     return await appUseCases.label.io.exportLabelsWithData(project, allLabels, dataInfos);
+  }
+
+  @override
+  void dispose() {
+    for (final vm in labelCache.values) {
+      vm.removeListener(notifyListeners);
+      vm.dispose();
+    }
+    super.dispose();
   }
 }
