@@ -14,37 +14,22 @@ class SegmentationLabelViewModel extends LabelViewModel {
     required super.mode,
     required super.labelModel,
     required super.labelUseCases,
+    required super.labelInputMapper,
   });
-
-  @override
-  void updateLabel(dynamic labelData) {
-    if (labelModel is SegmentationLabelModel) {
-      if (labelData is SegmentationData) {
-        labelModel = (labelModel as SegmentationLabelModel).copyWith(label: labelData);
-        notifyListeners();
-      } else {
-        throw ArgumentError('labelData must be SegmentationLabelData');
-      }
-    }
-  }
 
   @override
   Future<void> addPixel(int x, int y, String classLabel) async {
     final prev = labelModel as SegmentationLabelModel;
-    final newModel = prev.copyWith(labeledAt: DateTime.now(), label: prev.label?.addPixel(x, y, classLabel));
-
-    labelModel = newModel;
-    await saveLabel();
-    notifyListeners();
+    final updated = prev.label?.addPixel(x, y, classLabel);
+    final newModel = prev.copyWith(labeledAt: DateTime.now(), label: updated);
+    await updateLabel(newModel);
   }
 
   @override
   Future<void> removePixel(int x, int y) async {
     final prev = labelModel as SegmentationLabelModel;
-    final newModel = prev.copyWith(labeledAt: DateTime.now(), label: prev.label?.removePixel(x, y));
-
-    labelModel = newModel;
-    await saveLabel();
-    notifyListeners();
+    final updated = prev.label?.removePixel(x, y);
+    final newModel = prev.copyWith(labeledAt: DateTime.now(), label: updated);
+    await updateLabel(newModel);
   }
 }
