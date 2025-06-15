@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:zae_labeler/common/common_widgets.dart';
+import '../../domain/app_use_cases.dart';
 import '../../view_models/project_list_view_model.dart';
 import '../../view_models/locale_view_model.dart';
 import '../../view_models/configuration_view_model.dart';
@@ -74,6 +75,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final appUseCases = Provider.of<AppUseCases>(context, listen: false);
     return Consumer2<ProjectListViewModel, LocaleViewModel>(
       builder: (context, projectListVM, localeVM, child) {
         return Scaffold(
@@ -102,7 +104,9 @@ class _ProjectListPageState extends State<ProjectListPage> {
                 icon: const Icon(Icons.add),
                 onPressed: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => ChangeNotifierProvider(create: (_) => ConfigurationViewModel(), child: const ConfigureProjectPage())),
+                  MaterialPageRoute(
+                      builder: (_) =>
+                          ChangeNotifierProvider(create: (_) => ConfigurationViewModel(appUseCases: appUseCases), child: const ConfigureProjectPage())),
                 ),
                 tooltip: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 생성' : 'Create Project',
               ),

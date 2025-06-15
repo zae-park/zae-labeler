@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:zae_labeler/common/common_widgets.dart';
+import '../../domain/app_use_cases.dart';
 import '../../models/project_model.dart';
 import '../../view_models/project_view_model.dart';
 import '../../view_models/configuration_view_model.dart';
@@ -18,11 +19,13 @@ class ProjectTile extends StatelessWidget {
   }
 
   void _openEditPage(BuildContext context) async {
+    final appUseCases = Provider.of<AppUseCases>(context, listen: false);
     final updated = await Navigator.push<Project?>(
       context,
       MaterialPageRoute(
         settings: const RouteSettings(name: '/configuration'),
-        builder: (_) => ChangeNotifierProvider(create: (_) => ConfigurationViewModel.fromProject(vm.project), child: const ConfigureProjectPage()),
+        builder: (_) => ChangeNotifierProvider(
+            create: (_) => ConfigurationViewModel.fromProject(vm.project, appUseCases: appUseCases), child: const ConfigureProjectPage()),
       ),
     );
 
