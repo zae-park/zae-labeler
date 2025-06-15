@@ -1,4 +1,6 @@
 // lib/src/utils/interface_storage_helper.dart
+import 'package:flutter/foundation.dart';
+
 import '../../models/data_model.dart';
 import '../../models/label_model.dart';
 import '../../models/project_model.dart';
@@ -55,6 +57,7 @@ class LabelModelConverter {
       final dataId = json['data_id'] ?? '';
       final dataPath = json['data_path'];
       final labeledAt = DateTime.parse(json['labeled_at']);
+      debugPrint("[LabelModelConverter.fromJson] 📥 LabelModel 생성: $mode / $dataId");
 
       switch (mode) {
         case LabelingMode.singleClassification:
@@ -69,6 +72,7 @@ class LabelModelConverter {
           return MultiClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: SegmentationData.fromJson(json['label']), labeledAt: labeledAt);
       }
     } catch (e) {
+      debugPrint("[LabelModelConverter.fromJson] ❌ LabelModel 생성 실패: $e");
       return SingleClassificationLabelModel.empty();
     }
   }
