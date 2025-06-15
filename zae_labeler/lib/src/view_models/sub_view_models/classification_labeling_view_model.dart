@@ -6,7 +6,6 @@ import '../../utils/cross_pairing.dart';
 import '../label_view_model.dart';
 import 'base_labeling_view_model.dart';
 import '../../models/sub_models/classification_label_model.dart';
-import '../../models/sub_models/segmentation_label_model.dart';
 
 /// ViewModel for single and multi classification labeling modes.
 /// Handles label toggling and status tracking per data item.
@@ -16,40 +15,21 @@ class ClassificationLabelingViewModel extends LabelingViewModel {
   @override
   Future<void> updateLabel(dynamic labelData) async {
     final labelVM = currentLabelVM;
-
-    if (labelVM.labelModel is ClassificationLabelModel) {
-      final model = labelVM.labelModel as ClassificationLabelModel;
-      labelVM.labelModel = model.isMultiClass ? model.toggleLabel(labelData) : model.updateLabel(labelData);
-
-      debugPrint("[ClsLabelingVM.updateLabel] selected: \${labelVM.labelModel.label}");
-
-      await labelVM.saveLabel();
-      await refreshStatus(currentUnifiedData.dataId);
-
-      notifyListeners();
-    } else if (labelVM.labelModel is SegmentationLabelModel) {
-      throw UnimplementedError('SegmentationLabelModel은 ClassificationLabelingViewModel에서 지원하지 않습니다.');
-    }
+    await labelVM.updateLabelFromInput(labelData); // ✅ LabelViewModel 내부 책임으로 위임
+    await refreshStatus(currentUnifiedData.dataId);
+    notifyListeners();
   }
 
   @override
-  void toggleLabel(String labelItem) {
+  Future<void> toggleLabel(String labelItem) async {
     final labelVM = currentLabelVM;
-
-    if (labelVM.labelModel is ClassificationLabelModel) {
-      labelVM.labelModel = (labelVM.labelModel as ClassificationLabelModel).toggleLabel(labelItem);
-      notifyListeners();
-    }
+    labelVM.toggleLabel(labelItem);
+    await refreshStatus(currentUnifiedData.dataId);
+    notifyListeners();
   }
 
   @override
-  bool isLabelSelected(String labelItem) {
-    final model = currentLabelVM.labelModel;
-    if (model is ClassificationLabelModel) {
-      return model.isSelected(labelItem);
-    }
-    return false;
-  }
+  bool isLabelSelected(String labelItem) => currentLabelVM.isLabelSelected(labelItem);
 }
 
 /// ViewModel for cross classification mode, labeling pairs of data.
@@ -99,8 +79,7 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
     _crossPairs[currentPairIndex] = updatedPair;
 
     final labelVM = getOrCreateLabelVMForCrossPair(updatedPair);
-    labelVM.labelModel =
-        CrossClassificationLabelModel(dataId: '${updatedPair.sourceId}_${updatedPair.targetId}', label: updatedPair, labeledAt: DateTime.now());
+    labelVM.updateLabelFromInput(updatedPair);
 
     debugPrint("[CrossClsLabelingVM.updateLabel] source=\${updatedPair.sourceId}, target=\${updatedPair.targetId}, relation=\${updatedPair.relation}");
 
@@ -109,13 +88,24 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
   }
 
   @override
-  void toggleLabel(String labelItem) {
-    updateLabel(labelItem);
+  Future<void> toggleLabel(String labelItem) async {
+    if (currentPair == null) return;
+
+    final updatedPair = currentPair!.copyWith(relation: labelItem);
+    _crossPairs[currentPairIndex] = updatedPair;
+
+    final labelVM = getOrCreateLabelVMForCrossPair(currentPair!);
+    labelVM.toggleLabel(labelItem);
+    await refreshStatus("${currentPair!.sourceId}_${currentPair!.targetId}");
+    notifyListeners();
   }
 
   @override
   bool isLabelSelected(String labelItem) {
-    return currentPair?.relation == labelItem;
+    return getOrCreateLabelVMForCrossPair(currentPair!).isLabelSelected(labelItem);
+    // if (currentPair == null) return false;
+    // final labelVM = getOrCreateLabelVMForCrossPair(currentPair!);
+    // return labelVM.isLabelSelected(labelItem);
   }
 
   @override
@@ -141,14 +131,14 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
   }
 
   LabelViewModel getOrCreateLabelVMForCrossPair(CrossDataPair pair) {
-    String id = "\${pair.sourceId}_\${pair.targetId}";
+    String id = "${pair.sourceId}_${pair.targetId}";
     return labelCache.putIfAbsent(
-        id,
-        () => LabelViewModelFactory.create(
-            projectId: project.id, dataId: id, dataFilename: id, dataPath: '', mode: project.mode, labelUseCases: appUseCases.label));
+      id,
+      () =>
+          LabelViewModelFactory.create(projectId: project.id, dataId: id, dataFilename: id, dataPath: '', mode: project.mode, labelUseCases: appUseCases.label),
+    );
   }
 
   UnifiedData get currentSourceData => unifiedDataList.firstWhere((e) => e.dataId == _selectedDataIds[_sourceIndex]);
-
   UnifiedData get currentTargetData => unifiedDataList.firstWhere((e) => e.dataId == _selectedDataIds[_targetIndex]);
 }

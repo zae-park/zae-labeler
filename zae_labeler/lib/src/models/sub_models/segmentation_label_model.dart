@@ -4,14 +4,26 @@ import '../../utils/run_length_codec.dart';
 /// ✅ Segmentation Label의 최상위 클래스
 abstract class SegmentationLabelModel<T> extends LabelModel<T> {
   SegmentationLabelModel({required super.dataId, super.dataPath, required super.label, required super.labeledAt});
+  // SegmentationLabelModel updateLabel(SegmentationData labelData);
+  SegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label});
 
-  SegmentationLabelModel<T> addPixel(int x, int y, String classLabel);
-  SegmentationLabelModel<T> removePixel(int x, int y);
+  @override
+  LabelingMode get mode;
+  @override
+  bool get isMultiClass;
+  @override
+  bool get isLabeled;
+
+  // SegmentationLabelModel<T> addPixel(int x, int y, String classLabel);
+  // SegmentationLabelModel<T> removePixel(int x, int y);
 }
 
 /// ✅ 단일 클래스 세그멘테이션 (Single-Class Segmentation)
 class SingleClassSegmentationLabelModel extends SegmentationLabelModel<SegmentationData> {
   SingleClassSegmentationLabelModel({required super.dataId, super.dataPath, required super.label, required super.labeledAt});
+
+  @override
+  LabelingMode get mode => LabelingMode.singleClassSegmentation;
 
   @override
   bool get isMultiClass => false;
@@ -28,27 +40,26 @@ class SingleClassSegmentationLabelModel extends SegmentationLabelModel<Segmentat
         dataId: json['data_id'], dataPath: json['data_path'], label: SegmentationData.fromJson(json['label']), labeledAt: DateTime.parse(json['labeled_at']));
   }
 
+  @override
   factory SingleClassSegmentationLabelModel.empty() =>
       SingleClassSegmentationLabelModel(dataId: '', dataPath: null, label: SegmentationData(segments: {}), labeledAt: DateTime.fromMillisecondsSinceEpoch(0));
 
-  @override
-  SingleClassSegmentationLabelModel addPixel(int x, int y, String classLabel) => updateLabel(label!.addPixel(x, y, classLabel));
-  @override
-  SingleClassSegmentationLabelModel removePixel(int x, int y) => updateLabel(label!.removePixel(x, y));
+  // @override
+  // SingleClassSegmentationLabelModel addPixel(int x, int y, String classLabel) => updateLabel(label!.addPixel(x, y, classLabel));
+  // @override
+  // SingleClassSegmentationLabelModel removePixel(int x, int y) => updateLabel(label!.removePixel(x, y));
+
+  // @override
+  // SingleClassSegmentationLabelModel updateLabel(SegmentationData labelData) =>
+  //     SingleClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: labelData, labeledAt: DateTime.now());
+
+  // bool isSelected(SegmentationData labelData) {
+  //   if (label!.segments.isEmpty || labelData.segments.isEmpty) return false;
+  //   final labelClass = label!.segments.keys.first;
+  //   return labelData.segments[labelClass]?.indices.any((index) => label!.segments[labelClass]?.indices.contains(index) ?? false) ?? false;
+  // }
 
   @override
-  SingleClassSegmentationLabelModel updateLabel(SegmentationData labelData) =>
-      SingleClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: labelData, labeledAt: DateTime.now());
-
-  bool isSelected(SegmentationData labelData) {
-    if (label!.segments.isEmpty || labelData.segments.isEmpty) return false;
-    final labelClass = label!.segments.keys.first;
-    return labelData.segments[labelClass]?.indices.any((index) => label!.segments[labelClass]?.indices.contains(index) ?? false) ?? false;
-  }
-
-  @override
-  LabelingMode get mode => LabelingMode.singleClassSegmentation;
-
   SingleClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) =>
       SingleClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
 }
@@ -56,6 +67,9 @@ class SingleClassSegmentationLabelModel extends SegmentationLabelModel<Segmentat
 /// ✅ 다중 클래스 세그멘테이션 (Multi-Class Segmentation) - 추후 업데이트
 class MultiClassSegmentationLabelModel extends SegmentationLabelModel<SegmentationData> {
   MultiClassSegmentationLabelModel({required super.dataId, super.dataPath, required super.label, required super.labeledAt});
+
+  @override
+  LabelingMode get mode => LabelingMode.multiClassSegmentation;
 
   @override
   bool get isMultiClass => true;
@@ -70,28 +84,27 @@ class MultiClassSegmentationLabelModel extends SegmentationLabelModel<Segmentati
   factory MultiClassSegmentationLabelModel.fromJson(Map<String, dynamic> json) => MultiClassSegmentationLabelModel(
       dataId: json['data_id'], dataPath: json['data_path'], label: SegmentationData.fromJson(json['label']), labeledAt: DateTime.parse(json['labeled_at']));
 
+  @override
   factory MultiClassSegmentationLabelModel.empty() =>
       MultiClassSegmentationLabelModel(dataId: '', dataPath: null, label: SegmentationData(segments: {}), labeledAt: DateTime.fromMillisecondsSinceEpoch(0));
 
   @override
-  MultiClassSegmentationLabelModel addPixel(int x, int y, String classLabel) => updateLabel(label!.addPixel(x, y, classLabel));
-  @override
-  MultiClassSegmentationLabelModel removePixel(int x, int y) => updateLabel(label!.removePixel(x, y));
-
-  @override
-  MultiClassSegmentationLabelModel updateLabel(SegmentationData labelData) =>
-      MultiClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: labelData, labeledAt: DateTime.now());
-
-  bool isSelected(SegmentationData other) => other.segments.entries.any((entry) {
-        final targetSegment = label!.segments[entry.key];
-        return targetSegment != null && entry.value.indices.any((index) => targetSegment.indices.contains(index));
-      });
-
-  @override
-  LabelingMode get mode => LabelingMode.multiClassSegmentation;
-
   MultiClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) =>
       MultiClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
+
+  // @override
+  // MultiClassSegmentationLabelModel addPixel(int x, int y, String classLabel) => updateLabel(label!.addPixel(x, y, classLabel));
+  // @override
+  // MultiClassSegmentationLabelModel removePixel(int x, int y) => updateLabel(label!.removePixel(x, y));
+
+  // @override
+  // MultiClassSegmentationLabelModel updateLabel(SegmentationData labelData) =>
+  //     MultiClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: labelData, labeledAt: DateTime.now());
+
+  // bool isSelected(SegmentationData other) => other.segments.entries.any((entry) {
+  //       final targetSegment = label!.segments[entry.key];
+  //       return targetSegment != null && entry.value.indices.any((index) => targetSegment.indices.contains(index));
+  //     });
 }
 
 /// ✅ 세그멘테이션 데이터 구조를 저장하는 클래스.

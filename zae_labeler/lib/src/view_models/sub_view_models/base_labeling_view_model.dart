@@ -11,7 +11,7 @@ import '../label_view_model.dart';
 
 /// Abstract base class for all LabelingViewModels.
 abstract class LabelingViewModel extends ChangeNotifier {
-  final Project project;
+  late Project _project;
   final StorageHelperInterface storageHelper;
   final AppUseCases appUseCases;
   final List<UnifiedData>? initialDataList;
@@ -26,8 +26,16 @@ abstract class LabelingViewModel extends ChangeNotifier {
   final Map<String, LabelViewModel> labelCache = {};
   void clearLabelCache() => labelCache.clear();
 
-  LabelingViewModel({required this.project, required this.storageHelper, required this.appUseCases, this.initialDataList});
+  LabelingViewModel({required Project project, required this.storageHelper, required this.appUseCases, this.initialDataList}) {
+    _project = project;
+  }
 
+  set project(Project updated) {
+    _project = updated;
+    notifyListeners();
+  }
+
+  Project get project => _project;
   bool get isInitialized => _isInitialized;
   int get currentIndex => _currentIndex;
   List<UnifiedData> get unifiedDataList => _unifiedDataList;
@@ -73,11 +81,31 @@ abstract class LabelingViewModel extends ChangeNotifier {
 
   Future<void> validateLabelModelType() async {
     final labelVM = currentLabelVM;
-    if (labelVM.mode != project.mode) {
-      debugPrint("⚠️ 라벨 모델 모드 불일치 → 초기화");
+    final expectedType = LabelModelFactory.expectedType(project.mode);
+
+    if (labelVM.labelModel.runtimeType != expectedType) {
+      debugPrint("⚠️ 라벨 모델 타입 불일치 → 초기화");
+
+      // 기존 VM 제거
       labelCache.remove(_currentUnifiedData.dataId);
-      labelVM.labelModel = LabelModelFactory.createNew(project.mode, dataId: _currentUnifiedData.dataId);
-      await labelVM.saveLabel();
+
+      // 새로운 VM 생성 및 교체
+      final newVM = LabelViewModelFactory.create(
+        projectId: project.id,
+        dataId: _currentUnifiedData.dataId,
+        dataFilename: _currentUnifiedData.fileName,
+        dataPath: _currentUnifiedData.dataPath ?? '',
+        mode: project.mode,
+        labelUseCases: appUseCases.label,
+      );
+      await newVM.loadLabel();
+
+      // 새로 캐시 및 리스너 등록
+      newVM.addListener(notifyListeners);
+      labelCache[_currentUnifiedData.dataId] = newVM;
+
+      final refreshed = getOrCreateLabelVM();
+      debugPrint("✅ [validateLabelModelType] refreshed: ${refreshed.labelModel.runtimeType}, multi=${refreshed.labelModel.isMultiClass}");
     }
   }
 
@@ -99,7 +127,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
   LabelViewModel getOrCreateLabelVM() {
     final id = _currentUnifiedData.dataId;
     return labelCache.putIfAbsent(id, () {
-      return LabelViewModelFactory.create(
+      final vm = LabelViewModelFactory.create(
         projectId: project.id,
         dataId: id,
         dataFilename: _currentUnifiedData.fileName,
@@ -107,6 +135,9 @@ abstract class LabelingViewModel extends ChangeNotifier {
         mode: project.mode,
         labelUseCases: appUseCases.label,
       );
+      debugPrint("[Factory.created] mode=${vm.mode}, dataId=${vm.dataId}, dataPath=${vm.dataPath}");
+      vm.addListener(notifyListeners);
+      return vm;
     });
   }
 
@@ -154,5 +185,14 @@ abstract class LabelingViewModel extends ChangeNotifier {
     final allLabels = labelCache.values.map((vm) => vm.labelModel).toList();
     final dataInfos = _unifiedDataList.map((e) => e.toDataInfo()).toList();
     return await appUseCases.label.io.exportLabelsWithData(project, allLabels, dataInfos);
+  }
+
+  @override
+  void dispose() {
+    for (final vm in labelCache.values) {
+      vm.removeListener(notifyListeners);
+      vm.dispose();
+    }
+    super.dispose();
   }
 }

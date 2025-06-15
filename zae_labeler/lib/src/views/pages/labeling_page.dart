@@ -51,6 +51,7 @@ class LabelingPage extends StatelessWidget {
 
         final vm = snapshot.data!;
         debugPrint('[LabelingPage]: ${vm.runtimeType}');
+        debugPrint('[LabelingPage]: ${vm.project.mode}');
 
         switch (project.mode) {
           case LabelingMode.singleClassification:

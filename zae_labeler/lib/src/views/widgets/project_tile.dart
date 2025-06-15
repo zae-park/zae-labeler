@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:zae_labeler/common/common_widgets.dart';
+import '../../domain/app_use_cases.dart';
 import '../../models/project_model.dart';
 import '../../view_models/project_view_model.dart';
 import '../../view_models/configuration_view_model.dart';
@@ -14,28 +15,23 @@ class ProjectTile extends StatelessWidget {
   const ProjectTile({Key? key, required this.vm}) : super(key: key);
 
   void _openLabelingPage(BuildContext context) {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-          settings: const RouteSettings(name: '/labeling'),
-          builder: (_) => LabelingPage(project: vm.project),
-        ));
+    Navigator.push(context, MaterialPageRoute(settings: const RouteSettings(name: '/labeling'), builder: (_) => LabelingPage(project: vm.project)));
   }
 
   void _openEditPage(BuildContext context) async {
+    final appUseCases = Provider.of<AppUseCases>(context, listen: false);
     final updated = await Navigator.push<Project?>(
       context,
       MaterialPageRoute(
         settings: const RouteSettings(name: '/configuration'),
         builder: (_) => ChangeNotifierProvider(
-          create: (_) => ConfigurationViewModel.fromProject(vm.project),
-          child: const ConfigureProjectPage(),
-        ),
+            create: (_) => ConfigurationViewModel.fromProject(vm.project, appUseCases: appUseCases), child: const ConfigureProjectPage()),
       ),
     );
 
     if (updated != null) {
-      vm.onChanged?.call(updated);
+      vm.updateFrom(updated); // ✅ ViewModel 내부 상태 갱신
+      vm.onChanged?.call(updated); // ✅ 외부 콜백도 호출 (필요한 경우)
     }
   }
 

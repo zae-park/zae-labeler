@@ -4,8 +4,8 @@ import '../label_model.dart';
 abstract class ClassificationLabelModel<T> extends LabelModel<T> {
   ClassificationLabelModel({required super.dataId, super.dataPath, required super.label, required super.labeledAt});
 
-  LabelModel toggleLabel(String labelItem);
-  bool isSelected(String labelData);
+  // LabelModel toggleLabel(String labelItem);
+  // bool isSelected(String labelData);
   @override
   LabelingMode get mode => throw UnimplementedError('mode must be implemented in subclasses.');
 }
@@ -34,16 +34,16 @@ class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
     return SingleClassificationLabelModel(dataId: '', dataPath: null, label: null, labeledAt: DateTime.fromMillisecondsSinceEpoch(0));
   }
 
-  @override
-  SingleClassificationLabelModel updateLabel(String labelData) {
-    return SingleClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: labelData, labeledAt: DateTime.now());
-  }
+  // @override
+  // SingleClassificationLabelModel updateLabel(String labelData) {
+  //   return SingleClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: labelData, labeledAt: DateTime.now());
+  // }
 
-  @override
-  LabelModel toggleLabel(String labelItem) => updateLabel(labelItem);
+  // @override
+  // LabelModel toggleLabel(String labelItem) => updateLabel(labelItem);
 
-  @override
-  bool isSelected(String labelData) => label == labelData;
+  // @override
+  // bool isSelected(String labelData) => label == labelData;
 
   @override
   LabelingMode get mode => LabelingMode.singleClassification;
@@ -72,23 +72,23 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
   factory MultiClassificationLabelModel.empty() =>
       MultiClassificationLabelModel(dataId: '', dataPath: null, label: null, labeledAt: DateTime.fromMillisecondsSinceEpoch(0));
 
-  @override
-  MultiClassificationLabelModel updateLabel(Set<String> labelData) =>
-      MultiClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: labelData, labeledAt: DateTime.now());
+  // @override
+  // MultiClassificationLabelModel updateLabel(Set<String> labelData) =>
+  //     MultiClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: labelData, labeledAt: DateTime.now());
 
-  @override
-  LabelModel toggleLabel(String labelItem) {
-    final updated = Set<String>.from(label ?? {});
-    if (updated.contains(labelItem)) {
-      updated.remove(labelItem);
-    } else {
-      updated.add(labelItem);
-    }
-    return updateLabel(updated);
-  }
+  // @override
+  // LabelModel toggleLabel(String labelItem) {
+  //   final updated = Set<String>.from(label ?? {});
+  //   if (updated.contains(labelItem)) {
+  //     updated.remove(labelItem);
+  //   } else {
+  //     updated.add(labelItem);
+  //   }
+  //   return updateLabel(updated);
+  // }
 
-  @override
-  bool isSelected(String labelData) => label?.contains(labelData) ?? false;
+  // @override
+  // bool isSelected(String labelData) => label?.contains(labelData) ?? false;
 
   @override
   LabelingMode get mode => LabelingMode.multiClassification;
@@ -134,17 +134,17 @@ class CrossClassificationLabelModel extends ClassificationLabelModel<CrossDataPa
   }
 
   @override
-  CrossClassificationLabelModel updateLabel(CrossDataPair labelData) =>
-      CrossClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: labelData, labeledAt: DateTime.now());
+  // CrossClassificationLabelModel updateLabel(CrossDataPair labelData) =>
+  //     CrossClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: labelData, labeledAt: DateTime.now());
 
-  @override
-  LabelModel toggleLabel(String labelItem) {
-    if (label == null) return this;
-    return updateLabel(label!.copyWith(relation: labelItem));
-  }
+  // @override
+  // LabelModel toggleLabel(String labelItem) {
+  //   if (label == null) return this;
+  //   return updateLabel(label!.copyWith(relation: labelItem));
+  // }
 
-  @override
-  bool isSelected(String labelData) => label?.relation == labelData;
+  // @override
+  // bool isSelected(String labelData) => label?.relation == labelData;
 
   @override
   LabelingMode get mode => LabelingMode.crossClassification;

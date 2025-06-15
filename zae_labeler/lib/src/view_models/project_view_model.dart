@@ -33,12 +33,8 @@ class ProjectViewModel extends ChangeNotifier {
   final void Function(Project updated)? onChanged;
   late final LabelingMode _initialMode;
 
-  ProjectViewModel({
-    required this.shareHelper,
-    required this.useCases,
-    this.onChanged,
-    Project? project,
-  }) : project = project ??
+  ProjectViewModel({required this.shareHelper, required this.useCases, this.onChanged, Project? project})
+      : project = project ??
             Project(
               id: project?.id ?? const Uuid().v4(),
               name: project?.name ?? '',
