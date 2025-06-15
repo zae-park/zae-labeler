@@ -52,7 +52,7 @@ abstract class LabelViewModel extends ChangeNotifier {
   }
 
   bool isLabelSelected(String labelItem) => throw UnimplementedError("Only for classification");
-  void toggleLabel(String labelItem) => throw UnimplementedError("Only for classification");
+  Future<void> toggleLabel(String labelItem) => throw UnimplementedError("Only for classification");
   Future<void> addPixel(int x, int y, String classLabel) => throw UnimplementedError("Only for segmentation");
   Future<void> removePixel(int x, int y) => throw UnimplementedError("Only for segmentation");
 }
