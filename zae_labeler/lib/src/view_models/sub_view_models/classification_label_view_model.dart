@@ -13,30 +13,10 @@ class ClassificationLabelViewModel extends LabelViewModel {
     required super.mode,
     required super.labelModel,
     required super.labelUseCases,
+    required super.labelInputMapper,
   });
 
   bool get isMultiLabel => labelModel.isMultiClass;
-
-  @override
-  void updateLabel(dynamic labelData) async {
-    ClassificationLabelModel newModel;
-
-    if (isMultiLabel) {
-      if (labelData is! Set<String>) {
-        throw ArgumentError('Expected Set<String> for multi-label mode');
-      }
-      newModel = MultiClassificationLabelModel(dataId: dataId, dataPath: dataPath, labeledAt: DateTime.now(), label: labelData);
-    } else {
-      if (labelData != null && labelData is! String) {
-        throw ArgumentError('Expected String or null for single-label mode');
-      }
-      newModel = SingleClassificationLabelModel(dataId: dataId, dataPath: dataPath, labeledAt: DateTime.now(), label: labelData);
-    }
-
-    labelModel = newModel;
-    await saveLabel();
-    notifyListeners();
-  }
 
   @override
   void toggleLabel(String labelItem) {
@@ -49,9 +29,9 @@ class ClassificationLabelViewModel extends LabelViewModel {
       } else {
         currentSet.add(labelItem);
       }
-      updateLabel(currentSet);
+      updateLabelFromInput(currentSet);
     } else {
-      updateLabel(current == labelItem ? null : labelItem);
+      updateLabelFromInput(current == labelItem ? null : labelItem);
     }
   }
 
@@ -76,22 +56,8 @@ class CrossClassificationLabelViewModel extends LabelViewModel {
     required super.mode,
     required super.labelModel,
     required super.labelUseCases,
+    required super.labelInputMapper,
   });
-
-  @override
-  Future<void> updateLabel(dynamic labelData) async {
-    if (labelData is! String) {
-      throw ArgumentError('labelData must be a String in CrossClassification');
-    }
-
-    final previous = labelModel as CrossClassificationLabelModel;
-    final newModel =
-        CrossClassificationLabelModel(dataId: dataId, dataPath: dataPath, labeledAt: DateTime.now(), label: previous.label?.copyWith(relation: labelData));
-
-    labelModel = newModel;
-    await saveLabel();
-    notifyListeners();
-  }
 
   @override
   Future<void> toggleLabel(String labelItem) async {
@@ -102,10 +68,10 @@ class CrossClassificationLabelViewModel extends LabelViewModel {
 
     final toggled = current.relation == labelItem ? '' : labelItem;
 
-    labelModel = CrossClassificationLabelModel(dataId: dataId, dataPath: dataPath, labeledAt: DateTime.now(), label: current.copyWith(relation: toggled));
+    final toggledModel =
+        CrossClassificationLabelModel(dataId: dataId, dataPath: dataPath, labeledAt: DateTime.now(), label: current.copyWith(relation: toggled));
 
-    await saveLabel();
-    notifyListeners();
+    updateLabel(toggledModel);
   }
 
   @override
