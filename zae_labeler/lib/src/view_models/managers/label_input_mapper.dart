@@ -24,3 +24,16 @@ class MultiClassificationInputMapper extends LabelInputMapper {
     return MultiClassificationLabelModel(dataId: dataId, dataPath: dataPath, labeledAt: DateTime.now(), label: labelData);
   }
 }
+
+class CrossClassificationInputMapper extends LabelInputMapper {
+  @override
+  LabelModel map(dynamic labelData, {required String dataId, required String dataPath}) {
+    if (labelData is! String) throw ArgumentError('Expected String');
+    return CrossClassificationLabelModel(
+      dataId: dataId,
+      dataPath: dataPath,
+      labeledAt: DateTime.now(),
+      label: CrossDataPair(sourceId: '', targetId: '', relation: labelData),
+    );
+  }
+}
