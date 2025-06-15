@@ -2,6 +2,11 @@ import '../../models/label_model.dart';
 import '../../models/sub_models/classification_label_model.dart';
 import '../../models/sub_models/segmentation_label_model.dart';
 
+/// [labelData]는 모드에 따라 다음과 같은 타입이 요구됩니다:
+/// - SingleClassification: String
+/// - MultiClassification: Set<String>
+/// - CrossClassification: CrossDataPair
+/// - Segmentation: SegmentationData
 abstract class LabelInputMapper {
   LabelModel map(dynamic labelData, {required String dataId, required String dataPath});
 }
@@ -29,13 +34,11 @@ class MultiClassificationInputMapper extends LabelInputMapper {
 class CrossClassificationInputMapper extends LabelInputMapper {
   @override
   LabelModel map(dynamic labelData, {required String dataId, required String dataPath}) {
-    if (labelData is! String) throw ArgumentError('Expected String');
-    return CrossClassificationLabelModel(
-      dataId: dataId,
-      dataPath: dataPath,
-      labeledAt: DateTime.now(),
-      label: CrossDataPair(sourceId: '', targetId: '', relation: labelData),
-    );
+    if (labelData is! CrossDataPair) {
+      throw ArgumentError('Expected CrossDataPair');
+    }
+
+    return CrossClassificationLabelModel(dataId: dataId, dataPath: dataPath, labeledAt: DateTime.now(), label: labelData);
   }
 }
 
