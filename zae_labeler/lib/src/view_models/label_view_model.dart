@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../models/label_model.dart';
 import '../domain/label/label_use_cases.dart';
 import 'label_view_model.dart';
@@ -42,7 +44,7 @@ class LabelViewModelFactory {
       labelUseCases: labelUseCases,
       labelInputMapper: LabelInputMapperFactory.create(mode),
     );
-
+    debugPrint("[Factory.create] mode=$mode");
     switch (mode) {
       case LabelingMode.singleClassification:
       case LabelingMode.multiClassification:
