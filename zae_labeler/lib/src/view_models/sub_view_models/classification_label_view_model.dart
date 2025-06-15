@@ -19,20 +19,34 @@ class ClassificationLabelViewModel extends LabelViewModel {
   bool get isMultiLabel => labelModel.isMultiClass;
 
   @override
-  void toggleLabel(String labelItem) {
-    final current = labelModel.label;
-
+  Future<void> updateLabelFromInput(dynamic labelData) async {
     if (isMultiLabel) {
+      // ✅ 내부 상태와 비교하여 Set<String> 업데이트
+      final current = labelModel.label;
       final currentSet = (current is Set<String>) ? Set<String>.from(current) : <String>{};
-      if (currentSet.contains(labelItem)) {
-        currentSet.remove(labelItem);
-      } else {
-        currentSet.add(labelItem);
+
+      if (labelData is! String) {
+        throw ArgumentError('Expected String for multi-label input');
       }
-      updateLabelFromInput(currentSet);
+
+      if (currentSet.contains(labelData)) {
+        currentSet.remove(labelData);
+      } else {
+        currentSet.add(labelData);
+      }
+
+      final newModel = MultiClassificationLabelModel(dataId: dataId, dataPath: dataPath, labeledAt: DateTime.now(), label: currentSet);
+
+      await updateLabel(newModel);
     } else {
-      updateLabelFromInput(current == labelItem ? null : labelItem);
+      // ✅ 단일 선택인 경우는 그대로 mapper에 위임
+      await super.updateLabelFromInput(labelData);
     }
+  }
+
+  @override
+  Future<void> toggleLabel(String labelItem) async {
+    await updateLabelFromInput(labelItem);
   }
 
   @override
