@@ -8,7 +8,7 @@ import './project/mock_project_use_cases.dart' as projectMocks;
 class MockAppUseCases extends AppUseCases {
   MockAppUseCases({ProjectUseCases? project, LabelUseCases? label})
       : super(
-          project: project ?? projectMocks.MockProjectUseCases.create(),
-          label: label ?? labelMocks.MockLabelUseCases.create(), // factory라면 .create()
+          project: project ?? projectMocks.MockProjectUseCases(),
+          label: label ?? labelMocks.MockLabelUseCases(),
         );
 }
