@@ -1,13 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zae_labeler/src/domain/project/project_use_cases.dart';
 import 'package:zae_labeler/src/models/label_model.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
 import 'package:zae_labeler/src/view_models/project_list_view_model.dart';
-import '../../mocks/mock_project_use_cases.dart';
+import '../../mocks/use_cases/project/mock_project_use_cases.dart';
 
 void main() {
   group('ProjectListViewModel', () {
+    late ProjectUseCases mockProjectUseCases;
     late ProjectListViewModel vm;
-    late MockProjectUseCases mockUseCases;
 
     final sampleProject = Project(
       id: 'test1',
@@ -17,8 +18,8 @@ void main() {
     );
 
     setUp(() {
-      mockUseCases = MockProjectUseCases();
-      vm = ProjectListViewModel(useCases: mockUseCases);
+      mockProjectUseCases = MockProjectUseCases();
+      vm = ProjectListViewModel(projectUseCases: mockProjectUseCases);
     });
 
     test('upsertProject adds new ProjectViewModel', () async {

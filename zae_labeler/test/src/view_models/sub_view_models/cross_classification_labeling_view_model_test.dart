@@ -6,9 +6,9 @@ import 'package:zae_labeler/src/models/label_model.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
 import 'package:zae_labeler/src/view_models/sub_view_models/classification_labeling_view_model.dart';
 
-import '../../../mocks/mock_label_repository.dart';
 import '../../../mocks/mock_storage_helper.dart';
 import '../../../mocks/mock_path_provider.dart';
+import '../../../mocks/use_cases/mock_app_use_cases.dart';
 
 void main() {
   setUpAll(() {
@@ -17,12 +17,10 @@ void main() {
 
   group('CrossClassificationLabelingViewModel', () {
     late CrossClassificationLabelingViewModel viewModel;
-    late MockLabelRepository mockLabelRepo;
     late MockStorageHelper mockStorage;
 
     setUp(() async {
       mockStorage = MockStorageHelper();
-      mockLabelRepo = MockLabelRepository(storageHelper: mockStorage);
 
       final project = Project(
         id: 'test-project',
@@ -32,7 +30,7 @@ void main() {
         classes: ['positive', 'negative'],
       );
 
-      viewModel = CrossClassificationLabelingViewModel(project: project, storageHelper: mockStorage, labelRepository: mockLabelRepo);
+      viewModel = CrossClassificationLabelingViewModel(project: project, storageHelper: mockStorage, appUseCases: MockAppUseCases(), initialDataList: []);
 
       await viewModel.initialize();
     });
