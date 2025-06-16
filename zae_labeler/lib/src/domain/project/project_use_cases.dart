@@ -14,7 +14,7 @@ class ProjectUseCases {
   final ManageProjectIOUseCase io;
   final ShareProjectUseCase share;
 
-  ProjectUseCases._({
+  ProjectUseCases({
     required this.repository,
     required this.edit,
     required this.classList,
@@ -25,7 +25,7 @@ class ProjectUseCases {
 
   /// 생성자 단일화
   factory ProjectUseCases.from(ProjectRepository repository) {
-    return ProjectUseCases._(
+    return ProjectUseCases(
       repository: repository,
       edit: EditProjectMetaUseCase(repository: repository),
       classList: ManageClassListUseCase(repository: repository),
