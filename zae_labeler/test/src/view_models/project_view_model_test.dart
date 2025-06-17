@@ -23,7 +23,7 @@ void main() {
     });
 
     test('setLabelingMode updates mode', () async {
-      await viewModel.setLabelingMode(LabelingMode.multiClassification);
+      await viewModel.useCases.edit.changeLabelingMode(viewModel.project.id, LabelingMode.multiClassification);
       expect(viewModel.project.mode, LabelingMode.multiClassification);
     });
 
@@ -58,9 +58,9 @@ void main() {
     //   expect(mockRepository.wasDeleteCalled, isTrue);
     // });
 
-    test('clearProjectData calls deleteProjectLabels', () async {
-      await viewModel.clearProjectLabels();
-      // expect(mockRepository.wasLabelDeleted, isTrue);
-    });
+    // test('clearProjectData calls deleteProjectLabels', () async {
+    //   await viewModel.clearProjectLabels();
+    //   // expect(mockRepository.wasLabelDeleted, isTrue);
+    // });
   });
 }

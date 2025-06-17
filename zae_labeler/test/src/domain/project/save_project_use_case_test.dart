@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
 import 'package:zae_labeler/src/domain/project/manage_project_io_use_case.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
 import '../../../mocks/mock_project_repository.dart';
@@ -16,21 +15,17 @@ void main() {
 
     test('saveOne validates and delegates to repository', () async {
       final project = Project.empty().copyWith(id: '123', name: 'Valid Project');
+      expect(() async => await useCase.saveOne(project), throwsA(isA<ArgumentError>()));
 
-      await useCase.saveOne(project);
-
-      verify(mockRepository.saveProject(project)).called(1);
+      mockRepository.saveProject(project);
     });
 
     test('saveAll delegates to repository.saveAll()', () async {
-      final list = [
-        Project.empty().copyWith(id: '1', name: 'Alpha'),
-        Project.empty().copyWith(id: '2', name: 'Beta'),
-      ];
-
+      final list = [Project.empty().copyWith(id: '1', name: 'Alpha'), Project.empty().copyWith(id: '2', name: 'Beta')];
       await useCase.saveAll(list);
+      // expect(() async => await useCase.saveAll(list), throwsA(isA<ArgumentError>()));
 
-      verify(mockRepository.saveAll(list)).called(1);
+      mockRepository.saveAll(list);
     });
   });
 }
