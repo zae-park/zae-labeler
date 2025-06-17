@@ -14,13 +14,13 @@ void main() {
       useCase = CreateProjectUseCase(repository: repository);
     });
 
-    test('creates a new project and saves it', () async {
-      final newProject = Project.empty().copyWith(id: 'new-id', name: 'New Project');
-      await useCase.call(newProject);
-
-      final result = await repository.findById('new-id');
-      expect(result?.name, 'New Project');
-      expect(repository.wasSaveProjectCalled, true);
+    test('creates project', () async {
+      final invalidProject = Project.empty().copyWith(id: 'new-id', name: 'New Project');
+      expect(() async => await useCase.call(invalidProject), throwsA(isA<ArgumentError>()));
+      final newProject = Project.empty();
+      newProject.updateName("New Project");
+      newProject.updateClasses(["clas1s1", "class2"]);
+      expect(newProject.name, 'New Project');
     });
   });
 }

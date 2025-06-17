@@ -137,11 +137,11 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
       }
     }
 
-    final segmentation = SegmentationData(
-      segments: {_selectedClass!: Segment(indices: selectedPixels, classLabel: _selectedClass!)},
-    );
+    // final segmentation = SegmentationData(
+    //   segments: {_selectedClass!: Segment(indices: selectedPixels, classLabel: _selectedClass!)},
+    // );
 
-    await updateLabel(segmentation);
+    await updateLabel(Segment(indices: selectedPixels, classLabel: _selectedClass!));
   }
 
   /// Restores grid state from saved SegmentationData

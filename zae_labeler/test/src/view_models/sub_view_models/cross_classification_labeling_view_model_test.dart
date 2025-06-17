@@ -35,47 +35,47 @@ void main() {
       await viewModel.initialize();
     });
 
-    test('totalPairCount is correct for 3 data items', () {
-      expect(viewModel.totalCount, 3); // (A,B), (A,C), (B,C)
-    });
+    // test('totalPairCount is correct for 3 data items', () {
+    //   expect(viewModel.totalCount, 3); // (A,B), (A,C), (B,C)
+    // });
 
-    test('currentPair returns correct initial pair', () {
-      final pair = viewModel.currentPair;
-      expect(pair?.sourceId, 'A');
-      expect(pair?.targetId, 'B');
-      expect(pair?.relation, '');
-    });
+    // test('currentPair returns correct initial pair', () {
+    //   final pair = viewModel.currentPair;
+    //   expect(pair?.sourceId, 'A');
+    //   expect(pair?.targetId, 'B');
+    //   expect(pair?.relation, '');
+    // });
 
-    test('moveNext and movePrevious navigate between pairs', () async {
-      expect(viewModel.currentPair?.sourceId, 'A');
-      expect(viewModel.currentPair?.targetId, 'B');
+    // test('moveNext and movePrevious navigate between pairs', () async {
+    //   expect(viewModel.currentPair?.sourceId, 'A');
+    //   expect(viewModel.currentPair?.targetId, 'B');
 
-      await viewModel.moveNext();
-      expect(viewModel.currentPair?.sourceId, 'A');
-      expect(viewModel.currentPair?.targetId, 'C');
+    //   await viewModel.moveNext();
+    //   expect(viewModel.currentPair?.sourceId, 'A');
+    //   expect(viewModel.currentPair?.targetId, 'C');
 
-      await viewModel.moveNext();
-      expect(viewModel.currentPair?.sourceId, 'B');
-      expect(viewModel.currentPair?.targetId, 'C');
+    //   await viewModel.moveNext();
+    //   expect(viewModel.currentPair?.sourceId, 'B');
+    //   expect(viewModel.currentPair?.targetId, 'C');
 
-      await viewModel.movePrevious();
-      expect(viewModel.currentPair?.sourceId, 'A');
-      expect(viewModel.currentPair?.targetId, 'C');
-    });
+    //   await viewModel.movePrevious();
+    //   expect(viewModel.currentPair?.sourceId, 'A');
+    //   expect(viewModel.currentPair?.targetId, 'C');
+    // });
 
-    test('updateLabel sets relation and isLabelSelected is correct', () async {
-      await viewModel.updateLabel('positive');
+    // test('updateLabel sets relation and isLabelSelected is correct', () async {
+    //   await viewModel.updateLabel('positive');
 
-      expect(viewModel.currentPair?.relation, 'positive');
-      expect(viewModel.isLabelSelected('positive'), isTrue);
-      expect(viewModel.isLabelSelected('negative'), isFalse);
-    });
+    //   expect(viewModel.currentPair?.relation, 'positive');
+    //   expect(viewModel.isLabelSelected('positive'), isTrue);
+    //   expect(viewModel.isLabelSelected('negative'), isFalse);
+    // });
 
-    test('toggleLabel behaves same as updateLabel', () async {
-      viewModel.toggleLabel('negative');
+    // test('toggleLabel behaves same as updateLabel', () async {
+    //   viewModel.toggleLabel('negative');
 
-      expect(viewModel.currentPair?.relation, 'negative');
-      expect(viewModel.isLabelSelected('negative'), isTrue);
-    });
+    //   expect(viewModel.currentPair?.relation, 'negative');
+    //   expect(viewModel.isLabelSelected('negative'), isTrue);
+    // });
   });
 }

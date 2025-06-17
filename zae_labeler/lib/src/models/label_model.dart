@@ -64,6 +64,8 @@ extension LabelModelFactory on LabelModel {
         return SingleClassSegmentationLabelModel(dataId: dataId, labeledAt: now, label: null);
       case LabelingMode.multiClassSegmentation:
         return MultiClassSegmentationLabelModel(dataId: dataId, labeledAt: now, label: null);
+      default:
+        return SingleClassificationLabelModel(dataId: dataId, labeledAt: now, label: null);
     }
   }
 
