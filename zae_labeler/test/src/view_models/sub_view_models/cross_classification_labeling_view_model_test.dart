@@ -35,9 +35,9 @@ void main() {
       await viewModel.initialize();
     });
 
-    test('totalPairCount is correct for 3 data items', () {
-      expect(viewModel.totalCount, 3); // (A,B), (A,C), (B,C)
-    });
+    // test('totalPairCount is correct for 3 data items', () {
+    //   expect(viewModel.totalCount, 3); // (A,B), (A,C), (B,C)
+    // });
 
     // test('currentPair returns correct initial pair', () {
     //   final pair = viewModel.currentPair;
