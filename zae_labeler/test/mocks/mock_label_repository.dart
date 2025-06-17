@@ -31,18 +31,11 @@ class MockLabelRepository implements LabelRepository {
   }
 
   @override
-  Future<LabelModel> loadLabel({
-    required String projectId,
-    required String dataId,
-    required String dataPath,
-    required LabelingMode mode,
-  }) async {
+  Future<LabelModel> loadLabel({required String projectId, required String dataId, required String dataPath, required LabelingMode mode}) async {
     wasLoadCalled = true;
-    final found = _labelStore[projectId]?.firstWhere(
-      (l) => l.dataId == dataId,
-      orElse: () => LabelModelFactory.createNew(mode, dataId: dataId),
-    );
-    return found!;
+    LabelModel? found = _labelStore[projectId]?.firstWhere((l) => l.dataId == dataId, orElse: () => LabelModelFactory.createNew(mode, dataId: dataId));
+    found ??= LabelModelFactory.createNew(mode, dataId: dataId);
+    return found;
   }
 
   @override
