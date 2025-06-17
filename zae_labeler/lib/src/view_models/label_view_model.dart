@@ -15,6 +15,8 @@ class LabelInputMapperFactory {
         return SingleClassificationInputMapper();
       case LabelingMode.multiClassification:
         return MultiClassificationInputMapper();
+      case LabelingMode.crossClassification:
+        return CrossClassificationInputMapper();
       case LabelingMode.singleClassSegmentation:
         return SingleSegmentationInputMapper();
       case LabelingMode.multiClassSegmentation:
