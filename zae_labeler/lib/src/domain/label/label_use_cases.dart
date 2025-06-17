@@ -12,9 +12,9 @@ class LabelUseCases {
   final LabelValidationUseCases validation;
   final LabelIOUseCases io;
 
-  LabelUseCases._({required this.repository, required this.single, required this.batch, required this.validation, required this.io});
+  LabelUseCases({required this.repository, required this.single, required this.batch, required this.validation, required this.io});
 
-  factory LabelUseCases.from(LabelRepository repository) => LabelUseCases._(
+  factory LabelUseCases.from(LabelRepository repository) => LabelUseCases(
         repository: repository,
         single: SingleLabelUseCases(repository),
         batch: BatchLabelUseCases(repository),

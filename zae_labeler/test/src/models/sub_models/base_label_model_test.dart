@@ -7,7 +7,6 @@ class DummyLabelModel extends LabelModel<String> {
   @override
   bool get isMultiClass => false;
 
-  @override
   DummyLabelModel updateLabel(String labelData) {
     return DummyLabelModel(dataId: 'dummy-test', label: labelData, labeledAt: DateTime.now());
   }

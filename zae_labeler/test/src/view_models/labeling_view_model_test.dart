@@ -6,8 +6,8 @@ import 'package:zae_labeler/src/models/sub_models/segmentation_label_model.dart'
 import 'package:zae_labeler/src/view_models/labeling_view_model.dart';
 
 import '../../mocks/mock_storage_helper.dart';
-import '../../mocks/mock_label_repository.dart';
 import '../../mocks/mock_path_provider.dart';
+import '../../mocks/use_cases/mock_app_use_cases.dart';
 
 void main() {
   setUpAll(() {
@@ -15,12 +15,12 @@ void main() {
   });
 
   group('LabelingViewModelFactory.createAsync', () {
-    late MockLabelRepository mockLabelRepo;
     late MockStorageHelper mockStorage;
+    late MockAppUseCases mockAppUseCases;
 
     setUp(() {
       mockStorage = MockStorageHelper();
-      mockLabelRepo = MockLabelRepository(storageHelper: mockStorage);
+      mockAppUseCases = MockAppUseCases();
     });
 
     Future<void> testCreation(LabelingMode mode, Type expectedType) async {
@@ -32,7 +32,7 @@ void main() {
         classes: ['cat', 'dog'],
       );
 
-      final viewModel = await LabelingViewModelFactory.createAsync(project, mockStorage, mockLabelRepo);
+      final viewModel = await LabelingViewModelFactory.createAsync(project, mockStorage, mockAppUseCases);
 
       expect(viewModel.runtimeType, expectedType);
       expect(viewModel.project.id, 'test_project');
@@ -61,13 +61,13 @@ void main() {
   });
 
   group('SegmentationLabelingViewModel', () {
-    late MockLabelRepository mockLabelRepo;
+    late MockAppUseCases mockAppUseCases;
     late MockStorageHelper mockStorage;
     late SegmentationLabelingViewModel segVM;
 
     setUp(() {
       mockStorage = MockStorageHelper();
-      mockLabelRepo = MockLabelRepository(storageHelper: mockStorage);
+      mockAppUseCases = MockAppUseCases();
 
       final project = Project(
         id: 'test-project',
@@ -77,7 +77,7 @@ void main() {
         classes: ['car', 'road'],
       );
 
-      segVM = SegmentationLabelingViewModel(project: project, storageHelper: mockStorage, labelRepository: mockLabelRepo);
+      segVM = SegmentationLabelingViewModel(project: project, storageHelper: mockStorage, appUseCases: mockAppUseCases);
     });
 
     test('initial selected class is first in project.classes', () async {
@@ -113,11 +113,6 @@ void main() {
     });
 
     test('restoreGridFromLabel reconstructs grid from label', () async {
-      final fakeLabel = SegmentationData(segments: {
-        'car': Segment(indices: {(1, 1), (2, 2)}, classLabel: 'car'),
-      });
-
-      segVM.currentLabelVM.updateLabel(fakeLabel);
       segVM.restoreGridFromLabel();
 
       expect(segVM.labelGrid[1][1], equals(1));

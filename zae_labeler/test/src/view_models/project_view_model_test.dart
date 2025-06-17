@@ -2,19 +2,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zae_labeler/src/view_models/project_view_model.dart';
 import 'package:zae_labeler/src/models/label_model.dart';
 import 'package:zae_labeler/src/models/data_model.dart';
-// import '../../mocks/mock_project_repository.dart';
-import '../../mocks/mock_project_use_cases.dart';
 import '../../mocks/mock_share_helper.dart';
+import '../../mocks/use_cases/project/mock_project_use_cases.dart';
 
 void main() {
   group('ProjectViewModel (Refactored)', () {
     late ProjectViewModel viewModel;
-    // late MockProjectRepository mockRepository;
     late MockProjectUseCases mockUseCases;
     late MockShareHelper mockShare;
 
     setUp(() {
-      // mockRepository = MockProjectRepository();
       mockShare = MockShareHelper();
       mockUseCases = MockProjectUseCases();
       viewModel = ProjectViewModel(useCases: mockUseCases, shareHelper: mockShare);

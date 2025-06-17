@@ -17,7 +17,7 @@ void main() {
     setUp(() {
       mockHelper = MockShareHelper();
       repository = MockProjectRepository();
-      useCase = ShareProjectUseCase(shareHelper: mockHelper, repository: repository);
+      useCase = ShareProjectUseCase(repository: repository);
       testProject = Project.empty().copyWith(id: 'p1', name: 'Shared Project');
     });
 
