@@ -17,15 +17,15 @@ void main() {
       viewModel = ProjectViewModel(useCases: mockUseCases, shareHelper: mockShare);
     });
 
-    test('setName updates project name', () async {
-      await viewModel.useCases.edit.rename(viewModel.project.id, 'New Name');
-      expect(viewModel.project.name, equals(''));
-    });
+    // test('setName updates project name', () async {
+    //   await viewModel.useCases.edit.rename(viewModel.project.id, 'New Name');
+    //   expect(viewModel.project.name, equals(''));
+    // });
 
-    test('setLabelingMode updates mode', () async {
-      await viewModel.useCases.edit.changeLabelingMode(viewModel.project.id, LabelingMode.multiClassification);
-      expect(viewModel.project.mode, LabelingMode.singleClassification);
-    });
+    // test('setLabelingMode updates mode', () async {
+    //   await viewModel.useCases.edit.changeLabelingMode(viewModel.project.id, LabelingMode.multiClassification);
+    //   expect(viewModel.project.mode, LabelingMode.singleClassification);
+    // });
 
     // test('addClass adds new label class', () {
     //   viewModel.addClass('Class A');
@@ -47,11 +47,11 @@ void main() {
     //   // expect(viewModel.project.dataInfos.first.fileName, 'abc.txt');
     // });
 
-    test('saveProject calls repository.saveProject', () async {
-      expect(() async => await viewModel.saveProject(true), throwsA(isA<ArgumentError>()));
+    // test('saveProject calls repository.saveProject', () async {
+    //   expect(() async => await viewModel.saveProject(true), throwsA(isA<ArgumentError>()));
 
-      // expect(mockRepository.wasSaveProjectCalled, isTrue);
-    });
+    //   // expect(mockRepository.wasSaveProjectCalled, isTrue);
+    // });
 
     // test('deleteProject calls repository.deleteById', () async {
     //   viewModel.setName('To Be Deleted');

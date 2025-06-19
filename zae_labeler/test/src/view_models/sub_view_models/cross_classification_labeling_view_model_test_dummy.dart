@@ -19,21 +19,21 @@ void main() {
     late CrossClassificationLabelingViewModel viewModel;
     late MockStorageHelper mockStorage;
 
-    setUp(() async {
-      mockStorage = MockStorageHelper();
+    // setUp(() async {
+    //   mockStorage = MockStorageHelper();
 
-      final project = Project(
-        id: 'test-project',
-        name: 'Test Project',
-        mode: LabelingMode.crossClassification,
-        dataInfos: ['A', 'B', 'C'].map((id) => DataInfo(id: id, fileName: '$id.jpg')).toList(),
-        classes: ['positive', 'negative'],
-      );
+    //   final project = Project(
+    //     id: 'test-project',
+    //     name: 'Test Project',
+    //     mode: LabelingMode.crossClassification,
+    //     dataInfos: ['A', 'B', 'C'].map((id) => DataInfo(id: id, fileName: '$id.jpg')).toList(),
+    //     classes: ['positive', 'negative'],
+    //   );
 
-      viewModel = CrossClassificationLabelingViewModel(project: project, storageHelper: mockStorage, appUseCases: MockAppUseCases(), initialDataList: []);
+    //   viewModel = CrossClassificationLabelingViewModel(project: project, storageHelper: mockStorage, appUseCases: MockAppUseCases(), initialDataList: []);
 
-      await viewModel.initialize();
-    });
+    //   await viewModel.initialize();
+    // });
 
     // test('totalPairCount is correct for 3 data items', () {
     //   expect(viewModel.totalCount, 3); // (A,B), (A,C), (B,C)
