@@ -51,18 +51,38 @@ enum LabelingMode {
 
 /// ✅ `LabelModel`에 대한 확장(Extension)을 사용하여 `createNew()` 팩토리 메서드 추가
 extension LabelModelFactory on LabelModel {
-  static LabelModel createNew(LabelingMode mode) {
+  static LabelModel createNew(LabelingMode mode, {required String dataId}) {
+    final now = DateTime.now();
     switch (mode) {
       case LabelingMode.singleClassification:
-        return SingleClassificationLabelModel.empty();
+        return SingleClassificationLabelModel(dataId: dataId, labeledAt: now, label: null);
       case LabelingMode.multiClassification:
-        return MultiClassificationLabelModel.empty();
+        return MultiClassificationLabelModel(dataId: dataId, labeledAt: now, label: null);
       case LabelingMode.crossClassification:
-        return CrossClassificationLabelModel.empty();
+        return CrossClassificationLabelModel(dataId: dataId, labeledAt: now, label: null);
       case LabelingMode.singleClassSegmentation:
-        return SingleClassSegmentationLabelModel.empty();
+        return SingleClassSegmentationLabelModel(dataId: dataId, labeledAt: now, label: null);
       case LabelingMode.multiClassSegmentation:
-        return MultiClassSegmentationLabelModel.empty();
+        return MultiClassSegmentationLabelModel(dataId: dataId, labeledAt: now, label: null);
+      default:
+        return SingleClassificationLabelModel(dataId: dataId, labeledAt: now, label: null);
+    }
+  }
+
+  static Type expectedType(LabelingMode mode) {
+    switch (mode) {
+      case LabelingMode.singleClassification:
+        return SingleClassificationLabelModel;
+      case LabelingMode.multiClassification:
+        return MultiClassificationLabelModel;
+      case LabelingMode.crossClassification:
+        return CrossClassificationLabelModel;
+      case LabelingMode.singleClassSegmentation:
+        return SingleClassSegmentationLabelModel;
+      case LabelingMode.multiClassSegmentation:
+        return MultiClassSegmentationLabelModel;
+      default:
+        throw UnimplementedError("Unsupported mode: $mode");
     }
   }
 }

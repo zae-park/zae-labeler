@@ -84,6 +84,9 @@ class StorageHelper extends StorageHelperInterface {
   @override
   Future<void> deleteProjectLabels(String projectId) => _instance.deleteProjectLabels(projectId);
 
+  @override
+  Future<void> deleteProject(String projectId) => _instance.deleteProject(projectId);
+
   // ==============================
   // 📌 **Project-wide Label IO**
   // ==============================
@@ -98,7 +101,7 @@ class StorageHelper extends StorageHelperInterface {
   /// - Web: `localStorage`에서 JSON 읽기
   /// - Native: `labels_project_<projectId>.json` 파일에서 JSON 읽기
   @override
-  Future<List<LabelModel>> loadAllLabels(String projectId) => _instance.loadAllLabels(projectId);
+  Future<List<LabelModel>> loadAllLabelModels(String projectId) => _instance.loadAllLabelModels(projectId);
 
   // ==============================
   // 📌 **Label Data Import/Export**
@@ -108,7 +111,7 @@ class StorageHelper extends StorageHelperInterface {
   /// - Web: `Blob()`을 활용한 자동 다운로드 (`labels_project_<projectId>.zip`)
   /// - Native: `labels_project_<projectId>.zip` 파일을 생성 후 경로 반환
   @override
-  Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataPath> fileDataList) =>
+  Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataInfo> fileDataList) =>
       _instance.exportAllLabels(project, labelModels, fileDataList);
 
   /// ✅ **외부 Label JSON 데이터를 가져오기**

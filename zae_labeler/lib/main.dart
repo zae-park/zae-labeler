@@ -3,10 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'firebase_options.dart';
 import 'env.dart';
+import 'src/domain/app_use_cases.dart';
+import 'src/domain/label/label_use_cases.dart';
+import 'src/domain/project/project_use_cases.dart';
 import 'src/models/project_model.dart';
+import 'src/repositories/label_repository.dart';
+import 'src/repositories/project_repository.dart';
 import 'src/utils/storage_helper.dart';
 import 'src/utils/proxy_storage_helper/cloud_storage_helper.dart';
 import 'src/view_models/auth_view_model.dart';
@@ -24,32 +30,42 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   // await FirebaseAuth.instance.authStateChanges().firstWhere((u) => u != null);
 
-  runApp(const ZaeLabeler());
+  runApp(ZaeLabeler(
+    systemLocale: WidgetsBinding.instance.platformDispatcher.locales.first,
+    // systemLocale: WidgetsBinding.instance.platformDispatcher.locale,
+  ));
 }
 
 class ZaeLabeler extends StatelessWidget {
-  const ZaeLabeler({super.key});
+  final Locale systemLocale;
+  const ZaeLabeler({super.key, required this.systemLocale});
 
   @override
   Widget build(BuildContext context) {
     final useCloud = isProd && kIsWeb; // 🔧 dev or local에서는 로컬 저장
     final storageHelper = useCloud ? CloudStorageHelper() : StorageHelper.instance;
+    final projectRepo = ProjectRepository(storageHelper: storageHelper);
+    final labelRepo = LabelRepository(storageHelper: storageHelper);
+
+    final appUseCases = AppUseCases(project: ProjectUseCases.from(projectRepo), label: LabelUseCases.from(labelRepo));
 
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(storageHelper: storageHelper)),
+        Provider<StorageHelperInterface>.value(value: storageHelper),
+        Provider<AppUseCases>.value(value: appUseCases),
+        ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(projectUseCases: appUseCases.project)),
         ChangeNotifierProvider<LocaleViewModel>(create: (_) => LocaleViewModel()),
         ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel()),
-        Provider<StorageHelperInterface>.value(value: storageHelper),
       ],
       child: Consumer<LocaleViewModel>(
         builder: (context, localeVM, child) {
           return MaterialApp(
-            title: 'Data Labeling App for YOU!',
+            title: "ZAE Labeler",
             theme: ThemeData(primarySwatch: Colors.blue),
             locale: localeVM.currentLocale,
             supportedLocales: const [Locale('en'), Locale('ko')],
             localizationsDelegates: const [
+              AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
@@ -57,14 +73,6 @@ class ZaeLabeler extends StatelessWidget {
 
             // Initial route when the app is launched
             initialRoute: '/',
-            // routes: {
-            //   '/': (context) => isProd ? const SplashScreen() : const ProjectListPage(),
-            //   // '/onboarding': (context) => const OnboardingPage(),
-            //   // '/auth': (context) => isProd ? const AuthGate() : const ProjectListPage(),
-            //   '/project_list': (context) => const ProjectListPage(),
-            //   '/configuration': (context) => const ConfigureProjectPage(),
-            //   '/labeling': (context) => const LabelingPage(),
-            // },
             onUnknownRoute: (_) => MaterialPageRoute(builder: (_) => const NotFoundPage()),
             onGenerateRoute: (RouteSettings settings) {
               final isSignedIn = context.read<AuthViewModel>().isSignedIn;

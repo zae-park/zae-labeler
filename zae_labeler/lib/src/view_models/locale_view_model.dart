@@ -5,6 +5,10 @@ class LocaleViewModel extends ChangeNotifier {
 
   Locale get currentLocale => _currentLocale;
 
+  LocaleViewModel({Locale? systemLocale}) {
+    _currentLocale = systemLocale ?? const Locale('en');
+  }
+
   void changeLocale(String languageCode) {
     _currentLocale = Locale(languageCode);
     notifyListeners();

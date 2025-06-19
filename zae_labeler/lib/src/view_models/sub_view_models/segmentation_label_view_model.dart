@@ -3,6 +3,8 @@
 import 'base_label_view_model.dart';
 import '../../models/sub_models/segmentation_label_model.dart';
 
+/// ViewModel for segmentation labeling.
+/// Handles pixel-level updates and repository-backed I/O.
 class SegmentationLabelViewModel extends LabelViewModel {
   SegmentationLabelViewModel({
     required super.projectId,
@@ -11,32 +13,23 @@ class SegmentationLabelViewModel extends LabelViewModel {
     required super.dataPath,
     required super.mode,
     required super.labelModel,
-    required super.storageHelper,
+    required super.labelUseCases,
+    required super.labelInputMapper,
   });
 
   @override
-  void updateLabel(dynamic labelData) {
-    if (labelData is SegmentationData) {
-      labelModel = labelModel.updateLabel(labelData);
-      notifyListeners();
-    } else {
-      throw ArgumentError('labelData must be SegmentationData for segmentation');
-    }
+  Future<void> addPixel(int x, int y, String classLabel) async {
+    final prev = labelModel as SegmentationLabelModel;
+    final updated = prev.label?.addPixel(x, y, classLabel);
+    final newModel = prev.copyWith(labeledAt: DateTime.now(), label: updated);
+    await updateLabel(newModel);
   }
 
-  void addPixel(int x, int y, String classLabel) {
-    if (labelModel is SegmentationLabelModel) {
-      final updated = (labelModel as MultiClassSegmentationLabelModel).addPixel(x, y, classLabel);
-      labelModel = updated;
-      notifyListeners();
-    }
-  }
-
-  void removePixel(int x, int y) {
-    if (labelModel is MultiClassSegmentationLabelModel) {
-      final updated = (labelModel as MultiClassSegmentationLabelModel).removePixel(x, y);
-      labelModel = updated;
-      notifyListeners();
-    }
+  @override
+  Future<void> removePixel(int x, int y) async {
+    final prev = labelModel as SegmentationLabelModel;
+    final updated = prev.label?.removePixel(x, y);
+    final newModel = prev.copyWith(labeledAt: DateTime.now(), label: updated);
+    await updateLabel(newModel);
   }
 }

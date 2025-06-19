@@ -1,17 +1,29 @@
-import 'base_label_model.dart';
+import '../label_model.dart';
 import '../../utils/run_length_codec.dart';
 
 /// ✅ Segmentation Label의 최상위 클래스
 abstract class SegmentationLabelModel<T> extends LabelModel<T> {
-  SegmentationLabelModel({required super.label, required super.labeledAt});
+  SegmentationLabelModel({required super.dataId, super.dataPath, required super.label, required super.labeledAt});
+  // SegmentationLabelModel updateLabel(SegmentationData labelData);
+  SegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label});
 
-  SegmentationLabelModel<T> addPixel(int x, int y, String classLabel);
-  SegmentationLabelModel<T> removePixel(int x, int y);
+  @override
+  LabelingMode get mode;
+  @override
+  bool get isMultiClass;
+  @override
+  bool get isLabeled;
+
+  // SegmentationLabelModel<T> addPixel(int x, int y, String classLabel);
+  // SegmentationLabelModel<T> removePixel(int x, int y);
 }
 
 /// ✅ 단일 클래스 세그멘테이션 (Single-Class Segmentation)
 class SingleClassSegmentationLabelModel extends SegmentationLabelModel<SegmentationData> {
-  SingleClassSegmentationLabelModel({required super.label, required super.labeledAt});
+  SingleClassSegmentationLabelModel({required super.dataId, super.dataPath, required super.label, required super.labeledAt});
+
+  @override
+  LabelingMode get mode => LabelingMode.singleClassSegmentation;
 
   @override
   bool get isMultiClass => false;
@@ -20,40 +32,44 @@ class SingleClassSegmentationLabelModel extends SegmentationLabelModel<Segmentat
   bool get isLabeled => label != null && label!.isNotEmpty;
 
   @override
-  Map<String, dynamic> toJson() => {'label': label!.toJson(), 'labeled_at': labeledAt.toIso8601String()};
+  Map<String, dynamic> toJson() => {'data_id': dataId, 'data_path': dataPath, 'label': label!.toJson(), 'labeled_at': labeledAt.toIso8601String()};
 
   @override
   factory SingleClassSegmentationLabelModel.fromJson(Map<String, dynamic> json) {
-    return SingleClassSegmentationLabelModel(label: SegmentationData.fromJson(json['label']), labeledAt: DateTime.parse(json['labeled_at']));
+    return SingleClassSegmentationLabelModel(
+        dataId: json['data_id'], dataPath: json['data_path'], label: SegmentationData.fromJson(json['label']), labeledAt: DateTime.parse(json['labeled_at']));
   }
 
+  @override
   factory SingleClassSegmentationLabelModel.empty() =>
-      SingleClassSegmentationLabelModel(label: SegmentationData(segments: {}), labeledAt: DateTime.fromMillisecondsSinceEpoch(0));
+      SingleClassSegmentationLabelModel(dataId: '', dataPath: null, label: SegmentationData(segments: {}), labeledAt: DateTime.fromMillisecondsSinceEpoch(0));
+
+  // @override
+  // SingleClassSegmentationLabelModel addPixel(int x, int y, String classLabel) => updateLabel(label!.addPixel(x, y, classLabel));
+  // @override
+  // SingleClassSegmentationLabelModel removePixel(int x, int y) => updateLabel(label!.removePixel(x, y));
+
+  // @override
+  // SingleClassSegmentationLabelModel updateLabel(SegmentationData labelData) =>
+  //     SingleClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: labelData, labeledAt: DateTime.now());
+
+  // bool isSelected(SegmentationData labelData) {
+  //   if (label!.segments.isEmpty || labelData.segments.isEmpty) return false;
+  //   final labelClass = label!.segments.keys.first;
+  //   return labelData.segments[labelClass]?.indices.any((index) => label!.segments[labelClass]?.indices.contains(index) ?? false) ?? false;
+  // }
 
   @override
-  SingleClassSegmentationLabelModel addPixel(int x, int y, String classLabel) => updateLabel(label!.addPixel(x, y, classLabel));
-  @override
-  SingleClassSegmentationLabelModel removePixel(int x, int y) => updateLabel(label!.removePixel(x, y));
-
-  @override
-  SingleClassSegmentationLabelModel updateLabel(SegmentationData labelData) {
-    return SingleClassSegmentationLabelModel(labeledAt: DateTime.now(), label: labelData);
-  }
-
-  bool isSelected(SegmentationData labelData) {
-    if (label!.segments.isEmpty || labelData.segments.isEmpty) return false;
-    final labelClass = label!.segments.keys.first;
-
-    return labelData.segments[labelClass]?.indices.any((index) => label!.segments[labelClass]?.indices.contains(index) ?? false) ?? false;
-  }
-
   SingleClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) =>
-      SingleClassSegmentationLabelModel(labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
+      SingleClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
 }
 
 /// ✅ 다중 클래스 세그멘테이션 (Multi-Class Segmentation) - 추후 업데이트
 class MultiClassSegmentationLabelModel extends SegmentationLabelModel<SegmentationData> {
-  MultiClassSegmentationLabelModel({required super.label, required super.labeledAt});
+  MultiClassSegmentationLabelModel({required super.dataId, super.dataPath, required super.label, required super.labeledAt});
+
+  @override
+  LabelingMode get mode => LabelingMode.multiClassSegmentation;
 
   @override
   bool get isMultiClass => true;
@@ -62,36 +78,33 @@ class MultiClassSegmentationLabelModel extends SegmentationLabelModel<Segmentati
   bool get isLabeled => label != null && label!.isNotEmpty;
 
   @override
-  Map<String, dynamic> toJson() => {'label': label!.toJson(), 'labeled_at': labeledAt.toIso8601String()};
+  Map<String, dynamic> toJson() => {'data_id': dataId, 'data_path': dataPath, 'label': label!.toJson(), 'labeled_at': labeledAt.toIso8601String()};
 
   @override
-  factory MultiClassSegmentationLabelModel.fromJson(Map<String, dynamic> json) {
-    return MultiClassSegmentationLabelModel(label: SegmentationData.fromJson(json['label']), labeledAt: DateTime.parse(json['labeled_at']));
-  }
+  factory MultiClassSegmentationLabelModel.fromJson(Map<String, dynamic> json) => MultiClassSegmentationLabelModel(
+      dataId: json['data_id'], dataPath: json['data_path'], label: SegmentationData.fromJson(json['label']), labeledAt: DateTime.parse(json['labeled_at']));
 
+  @override
   factory MultiClassSegmentationLabelModel.empty() =>
-      MultiClassSegmentationLabelModel(label: SegmentationData(segments: {}), labeledAt: DateTime.fromMillisecondsSinceEpoch(0));
+      MultiClassSegmentationLabelModel(dataId: '', dataPath: null, label: SegmentationData(segments: {}), labeledAt: DateTime.fromMillisecondsSinceEpoch(0));
 
   @override
-  MultiClassSegmentationLabelModel addPixel(int x, int y, String classLabel) => updateLabel(label!.addPixel(x, y, classLabel));
-  @override
-  MultiClassSegmentationLabelModel removePixel(int x, int y) => updateLabel(label!.removePixel(x, y));
-
-  @override
-  MultiClassSegmentationLabelModel updateLabel(SegmentationData labelData) {
-    return MultiClassSegmentationLabelModel(labeledAt: DateTime.now(), label: labelData);
-  }
-
-  /// ✅ 특정 픽셀 (x, y)이 특정 클래스 내에서 선택되었는지 확인
-  bool isSelected(SegmentationData other) {
-    return other.segments.entries.any((entry) {
-      final targetSegment = label!.segments[entry.key];
-      return targetSegment != null && entry.value.indices.any((index) => targetSegment.indices.contains(index));
-    });
-  }
-
   MultiClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) =>
-      MultiClassSegmentationLabelModel(labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
+      MultiClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
+
+  // @override
+  // MultiClassSegmentationLabelModel addPixel(int x, int y, String classLabel) => updateLabel(label!.addPixel(x, y, classLabel));
+  // @override
+  // MultiClassSegmentationLabelModel removePixel(int x, int y) => updateLabel(label!.removePixel(x, y));
+
+  // @override
+  // MultiClassSegmentationLabelModel updateLabel(SegmentationData labelData) =>
+  //     MultiClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: labelData, labeledAt: DateTime.now());
+
+  // bool isSelected(SegmentationData other) => other.segments.entries.any((entry) {
+  //       final targetSegment = label!.segments[entry.key];
+  //       return targetSegment != null && entry.value.indices.any((index) => targetSegment.indices.contains(index));
+  //     });
 }
 
 /// ✅ 세그멘테이션 데이터 구조를 저장하는 클래스.

@@ -1,140 +1,151 @@
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart'; // For generating unique project IDs
+import 'package:uuid/uuid.dart';
+
+import '../models/data_model.dart';
 import '../models/label_model.dart';
 import '../models/project_model.dart';
-import '../models/data_model.dart';
 import '../utils/proxy_share_helper/interface_share_helper.dart';
-import '../utils/storage_helper.dart';
+
+import '../domain/project/project_use_cases.dart';
+
+/// 🔧 ViewModel: 단일 프로젝트를 관리
+/// ProjectViewModel
+/// ├── setName(String)                        // 프로젝트 이름 변경
+/// ├── setLabelingMode(LabelingMode)         // 라벨링 모드 변경 (라벨 초기화 포함)
+/// ├── addClass(String)                       // 클래스 추가
+/// ├── editClass(int, String)                // 클래스 이름 수정
+/// ├── removeClass(int)                      // 클래스 제거
+/// ├── addDataInfo(DataInfo)                 // 데이터 추가
+/// ├── removeDataInfo(String)                // 데이터 제거
+/// │
+/// ├── isLabelingModeChanged()               // 모드 변경 여부 확인
+/// │
+/// ├── clearProjectLabels()                    // 라벨 초기화
+/// │
+/// ├── downloadProjectConfig()               // 설정 다운로드
+/// └── shareProject(BuildContext)            // 프로젝트 공유
 
 class ProjectViewModel extends ChangeNotifier {
   Project project;
-  final StorageHelperInterface storageHelper;
   final ShareHelperInterface shareHelper;
+  final ProjectUseCases useCases;
 
-  ProjectViewModel({required this.storageHelper, required this.shareHelper, Project? project})
+  final void Function(Project updated)? onChanged;
+  late final LabelingMode _initialMode;
+
+  ProjectViewModel({required this.shareHelper, required this.useCases, this.onChanged, Project? project})
       : project = project ??
             Project(
               id: project?.id ?? const Uuid().v4(),
               name: project?.name ?? '',
               mode: project?.mode ?? LabelingMode.singleClassification,
               classes: project?.classes ?? [],
-            );
-
-  // ==============================
-  // 📌 **프로젝트 기본 정보 관리**
-  // ==============================
-
-  /// ✅ 프로젝트 이름 변경
-  void setName(String name) {
-    project = project.copyWith(name: name);
-    notifyListeners();
+            ) {
+    _initialMode = this.project.mode;
   }
 
-  /// ✅ 라벨링 모드 변경
+  // ==============================
+  // 📌 프로젝트 정보 수정
+  // ==============================
+
+  Future<void> setName(String name) async {
+    final updated = await useCases.edit.rename(project.id, name);
+    if (updated != null) {
+      project = updated;
+      notifyListeners();
+      onChanged?.call(project);
+    }
+  }
+
   Future<void> setLabelingMode(LabelingMode mode) async {
     if (project.mode != mode) {
-      await storageHelper.deleteProjectLabels(project.id);
-    }
-    project = project.copyWith(mode: mode);
-    notifyListeners();
-  }
-
-  /// ✅ 클래스 추가
-  void addClass(String className) {
-    if (!project.classes.contains(className)) {
-      project = project.copyWith(classes: [...project.classes, className]);
+      project = (await useCases.edit.changeLabelingMode(project.id, mode))!;
       notifyListeners();
+      onChanged?.call(project);
     }
   }
 
-  /// ✅ 클래스 제거
-  void removeClass(int index) {
-    if (index >= 0 && index < project.classes.length) {
-      List<String> updatedClasses = List.from(project.classes)..removeAt(index);
-      project = project.copyWith(classes: updatedClasses);
-      notifyListeners();
-    }
-  }
-
-  /// ✅ 데이터 경로 추가
-  void addDataPath(DataPath dataPath) {
-    project = project.copyWith(dataPaths: [...project.dataPaths, dataPath]);
+  Future<void> addClass(String className) async {
+    project = await useCases.classList.addClass(project.id, className);
     notifyListeners();
+    onChanged?.call(project);
+  }
+
+  Future<void> editClass(int index, String newName) async {
+    useCases.classList.editClass(project.id, index, newName);
+  }
+
+  Future<void> removeClass(int index) async {
+    project = await useCases.classList.removeClass(project.id, index);
+    notifyListeners();
+    onChanged?.call(project);
+  }
+
+  Future<void> addDataInfo(DataInfo dataInfo) async {
+    project = await useCases.dataInfo.addData(projectId: project.id, dataPath: dataInfo);
+    notifyListeners();
+    onChanged?.call(project);
+  }
+
+  Future<void> removeDataInfo(String dataId) async {
+    final index = project.dataInfos.indexWhere((e) => e.id == dataId);
+    if (index != -1) {
+      project = await useCases.dataInfo.removeData(projectId: project.id, dataIndex: index);
+      notifyListeners();
+      onChanged?.call(project);
+    }
   }
 
   // ==============================
-  // 📌 **설정 변경 감지**
+  // 📌 변경 감지
   // ==============================
 
-  /// ✅ 기존 프로젝트와 라벨링 모드가 변경되었는지 확인
   bool isLabelingModeChanged() {
-    return project.mode != project.mode;
+    return project.mode != _initialMode;
   }
 
   // ==============================
-  // 📌 **프로젝트 저장 및 삭제**
+  // 📌 저장 / 삭제 / 초기화
   // ==============================
 
-  /// ✅ 프로젝트 저장 (신규/업데이트)
   Future<void> saveProject(bool isNew) async {
-    List<Project> projects = await storageHelper.loadProjectFromConfig("projects");
-
-    if (isNew) {
-      projects.add(project);
-    } else {
-      int index = projects.indexWhere((p) => p.id == project.id);
-      if (index != -1) {
-        projects[index] = project;
-      }
-    }
-
-    await storageHelper.saveProjectConfig(projects);
+    await useCases.io.saveOne(project);
     notifyListeners();
+    onChanged?.call(project);
   }
 
-  /// ✅ 프로젝트 삭제
-  Future<void> deleteProject() async {
-    List<Project> projects = await storageHelper.loadProjectFromConfig("projects");
-    projects.removeWhere((p) => p.id == project.id);
+  Future<void> clearProjectLabels() async {
+    await useCases.edit.clearLabels(project.id);
+    notifyListeners();
+    onChanged?.call(project);
+  }
 
-    await storageHelper.saveProjectConfig(projects);
+  void updateFrom(Project updated) {
+    project = updated;
     notifyListeners();
   }
 
   // ==============================
-  // 📌 **프로젝트 데이터 초기화**
+  // 📌 다운로드 및 공유
   // ==============================
 
-  /// ✅ 프로젝트의 기존 데이터 제거
-  Future<void> clearProjectData() async {
-    await storageHelper.deleteProjectLabels(project.id);
-    notifyListeners();
-  }
-
-  // ==============================
-  // 📌 **다운로드 & 공유 기능**
-  // ==============================
-
-  /// ✅ 프로젝트 설정 다운로드
-  Future<void> downloadProjectConfig() async {
-    await storageHelper.downloadProjectConfig(project);
-  }
-
-  /// ✅ 프로젝트 공유
   Future<void> shareProject(BuildContext context) async {
     try {
-      final jsonString = project.toJsonString();
-      await shareHelper.shareProject(
-        name: project.name,
-        jsonString: jsonString,
-        getFilePath: () => storageHelper.downloadProjectConfig(project),
-      );
+      await useCases.share.call(context, project);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to share project: $e')),
+          SnackBar(content: Text('⚠️ 프로젝트 공유에 실패했습니다: $e')),
         );
       }
+    }
+  }
+
+  Future<void> downloadProjectConfig() async {
+    try {
+      await useCases.repository.exportConfig(project);
+    } catch (e) {
+      debugPrint("❌ Failed to download config: $e");
     }
   }
 }

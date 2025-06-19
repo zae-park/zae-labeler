@@ -12,10 +12,7 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
   String? _selectedClass;
   String? get selectedClass => _selectedClass;
 
-  SegmentationLabelingViewModel({
-    required super.project,
-    required super.storageHelper,
-  });
+  SegmentationLabelingViewModel({required super.project, required super.storageHelper, required super.appUseCases, super.initialDataList});
 
   /// Restores grid from saved label and sets default class if needed
   @override
@@ -114,7 +111,12 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
   @override
   Future<void> updateLabel(dynamic labelData) async {
     currentLabelVM.updateLabel(labelData);
-    await currentLabelVM.saveLabel();
+    await appUseCases.label.single.saveLabel(
+      projectId: project.id,
+      dataId: currentUnifiedData.dataId,
+      dataPath: currentUnifiedData.file?.path ?? '',
+      labelModel: currentLabelVM.labelModel,
+    );
     await refreshStatus(currentUnifiedData.dataId);
     notifyListeners();
   }
@@ -135,11 +137,11 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
       }
     }
 
-    final segmentation = SegmentationData(
-      segments: {_selectedClass!: Segment(indices: selectedPixels, classLabel: _selectedClass!)},
-    );
+    // final segmentation = SegmentationData(
+    //   segments: {_selectedClass!: Segment(indices: selectedPixels, classLabel: _selectedClass!)},
+    // );
 
-    await updateLabel(segmentation);
+    await updateLabel(Segment(indices: selectedPixels, classLabel: _selectedClass!));
   }
 
   /// Restores grid state from saved SegmentationData

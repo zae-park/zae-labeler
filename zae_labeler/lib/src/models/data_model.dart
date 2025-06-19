@@ -2,7 +2,8 @@
 
 /*
 이 파일은 데이터 모델을 정의하며, 다양한 데이터 유형(시계열, JSON 오브젝트, 이미지 등)을 다루기 위한 클래스들을 포함합니다.
-FileData, DataPath, UnifiedData 클래스를 사용하여 데이터를 로드, 변환, 직렬화 및 관리할 수 있습니다.
+DataInfo: 원본 데이터의 경로/메타데이터
+UnifiedData: 실제 파싱된 콘텐츠 및 라벨링 상태
 */
 
 import 'dart:convert';
@@ -14,61 +15,36 @@ import 'label_model.dart';
 
 enum FileType { series, object, image, unsupported }
 
-/// Represents file data and its associated content and metadata.
-class FileData {
-  final String name; // 파일 이름
-  final String type; // 파일 타입
-  final String content; // Base64 인코딩된 파일 내용
-  List<double>? seriesData; // 시계열 데이터
-  Map<String, dynamic>? objectData; // JSON 오브젝트 데이터
-  FileType? fileType; // 파일 유형
-
-  FileData({
-    required this.name,
-    required this.type,
-    required this.content,
-    this.seriesData,
-    this.objectData,
-    this.fileType,
-  });
-}
-
-/// Represents a data path that can be used to load file content.
-class DataPath {
-  final String id; // ✅ 고유 식별자 (uuid)
+/// ✅ Represents a data path that can be used to load file content (Web or Native)
+class DataInfo {
+  final String id; // 고유 식별자
   final String fileName; // 파일 이름
-  final String? base64Content; // Base64 인코딩된 파일 내용 (Web 환경)
-  final String? filePath; // 파일 경로 (Native 환경)
+  final String? base64Content; // Web용 base64 인코딩 데이터
+  final String? filePath; // Native용 파일 경로
 
-  DataPath({String? id, required this.fileName, this.base64Content, this.filePath}) : id = id ?? const Uuid().v4();
+  DataInfo({String? id, required this.fileName, this.base64Content, this.filePath}) : id = id ?? const Uuid().v4();
 
-  /// Loads the content of the file based on its environment (Web or Native).
+  /// 실제 파일 내용 로드 (Web/Naitve 환경 자동 대응)
   Future<String?> loadData() async {
     if (base64Content != null) {
-      // ✅ 이미지 데이터는 UTF-8 디코딩 없이 그대로 반환
-      if (['.png', '.jpg', '.jpeg'].any((ext) => fileName.endsWith(ext))) {
-        return base64Content;
+      if ([".png", ".jpg", ".jpeg"].any((ext) => fileName.endsWith(ext))) {
+        return base64Content; // 이미지일 경우 디코딩 없음
       }
-      return utf8.decode(base64Decode(base64Content!)); // ✅ JSON, CSV 파일만 UTF-8 디코딩
+      return utf8.decode(base64Decode(base64Content!));
     } else if (filePath != null) {
-      // Native 환경: 파일에서 데이터 읽기
       final file = File(filePath!);
-      if (file.existsSync()) {
-        return await file.readAsString();
-      }
+      if (file.existsSync()) return await file.readAsString();
     }
-    return null; // 데이터가 없는 경우
+    return null;
   }
 
-  /// Creates a DataPath instance from a JSON-compatible map.
-  factory DataPath.fromJson(Map<String, dynamic> json) => DataPath(
+  factory DataInfo.fromJson(Map<String, dynamic> json) => DataInfo(
         id: json['id'],
         fileName: json['fileName'],
         base64Content: json['base64Content'],
         filePath: json['filePath'],
       );
 
-  /// Converts the DataPath instance into a JSON-compatible map.
   Map<String, dynamic> toJson() => {
         'id': id,
         'fileName': fileName,
@@ -77,65 +53,66 @@ class DataPath {
       };
 }
 
-/// Represents unified data that encapsulates various types of content.
+/// ✅ Unified data object after loading/parsing the content
 class UnifiedData {
-  final String dataId; // ✅ 유일 식별자 추가
-  final String fileName;
-  final FileType fileType; // 파일 유형
-  final File? file; // Native 환경의 파일 객체
-  final List<double>? seriesData; // 시계열 데이터
-  final Map<String, dynamic>? objectData; // JSON 오브젝트 데이터
-
-  final String? content; // ✅ Base64 인코딩된 이미지 데이터 추가 (Web 지원)
-
+  final DataInfo dataInfo;
+  final FileType fileType;
+  final List<double>? seriesData;
+  final Map<String, dynamic>? objectData;
+  final String? content; // Base64 이미지
+  final File? file; // Native 환경에서의 파일 객체
   LabelStatus status;
 
-  UnifiedData(
-      {required this.dataId,
-      this.file,
-      this.seriesData,
-      this.objectData,
-      this.content,
-      required this.fileName,
-      required this.fileType,
-      this.status = LabelStatus.incomplete});
+  String get dataId => dataInfo.id;
+  String? get dataPath => file?.path;
+  String get fileName => dataInfo.fileName;
 
-  factory UnifiedData.empty() => UnifiedData(dataId: 'empty', fileType: FileType.unsupported, fileName: '');
+  UnifiedData({
+    required this.dataInfo,
+    required this.fileType,
+    this.seriesData,
+    this.objectData,
+    this.content,
+    this.file,
+    this.status = LabelStatus.incomplete,
+  });
 
-  /// Creates a UnifiedData instance from a DataPath by determining the file type.
-  static Future<UnifiedData> fromDataPath(DataPath dataPath) async {
-    final fileName = dataPath.fileName;
-    final id = dataPath.id;
+  factory UnifiedData.empty() => UnifiedData(dataInfo: DataInfo(fileName: 'empty'), fileType: FileType.unsupported);
+
+  DataInfo toDataInfo() => DataInfo(id: dataId, fileName: fileName, filePath: file?.path, base64Content: content);
+
+  /// 데이터 파일 내용에 따라 파싱된 UnifiedData 객체 생성
+  static Future<UnifiedData> fromDataInfo(DataInfo dataInfo) async {
+    final fileName = dataInfo.fileName;
 
     if (fileName.endsWith('.csv')) {
-      // 시계열 데이터 로드
-      final content = await dataPath.loadData();
+      final content = await dataInfo.loadData();
       final seriesData = _parseSeriesData(content ?? '');
-      return UnifiedData(dataId: id, fileName: fileName, seriesData: seriesData, fileType: FileType.series);
+      return UnifiedData(dataInfo: dataInfo, fileType: FileType.series, seriesData: seriesData);
     } else if (fileName.endsWith('.json')) {
-      // JSON 오브젝트 데이터 로드
-      final content = await dataPath.loadData();
+      final content = await dataInfo.loadData();
       final objectData = _parseObjectData(content ?? '');
-      return UnifiedData(dataId: id, fileName: fileName, objectData: objectData, fileType: FileType.object);
-    } else if (['.png', '.jpg', '.jpeg'].any((ext) => fileName.endsWith(ext))) {
-      // ✅ 이미지 파일 로드 (UTF-8 디코딩 없이 처리)
-      final content = await dataPath.loadData();
+      return UnifiedData(dataInfo: dataInfo, fileType: FileType.object, objectData: objectData);
+    } else if ([".png", ".jpg", ".jpeg"].any((ext) => fileName.endsWith(ext))) {
+      final content = await dataInfo.loadData();
       return UnifiedData(
-        dataId: id,
-        fileName: fileName,
-        file: dataPath.filePath != null ? File(dataPath.filePath!) : null,
-        content: content,
+        dataInfo: dataInfo,
         fileType: FileType.image,
+        content: content,
+        file: dataInfo.filePath != null ? File(dataInfo.filePath!) : null,
       );
     }
 
-    // 지원되지 않는 파일 형식
-    return UnifiedData(dataId: id, fileType: FileType.unsupported, fileName: fileName);
+    return UnifiedData(dataInfo: dataInfo, fileType: FileType.unsupported);
+  }
+
+  static Future<UnifiedData> fromDataId({required List<DataInfo> dataInfos, required String dataId}) async {
+    final dataInfo = dataInfos.firstWhere((e) => e.id == dataId, orElse: () => throw Exception("dataId not found: $dataId"));
+    return UnifiedData.fromDataInfo(dataInfo);
   }
 
   UnifiedData copyWith({
-    String? dataId,
-    String? fileName,
+    DataInfo? dataInfo,
     FileType? fileType,
     File? file,
     List<double>? seriesData,
@@ -144,8 +121,7 @@ class UnifiedData {
     LabelStatus? status,
   }) {
     return UnifiedData(
-      dataId: dataId ?? this.dataId,
-      fileName: fileName ?? this.fileName,
+      dataInfo: dataInfo ?? this.dataInfo,
       fileType: fileType ?? this.fileType,
       file: file ?? this.file,
       seriesData: seriesData ?? this.seriesData,
@@ -155,17 +131,15 @@ class UnifiedData {
     );
   }
 
-  /// Parses series data (CSV format) into a list of doubles.
   static List<double> _parseSeriesData(String content) {
     final lines = content.split('\n');
-    return lines.expand((line) => line.split(',')).map((value) => double.tryParse(value.trim()) ?? 0.0).toList();
+    return lines.expand((line) => line.split(',')).map((v) => double.tryParse(v.trim()) ?? 0.0).toList();
   }
 
-  /// Parses JSON object data from a string into a Map.
   static Map<String, dynamic> _parseObjectData(String content) {
     try {
       return jsonDecode(content) as Map<String, dynamic>;
-    } catch (e) {
+    } catch (_) {
       return {};
     }
   }

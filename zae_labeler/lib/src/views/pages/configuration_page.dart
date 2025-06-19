@@ -43,19 +43,19 @@ class ConfigureProjectPage extends StatelessWidget {
     final updatedProject = configVM.project;
     final isNewProject = !configVM.isEditing;
 
-    debugPrint("[confirmProject] mode: ${configVM.project.mode} is new? : $isNewProject"); // ✅ 이 로그 추가
-    if (isNewProject) {
-      projectListVM.saveProject(updatedProject);
-    } else {
-      projectListVM.updateProject(updatedProject);
+    debugPrint("[confirmProject] mode: ${configVM.project.mode} is new? : $isNewProject");
+    debugPrint("[confirmProject] dataInfos 수: ${updatedProject.dataInfos.length}");
+    for (final dp in updatedProject.dataInfos) {
+      debugPrint("📂 dataInfo: dataId=${dp.id}, path=${dp.filePath}, name=${dp.fileName}");
     }
+    projectListVM.upsertProject(updatedProject);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('${updatedProject.name} project has been ${isNewProject ? "created" : "updated"}.')),
     );
 
     configVM.reset();
-    Navigator.pop(context);
+    Navigator.pop(context, updatedProject);
   }
 
   @override
@@ -142,25 +142,25 @@ class ConfigureProjectPage extends StatelessWidget {
                                 ElevatedButton.icon(
                                   icon: const Icon(Icons.folder_open),
                                   label: const Text(kIsWeb ? 'Select Files' : 'Select Data Directory'),
-                                  onPressed: () => configVM.addDataPath(),
+                                  onPressed: () => configVM.addDataInfo(),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 8),
-                            if (configVM.project.dataPaths.isNotEmpty) ...[
+                            if (configVM.project.dataInfos.isNotEmpty) ...[
                               const SizedBox(height: 8),
                               Container(
                                 height: 150,
                                 decoration: BoxDecoration(border: Border.all(color: Colors.grey), borderRadius: BorderRadius.circular(8)),
                                 child: Scrollbar(
                                   child: ListView.builder(
-                                    itemCount: configVM.project.dataPaths.length,
+                                    itemCount: configVM.project.dataInfos.length,
                                     itemBuilder: (context, index) {
                                       return ListTile(
-                                        title: Text(configVM.project.dataPaths[index].fileName),
+                                        title: Text(configVM.project.dataInfos[index].fileName),
                                         trailing: IconButton(
                                           icon: const Icon(Icons.delete, color: Colors.red),
-                                          onPressed: () => configVM.removeDataPath(index),
+                                          onPressed: () => configVM.removeDataInfo(index),
                                         ),
                                       );
                                     },

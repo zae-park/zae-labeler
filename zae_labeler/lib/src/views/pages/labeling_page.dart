@@ -1,31 +1,74 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../domain/label/label_use_cases.dart';
+import '../../domain/project/project_use_cases.dart';
 import '../../models/label_model.dart';
 import '../../models/project_model.dart';
+import '../../utils/storage_helper.dart';
+import '../../view_models/labeling_view_model.dart';
+
+import '../../domain/app_use_cases.dart';
+import '../../repositories/label_repository.dart';
+import '../../repositories/project_repository.dart';
+
 import 'not_found_page.dart';
 import 'sub_pages/classification_labeling_page.dart';
 import 'sub_pages/segmentation_labeling_page.dart';
 import 'sub_pages/cross_classification_labeling_page.dart';
 
-class LabelingPage extends StatefulWidget {
+class LabelingPage extends StatelessWidget {
   final Project project;
 
-  const LabelingPage({Key? key, required this.project}) : super(key: key);
-
-  @override
-  LabelingPageState createState() => LabelingPageState();
-}
-
-class LabelingPageState extends State<LabelingPage> {
-  final modeToPageBuilder = {
-    LabelingMode.singleClassification: (p) => ClassificationLabelingPage(project: p),
-    LabelingMode.multiClassification: (p) => ClassificationLabelingPage(project: p),
-    LabelingMode.crossClassification: (p) => CrossClassificationLabelingPage(project: p),
-    LabelingMode.singleClassSegmentation: (p) => SegmentationLabelingPage(project: p),
-    LabelingMode.multiClassSegmentation: (p) => SegmentationLabelingPage(project: p),
-  };
+  const LabelingPage({super.key, required this.project});
 
   @override
   Widget build(BuildContext context) {
-    return modeToPageBuilder[widget.project.mode]?.call(widget.project) ?? const NotFoundPage();
+    final helper = Provider.of<StorageHelperInterface>(context, listen: false);
+
+    // ✅ Repository 준비
+    final labelRepo = LabelRepository(storageHelper: helper);
+    final projectRepo = ProjectRepository(storageHelper: helper);
+
+    // ✅ AppUseCases 구성
+    final appUseCases = AppUseCases.from(project: ProjectUseCases.from(projectRepo), label: LabelUseCases.from(labelRepo));
+
+    return FutureBuilder<LabelingViewModel>(
+      future: LabelingViewModelFactory.createAsync(project, helper, appUseCases),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
+
+        if (snapshot.hasError) {
+          debugPrint('❌ ViewModel init error: ${snapshot.error}');
+          return const Scaffold(body: Center(child: Text('초기화 실패')));
+        }
+
+        if (!snapshot.hasData) {
+          return const Scaffold(body: Center(child: Text('데이터 없음')));
+        }
+
+        final vm = snapshot.data!;
+        debugPrint('[LabelingPage]: ${vm.runtimeType}');
+        debugPrint('[LabelingPage]: ${vm.project.mode}');
+
+        switch (project.mode) {
+          case LabelingMode.singleClassification:
+          case LabelingMode.multiClassification:
+            return ClassificationLabelingPage(project: project, viewModel: vm as ClassificationLabelingViewModel);
+
+          case LabelingMode.crossClassification:
+            return CrossClassificationLabelingPage(project: project, viewModel: vm as CrossClassificationLabelingViewModel);
+
+          case LabelingMode.singleClassSegmentation:
+          case LabelingMode.multiClassSegmentation:
+            return SegmentationLabelingPage(project: project, viewModel: vm as SegmentationLabelingViewModel);
+
+          default:
+            return const NotFoundPage();
+        }
+      },
+    );
   }
 }
