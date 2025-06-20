@@ -1,21 +1,20 @@
-import 'package:zae_labeler/src/models/data_model.dart';
-import 'package:zae_labeler/src/models/label_model.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
+import 'package:zae_labeler/src/models/label_model.dart';
+import 'package:zae_labeler/src/models/data_model.dart';
+import 'package:zae_labeler/src/utils/proxy_storage_helper/interface_storage_helper.dart';
 import 'package:zae_labeler/src/repositories/label_repository.dart';
-import 'package:zae_labeler/src/utils/storage_helper.dart';
 
-class MockLabelRepository implements LabelRepository {
-  final Map<String, List<LabelModel>> _labelStore = {};
-  bool wasSaveCalled = false;
-  bool wasLoadCalled = false;
-  bool wasExportCalled = false;
-  bool wasImportCalled = false;
-  bool wasDeleteCalled = false;
+import 'mock_storage_helper.dart';
 
-  @override
-  final StorageHelperInterface storageHelper;
+/// 🧪 테스트용 MockLabelRepository
+class MockLabelRepository extends LabelRepository {
+  final Map<String, Map<String, LabelModel>> _labelStorage = {}; // [projectId][dataId]
+  final Map<String, List<LabelModel>> _importedLabels = {};
+  List<LabelModel> lastSavedLabels = [];
+  bool shouldThrowOnSave = false;
+  bool shouldThrowOnLoad = false;
 
-  MockLabelRepository({required this.storageHelper});
+  MockLabelRepository({StorageHelperInterface? storageHelper}) : super(storageHelper: storageHelper ?? MockStorageHelper());
 
   @override
   Future<void> saveLabel({
@@ -24,83 +23,65 @@ class MockLabelRepository implements LabelRepository {
     required String dataPath,
     required LabelModel labelModel,
   }) async {
-    wasSaveCalled = true;
-    _labelStore.putIfAbsent(projectId, () => []);
-    _labelStore[projectId]!.removeWhere((l) => l.dataId == dataId);
-    _labelStore[projectId]!.add(labelModel);
+    if (shouldThrowOnSave) throw Exception('Save failed');
+    _labelStorage.putIfAbsent(projectId, () => {})[dataId] = labelModel;
   }
 
   @override
-  Future<LabelModel> loadLabel({required String projectId, required String dataId, required String dataPath, required LabelingMode mode}) async {
-    wasLoadCalled = true;
-    LabelModel? found = _labelStore[projectId]?.firstWhere((l) => l.dataId == dataId, orElse: () => LabelModelFactory.createNew(mode, dataId: dataId));
-    found ??= LabelModelFactory.createNew(mode, dataId: dataId);
-    return found;
-  }
-
-  @override
-  Future<void> saveAllLabels(String projectId, List<LabelModel> labels) async {
-    wasSaveCalled = true;
-    _labelStore[projectId] = labels;
+  Future<LabelModel> loadLabel({
+    required String projectId,
+    required String dataId,
+    required String dataPath,
+    required LabelingMode mode,
+  }) async {
+    if (shouldThrowOnLoad) throw Exception('Load failed');
+    return _labelStorage[projectId]?[dataId] ?? LabelModelFactory.createNew(mode, dataId: dataId);
   }
 
   @override
   Future<List<LabelModel>> loadAllLabels(String projectId) async {
-    wasLoadCalled = true;
-    return _labelStore[projectId] ?? [];
+    return _labelStorage[projectId]?.values.toList() ?? [];
+  }
+
+  @override
+  Future<void> saveAllLabels(String projectId, List<LabelModel> labels) async {
+    final map = {for (var l in labels) l.dataId: l};
+    _labelStorage[projectId] = map;
+    lastSavedLabels = labels;
   }
 
   @override
   Future<void> deleteAllLabels(String projectId) async {
-    wasDeleteCalled = true;
-    _labelStore.remove(projectId);
+    _labelStorage.remove(projectId);
   }
 
   @override
   Future<String> exportLabels(Project project, List<LabelModel> labels) async {
-    wasExportCalled = true;
-    return '/mock/path/${project.name}_labels.json';
+    return '/mock/export/path/${project.id}_labels.zip';
+  }
+
+  @override
+  Future<String> exportLabelsWithData(Project project, List<LabelModel> labels, List<DataInfo> dataInfos) async {
+    return '/mock/export/path/${project.id}_with_data.zip';
   }
 
   @override
   Future<List<LabelModel>> importLabels() async {
-    wasImportCalled = true;
-    return [];
-  }
-
-  @override
-  Future<String> exportLabelsWithData(Project project, List<LabelModel> labels, List<DataInfo> dataInfos) {
-    // TODO: implement exportLabelsWithData
-    throw UnimplementedError();
-  }
-
-  @override
-  LabelStatus getStatus(Project project, LabelModel? labelModel) {
-    // TODO: implement getStatus
-    throw UnimplementedError();
-  }
-
-  @override
-  bool isLabeled(LabelModel labelModel) {
-    // TODO: implement isLabeled
-    throw UnimplementedError();
+    return _importedLabels.values.expand((x) => x).toList();
   }
 
   @override
   bool isValid(Project project, LabelModel labelModel) {
-    // TODO: implement isValid
-    throw UnimplementedError();
+    return true; // 테스트에서는 항상 valid로 처리
   }
 
   @override
-  Future<Map<String, LabelModel>> loadLabelMap(String projectId) {
-    // TODO: implement loadLabelMap
-    throw UnimplementedError();
+  LabelStatus getStatus(Project project, LabelModel? labelModel) {
+    return labelModel == null ? LabelStatus.incomplete : LabelStatus.complete;
   }
 
   @override
-  Future<LabelModel> loadOrCreateLabel({required String projectId, required String dataId, required String dataPath, required LabelingMode mode}) {
-    // TODO: implement loadOrCreateLabel
-    throw UnimplementedError();
+  bool isLabeled(LabelModel labelModel) {
+    return labelModel.isLabeled;
   }
 }
