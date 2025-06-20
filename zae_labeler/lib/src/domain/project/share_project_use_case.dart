@@ -14,6 +14,10 @@ class ShareProjectUseCase {
   final ShareHelperInterface shareHelper;
   final ProjectRepository repository;
 
+  set shareHelper(ShareHelperInterface helper) {
+    shareHelper = helper;
+  }
+
   ShareProjectUseCase({required this.repository, ShareHelperInterface? shareHelper}) : shareHelper = shareHelper ?? getShareHelper();
 
   Future<void> call(BuildContext context, Project project) async {
