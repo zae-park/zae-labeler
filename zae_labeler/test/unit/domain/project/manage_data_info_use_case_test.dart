@@ -15,34 +15,46 @@ void main() {
       useCase = ManageDataInfoUseCase(repository: repo);
     });
 
-    test('replaceAll replaces all dataInfos', () async {
+    test('addData appends a new DataInfo', () async {
       final project = Project.empty().copyWith(id: 'p1');
       await repo.saveProject(project);
 
-      final newData = [DataInfo(fileName: 'file.csv')];
-      await useCase.replaceAll('p1', newData);
+      final added = await useCase.addData(
+        projectId: 'p1',
+        dataInfo: DataInfo(fileName: 'file.csv'),
+      );
 
-      final result = await repo.findById('p1');
-      expect(result?.dataInfos.length, 1);
+      expect(added.dataInfos.length, 1);
+      expect(added.dataInfos.first.fileName, 'file.csv');
     });
 
-    test('add appends a new DataInfo', () async {
-      final project = Project.empty().copyWith(id: 'p2');
-      await repo.saveProject(project);
-
-      await useCase.addData(projectId: 'p2', dataPath: DataInfo(fileName: 'test.json'));
-      final result = await repo.findById('p2');
-      expect(result?.dataInfos.first.fileName, 'test.json');
-    });
-
-    test('removeById deletes specific DataInfo', () async {
+    test('removeData deletes DataInfo by index', () async {
       final data = DataInfo(fileName: 'sample.csv');
-      final project = Project.empty().copyWith(id: 'p3', dataInfos: [data]);
+      final project = Project.empty().copyWith(id: 'p2', dataInfos: [data]);
       await repo.saveProject(project);
 
-      await useCase.removeById('p3', data.id);
-      final result = await repo.findById('p3');
-      expect(result?.dataInfos.length, 0);
+      final removed = await useCase.removeData(projectId: 'p2', dataIndex: 0);
+      expect(removed.dataInfos, isEmpty);
+    });
+
+    test('removeData throws on invalid index', () async {
+      final project = Project.empty().copyWith(id: 'p3');
+      await repo.saveProject(project);
+
+      expect(
+        () => useCase.removeData(projectId: 'p3', dataIndex: 5),
+        throwsException,
+      );
+    });
+
+    test('removeAll clears all DataInfos', () async {
+      final data1 = DataInfo(fileName: 'data1.csv');
+      final data2 = DataInfo(fileName: 'data2.csv');
+      final project = Project.empty().copyWith(id: 'p4', dataInfos: [data1, data2]);
+      await repo.saveProject(project);
+
+      final cleared = await useCase.removeAll('p4');
+      expect(cleared.dataInfos, isEmpty);
     });
   });
 }
