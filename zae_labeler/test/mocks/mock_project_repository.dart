@@ -1,111 +1,120 @@
-import 'package:zae_labeler/src/models/data_model.dart';
+// test/mocks/repositories/mock_project_repository.dart
 import 'package:zae_labeler/src/models/label_model.dart';
-import 'package:zae_labeler/src/models/project_model.dart';
-import 'package:zae_labeler/src/utils/storage_helper.dart';
 import 'package:zae_labeler/src/repositories/project_repository.dart';
+import 'package:zae_labeler/src/models/project_model.dart';
+import 'package:zae_labeler/src/models/data_model.dart';
+import 'package:zae_labeler/src/utils/storage_helper.dart';
+
 import 'mock_storage_helper.dart';
 
-class MockProjectRepository implements ProjectRepository {
-  List<Project> _projects = [];
-  bool wasSaveProjectCalled = false;
-  bool wasSaveAllCalled = false;
-  bool wasDeleteCalled = false;
-  bool wasLabelDeleted = false;
+class MockProjectRepository extends ProjectRepository {
+  final Map<String, Project> _mockStore = {};
+  bool wasSaveCalled = false;
 
-  set projects(List<Project> value) => _projects = value;
+  MockProjectRepository({StorageHelperInterface? storageHelper}) : super(storageHelper: storageHelper ?? MockStorageHelper());
 
   @override
-  final StorageHelperInterface storageHelper = MockStorageHelper();
-
-  @override
-  Future<List<Project>> fetchAllProjects() async => _projects;
+  Future<List<Project>> fetchAllProjects() async {
+    return _mockStore.values.toList();
+  }
 
   @override
   Future<Project?> findById(String id) async {
-    return _projects.where((p) => p.id == id).firstOrNull;
+    return _mockStore[id];
   }
 
   @override
   Future<void> saveProject(Project project) async {
-    wasSaveProjectCalled = true;
-    final idx = _projects.indexWhere((p) => p.id == project.id);
-    if (idx >= 0) {
-      _projects[idx] = project;
-    } else {
-      _projects.add(project);
-    }
+    _mockStore[project.id] = project;
+    wasSaveCalled = true;
   }
 
   @override
   Future<void> saveAll(List<Project> list) async {
-    wasSaveAllCalled = true;
-    _projects = list;
+    _mockStore.clear();
+    for (var project in list) {
+      _mockStore[project.id] = project;
+    }
   }
 
   @override
   Future<void> deleteById(String id) async {
-    wasDeleteCalled = true;
-    _projects.removeWhere((p) => p.id == id);
+    _mockStore.remove(id);
   }
 
   @override
   Future<void> deleteAll() async {
-    wasDeleteCalled = true;
-    _projects.clear();
-  }
-
-  @override
-  Future<List<Project>> importFromExternal() async {
-    return _projects;
-  }
-
-  @override
-  Future<String> exportConfig(Project project) async {
-    return '/mock/path/${project.name}.json';
+    _mockStore.clear();
   }
 
   @override
   Future<void> clearLabels(String projectId) async {
-    wasLabelDeleted = true;
-    final project = _projects.firstWhere((p) => p.id == projectId, orElse: () => Project.empty());
-    project.clearLabels();
-  }
-
-  @override
-  Future<void> addDataInfo(String id, DataInfo newDataInfo) async {
-    final project = _projects.firstWhere((p) => p.id == id, orElse: () => Project.empty());
-    project.addDataInfo(newDataInfo);
-  }
-
-  @override
-  Future<void> removeDataInfoById(String id, String dataInfoId) async {
-    final project = _projects.firstWhere((p) => p.id == id, orElse: () => Project.empty());
-    project.removeDataInfoById(dataInfoId);
-  }
-
-  @override
-  Future<void> updateDataInfos(String id, List<DataInfo> newDataInfos) async {
-    final project = _projects.firstWhere((p) => p.id == id, orElse: () => Project.empty());
-    project.updateDataInfos(newDataInfos);
-  }
-
-  @override
-  Future<void> updateProjectClasses(String id, List<String> newClasses) async {
-    final project = _projects.firstWhere((p) => p.id == id, orElse: () => Project.empty());
-    project.updateClasses(newClasses);
+    // Do nothing or mock label deletion logic
   }
 
   @override
   Future<Project?> updateProjectMode(String id, LabelingMode newMode) async {
-    final project = _projects.firstWhere((p) => p.id == id, orElse: () => Project.empty());
-    project.updateMode(newMode);
+    final project = _mockStore[id];
+    if (project != null) {
+      project.updateMode(newMode);
+      await saveProject(project);
+    }
     return project;
   }
 
   @override
+  Future<void> updateProjectClasses(String id, List<String> newClasses) async {
+    final project = _mockStore[id];
+    if (project != null) {
+      project.updateClasses(newClasses);
+      await saveProject(project);
+    }
+  }
+
+  @override
   Future<Project?> updateProjectName(String id, String newName) async {
-    final project = _projects.firstWhere((p) => p.id == id, orElse: () => Project.empty());
-    project.updateName(newName);
+    final project = _mockStore[id];
+    if (project != null) {
+      project.updateName(newName);
+      await saveProject(project);
+    }
     return project;
+  }
+
+  @override
+  Future<void> updateDataInfos(String id, List<DataInfo> newDataInfos) async {
+    final project = _mockStore[id];
+    if (project != null) {
+      project.updateDataInfos(newDataInfos);
+      await saveProject(project);
+    }
+  }
+
+  @override
+  Future<void> addDataInfo(String id, DataInfo newDataInfo) async {
+    final project = _mockStore[id];
+    if (project != null) {
+      project.addDataInfo(newDataInfo);
+      await saveProject(project);
+    }
+  }
+
+  @override
+  Future<void> removeDataInfoById(String id, String dataInfoId) async {
+    final project = _mockStore[id];
+    if (project != null) {
+      project.removeDataInfoById(dataInfoId);
+      await saveProject(project);
+    }
+  }
+
+  @override
+  Future<List<Project>> importFromExternal() async {
+    return _mockStore.values.toList();
+  }
+
+  @override
+  Future<String> exportConfig(Project project) async {
+    return 'mock_config_path.json';
   }
 }
