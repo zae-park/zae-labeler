@@ -8,10 +8,10 @@ class ManageDataInfoUseCase {
 
   ManageDataInfoUseCase({required this.repository});
 
-  Future<Project> addData({required String projectId, required DataInfo dataPath}) async {
+  Future<Project> addData({required String projectId, required DataInfo dataInfo}) async {
     final project = await repository.findById(projectId);
     if (project != null) {
-      final updatedList = [...project.dataInfos, dataPath];
+      final updatedList = [...project.dataInfos, dataInfo];
       final updatedProject = project.copyWith(dataInfos: updatedList);
       await repository.saveProject(updatedProject);
       return updatedProject;

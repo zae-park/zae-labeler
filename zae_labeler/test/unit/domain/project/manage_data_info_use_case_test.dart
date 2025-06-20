@@ -30,7 +30,7 @@ void main() {
       final project = Project.empty().copyWith(id: 'p2');
       await repo.saveProject(project);
 
-      await useCase.addData('p2', DataInfo(fileName: 'test.json'));
+      await useCase.addData(projectId: 'p2', dataPath: DataInfo(fileName: 'test.json'));
       final result = await repo.findById('p2');
       expect(result?.dataInfos.first.fileName, 'test.json');
     });
