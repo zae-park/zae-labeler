@@ -5,7 +5,7 @@ import 'package:zae_labeler/src/models/project_model.dart';
 import 'package:zae_labeler/src/models/data_model.dart';
 import 'package:zae_labeler/src/utils/storage_helper.dart';
 
-import 'mock_storage_helper.dart';
+import '../helpers/mock_storage_helper.dart';
 
 class MockProjectRepository extends ProjectRepository {
   final Map<String, Project> _mockStore = {};

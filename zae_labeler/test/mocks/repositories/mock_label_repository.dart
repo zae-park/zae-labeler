@@ -4,7 +4,7 @@ import 'package:zae_labeler/src/models/data_model.dart';
 import 'package:zae_labeler/src/utils/proxy_storage_helper/interface_storage_helper.dart';
 import 'package:zae_labeler/src/repositories/label_repository.dart';
 
-import 'mock_storage_helper.dart';
+import '../helpers/mock_storage_helper.dart';
 
 /// 🧪 테스트용 MockLabelRepository
 class MockLabelRepository extends LabelRepository {
