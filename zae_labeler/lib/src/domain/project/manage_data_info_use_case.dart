@@ -29,4 +29,14 @@ class ManageDataInfoUseCase {
     }
     throw Exception('Invalid project or data index');
   }
+
+  Future<Project> removeAll(String projectId) async {
+    final project = await repository.findById(projectId);
+    if (project != null) {
+      final updatedProject = project.copyWith(dataInfos: []);
+      await repository.saveProject(updatedProject);
+      return updatedProject;
+    }
+    throw Exception('Project not found');
+  }
 }
