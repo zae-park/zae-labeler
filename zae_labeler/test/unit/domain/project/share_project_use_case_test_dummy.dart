@@ -1,27 +1,29 @@
-// import 'package:flutter_test/flutter_test.dart';
-// import 'package:flutter/material.dart';
-// import 'package:zae_labeler/src/domain/project/share_project_use_case.dart';
-// import 'package:zae_labeler/src/models/project_model.dart';
-// import '../../../mocks/mock_project_repository.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:zae_labeler/src/domain/project/share_project_use_case.dart';
+import 'package:zae_labeler/src/models/project_model.dart';
 
-// void main() {
-//   TestWidgetsFlutterBinding.ensureInitialized();
+import '../../../mocks/helpers/mock_share_helper.dart';
+import '../../../mocks/repositories/mock_project_repository.dart';
 
-//   group('ShareProjectUseCase', () {
-//     late MockProjectRepository repository;
-//     late ShareProjectUseCase useCase;
-//     late Project testProject;
+void main() {
+  group('ShareProjectUseCase', () {
+    late ShareProjectUseCase useCase;
+    late MockProjectRepository repo;
+    late MockShareHelper mockHelper;
 
-//     setUp(() {
-//       repository = MockProjectRepository();
-//       useCase = ShareProjectUseCase(repository: repository);
-//       testProject = Project.empty().copyWith(id: 'p1', name: 'Shared Project');
-//     });
+    setUp(() {
+      repo = MockProjectRepository();
+      mockHelper = MockShareHelper();
+      useCase = ShareProjectUseCase(repository: repo);
+    });
 
-//     testWidgets('calls shareProject and sets state', (tester) async {
-//       await tester.pumpWidget(const MaterialApp(home: SizedBox()));
-//       final filePath = await repository.exportConfig(testProject);
-//       useCase.shareHelper.shareProject(name: testProject.name, jsonString: testProject.toJsonString(), getFilePath: () async => filePath);
-//     });
-//   });
-// }
+    test('shareProject calls helper with config', () async {
+      final project = Project.empty().copyWith(id: 'p1', name: 'TestProj');
+      await repo.saveProject(project);
+
+      await useCase.call(project);
+
+      expect(mockHelper.wasCalled, true);
+    });
+  });
+}
