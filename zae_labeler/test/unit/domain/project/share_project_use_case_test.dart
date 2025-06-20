@@ -3,6 +3,7 @@ import 'package:zae_labeler/src/domain/project/share_project_use_case.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
 
 import '../../../mocks/helpers/mock_share_helper.dart';
+import '../../../mocks/mock_context.dart';
 import '../../../mocks/repositories/mock_project_repository.dart';
 
 void main() {
@@ -15,13 +16,16 @@ void main() {
       repo = MockProjectRepository();
       mockHelper = MockShareHelper();
       useCase = ShareProjectUseCase(repository: repo);
+      useCase.shareHelper = mockHelper; // ❗ setter를 통해 shareHelper를 외부 주입
     });
 
     test('shareProject calls helper with config', () async {
       final project = Project.empty().copyWith(id: 'p1', name: 'TestProj');
       await repo.saveProject(project);
 
-      await useCase.call(project);
+      final dummyContext = MockDummyContext();
+
+      await useCase.call(dummyContext, project);
 
       expect(mockHelper.wasCalled, true);
     });
