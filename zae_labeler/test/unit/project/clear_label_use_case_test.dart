@@ -1,12 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zae_labeler/src/domain/project/edit_project_meta_use_case.dart';
-import 'package:zae_labeler/src/models/label_model.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
 
-import '../../../mocks/mock_project_repository.dart';
+import '../../mocks/mock_project_repository.dart';
 
 void main() {
-  group('ChangeLabelingModeUseCase', () {
+  group('ClearLabelUseCase', () {
     late MockProjectRepository repository;
     late EditProjectMetaUseCase useCase;
 
@@ -15,15 +14,14 @@ void main() {
       useCase = EditProjectMetaUseCase(repository: repository);
     });
 
-    test('changes labeling mode and clears labels', () async {
-      final original = Project.empty().copyWith(id: 'p1', name: 'Test');
+    test('clears all labels in the project', () async {
+      final original = Project.empty().copyWith(id: 'p1', name: 'Test', labels: [/* dummy label */]);
       await repository.saveProject(original);
 
-      await useCase.changeLabelingMode('p1', LabelingMode.multiClassification);
+      await useCase.clearLabels('p1');
 
       final updated = await repository.findById('p1');
-      expect(updated?.mode, LabelingMode.multiClassification);
-      expect(updated?.labels, isEmpty);
+      expect(updated?.labels.isEmpty, isTrue);
     });
   });
 }

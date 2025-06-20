@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zae_labeler/src/domain/project/import_project_use_case.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
 
-import '../../../mocks/mock_project_repository.dart';
+import '../../mocks/mock_project_repository.dart';
 
 void main() {
   group('ImportProjectUseCase', () {
