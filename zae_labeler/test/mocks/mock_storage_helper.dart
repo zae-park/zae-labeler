@@ -72,10 +72,12 @@ class MockStorageHelper implements StorageHelperInterface {
   }
 
   @override
-  Future<void> saveAllLabels(String projectId, List<LabelModel> labels) async {}
+  Future<void> saveAllLabels(String projectId, List<LabelModel> labels) async {
+    _labelStorage[projectId] = {for (var label in labels) label.dataId: label};
+  }
 
   @override
-  Future<List<LabelModel>> loadAllLabelModels(String projectId) async => [];
+  Future<List<LabelModel>> loadAllLabelModels(String projectId) async => _labelStorage[projectId]?.values.toList() ?? [];
 
   @override
   Future<void> deleteProjectLabels(String projectId) async {}
@@ -90,8 +92,8 @@ class MockStorageHelper implements StorageHelperInterface {
   Future<void> clearAllCache() async {}
 
   @override
-  Future<void> deleteProject(String projectId) {
-    // TODO: implement deleteProject
-    throw UnimplementedError();
+  Future<void> deleteProject(String projectId) async {
+    _labelStorage.remove(projectId);
+    savedProjects.removeWhere((p) => p.id == projectId);
   }
 }
