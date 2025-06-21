@@ -4,10 +4,10 @@ import '../../models/data_model.dart';
 import '../../repositories/label_repository.dart';
 
 /// ✅ 라벨의 외부 입출력 처리용 UseCase 모음
-class LabelIOUseCases {
+class LabelIOUseCase {
   final LabelRepository repository;
 
-  LabelIOUseCases(this.repository);
+  LabelIOUseCase(this.repository);
 
   /// 📤 라벨만 export (데이터 제외)
   Future<String> exportLabels(Project project, List<LabelModel> labels) => repository.exportLabels(project, labels);

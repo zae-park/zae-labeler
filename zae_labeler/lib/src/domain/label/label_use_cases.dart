@@ -7,18 +7,18 @@ import 'label_io_use_case.dart';
 /// 🧩 ViewModel에 주입하기 위한 Label 관련 UseCase 모음
 class LabelUseCases {
   final LabelRepository repository;
-  final SingleLabelUseCases single;
-  final BatchLabelUseCases batch;
-  final LabelValidationUseCases validation;
-  final LabelIOUseCases io;
+  final SingleLabelUseCase single;
+  final BatchLabelUseCase batch;
+  final LabelValidationUseCase validation;
+  final LabelIOUseCase io;
 
   LabelUseCases({required this.repository, required this.single, required this.batch, required this.validation, required this.io});
 
   factory LabelUseCases.from(LabelRepository repository) => LabelUseCases(
         repository: repository,
-        single: SingleLabelUseCases(repository),
-        batch: BatchLabelUseCases(repository),
-        validation: LabelValidationUseCases(repository),
-        io: LabelIOUseCases(repository),
+        single: SingleLabelUseCase(repository),
+        batch: BatchLabelUseCase(repository),
+        validation: LabelValidationUseCase(repository),
+        io: LabelIOUseCase(repository),
       );
 }

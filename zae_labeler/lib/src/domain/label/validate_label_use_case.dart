@@ -3,10 +3,10 @@ import '../../models/project_model.dart';
 import '../../repositories/label_repository.dart';
 
 /// ✅ 라벨 유효성 검사 및 상태 판단용 UseCase 모음
-class LabelValidationUseCases {
+class LabelValidationUseCase {
   final LabelRepository repository;
 
-  LabelValidationUseCases(this.repository);
+  LabelValidationUseCase(this.repository);
 
   /// 📌 주어진 프로젝트 기준으로 라벨이 유효한지 판단
   bool isValid(Project project, LabelModel label) => repository.isValid(project, label);
