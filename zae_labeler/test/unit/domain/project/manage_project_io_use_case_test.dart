@@ -75,5 +75,25 @@ void main() {
       await localUseCase.clearCache();
       expect(customStorageHelper.wasClearCacheCalled, isTrue);
     });
+
+    // ─────────────────────────────────────
+    // 📂 Import/Export 테스트 추가
+    // ─────────────────────────────────────
+    test('importProjects loads from repository', () async {
+      final p1 = Project.empty().copyWith(id: 'p1');
+      final p2 = Project.empty().copyWith(id: 'p2');
+      await repo.saveAll([p1, p2]);
+
+      final imported = await useCase.importProjects();
+      expect(imported.length, 2);
+      expect(imported.map((e) => e.id), containsAll(['p1', 'p2']));
+    });
+
+    test('exportProject returns mock config path', () async {
+      final project = Project.empty().copyWith(id: 'p1', name: 'ExportTest');
+      final path = await useCase.exportProject(project);
+      expect(path, contains('p1'));
+      expect(path, contains('.json'));
+    });
   });
 }
