@@ -40,4 +40,14 @@ class ManageProjectIOUseCase {
   Future<void> clearCache() async {
     await repository.storageHelper.clearAllCache();
   }
+
+  /// 🔹 외부에서 프로젝트들 가져오기
+  Future<List<Project>> importProjects() async {
+    return await repository.importFromExternal();
+  }
+
+  /// 🔹 프로젝트 설정 내보내기
+  Future<String> exportProject(Project project) async {
+    return await repository.exportConfig(project);
+  }
 }
