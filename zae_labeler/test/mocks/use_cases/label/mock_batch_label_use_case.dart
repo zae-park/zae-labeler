@@ -1,17 +1,31 @@
 import 'package:zae_labeler/src/domain/label/batch_label_use_case.dart';
 import 'package:zae_labeler/src/models/label_model.dart';
 
-import '../../mock_label_repository.dart';
-import '../../mock_storage_helper.dart';
+class MockBatchLabelUseCase extends BatchLabelUseCase {
+  List<LabelModel> mockLabels = [];
+  Map<String, LabelModel> mockLabelMap = {};
+  bool wasDeleteAllCalled = false;
 
-class MockBatchLabelUseCases extends BatchLabelUseCases {
-  MockBatchLabelUseCases() : super(MockLabelRepository(storageHelper: MockStorageHelper()));
+  MockBatchLabelUseCase({required super.repository});
 
-  // @override
-  // Future<List<LabelModel>> loadAllLabels(String projectId) async {
-  //   return dataPaths.map((e) => LabelModelFactory.createNew(mode, dataId: 'mock')).toList();
-  // }
+  List<LabelModel> get savedLabels => mockLabels;
+  Map<String, LabelModel> get savedLabelMap => mockLabelMap;
 
   @override
-  Future<void> saveAllLabels(String projectId, List<LabelModel> labels) async {}
+  Future<List<LabelModel>> loadAllLabels(String projectId) async => mockLabels;
+
+  @override
+  Future<Map<String, LabelModel>> loadLabelMap(String projectId) async => mockLabelMap;
+
+  @override
+  Future<void> saveAllLabels(String projectId, List<LabelModel> labels) async {
+    mockLabels = labels;
+  }
+
+  @override
+  Future<void> deleteAllLabels(String projectId) async {
+    wasDeleteAllCalled = true;
+    mockLabels.clear();
+    mockLabelMap.clear();
+  }
 }
