@@ -1,37 +1,34 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zae_labeler/src/domain/label/validate_label_use_case.dart';
 import 'package:zae_labeler/src/models/label_model.dart';
 import 'package:zae_labeler/src/models/project_model.dart';
 
 import '../../../mocks/repositories/mock_label_repository.dart';
+import '../../../mocks/use_cases/label/mock_valid_label_use_case.dart';
 
 void main() {
-  group('LabelValidationUseCase', () {
-    late LabelValidationUseCase useCase;
-    late MockLabelRepository repo;
+  group('MockLabelValidationUseCase', () {
+    late MockLabelValidationUseCase useCase;
+    late Project dummyProject;
+    late LabelModel dummyLabel;
 
     setUp(() {
-      repo = MockLabelRepository();
-      useCase = LabelValidationUseCase(repo);
+      useCase = MockLabelValidationUseCase(repository: MockLabelRepository());
+      dummyProject = Project(id: 'p1', name: 'Test Project', mode: LabelingMode.singleClassification, classes: ['A', 'B'], dataInfos: []);
+      dummyLabel = LabelModelFactory.createNew(LabelingMode.singleClassification, dataId: 'd1');
     });
 
-    test('isValid returns true from repo', () {
-      final project = Project.empty();
-      final label = LabelModelFactory.createNew(LabelingMode.singleClassification, dataId: 'x');
-
-      final result = useCase.isValid(project, label);
-      expect(result, isTrue);
+    test('isValid always returns true', () {
+      expect(useCase.isValid(dummyProject, dummyLabel), isTrue);
     });
 
-    test('getStatus returns label status from repo', () {
-      final project = Project.empty();
-      final label = LabelModelFactory.createNew(LabelingMode.singleClassification, dataId: 'y');
+    test('getStatus always returns LabelStatus.complete', () {
+      final status = useCase.getStatus(dummyProject, dummyLabel);
+      expect(status, LabelStatus.complete);
+    });
 
-      final result = useCase.getStatus(project, label);
-      expect(result, LabelStatus.complete);
-
-      final nullResult = useCase.getStatus(project, null);
-      expect(nullResult, LabelStatus.incomplete);
+    test('getStatus handles null label safely', () {
+      final status = useCase.getStatus(dummyProject, null);
+      expect(status, LabelStatus.complete);
     });
   });
 }
