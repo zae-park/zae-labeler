@@ -4,7 +4,7 @@ import '../../repositories/label_repository.dart';
 class BatchLabelUseCase {
   final LabelRepository repository;
 
-  BatchLabelUseCase(this.repository);
+  BatchLabelUseCase({required this.repository});
 
   Future<List<LabelModel>> loadAllLabels(String projectId) => repository.loadAllLabels(projectId);
   Future<Map<String, LabelModel>> loadLabelMap(String projectId) => repository.loadLabelMap(projectId);

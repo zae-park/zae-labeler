@@ -5,7 +5,7 @@ import '../../repositories/label_repository.dart';
 class SingleLabelUseCase {
   final LabelRepository repository;
 
-  SingleLabelUseCase(this.repository);
+  SingleLabelUseCase({required this.repository});
 
   /// 📌 단일 라벨 로드
   Future<LabelModel> loadLabel({required String projectId, required String dataId, required String dataPath, required LabelingMode mode}) =>

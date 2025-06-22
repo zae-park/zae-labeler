@@ -16,9 +16,9 @@ class LabelUseCases {
 
   factory LabelUseCases.from(LabelRepository repository) => LabelUseCases(
         repository: repository,
-        single: SingleLabelUseCase(repository),
-        batch: BatchLabelUseCase(repository),
-        validation: LabelValidationUseCase(repository),
-        io: LabelIOUseCase(repository),
+        single: SingleLabelUseCase(repository: repository),
+        batch: BatchLabelUseCase(repository: repository),
+        validation: LabelValidationUseCase(repository: repository),
+        io: LabelIOUseCase(repository: repository),
       );
 }

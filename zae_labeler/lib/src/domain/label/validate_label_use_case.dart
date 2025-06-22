@@ -6,7 +6,7 @@ import '../../repositories/label_repository.dart';
 class LabelValidationUseCase {
   final LabelRepository repository;
 
-  LabelValidationUseCase(this.repository);
+  LabelValidationUseCase({required this.repository});
 
   /// 📌 주어진 프로젝트 기준으로 라벨이 유효한지 판단
   bool isValid(Project project, LabelModel label) => repository.isValid(project, label);

@@ -7,7 +7,7 @@ import '../../repositories/label_repository.dart';
 class LabelIOUseCase {
   final LabelRepository repository;
 
-  LabelIOUseCase(this.repository);
+  LabelIOUseCase({required this.repository});
 
   /// 📤 라벨만 export (데이터 제외)
   Future<String> exportLabels(Project project, List<LabelModel> labels) => repository.exportLabels(project, labels);
