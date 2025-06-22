@@ -6,13 +6,14 @@ import 'mock_valid_label_use_case.dart';
 import 'mock_io_label_use_case.dart';
 
 class MockLabelUseCases extends LabelUseCases {
-  static final _repo = MockLabelRepository();
-  MockLabelUseCases()
+  MockLabelUseCases({MockLabelRepository? repository})
       : super(
-          repository: _repo,
-          single: MockSingleLabelUseCase(repository: _repo),
-          batch: MockBatchLabelUseCase(repository: _repo),
-          validation: MockLabelValidationUseCase(repository: _repo),
-          io: MockLabelIOUseCase(repository: _repo),
+          repository: repository ?? _fallbackRepo,
+          single: MockSingleLabelUseCase(repository: repository ?? _fallbackRepo),
+          batch: MockBatchLabelUseCase(repository: repository ?? _fallbackRepo),
+          validation: MockLabelValidationUseCase(repository: repository ?? _fallbackRepo),
+          io: MockLabelIOUseCase(repository: repository ?? _fallbackRepo),
         );
+
+  static final _fallbackRepo = MockLabelRepository();
 }
