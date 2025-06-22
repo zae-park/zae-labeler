@@ -10,6 +10,8 @@ import '../helpers/mock_storage_helper.dart';
 class MockProjectRepository extends ProjectRepository {
   final Map<String, Project> _mockStore = {};
   bool wasSaveCalled = false;
+  bool wasClearLabelsCalled = false; // ✅ 추가
+  bool wasDownloadCalled = false; // ✅ 추가
 
   MockProjectRepository({StorageHelperInterface? storageHelper}) : super(storageHelper: storageHelper ?? MockStorageHelper());
 
@@ -49,7 +51,7 @@ class MockProjectRepository extends ProjectRepository {
 
   @override
   Future<void> clearLabels(String projectId) async {
-    // Do nothing or mock label deletion logic
+    wasClearLabelsCalled = true;
   }
 
   @override
@@ -115,6 +117,7 @@ class MockProjectRepository extends ProjectRepository {
 
   @override
   Future<String> exportConfig(Project project) async {
+    wasDownloadCalled = true;
     return 'mock_config_path.json';
   }
 }
