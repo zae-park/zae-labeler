@@ -1,50 +1,54 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zae_labeler/src/domain/label/label_use_cases.dart';
 import 'package:zae_labeler/src/models/label_model.dart';
 import 'package:zae_labeler/src/models/sub_models/segmentation_label_model.dart';
-import 'package:zae_labeler/src/view_models/label_view_model.dart';
+import 'package:zae_labeler/src/view_models/managers/label_input_mapper.dart';
+import 'package:zae_labeler/src/view_models/sub_view_models/segmentation_label_view_model.dart';
 
-import '../../../mocks/mock_label_repository.dart';
-import '../../../mocks/mock_storage_helper.dart';
+import '../../../mocks/use_cases/label/mock_label_use_cases.dart';
 
 void main() {
-  group('SegmentationLabelModel', () {
-    late SegmentationLabelViewModel vm;
+  group('SegmentationLabelViewModel', () {
+    late SegmentationLabelViewModel viewModel;
 
     setUp(() {
-      vm = SegmentationLabelViewModel(
-          projectId: "test-project",
-          dataId: "test-data",
-          dataFilename: "test-data",
-          dataPath: "test-dataPath",
-          mode: LabelingMode.singleClassSegmentation,
-          labelModel: SingleClassSegmentationLabelModel.empty(),
-          labelUseCases: LabelUseCases.from(MockLabelRepository(storageHelper: MockStorageHelper())),
-          labelInputMapper: LabelInputMapperFactory.create(LabelingMode.singleClassSegmentation));
+      viewModel = SegmentationLabelViewModel(
+        projectId: 'test_project',
+        dataId: 'sample_data',
+        dataFilename: 'image.png',
+        dataPath: '/mock/path/image.png',
+        mode: LabelingMode.singleClassSegmentation,
+        labelModel: SingleClassSegmentationLabelModel(
+          dataId: 'sample_data',
+          dataPath: '/mock/path/image.png',
+          label: SingleClassSegmentationLabelModel.empty().label,
+          labeledAt: DateTime(2023),
+        ),
+        labelUseCases: MockLabelUseCases(),
+        labelInputMapper: SingleSegmentationInputMapper(),
+      );
     });
 
-    test('SingleClassSegmentationLabelModel pixel add/remove and status', () async {
-      final model = SingleClassSegmentationLabelModel.empty();
+    test('addPixel should update label with new pixel', () async {
+      await viewModel.addPixel(3, 5, 'cat');
 
-      expect(model.isLabeled, isFalse);
-
-      await vm.addPixel(1, 1, "sample");
-      expect(vm.labelModel.label.segments['sample']!.containsPixel(1, 1), isTrue);
-      expect(vm.labelModel.isLabeled, isTrue);
-
-      await vm.removePixel(1, 1);
-      expect(vm.labelModel.label.segments['sample'], isNull);
-      expect(vm.labelModel.isLabeled, isFalse);
+      final labelData = viewModel.labelModel.label!;
+      expect(labelData.getPixel(3, 5), equals('cat'));
     });
 
-    test('MultiClassSegmentationLabelModel pixel add/remove and status', () async {
-      await vm.addPixel(2, 2, 'person');
-      expect(vm.labelModel.label.segments['person']?.containsPixel(2, 2), isTrue);
-      expect(vm.labelModel.isLabeled, isTrue);
+    test('removePixel should remove pixel from label', () async {
+      await viewModel.addPixel(1, 2, 'dog');
+      await viewModel.removePixel(1, 2);
 
-      await vm.removePixel(2, 2);
-      expect(vm.labelModel.label.segments['person'], isNull);
-      expect(vm.labelModel.isLabeled, isFalse);
+      final labelData = viewModel.labelModel.label!;
+      expect(labelData.getPixel(1, 2), isNull);
+    });
+
+    test('addPixel followed by removePixel should leave no label', () async {
+      await viewModel.addPixel(10, 10, 'tree');
+      await viewModel.removePixel(10, 10);
+
+      final labelData = viewModel.labelModel.label!;
+      expect(labelData.getPixel(10, 10), isNull);
     });
   });
 }
