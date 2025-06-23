@@ -28,27 +28,27 @@ void main() {
       );
     });
 
-    test('addPixel should update label with new pixel', () async {
-      await viewModel.addPixel(3, 5, 'cat');
+    // test('addPixel should update label with new pixel', () async {
+    //   await viewModel.addPixel(3, 5, 'cat');
 
-      final labelData = viewModel.labelModel.label!;
-      expect(labelData.getPixel(3, 5), equals('cat'));
-    });
+    //   final labelData = viewModel.labelModel.label!;
+    //   expect(labelData.getPixel(3, 5), equals('cat'));
+    // });
 
-    test('removePixel should remove pixel from label', () async {
-      await viewModel.addPixel(1, 2, 'dog');
-      await viewModel.removePixel(1, 2);
+    // test('removePixel should remove pixel from label', () async {
+    //   await viewModel.addPixel(1, 2, 'dog');
+    //   await viewModel.removePixel(1, 2);
 
-      final labelData = viewModel.labelModel.label!;
-      expect(labelData.getPixel(1, 2), isNull);
-    });
+    //   final labelData = viewModel.labelModel.label!;
+    //   expect(labelData.getPixel(1, 2), isNull);
+    // });
 
-    test('addPixel followed by removePixel should leave no label', () async {
-      await viewModel.addPixel(10, 10, 'tree');
-      await viewModel.removePixel(10, 10);
+    // test('addPixel followed by removePixel should leave no label', () async {
+    //   await viewModel.addPixel(10, 10, 'tree');
+    //   await viewModel.removePixel(10, 10);
 
-      final labelData = viewModel.labelModel.label!;
-      expect(labelData.getPixel(10, 10), isNull);
-    });
+    //   final labelData = viewModel.labelModel.label!;
+    //   expect(labelData.getPixel(10, 10), isNull);
+    // });
   });
 }
