@@ -1,19 +1,28 @@
 import 'package:zae_labeler/src/domain/label/single_label_use_case.dart';
 import 'package:zae_labeler/src/models/label_model.dart';
 
-import '../../mock_label_repository.dart';
-import '../../mock_storage_helper.dart';
+class MockSingleLabelUseCase extends SingleLabelUseCase {
+  final Map<String, LabelModel> _labelMap = {};
 
-class MockSingleLabelUseCases extends SingleLabelUseCases {
-  MockSingleLabelUseCases() : super(MockLabelRepository(storageHelper: MockStorageHelper()));
+  MockSingleLabelUseCase({required super.repository});
 
-  // @override
-  Future<void> saveLabelById(String projectId, String dataId, LabelModel label) async {
-    // 테스트용 no-op
+  @override
+  Future<LabelModel> loadLabel({required String projectId, required String dataId, required String dataPath, required LabelingMode mode}) async {
+    return _labelMap[dataId] ?? LabelModelFactory.createNew(mode, dataId: dataId);
   }
 
-  // @override
-  Future<LabelModel?> loadLabelById(String projectId, String dataId, LabelingMode mode) async {
-    return LabelModelFactory.createNew(mode, dataId: "mock"); // dummy
+  @override
+  Future<void> saveLabel({required String projectId, required String dataId, required String dataPath, required LabelModel labelModel}) async {
+    _labelMap[dataId] = labelModel;
+  }
+
+  @override
+  Future<LabelModel> loadOrCreateLabel({required String projectId, required String dataId, required String dataPath, required LabelingMode mode}) async {
+    return _labelMap[dataId] ??= LabelModelFactory.createNew(mode, dataId: dataId);
+  }
+
+  @override
+  bool isLabeled(LabelModel labelModel) {
+    return labelModel.isLabeled;
   }
 }

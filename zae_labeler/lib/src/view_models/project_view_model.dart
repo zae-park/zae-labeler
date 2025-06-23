@@ -82,7 +82,7 @@ class ProjectViewModel extends ChangeNotifier {
   }
 
   Future<void> addDataInfo(DataInfo dataInfo) async {
-    project = await useCases.dataInfo.addData(projectId: project.id, dataPath: dataInfo);
+    project = await useCases.dataInfo.addData(projectId: project.id, dataInfo: dataInfo);
     notifyListeners();
     onChanged?.call(project);
   }

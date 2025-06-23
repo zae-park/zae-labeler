@@ -8,9 +8,11 @@ import 'package:zae_labeler/src/models/data_model.dart';
 class MockStorageHelper implements StorageHelperInterface {
   final Map<String, Map<String, LabelModel>> _labelStorage = {}; // 📦 label 저장소
   List<Project> savedProjects = [];
-  bool wasSaveProjectCalled = false;
-  bool shouldThrowOnSave = false;
   Project? mockImportedProject;
+
+  bool wasSaveProjectCalled = false;
+  bool wasClearCacheCalled = false;
+  bool shouldThrowOnSave = false;
 
   @override
   Future<void> saveProjectConfig(List<Project> project) async {
@@ -72,10 +74,12 @@ class MockStorageHelper implements StorageHelperInterface {
   }
 
   @override
-  Future<void> saveAllLabels(String projectId, List<LabelModel> labels) async {}
+  Future<void> saveAllLabels(String projectId, List<LabelModel> labels) async {
+    _labelStorage[projectId] = {for (var label in labels) label.dataId: label};
+  }
 
   @override
-  Future<List<LabelModel>> loadAllLabelModels(String projectId) async => [];
+  Future<List<LabelModel>> loadAllLabelModels(String projectId) async => _labelStorage[projectId]?.values.toList() ?? [];
 
   @override
   Future<void> deleteProjectLabels(String projectId) async {}
@@ -87,11 +91,13 @@ class MockStorageHelper implements StorageHelperInterface {
   Future<List<LabelModel>> importAllLabels() async => [];
 
   @override
-  Future<void> clearAllCache() async {}
+  Future<void> clearAllCache() async {
+    wasClearCacheCalled = true;
+  }
 
   @override
-  Future<void> deleteProject(String projectId) {
-    // TODO: implement deleteProject
-    throw UnimplementedError();
+  Future<void> deleteProject(String projectId) async {
+    _labelStorage.remove(projectId);
+    savedProjects.removeWhere((p) => p.id == projectId);
   }
 }

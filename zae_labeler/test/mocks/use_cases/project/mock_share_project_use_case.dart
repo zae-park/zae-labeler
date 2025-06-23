@@ -1,6 +1,16 @@
+import 'package:flutter/material.dart';
 import 'package:zae_labeler/src/domain/project/share_project_use_case.dart';
-import '../../mock_project_repository.dart';
+import 'package:zae_labeler/src/models/project_model.dart';
 
 class MockShareProjectUseCase extends ShareProjectUseCase {
-  MockShareProjectUseCase() : super(repository: MockProjectRepository());
+  bool wasCalled = false;
+  Project? sharedProject;
+
+  MockShareProjectUseCase({required super.repository});
+
+  @override
+  Future<void> call(BuildContext context, Project project) async {
+    wasCalled = true;
+    sharedProject = project;
+  }
 }
