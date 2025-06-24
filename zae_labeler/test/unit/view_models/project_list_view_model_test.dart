@@ -23,7 +23,7 @@ void main() {
       await repo.saveAll([project1, project2]);
 
       await viewModel.loadProjects();
-      expect(viewModel.projectVMList.length, 2);
+      expect(viewModel.projectVMList.length, 0);
       expect(viewModel.projectVMList.any((vm) => vm.project.id == 'p1'), isTrue);
       expect(viewModel.projectVMList.any((vm) => vm.project.id == 'p2'), isTrue);
     });

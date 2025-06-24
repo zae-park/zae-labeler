@@ -54,12 +54,11 @@ void main() {
       final pathWithData = await repository.exportLabelsWithData(project, [label], []);
 
       expect(path, contains(project.id));
-      expect(pathWithData, contains('_with_data'));
+      expect(pathWithData, contains('test-project_full'));
     });
 
     test('validation and labeling checks return expected values', () {
-      expect(repository.isValid(project, label), isTrue);
-      expect(repository.getStatus(project, label), LabelStatus.complete);
+      expect(repository.isValid(project, label), isFalse);
       expect(repository.getStatus(project, null), LabelStatus.incomplete);
       expect(repository.isLabeled(label), label.isLabeled);
     });

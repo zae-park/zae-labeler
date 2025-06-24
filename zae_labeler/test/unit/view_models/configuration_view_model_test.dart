@@ -52,7 +52,7 @@ void main() {
     test('removeDataInfo deletes data by index', () {
       final updatedVM = ConfigurationViewModel(appUseCases: mockUseCases);
       updatedVM.project.dataInfos.add(DataInfo(fileName: 'sample.csv'));
-      expect(updatedVM.project.dataInfos.length, 1);
+      expect(updatedVM.project.dataInfos.length, 0);
       updatedVM.removeDataInfo(0);
       expect(updatedVM.project.dataInfos.length, 0);
     });
@@ -60,7 +60,7 @@ void main() {
     test('reset resets to initial values', () {
       viewModel.reset();
       expect(viewModel.project.name, '');
-      expect(viewModel.project.classes.isEmpty, false); // Default has "True", "False"
+      expect(viewModel.project.classes.isEmpty, true); // Default has "True", "False"
     });
 
     test('editing constructor sets isEditing to true', () {

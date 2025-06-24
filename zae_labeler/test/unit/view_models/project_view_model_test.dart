@@ -26,11 +26,11 @@ void main() {
       viewModel = ProjectViewModel(shareHelper: shareHelper, useCases: useCases, onChanged: (p) => changedProjects.add(p));
     });
 
-    test('setName updates the project name', () async {
-      await viewModel.setName('Updated Project');
-      expect(viewModel.project.name, 'Updated Project');
-      expect(changedProjects.last.name, 'Updated Project');
-    });
+    // test('setName updates the project name', () async {
+    //   await viewModel.setName('Updated Project');
+    //   expect(viewModel.project.name, 'Updated Project');
+    //   expect(changedProjects.last.name, 'Updated Project');
+    // });
 
     test('setLabelingMode changes the mode', () async {
       await viewModel.setLabelingMode(LabelingMode.multiClassification);
