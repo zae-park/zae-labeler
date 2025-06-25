@@ -15,41 +15,49 @@ class MockManageClassListUseCase extends ManageClassListUseCase {
 
   Project? getProject(String id) => _projects[id];
 
+  Project _getProjectOrThrow(String projectId) {
+    final project = _projects[projectId];
+    if (project == null) {
+      throw StateError("Project not found for id: $projectId");
+    }
+    return project;
+  }
+
   @override
   Future<Project> addClass(String projectId, String newClass) async {
     addCalls.add('$projectId:$newClass');
-    final project = _projects[projectId];
-    if (project != null && !project.classes.contains(newClass)) {
+    final project = _getProjectOrThrow(projectId);
+    if (!project.classes.contains(newClass)) {
       final updatedProject = project.copyWith(classes: [...project.classes, newClass]);
       _projects[projectId] = updatedProject;
       return updatedProject;
     }
-    return project!;
+    return project;
   }
 
   @override
   Future<Project> removeClass(String projectId, int index) async {
     removeCalls.add('$projectId:$index');
-    final project = _projects[projectId];
-    if (project != null && index >= 0 && index < project.classes.length) {
+    final project = _getProjectOrThrow(projectId);
+    if (index >= 0 && index < project.classes.length) {
       final updatedClasses = List<String>.from(project.classes)..removeAt(index);
       final updatedProject = project.copyWith(classes: updatedClasses);
       _projects[projectId] = updatedProject;
       return updatedProject;
     }
-    return project!;
+    return project;
   }
 
   @override
   Future<Project> editClass(String projectId, int index, String newName) async {
     editCalls.add('$projectId:$index->$newName');
-    final project = _projects[projectId];
-    if (project != null && index >= 0 && index < project.classes.length) {
+    final project = _getProjectOrThrow(projectId);
+    if (index >= 0 && index < project.classes.length) {
       final updatedClasses = List<String>.from(project.classes)..[index] = newName;
       final updatedProject = project.copyWith(classes: updatedClasses);
       _projects[projectId] = updatedProject;
       return updatedProject;
     }
-    return project!;
+    return project;
   }
 }
