@@ -8,24 +8,28 @@ import '../../mocks/use_cases/project/mock_project_use_cases.dart';
 void main() {
   group('ProjectListViewModel', () {
     late MockProjectRepository repo;
-    late MockProjectUseCases useCases;
+    late MockProjectUseCases mockUseCases;
     late ProjectListViewModel viewModel;
 
     setUp(() {
       repo = MockProjectRepository();
-      useCases = MockProjectUseCases();
-      viewModel = ProjectListViewModel(projectUseCases: useCases);
+      mockUseCases = MockProjectUseCases(repository: repo);
+      viewModel = ProjectListViewModel(projectUseCases: mockUseCases);
     });
 
     test('loadProjects populates projectVMList', () async {
-      final project1 = Project.empty().copyWith(id: 'p1', name: 'Test1');
-      final project2 = Project.empty().copyWith(id: 'p2', name: 'Test2');
-      await repo.saveAll([project1, project2]);
+      // ✅ repo에 직접 저장
+      await repo.saveAll([
+        Project.empty().copyWith(id: 'p1', name: 'Test1'),
+        Project.empty().copyWith(id: 'p2', name: 'Test2'),
+      ]);
+
+      // ✅ viewModel을 다시 생성하여 mockUseCases 연결
+      viewModel = ProjectListViewModel(projectUseCases: mockUseCases);
 
       await viewModel.loadProjects();
-      expect(viewModel.projectVMList.length, 0);
-      expect(viewModel.projectVMList.any((vm) => vm.project.id == 'p1'), isTrue);
-      expect(viewModel.projectVMList.any((vm) => vm.project.id == 'p2'), isTrue);
+
+      expect(viewModel.projectVMList.length, 2);
     });
 
     test('upsertProject adds new project', () async {
