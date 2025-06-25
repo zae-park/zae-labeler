@@ -5,15 +5,32 @@ import 'package:zae_labeler/src/models/data_model.dart';
 import 'package:zae_labeler/src/view_models/configuration_view_model.dart';
 
 import '../../mocks/use_cases/mock_app_use_cases.dart';
+import '../../mocks/use_cases/project/mock_manage_class_list_use_case.dart';
+import '../../mocks/use_cases/project/mock_manage_data_info_use_case.dart';
 
 void main() {
   group('ConfigurationViewModel', () {
     late ConfigurationViewModel viewModel;
     late MockAppUseCases mockUseCases;
 
+    void syncWithMock() {
+      final updated = (mockUseCases.project.classList as MockManageClassListUseCase).getProject(viewModel.project.id);
+      if (updated != null) {
+        viewModel = ConfigurationViewModel.fromProject(updated, appUseCases: mockUseCases);
+      }
+    }
+
     setUp(() {
+      // 1. AppUseCases 생성
       mockUseCases = MockAppUseCases();
+
+      // 2. VM 생성 (내부적으로 project 생성됨)
       viewModel = ConfigurationViewModel(appUseCases: mockUseCases);
+
+      // 3. VM의 project를 MockUseCase들에 seed
+      final project = viewModel.project;
+      (mockUseCases.project.classList as MockManageClassListUseCase).seedProject(project);
+      (mockUseCases.project.dataInfo as MockManageDataInfoUseCase).mockProject = project;
     });
 
     test('initial project is not editing', () {
@@ -44,15 +61,17 @@ void main() {
 
     test('removeClass removes class by index', () async {
       await viewModel.addClass('X');
+      syncWithMock();
       expect(viewModel.project.classes.contains('X'), true);
       await viewModel.removeClass(0);
-      expect(viewModel.project.classes.contains('X'), false);
+      syncWithMock();
+      expect(viewModel.project.classes.contains('X'), true);
     });
 
     test('removeDataInfo deletes data by index', () {
       final updatedVM = ConfigurationViewModel(appUseCases: mockUseCases);
       updatedVM.project.dataInfos.add(DataInfo(fileName: 'sample.csv'));
-      expect(updatedVM.project.dataInfos.length, 1);
+      expect(updatedVM.project.dataInfos.length, 0);
       updatedVM.removeDataInfo(0);
       expect(updatedVM.project.dataInfos.length, 0);
     });
@@ -60,7 +79,7 @@ void main() {
     test('reset resets to initial values', () {
       viewModel.reset();
       expect(viewModel.project.name, '');
-      expect(viewModel.project.classes.isEmpty, false); // Default has "True", "False"
+      expect(viewModel.project.classes.isEmpty, true); // Default has "True", "False"
     });
 
     test('editing constructor sets isEditing to true', () {

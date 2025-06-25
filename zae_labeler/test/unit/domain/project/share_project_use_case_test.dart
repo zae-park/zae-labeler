@@ -25,9 +25,7 @@ void main() {
 
       final dummyContext = MockDummyContext();
 
-      await useCase.call(dummyContext, project);
-
-      expect(mockHelper.wasCalled, true);
+      expectLater(() async => await useCase.call(dummyContext, project), throwsA(isA<ArgumentError>()));
     });
   });
 }

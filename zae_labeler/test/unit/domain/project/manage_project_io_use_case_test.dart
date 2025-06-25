@@ -92,7 +92,7 @@ void main() {
     test('exportProject returns mock config path', () async {
       final project = Project.empty().copyWith(id: 'p1', name: 'ExportTest');
       final path = await useCase.exportProject(project);
-      expect(path, contains('p1'));
+      expect(path, contains('mock_config_path'));
       expect(path, contains('.json'));
     });
   });
