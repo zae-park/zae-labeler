@@ -11,32 +11,23 @@ class MockManageProjectIOUseCase extends ManageProjectIOUseCase {
   MockManageProjectIOUseCase({required super.repository});
 
   @override
-  Future<void> saveOne(Project project) async {
-    savedProjects.removeWhere((p) => p.id == project.id);
-    savedProjects.add(project);
-  }
+  Future<void> saveOne(Project project) async => await repository.saveProject(project);
 
   @override
-  Future<void> saveAll(List<Project> projects) async {
-    savedProjects = projects;
-  }
+  Future<void> saveAll(List<Project> projects) async => await repository.saveAll(projects);
 
   @override
-  Future<void> deleteById(String projectId) async {
-    deletedIds.add(projectId);
-    savedProjects.removeWhere((p) => p.id == projectId);
-  }
+  Future<void> deleteById(String projectId) async => await repository.deleteById(projectId);
 
   @override
   Future<void> deleteAll(List<String> projectIds) async {
-    deletedIds.addAll(projectIds);
-    savedProjects.removeWhere((p) => projectIds.contains(p.id));
+    for (final id in projectIds) {
+      await repository.deleteById(id);
+    }
   }
 
   @override
-  Future<List<Project>> fetchAll() async {
-    return savedProjects;
-  }
+  Future<List<Project>> fetchAll() async => await repository.fetchAllProjects();
 
   @override
   Future<void> clearCache() async {
