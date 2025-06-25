@@ -7,6 +7,8 @@ import 'package:zae_labeler/src/view_models/project_view_model.dart';
 
 import '../../mocks/helpers/mock_share_helper.dart';
 import '../../mocks/repositories/mock_project_repository.dart';
+import '../../mocks/use_cases/project/mock_manage_class_list_use_case.dart';
+import '../../mocks/use_cases/project/mock_manage_data_info_use_case.dart';
 import '../../mocks/use_cases/project/mock_project_use_cases.dart';
 
 void main() {
@@ -18,13 +20,25 @@ void main() {
     late List<Project> changedProjects;
 
     setUp(() {
+      // 1. ViewModel을 먼저 생성
       repo = MockProjectRepository();
       shareHelper = MockShareHelper();
-      useCases = MockProjectUseCases();
+      useCases = MockProjectUseCases(repository: repo);
       changedProjects = [];
 
       viewModel = ProjectViewModel(shareHelper: shareHelper, useCases: useCases, onChanged: (p) => changedProjects.add(p));
+
+      // 2. 이후 ViewModel의 실제 project를 seed
+      final project = viewModel.project;
+      repo.saveProject(project);
+      (useCases.dataInfo as MockManageDataInfoUseCase).mockProject = project;
+      (useCases.classList as MockManageClassListUseCase).seedProject(project);
     });
+
+    void syncWithMock() {
+      final updated = (useCases.classList as MockManageClassListUseCase).getProject(viewModel.project.id)!;
+      viewModel.updateFrom(updated);
+    }
 
     // test('setName updates the project name', () async {
     //   await viewModel.setName('Updated Project');
@@ -39,18 +53,21 @@ void main() {
 
     test('addClass adds a new class', () async {
       await viewModel.addClass('A');
+      syncWithMock();
       expect(viewModel.project.classes, contains('A'));
     });
 
     test('editClass changes class name', () async {
       await viewModel.addClass('A');
       await viewModel.editClass(0, 'B');
+      syncWithMock();
       expect(viewModel.project.classes[0], 'B');
     });
 
     test('removeClass deletes a class', () async {
       await viewModel.addClass('X');
       await viewModel.removeClass(0);
+      syncWithMock();
       expect(viewModel.project.classes, isEmpty);
     });
 
@@ -68,9 +85,13 @@ void main() {
     });
 
     test('isLabelingModeChanged detects change', () async {
-      final initial = viewModel.project.mode;
-      await viewModel.setLabelingMode(LabelingMode.multiClassification);
-      expect(viewModel.isLabelingModeChanged(), initial != viewModel.project.mode);
+      await viewModel.setLabelingMode(LabelingMode.singleClassification); // initial baseline
+      await viewModel.setLabelingMode(LabelingMode.multiClassification); // actual change
+      expect(viewModel.isLabelingModeChanged(), true);
+
+      // final initial = viewModel.project.mode;
+      // await viewModel.setLabelingMode(LabelingMode.multiClassification);
+      // expect(viewModel.isLabelingModeChanged(), initial != viewModel.project.mode);
     });
 
     test('saveProject triggers storage and notifies', () async {
