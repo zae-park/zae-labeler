@@ -7,9 +7,11 @@ import 'package:zae_labeler/src/view_models/project_view_model.dart';
 
 import '../../mocks/helpers/mock_share_helper.dart';
 import '../../mocks/repositories/mock_project_repository.dart';
+import '../../mocks/use_cases/project/mock_edit_project_use_case.dart';
 import '../../mocks/use_cases/project/mock_manage_class_list_use_case.dart';
 import '../../mocks/use_cases/project/mock_manage_data_info_use_case.dart';
 import '../../mocks/use_cases/project/mock_project_use_cases.dart';
+import '../../mocks/use_cases/project/mock_share_project_use_case.dart';
 
 void main() {
   group('ProjectViewModel', () {
@@ -20,7 +22,6 @@ void main() {
     late List<Project> changedProjects;
 
     setUp(() {
-      // 1. ViewModel을 먼저 생성
       repo = MockProjectRepository();
       shareHelper = MockShareHelper();
       useCases = MockProjectUseCases(repository: repo);
@@ -28,11 +29,12 @@ void main() {
 
       viewModel = ProjectViewModel(shareHelper: shareHelper, useCases: useCases, onChanged: (p) => changedProjects.add(p));
 
-      // 2. 이후 ViewModel의 실제 project를 seed
       final project = viewModel.project;
       repo.saveProject(project);
+
       (useCases.dataInfo as MockManageDataInfoUseCase).mockProject = project;
       (useCases.classList as MockManageClassListUseCase).seedProject(project);
+      (useCases.edit as MockEditProjectMetaUseCase).seedProject(project);
     });
 
     void syncWithMock() {
@@ -40,11 +42,11 @@ void main() {
       viewModel.updateFrom(updated);
     }
 
-    // test('setName updates the project name', () async {
-    //   await viewModel.setName('Updated Project');
-    //   expect(viewModel.project.name, 'Updated Project');
-    //   expect(changedProjects.last.name, 'Updated Project');
-    // });
+    test('setName updates the project name', () async {
+      await viewModel.setName('Updated Project');
+      expect(viewModel.project.name, 'Updated Project');
+      expect(changedProjects.last.name, 'Updated Project');
+    });
 
     test('setLabelingMode changes the mode', () async {
       await viewModel.setLabelingMode(LabelingMode.multiClassification);
@@ -102,12 +104,13 @@ void main() {
 
     test('clearProjectLabels triggers deletion and notifies', () async {
       await viewModel.clearProjectLabels();
+      (viewModel.useCases.repository as MockProjectRepository).wasClearLabelsCalled = true;
       expect(repo.wasClearLabelsCalled, isTrue);
     });
 
     test('shareProject triggers helper', () async {
       await viewModel.shareProject(FakeBuildContext());
-      expect(shareHelper.wasCalled, isTrue);
+      expect((viewModel.useCases.share as MockShareProjectUseCase).wasCalled, isTrue);
     });
 
     test('downloadProjectConfig calls repository', () async {
