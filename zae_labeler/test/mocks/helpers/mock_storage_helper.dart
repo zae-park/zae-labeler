@@ -68,8 +68,6 @@ class MockStorageHelper implements StorageHelperInterface {
         return SingleClassSegmentationLabelModel.empty();
       case LabelingMode.multiClassSegmentation:
         return MultiClassSegmentationLabelModel.empty();
-      default:
-        throw UnimplementedError("Mock for $mode not implemented.");
     }
   }
 

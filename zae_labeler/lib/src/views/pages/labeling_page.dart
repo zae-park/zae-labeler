@@ -12,7 +12,6 @@ import '../../domain/app_use_cases.dart';
 import '../../repositories/label_repository.dart';
 import '../../repositories/project_repository.dart';
 
-import 'not_found_page.dart';
 import 'sub_pages/classification_labeling_page.dart';
 import 'sub_pages/segmentation_labeling_page.dart';
 import 'sub_pages/cross_classification_labeling_page.dart';
@@ -64,9 +63,6 @@ class LabelingPage extends StatelessWidget {
           case LabelingMode.singleClassSegmentation:
           case LabelingMode.multiClassSegmentation:
             return SegmentationLabelingPage(project: project, viewModel: vm as SegmentationLabelingViewModel);
-
-          default:
-            return const NotFoundPage();
         }
       },
     );

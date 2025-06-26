@@ -21,8 +21,6 @@ class LabelInputMapperFactory {
         return SingleSegmentationInputMapper();
       case LabelingMode.multiClassSegmentation:
         return MultiSegmentationInputMapper();
-      default:
-        throw UnsupportedError('Unsupported LabelingMode: $mode');
     }
   }
 }
