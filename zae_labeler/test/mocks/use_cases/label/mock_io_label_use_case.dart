@@ -1,20 +1,27 @@
-import 'package:zae_labeler/src/domain/label/label_io_use_case.dart';
-import 'package:zae_labeler/src/models/label_model.dart';
-import 'package:zae_labeler/src/models/project_model.dart';
+import 'package:zae_labeler/src/core/use_cases/label/label_io_use_case.dart';
+import 'package:zae_labeler/src/core/models/data_model.dart';
+import 'package:zae_labeler/src/core/models/label_model.dart';
+import 'package:zae_labeler/src/core/models/project_model.dart';
 
-import '../../mock_label_repository.dart';
-import '../../mock_storage_helper.dart';
+class MockLabelIOUseCase extends LabelIOUseCase {
+  String exportPath = 'mock_export_path.json';
+  List<LabelModel> importedLabels = [];
 
-class MockLabelIOUseCases extends LabelIOUseCases {
-  MockLabelIOUseCases({required MockStorageHelper storageHelper}) : super(MockLabelRepository(storageHelper: MockStorageHelper()));
+  MockLabelIOUseCase({required super.repository});
 
-  // @override
-  Future<String> exportLabelsToJson(Project project) async {
-    return '{"labels": []}'; // dummy
+  List<LabelModel>? lastExportedLabels;
+  Project? lastExportedProject;
+
+  @override
+  Future<String> exportLabels(Project project, List<LabelModel> labels) async {
+    lastExportedProject = project;
+    lastExportedLabels = labels;
+    return exportPath;
   }
 
-  // @override
-  Future<List<LabelModel>> importLabelsFromJson(Project project, String jsonStr) async {
-    return []; // 빈 리스트 반환
-  }
+  @override
+  Future<String> exportLabelsWithData(Project project, List<LabelModel> labels, List<DataInfo> dataInfos) async => exportPath;
+
+  @override
+  Future<List<LabelModel>> importLabels() async => importedLabels;
 }

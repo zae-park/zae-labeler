@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
-import '../../../models/project_model.dart';
+import '../../../core/models/project_model.dart';
 import '../../../view_models/labeling_view_model.dart';
 import '../../widgets/navigator.dart';
 import '../../widgets/shared/labeling_progress.dart';

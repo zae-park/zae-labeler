@@ -1,19 +1,13 @@
-import 'package:zae_labeler/src/domain/label/validate_label_use_case.dart';
-import 'package:zae_labeler/src/models/label_model.dart';
+import 'package:zae_labeler/src/core/use_cases/label/validate_label_use_case.dart';
+import 'package:zae_labeler/src/core/models/label_model.dart';
+import 'package:zae_labeler/src/core/models/project_model.dart';
 
-import '../../mock_label_repository.dart';
-import '../../mock_storage_helper.dart';
+class MockLabelValidationUseCase extends LabelValidationUseCase {
+  MockLabelValidationUseCase({required super.repository});
 
-class MockLabelValidationUseCases extends LabelValidationUseCases {
-  MockLabelValidationUseCases() : super(MockLabelRepository(storageHelper: MockStorageHelper()));
+  @override
+  bool isValid(Project project, LabelModel label) => true;
 
-  // @override
-  LabelStatus validate(LabelModel label) {
-    return LabelStatus.complete; // 테스트용 항상 완료
-  }
-
-  // @override
-  List<LabelStatus> validateAll(List<LabelModel> labels) {
-    return List.filled(labels.length, LabelStatus.complete);
-  }
+  @override
+  LabelStatus getStatus(Project project, LabelModel? label) => LabelStatus.complete;
 }

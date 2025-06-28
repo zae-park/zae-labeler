@@ -1,9 +1,9 @@
 // lib/utils/adaptive/adaptive_data_loader.dart
 import 'package:flutter/foundation.dart';
-import '../../models/project_model.dart';
-import '../../models/data_model.dart';
-import '../../models/label_model.dart';
-import '../proxy_storage_helper/interface_storage_helper.dart';
+import '../../core/models/project_model.dart';
+import '../../core/models/data_model.dart';
+import '../../core/models/label_model.dart';
+import '../../platform_helpers/storage/interface_storage_helper.dart';
 
 /// {@template adaptive_data_loader}
 /// 플랫폼에 따라 프로젝트의 데이터를 적절하게 불러오기 위한 어댑터 함수입니다.

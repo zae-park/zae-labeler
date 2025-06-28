@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
-import '../models/data_model.dart';
-import '../models/label_model.dart';
-import '../models/project_model.dart';
-import '../utils/proxy_share_helper/interface_share_helper.dart';
+import '../core/models/data_model.dart';
+import '../core/models/label_model.dart';
+import '../core/models/project_model.dart';
+import '../platform_helpers/share/interface_share_helper.dart';
 
-import '../domain/project/project_use_cases.dart';
+import '../core/use_cases/project/project_use_cases.dart';
 
 /// 🔧 ViewModel: 단일 프로젝트를 관리
 /// ProjectViewModel
@@ -82,7 +82,7 @@ class ProjectViewModel extends ChangeNotifier {
   }
 
   Future<void> addDataInfo(DataInfo dataInfo) async {
-    project = await useCases.dataInfo.addData(projectId: project.id, dataPath: dataInfo);
+    project = await useCases.dataInfo.addData(projectId: project.id, dataInfo: dataInfo);
     notifyListeners();
     onChanged?.call(project);
   }

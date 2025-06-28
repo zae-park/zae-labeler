@@ -1,7 +1,7 @@
 // 📁 sub_view_models/classification_label_view_model.dart
 
 import 'base_label_view_model.dart';
-import '../../models/sub_models/classification_label_model.dart';
+import '../../core/models/sub_models/classification_label_model.dart';
 
 /// ViewModel for single and multi classification labeling
 class ClassificationLabelViewModel extends LabelViewModel {

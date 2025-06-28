@@ -1,6 +1,6 @@
-import '../../models/label_model.dart';
-import '../../models/sub_models/classification_label_model.dart';
-import '../../models/sub_models/segmentation_label_model.dart';
+import '../../core/models/label_model.dart';
+import '../../core/models/sub_models/classification_label_model.dart';
+import '../../core/models/sub_models/segmentation_label_model.dart';
 
 /// [labelData]는 모드에 따라 다음과 같은 타입이 요구됩니다:
 /// - SingleClassification: String

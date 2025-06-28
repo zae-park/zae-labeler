@@ -13,13 +13,13 @@ dependencies:
     sdk: flutter
   provider: ^6.0.0
   shared_preferences: ^2.0.15
-  uuid: ^3.0.6
-  file_picker: ^5.2.5
+  uuid: ^4.3.3
+  file_picker: ^6.1.1
   path_provider: ^2.0.15
-  fl_chart: ^0.55.2
+  fl_chart: ^0.64.0
   archive: ^3.3.2
   permission_handler: ^10.2.0
-  share_plus: ^6.3.0
+  share_plus: ^7.2.2
   path: ^1.8.3
   cupertino_icons: ^1.0.2
   mockito: ^5.4.4
@@ -32,6 +32,8 @@ dependencies:
   url_launcher: ^6.3.0
   lottie: ^2.6.0
   universal_html: ^2.2.4
+  # web: ^0.5.0 # Uncomment if you need web support
+  win32: ^5.0.0
 
 dev_dependencies:
   flutter_test:
