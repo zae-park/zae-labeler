@@ -10,6 +10,6 @@ class ShareHelperImpl implements ShareHelperInterface {
     required Future<String> Function() getFilePath,
   }) async {
     final path = await getFilePath();
-    await Share.shareXFiles([XFile(path)], text: '$name project configuration');
+    await Share.shareXFiles([XFile(path)], text: 'Project - $name');
   }
 }
