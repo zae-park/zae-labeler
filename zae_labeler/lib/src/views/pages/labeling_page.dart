@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../domain/label/label_use_cases.dart';
-import '../../domain/project/project_use_cases.dart';
-import '../../models/label_model.dart';
-import '../../models/project_model.dart';
-import '../../utils/storage_helper.dart';
+import '../../core/use_cases/label/label_use_cases.dart';
+import '../../core/use_cases/project/project_use_cases.dart';
+import '../../core/models/label_model.dart';
+import '../../core/models/project_model.dart';
+import '../../platform_helpers/storage/get_storage_helper.dart';
 import '../../view_models/labeling_view_model.dart';
 
-import '../../domain/app_use_cases.dart';
-import '../../repositories/label_repository.dart';
-import '../../repositories/project_repository.dart';
+import '../../core/use_cases/app_use_cases.dart';
+import '../../core/repositories/label_repository.dart';
+import '../../core/repositories/project_repository.dart';
 
 import 'sub_pages/classification_labeling_page.dart';
 import 'sub_pages/segmentation_labeling_page.dart';

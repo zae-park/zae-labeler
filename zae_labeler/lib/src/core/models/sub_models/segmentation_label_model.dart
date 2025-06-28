@@ -1,5 +1,5 @@
 import '../label_model.dart';
-import '../../utils/run_length_codec.dart';
+import '../../../utils/run_length_codec.dart';
 
 /// ✅ Segmentation Label의 최상위 클래스
 abstract class SegmentationLabelModel<T> extends LabelModel<T> {

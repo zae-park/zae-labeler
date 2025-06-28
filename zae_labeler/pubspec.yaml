@@ -14,9 +14,9 @@ dependencies:
   provider: ^6.0.0
   shared_preferences: ^2.0.15
   uuid: ^4.3.3
-  file_picker: ^5.2.5
+  file_picker: ^6.1.1
   path_provider: ^2.0.15
-  fl_chart: ^0.55.2
+  fl_chart: ^0.64.0
   archive: ^3.3.2
   permission_handler: ^10.2.0
   share_plus: ^7.2.2

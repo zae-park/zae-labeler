@@ -1,3 +1,5 @@
+import 'package:share_plus/share_plus.dart';
+
 import 'interface_share_helper.dart';
 
 class ShareHelperImpl implements ShareHelperInterface {
@@ -7,6 +9,7 @@ class ShareHelperImpl implements ShareHelperInterface {
     required String jsonString,
     required Future<String> Function() getFilePath,
   }) async {
-    // no-op
+    final path = await getFilePath();
+    await Share.shareXFiles([XFile(path)], text: 'Project - $name');
   }
 }

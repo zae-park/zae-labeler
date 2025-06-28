@@ -6,10 +6,10 @@ import 'dart:html' as html;
 import 'package:flutter/services.dart';
 import 'package:archive/archive.dart';
 
-import './interface_storage_helper.dart';
-import '../../models/project_model.dart';
-import '../../models/data_model.dart';
-import '../../models/label_model.dart';
+import 'interface_storage_helper.dart';
+import '../../core/models/project_model.dart';
+import '../../core/models/data_model.dart';
+import '../../core/models/label_model.dart';
 
 class StorageHelperImpl implements StorageHelperInterface {
   // ==============================

@@ -1,7 +1,7 @@
-import '../../models/project_model.dart';
-import '../../models/label_model.dart';
-import '../../models/data_model.dart';
-import '../../domain/label/label_use_cases.dart';
+import '../../core/models/project_model.dart';
+import '../../core/models/label_model.dart';
+import '../../core/models/data_model.dart';
+import '../../core/use_cases/label/label_use_cases.dart';
 import '../label_view_model.dart';
 
 /// ✅ StatusManager

@@ -1,7 +1,7 @@
-import 'package:zae_labeler/src/domain/label/label_io_use_case.dart';
-import 'package:zae_labeler/src/models/data_model.dart';
-import 'package:zae_labeler/src/models/label_model.dart';
-import 'package:zae_labeler/src/models/project_model.dart';
+import 'package:zae_labeler/src/core/use_cases/label/label_io_use_case.dart';
+import 'package:zae_labeler/src/core/models/data_model.dart';
+import 'package:zae_labeler/src/core/models/label_model.dart';
+import 'package:zae_labeler/src/core/models/project_model.dart';
 
 class MockLabelIOUseCase extends LabelIOUseCase {
   String exportPath = 'mock_export_path.json';
