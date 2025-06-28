@@ -1,6 +1,6 @@
 import '../label_view_model.dart';
-import '../../models/project_model.dart';
-import '../../domain/label/label_use_cases.dart';
+import '../../core/models/project_model.dart';
+import '../../core/use_cases/label/label_use_cases.dart';
 
 /// 🏷️ LabelManager
 /// - LabelViewModel의 생성, 캐싱, 라벨 저장 및 불러오기 담당.

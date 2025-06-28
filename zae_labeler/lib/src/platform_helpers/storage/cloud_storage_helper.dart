@@ -6,10 +6,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_html/html.dart' as html;
 
-import '../../models/project_model.dart';
-import '../../models/data_model.dart';
-import '../../models/label_model.dart';
-import '../proxy_storage_helper/interface_storage_helper.dart';
+import '../../core/models/project_model.dart';
+import '../../core/models/data_model.dart';
+import '../../core/models/label_model.dart';
+import 'interface_storage_helper.dart';
 
 /// 🔒 Cloud 기반 StorageHelper 구현체 (Firebase Firestore 기반)
 /// - 플랫폼이 Web이며 Firebase 로그인된 사용자의 프로젝트 및 라벨 데이터를 Firestore에 저장/불러오기 위해 사용됩니다.

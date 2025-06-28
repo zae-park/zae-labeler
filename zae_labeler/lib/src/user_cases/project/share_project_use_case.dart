@@ -2,10 +2,10 @@
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import '../../models/project_model.dart';
-import '../../repositories/project_repository.dart';
-import '../../utils/proxy_share_helper/interface_share_helper.dart';
-import '../../utils/share_helper.dart';
+import '../../core/models/project_model.dart';
+import '../../core/repositories/project_repository.dart';
+import '../../platform_helpers/share/interface_share_helper.dart';
+import '../../platform_helpers/share/get_helper.dart';
 import '../validator/project_validator.dart';
 
 /// ✅ UseCase: 프로젝트 공유

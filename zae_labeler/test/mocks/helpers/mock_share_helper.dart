@@ -1,4 +1,4 @@
-import 'package:zae_labeler/src/utils/proxy_share_helper/interface_share_helper.dart';
+import 'package:zae_labeler/src/platform_helpers/share/interface_share_helper.dart';
 
 /// 🧪 테스트용 MockShareHelper
 class MockShareHelper implements ShareHelperInterface {

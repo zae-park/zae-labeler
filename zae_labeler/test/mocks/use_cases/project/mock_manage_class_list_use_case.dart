@@ -1,5 +1,5 @@
-import 'package:zae_labeler/src/models/project_model.dart';
-import 'package:zae_labeler/src/domain/project/manage_class_list_use_case.dart';
+import 'package:zae_labeler/src/core/models/project_model.dart';
+import 'package:zae_labeler/src/core/use_cases/project/manage_class_list_use_case.dart';
 
 class MockManageClassListUseCase extends ManageClassListUseCase {
   final Map<String, Project> _projects = {};

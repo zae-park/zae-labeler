@@ -6,11 +6,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:zae_labeler/common/common_widgets.dart';
-import '../../domain/app_use_cases.dart';
+import '../../core/use_cases/app_use_cases.dart';
 import '../../view_models/project_list_view_model.dart';
 import '../../view_models/locale_view_model.dart';
 import '../../view_models/configuration_view_model.dart';
-import '../../models/project_model.dart';
+import '../../core/models/project_model.dart';
 import '../pages/configuration_page.dart';
 import '../dialogs/onboarding_dialog.dart';
 import '../widgets/project_tile.dart';

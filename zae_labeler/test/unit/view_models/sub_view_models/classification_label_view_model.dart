@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zae_labeler/src/models/label_model.dart';
-import 'package:zae_labeler/src/models/sub_models/classification_label_model.dart';
+import 'package:zae_labeler/src/core/models/label_model.dart';
+import 'package:zae_labeler/src/core/models/sub_models/classification_label_model.dart';
 import 'package:zae_labeler/src/view_models/managers/label_input_mapper.dart';
 import 'package:zae_labeler/src/view_models/sub_view_models/classification_label_view_model.dart';
 

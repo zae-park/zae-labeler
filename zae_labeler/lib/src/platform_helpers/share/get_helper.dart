@@ -1,5 +1,5 @@
-import './proxy_share_helper/interface_share_helper.dart';
-import './proxy_share_helper/stub_share_helper.dart'
+import 'interface_share_helper.dart';
+import 'stub_share_helper.dart'
     if (dart.library.html) 'web_share_helper.dart'
     if (dart.library.io) 'native_share_helper.dart'
     if (dart.library.js) 'web_share_helper.dart' // fallback for web

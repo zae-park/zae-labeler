@@ -1,8 +1,8 @@
 // 📁 sub_view_models/base_label_view_model.dart
 
 import 'package:flutter/foundation.dart';
-import '../../models/label_model.dart';
-import '../../domain/label/label_use_cases.dart';
+import '../../core/models/label_model.dart';
+import '../../core/use_cases/label/label_use_cases.dart';
 import '../managers/label_input_mapper.dart';
 
 abstract class LabelViewModel extends ChangeNotifier {

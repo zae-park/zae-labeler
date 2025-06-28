@@ -1,4 +1,4 @@
-import 'package:zae_labeler/src/domain/label/label_use_cases.dart';
+import 'package:zae_labeler/src/core/use_cases/label/label_use_cases.dart';
 import '../../repositories/mock_label_repository.dart';
 import 'mock_single_label_use_case.dart';
 import 'mock_batch_label_use_case.dart';

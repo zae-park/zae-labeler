@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zae_labeler/src/domain/project/manage_project_io_use_case.dart';
-import 'package:zae_labeler/src/models/project_model.dart';
+import 'package:zae_labeler/src/core/use_cases/project/manage_project_io_use_case.dart';
+import 'package:zae_labeler/src/core/models/project_model.dart';
 
 import '../../../mocks/helpers/mock_storage_helper.dart';
 import '../../../mocks/repositories/mock_project_repository.dart';
