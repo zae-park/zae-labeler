@@ -3,9 +3,7 @@ import '../../core/models/data_model.dart';
 import '../../core/models/label_model.dart';
 import '../../core/models/project_model.dart';
 import 'interface_storage_helper.dart';
-import 'stub_storage_helper.dart'
-    if (dart.library.io) 'proxy_storage_helper/native_storage_helper.dart'
-    if (dart.library.html) 'proxy_storage_helper/web_storage_helper.dart';
+import 'stub_storage_helper.dart' if (dart.library.io) 'native_storage_helper.dart' if (dart.library.html) 'web_storage_helper.dart';
 export 'interface_storage_helper.dart';
 
 /// ✅ **StorageHelper: 플랫폼별 StorageHelperImpl을 Wrapping하는 클래스**
