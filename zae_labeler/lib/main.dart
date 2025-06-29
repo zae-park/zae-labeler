@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:zae_labeler/src/core/services/user_preference_service.dart';
 import '../l10n/app_localizations.dart';
 
 import 'firebase_options.dart';
@@ -36,70 +38,104 @@ void main() async {
   ));
 }
 
-class ZaeLabeler extends StatelessWidget {
+class ZaeLabeler extends StatefulWidget {
   final Locale systemLocale;
   const ZaeLabeler({super.key, required this.systemLocale});
 
   @override
+  State<ZaeLabeler> createState() => _ZaeLabelerState();
+}
+
+class _ZaeLabelerState extends State<ZaeLabeler> {
+  late final Future<void> _initialization;
+  late StorageHelperInterface _storageHelper;
+  late AppUseCases _appUseCases;
+  late SharedPreferences _prefs;
+
+  @override
+  void initState() {
+    super.initState();
+    _initialization = _initProviders();
+  }
+
+  Future<void> _initProviders() async {
+    final useCloud = isProd && kIsWeb;
+    _storageHelper = useCloud ? CloudStorageHelper() : StorageHelper.instance;
+
+    final projectRepo = ProjectRepository(storageHelper: _storageHelper);
+    final labelRepo = LabelRepository(storageHelper: _storageHelper);
+
+    _appUseCases = AppUseCases(
+      project: ProjectUseCases.from(projectRepo),
+      label: LabelUseCases.from(labelRepo),
+    );
+
+    _prefs = await SharedPreferences.getInstance();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final useCloud = isProd && kIsWeb; // 🔧 dev or local에서는 로컬 저장
-    final storageHelper = useCloud ? CloudStorageHelper() : StorageHelper.instance;
-    final projectRepo = ProjectRepository(storageHelper: storageHelper);
-    final labelRepo = LabelRepository(storageHelper: storageHelper);
+    return FutureBuilder<void>(
+      future: _initialization,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const MaterialApp(home: Scaffold(body: Center(child: CircularProgressIndicator())));
+        }
 
-    final appUseCases = AppUseCases(project: ProjectUseCases.from(projectRepo), label: LabelUseCases.from(labelRepo));
-
-    return MultiProvider(
-      providers: [
-        Provider<StorageHelperInterface>.value(value: storageHelper),
-        Provider<AppUseCases>.value(value: appUseCases),
-        ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(projectUseCases: appUseCases.project)),
-        ChangeNotifierProvider<LocaleViewModel>(create: (_) => LocaleViewModel()),
-        ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel()),
-      ],
-      child: Consumer<LocaleViewModel>(
-        builder: (context, localeVM, child) {
-          return MaterialApp(
-            title: "ZAE Labeler",
-            theme: ThemeData(primarySwatch: Colors.blue),
-            locale: localeVM.currentLocale,
-            supportedLocales: const [Locale('en'), Locale('ko')],
-            localizationsDelegates: const [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-
-            // Initial route when the app is launched
-            initialRoute: '/',
-            onUnknownRoute: (_) => MaterialPageRoute(builder: (_) => const NotFoundPage()),
-            onGenerateRoute: (RouteSettings settings) {
-              final isSignedIn = context.read<AuthViewModel>().isSignedIn;
-              if (isProd && !isSignedIn && settings.name != '/' && settings.name != '/auth') {
-                return MaterialPageRoute(builder: (_) => const SplashScreen());
-              }
-              switch (settings.name) {
-                case '/':
-                  return MaterialPageRoute(builder: (_) => isProd ? const SplashScreen() : const ProjectListPage());
-                case '/project_list':
-                  return MaterialPageRoute(builder: (context) => const ProjectListPage());
-                case '/configuration':
-                  return MaterialPageRoute(builder: (_) => const ConfigureProjectPage());
-                case '/labeling':
-                  final args = settings.arguments;
-                  if (args is Project) {
-                    return MaterialPageRoute(builder: (_) => LabelingPage(project: args), settings: settings);
-                  } else {
-                    return MaterialPageRoute(builder: (_) => const NotFoundPage());
+        return MultiProvider(
+          providers: [
+            Provider<StorageHelperInterface>.value(value: _storageHelper),
+            Provider<AppUseCases>.value(value: _appUseCases),
+            Provider<UserPreferenceService>.value(value: UserPreferenceService(_prefs)),
+            ChangeNotifierProvider<ProjectListViewModel>(
+              create: (_) => ProjectListViewModel(projectUseCases: _appUseCases.project),
+            ),
+            ChangeNotifierProvider<LocaleViewModel>(create: (_) => LocaleViewModel(systemLocale: widget.systemLocale)),
+            ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel()),
+          ],
+          child: Consumer<LocaleViewModel>(
+            builder: (context, localeVM, _) {
+              return MaterialApp(
+                title: "ZAE Labeler",
+                theme: ThemeData(primarySwatch: Colors.blue),
+                locale: localeVM.currentLocale,
+                supportedLocales: const [Locale('en'), Locale('ko')],
+                localizationsDelegates: const [
+                  AppLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                initialRoute: '/',
+                onUnknownRoute: (_) => MaterialPageRoute(builder: (_) => const NotFoundPage()),
+                onGenerateRoute: (settings) {
+                  final isSignedIn = context.read<AuthViewModel>().isSignedIn;
+                  if (isProd && !isSignedIn && settings.name != '/' && settings.name != '/auth') {
+                    return MaterialPageRoute(builder: (_) => const SplashScreen());
                   }
-                default:
-                  return null;
-              }
+                  switch (settings.name) {
+                    case '/':
+                      return MaterialPageRoute(builder: (_) => isProd ? const SplashScreen() : const ProjectListPage());
+                    case '/project_list':
+                      return MaterialPageRoute(builder: (_) => const ProjectListPage());
+                    case '/configuration':
+                      return MaterialPageRoute(builder: (_) => const ConfigureProjectPage());
+                    case '/labeling':
+                      final args = settings.arguments;
+                      if (args is Project) {
+                        return MaterialPageRoute(builder: (_) => LabelingPage(project: args), settings: settings);
+                      } else {
+                        return MaterialPageRoute(builder: (_) => const NotFoundPage());
+                      }
+                    default:
+                      return null;
+                  }
+                },
+              );
             },
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }
