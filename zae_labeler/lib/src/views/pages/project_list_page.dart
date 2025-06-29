@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:zae_labeler/l10n/app_localizations.dart';
 
 import 'package:zae_labeler/common/common_widgets.dart';
 import '../../core/use_cases/app_use_cases.dart';
@@ -76,11 +77,13 @@ class _ProjectListPageState extends State<ProjectListPage> {
   @override
   Widget build(BuildContext context) {
     final appUseCases = Provider.of<AppUseCases>(context, listen: false);
+    final loc = AppLocalizations.of(context)!;
+
     return Consumer2<ProjectListViewModel, LocaleViewModel>(
       builder: (context, projectListVM, localeVM, child) {
         return Scaffold(
           appBar: AppHeader(
-            title: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 목록' : 'Project List',
+            title: loc.projectList_title,
             actions: [
               IconButton(
                 icon: const Icon(Icons.help),
@@ -94,10 +97,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
               IconButton(icon: const Icon(Icons.refresh), onPressed: () => projectListVM.loadProjects()),
               PopupMenuButton<String>(
                 onSelected: (value) => localeVM.changeLocale(value),
-                itemBuilder: (context) => const [
-                  PopupMenuItem(value: 'en', child: Text('English')),
-                  PopupMenuItem(value: 'ko', child: Text('한국어')),
-                ],
+                itemBuilder: (context) => const [PopupMenuItem(value: 'en', child: Text('English')), PopupMenuItem(value: 'ko', child: Text('한국어'))],
                 icon: const Icon(Icons.language),
               ),
               IconButton(
@@ -108,7 +108,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
                       builder: (_) =>
                           ChangeNotifierProvider(create: (_) => ConfigurationViewModel(appUseCases: appUseCases), child: const ConfigureProjectPage())),
                 ),
-                tooltip: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 생성' : 'Create Project',
+                tooltip: loc.project_create,
               ),
               IconButton(
                 icon: const Icon(Icons.file_upload),
