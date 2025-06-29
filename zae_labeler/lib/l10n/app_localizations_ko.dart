@@ -40,6 +40,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get splashPage_guest_confirm => '네';
 
   @override
+  String get projectList_title => '프로젝트 목록';
+
+  @override
   String get project_create => '프로젝트 생성';
 
   @override

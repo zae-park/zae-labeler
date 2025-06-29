@@ -1,7 +1,6 @@
 {
     "@@locale": "en",
     "app_title": "Zae-Labeler: Data Labeling App",
-
     "splashPage_start": "Click to Start",
     "splashPage_error": "e-mail is already registered. Please try another authentication method.",
     "splashPage_google": "Google Login",
@@ -11,7 +10,7 @@
     "splashPage_guest_message": "Guest mode redirects to external links, which are nightly versions. \nIn guest mode, your work is saved in the web browser, and your work may be deleted. \nDo you want to move?",
     "splashPage_guest_cancel": "No",
     "splashPage_guest_confirm": "Yes",
-    
+    "projectList_title": "Project List",
     "project_create": "Create Project",
     "project_update": "Update Project",
     "project_name": "Project Name",

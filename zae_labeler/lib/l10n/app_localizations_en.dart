@@ -41,6 +41,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get splashPage_guest_confirm => 'Yes';
 
   @override
+  String get projectList_title => 'Project List';
+
+  @override
   String get project_create => 'Create Project';
 
   @override
