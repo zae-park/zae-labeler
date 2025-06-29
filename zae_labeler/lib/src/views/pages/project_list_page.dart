@@ -76,7 +76,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final appUseCases = Provider.of<AppUseCases>(context, listen: false);
+    final appUseCases = context.read<AppUseCases>();
     final loc = AppLocalizations.of(context)!;
 
     return Consumer2<ProjectListViewModel, LocaleViewModel>(
