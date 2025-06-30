@@ -51,6 +51,8 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
   late StorageHelperInterface _storageHelper;
   late AppUseCases _appUseCases;
   late SharedPreferences _prefs;
+  late Locale _initialLocale;
+  late UserPreferenceService _userPrefs;
 
   @override
   void initState() {
@@ -65,12 +67,11 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
     final projectRepo = ProjectRepository(storageHelper: _storageHelper);
     final labelRepo = LabelRepository(storageHelper: _storageHelper);
 
-    _appUseCases = AppUseCases(
-      project: ProjectUseCases.from(projectRepo),
-      label: LabelUseCases.from(labelRepo),
-    );
+    _appUseCases = AppUseCases(project: ProjectUseCases.from(projectRepo), label: LabelUseCases.from(labelRepo));
 
     _prefs = await SharedPreferences.getInstance();
+    _userPrefs = UserPreferenceService(_prefs);
+    _initialLocale = _userPrefs.locale;
   }
 
   @override
@@ -86,11 +87,9 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
           providers: [
             Provider<StorageHelperInterface>.value(value: _storageHelper),
             Provider<AppUseCases>.value(value: _appUseCases),
-            Provider<UserPreferenceService>.value(value: UserPreferenceService(_prefs)),
-            ChangeNotifierProvider<ProjectListViewModel>(
-              create: (_) => ProjectListViewModel(projectUseCases: _appUseCases.project),
-            ),
-            ChangeNotifierProvider<LocaleViewModel>(create: (context) => LocaleViewModel(preferenceService: context.read<UserPreferenceService>())),
+            Provider<UserPreferenceService>.value(value: _userPrefs),
+            ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(projectUseCases: _appUseCases.project)),
+            ChangeNotifierProvider<LocaleViewModel>(create: (_) => LocaleViewModel(preferenceService: _userPrefs, initial: _initialLocale)),
             ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel()),
           ],
           child: Consumer<LocaleViewModel>(
