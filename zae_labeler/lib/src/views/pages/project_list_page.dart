@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zae_labeler/l10n/app_localizations.dart';
 
 import 'package:zae_labeler/common/common_widgets.dart';
+import '../../core/services/user_preference_service.dart';
 import '../../core/use_cases/app_use_cases.dart';
 import '../../view_models/project_list_view_model.dart';
 import '../../view_models/locale_view_model.dart';
@@ -31,19 +32,17 @@ class _ProjectListPageState extends State<ProjectListPage> {
   }
 
   Future<void> _checkOnboarding() async {
-    final prefs = await SharedPreferences.getInstance();
-    final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
-
-    if (!hasSeenOnboarding && mounted) {
+    final prefs = context.read<UserPreferenceService>();
+    if (!prefs.hasSeenOnboarding && mounted) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _showOnboardingOverlay());
     }
   }
 
   Future<void> _showOnboardingOverlay() async {
-    await showDialog(context: context, barrierDismissible: true, builder: (context) => const OnboardingDialog());
+    await showDialog(context: context, barrierDismissible: true, builder: (_) => const OnboardingDialog());
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('hasSeenOnboarding', true);
+    final prefs = context.read<UserPreferenceService>();
+    await prefs.setHasSeenOnboarding(true);
   }
 
   Future<void> _importProject(BuildContext context) async {
