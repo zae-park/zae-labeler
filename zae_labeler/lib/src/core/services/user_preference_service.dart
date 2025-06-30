@@ -13,7 +13,7 @@ class UserPreferenceService {
   /// ✅ 언어 설정
   Locale get locale {
     final langCode = _prefs.getString(_keyLocale);
-    return langCode != null ? Locale(langCode) : const Locale('en');
+    return langCode != null ? Locale(langCode) : WidgetsBinding.instance.platformDispatcher.locale;
   }
 
   Future<void> setLocale(Locale locale) async {
