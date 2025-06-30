@@ -1,15 +1,16 @@
-// lib/src/views/pages/splash_screen.dart
-import 'package:flutter/material.dart';
-
-import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:zae_labeler/common/i18n.dart';
-import 'package:zae_labeler/common/common_widgets.dart';
 import 'dart:async';
 
-import '../../view_models/auth_view_model.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-// import 'package:zae_labeler/common/common_widgets.dart';
+import 'package:zae_labeler/common/common_widgets.dart';
+import 'package:zae_labeler/common/i18n.dart';
+
+import '../../view_models/auth_view_model.dart';
+import '../../view_models/locale_view_model.dart';
+import '../../core/services/user_preference_service.dart';
+import '../dialogs/onboarding_dialog.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -25,22 +26,38 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
+    _applySavedLocale();
+    _checkOnboarding();
 
     // 시작하기 버튼은 3초 후 표시
     Timer(const Duration(seconds: 3), () {
       if (mounted) {
-        setState(() {
-          _showStartButton = true;
-        });
+        setState(() => _showStartButton = true);
       }
     });
   }
 
+  void _applySavedLocale() {
+    final prefs = context.read<UserPreferenceService>();
+    final locale = prefs.locale; // ✅ 시스템 locale fallback 포함
+    context.read<LocaleViewModel>().changeLocale(locale.languageCode);
+  }
+
+  Future<void> _checkOnboarding() async {
+    final prefs = context.read<UserPreferenceService>();
+    if (!prefs.hasSeenOnboarding && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showOnboardingOverlay());
+    }
+  }
+
+  Future<void> _showOnboardingOverlay() async {
+    await showDialog(context: context, barrierDismissible: true, builder: (_) => const OnboardingDialog());
+    await context.read<UserPreferenceService>().setHasSeenOnboarding(true);
+  }
+
   void _handleUserInteraction() {
     if (!_showLoginButtons) {
-      setState(() {
-        _showLoginButtons = true;
-      });
+      setState(() => _showLoginButtons = true);
     }
   }
 
@@ -54,13 +71,14 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: Text(context.l10n.splashPage_guest_cancel)),
           TextButton(
-              onPressed: () async {
-                Navigator.pop(context);
-                if (await canLaunchUrl(url)) {
-                  await launchUrl(url, mode: LaunchMode.externalApplication);
-                }
-              },
-              child: Text(context.l10n.splashPage_guest_confirm)),
+            onPressed: () async {
+              Navigator.pop(context);
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url, mode: LaunchMode.externalApplication);
+              }
+            },
+            child: Text(context.l10n.splashPage_guest_confirm),
+          ),
         ],
       ),
     );
@@ -94,19 +112,14 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           child: AutoSeparatedColumn(
             separator: const SizedBox(height: 16),
             children: [
-              Expanded(
-                child: Center(
-                  child: Image.asset('assets/zae-splash2.gif', width: 250, height: 250, fit: BoxFit.contain),
-                  // child: Lottie.asset('assets/zae-splash.json', width: 250, height: 250, fit: BoxFit.contain),
-                ),
-              ),
+              Expanded(child: Center(child: Image.asset('assets/zae-splash2.gif', width: 250, height: 250, fit: BoxFit.contain))),
               const Text("ZAE Labeler", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
               SizedBox(
                 height: 200,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // 시작하기 버튼 (fade out → onEnd에서 로그인 버튼 보여주기)
+                    // 시작하기 버튼
                     AnimatedOpacity(
                       opacity: _showLoginButtons ? 0.0 : (_showStartButton ? 1.0 : 0.0),
                       duration: const Duration(milliseconds: 600),
@@ -114,10 +127,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         visible: !_showLoginButtons,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent, // 🔍 배경 투명
-                            foregroundColor: Colors.grey[300], // 🔍 글자 회색
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: Colors.grey[300],
                             elevation: 0,
-
                             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                           ),
                           onPressed: () {
@@ -131,7 +143,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       ),
                     ),
 
-                    // 로그인 버튼들 (fade-in)
+                    // 로그인 버튼들
                     AnimatedOpacity(
                       opacity: _showLoginButtons ? 1.0 : 0.0,
                       duration: const Duration(milliseconds: 600),
