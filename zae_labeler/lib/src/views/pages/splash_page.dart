@@ -10,7 +10,6 @@ import 'package:zae_labeler/common/i18n.dart';
 import '../../view_models/auth_view_model.dart';
 import '../../view_models/locale_view_model.dart';
 import '../../core/services/user_preference_service.dart';
-import '../dialogs/onboarding_dialog.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -27,7 +26,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   void initState() {
     super.initState();
     _applySavedLocale();
-    _checkOnboarding();
 
     // 시작하기 버튼은 3초 후 표시
     Timer(const Duration(seconds: 3), () {
@@ -41,18 +39,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     final prefs = context.read<UserPreferenceService>();
     final locale = prefs.locale; // ✅ 시스템 locale fallback 포함
     context.read<LocaleViewModel>().changeLocale(locale.languageCode);
-  }
-
-  Future<void> _checkOnboarding() async {
-    final prefs = context.read<UserPreferenceService>();
-    if (!prefs.hasSeenOnboarding && mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _showOnboardingOverlay());
-    }
-  }
-
-  Future<void> _showOnboardingOverlay() async {
-    await showDialog(context: context, barrierDismissible: true, builder: (_) => const OnboardingDialog());
-    await context.read<UserPreferenceService>().setHasSeenOnboarding(true);
   }
 
   void _handleUserInteraction() {
