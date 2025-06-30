@@ -90,7 +90,7 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
             ChangeNotifierProvider<ProjectListViewModel>(
               create: (_) => ProjectListViewModel(projectUseCases: _appUseCases.project),
             ),
-            ChangeNotifierProvider<LocaleViewModel>(create: (_) => LocaleViewModel(systemLocale: widget.systemLocale)),
+            ChangeNotifierProvider<LocaleViewModel>(create: (context) => LocaleViewModel(preferenceService: context.read<UserPreferenceService>())),
             ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel()),
           ],
           child: Consumer<LocaleViewModel>(
