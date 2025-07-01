@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../common/common_widgets.dart';
 import 'project_list_page.dart';
 import '../../view_models/auth_view_model.dart';
 import '../../../env.dart';
@@ -68,17 +69,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_hasShownConflictSnackbar && provider != null && email != null) {
       _hasShownConflictSnackbar = true;
 
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final msg = "⚠️ $email 계정은 이미 가입되어 있습니다.\n다른 방법으로 로그인해주세요.";
-        debugPrint("[Snackbar] $msg");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(msg),
-            backgroundColor: Colors.red.shade700,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      });
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => GlobalAlertManager.show(context, "⚠️ $email 계정은 이미 가입되어 있습니다.\n다른 방법으로 로그인해주세요.", type: AlertType.error));
     }
   }
 

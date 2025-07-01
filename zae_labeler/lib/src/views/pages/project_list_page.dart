@@ -63,12 +63,12 @@ class _ProjectListPageState extends State<ProjectListPage> {
         await projectListVM.upsertProject(project);
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Imported project: ${project.name}')));
+          GlobalAlertManager.show(context, 'Imported project: ${project.name}', type: AlertType.success);
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to import project: $e')));
+        GlobalAlertManager.show(context, 'Failed to import project: $e', type: AlertType.error);
       }
     }
   }

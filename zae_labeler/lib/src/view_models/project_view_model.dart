@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+import 'package:zae_labeler/common/common_widgets.dart';
 
 import '../core/models/data_model.dart';
 import '../core/models/label_model.dart';
@@ -134,9 +135,7 @@ class ProjectViewModel extends ChangeNotifier {
       await useCases.share.call(context, project);
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('⚠️ 프로젝트 공유에 실패했습니다: $e')),
-        );
+        GlobalAlertManager.show(context, '⚠️ 프로젝트 공유에 실패했습니다: $e', type: AlertType.error);
       }
     }
   }

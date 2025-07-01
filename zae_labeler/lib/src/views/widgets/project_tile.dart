@@ -53,7 +53,7 @@ class ProjectTile extends StatelessWidget {
       await projectListVM.removeProject(vm.project.id);
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted project: ${vm.project.name}')));
+        GlobalAlertManager.show(context, 'Deleted project: ${vm.project.name}', type: AlertType.error);
       }
     }
   }
