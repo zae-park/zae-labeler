@@ -43,10 +43,61 @@ class AppLocalizationsKo extends AppLocalizations {
   String get projectList_title => '프로젝트 목록';
 
   @override
-  String get project_create => '프로젝트 생성';
+  String get projectList_empty => '프로젝트가 없습니다. 프로젝트를 생성해주세요.';
 
   @override
-  String get project_update => '프로젝트 수정';
+  String get appbar_onboarding => '온보딩 다시보기';
+
+  @override
+  String get appbar_refresh => '새로고침';
+
+  @override
+  String get appbar_language => '언어 선택';
+
+  @override
+  String get appbar_project_create => '프로젝트 생성';
+
+  @override
+  String get appbar_project_import => '프로젝트 가져오기';
+
+  @override
+  String get projectTile_mode => '모드';
+
+  @override
+  String get projectTile_label => '레이블링';
+
+  @override
+  String get projectTile_edit => '수정';
+
+  @override
+  String get projectTile_download => '다운로드';
+
+  @override
+  String get projectTile_share => '공유';
+
+  @override
+  String get projectTile_delete => '삭제';
+
+  @override
+  String get configPage_title_create => '새 프로젝트 생성';
+
+  @override
+  String get configPage_title_edit => '프로젝트 수정';
+
+  @override
+  String get configPage_project_name => '프로젝트 이름';
+
+  @override
+  String get configPage_labeling_mode => '레이블링 모드';
+
+  @override
+  String get configPage_classes => '클래스';
+
+  @override
+  String get configPage_dataList => '데이터 목록';
+
+  @override
+  String get configPage_confirm => '확인';
 
   @override
   String get project_name => '프로젝트 이름';

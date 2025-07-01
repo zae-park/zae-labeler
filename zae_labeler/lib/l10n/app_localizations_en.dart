@@ -44,10 +44,62 @@ class AppLocalizationsEn extends AppLocalizations {
   String get projectList_title => 'Project List';
 
   @override
-  String get project_create => 'Create Project';
+  String get projectList_empty =>
+      'No projects available. Please create a project.';
 
   @override
-  String get project_update => 'Update Project';
+  String get appbar_onboarding => 'Onboarding Again';
+
+  @override
+  String get appbar_refresh => 'Refresh';
+
+  @override
+  String get appbar_language => 'Select Language';
+
+  @override
+  String get appbar_project_create => 'Create Project';
+
+  @override
+  String get appbar_project_import => 'Import Project';
+
+  @override
+  String get projectTile_mode => 'MODE';
+
+  @override
+  String get projectTile_label => 'Lageling';
+
+  @override
+  String get projectTile_edit => 'Edit';
+
+  @override
+  String get projectTile_download => 'Download';
+
+  @override
+  String get projectTile_share => 'Share';
+
+  @override
+  String get projectTile_delete => 'Delete';
+
+  @override
+  String get configPage_title_create => 'Create New Project';
+
+  @override
+  String get configPage_title_edit => 'Edit Project';
+
+  @override
+  String get configPage_project_name => 'Project Name';
+
+  @override
+  String get configPage_labeling_mode => 'Labeling Mode';
+
+  @override
+  String get configPage_classes => 'Classes';
+
+  @override
+  String get configPage_dataList => 'Data List';
+
+  @override
+  String get configPage_confirm => 'Confirm';
 
   @override
   String get project_name => 'Project Name';

@@ -164,17 +164,119 @@ abstract class AppLocalizations {
   /// **'Project List'**
   String get projectList_title;
 
-  /// No description provided for @project_create.
+  /// No description provided for @projectList_empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No projects available. Please create a project.'**
+  String get projectList_empty;
+
+  /// No description provided for @appbar_onboarding.
+  ///
+  /// In en, this message translates to:
+  /// **'Onboarding Again'**
+  String get appbar_onboarding;
+
+  /// No description provided for @appbar_refresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get appbar_refresh;
+
+  /// No description provided for @appbar_language.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Language'**
+  String get appbar_language;
+
+  /// No description provided for @appbar_project_create.
   ///
   /// In en, this message translates to:
   /// **'Create Project'**
-  String get project_create;
+  String get appbar_project_create;
 
-  /// No description provided for @project_update.
+  /// No description provided for @appbar_project_import.
   ///
   /// In en, this message translates to:
-  /// **'Update Project'**
-  String get project_update;
+  /// **'Import Project'**
+  String get appbar_project_import;
+
+  /// No description provided for @projectTile_mode.
+  ///
+  /// In en, this message translates to:
+  /// **'MODE'**
+  String get projectTile_mode;
+
+  /// No description provided for @projectTile_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Lageling'**
+  String get projectTile_label;
+
+  /// No description provided for @projectTile_edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get projectTile_edit;
+
+  /// No description provided for @projectTile_download.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get projectTile_download;
+
+  /// No description provided for @projectTile_share.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get projectTile_share;
+
+  /// No description provided for @projectTile_delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get projectTile_delete;
+
+  /// No description provided for @configPage_title_create.
+  ///
+  /// In en, this message translates to:
+  /// **'Create New Project'**
+  String get configPage_title_create;
+
+  /// No description provided for @configPage_title_edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Project'**
+  String get configPage_title_edit;
+
+  /// No description provided for @configPage_project_name.
+  ///
+  /// In en, this message translates to:
+  /// **'Project Name'**
+  String get configPage_project_name;
+
+  /// No description provided for @configPage_labeling_mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Labeling Mode'**
+  String get configPage_labeling_mode;
+
+  /// No description provided for @configPage_classes.
+  ///
+  /// In en, this message translates to:
+  /// **'Classes'**
+  String get configPage_classes;
+
+  /// No description provided for @configPage_dataList.
+  ///
+  /// In en, this message translates to:
+  /// **'Data List'**
+  String get configPage_dataList;
+
+  /// No description provided for @configPage_confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get configPage_confirm;
 
   /// No description provided for @project_name.
   ///
