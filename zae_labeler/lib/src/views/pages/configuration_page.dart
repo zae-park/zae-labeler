@@ -50,7 +50,7 @@ class ConfigureProjectPage extends StatelessWidget {
       debugPrint("📂 dataInfo: dataId=${dp.id}, path=${dp.filePath}, name=${dp.fileName}");
     }
     projectListVM.upsertProject(updatedProject);
-    GlobalAlertManager.show(context, '${updatedProject.name} project has been ${isNewProject ? "created" : "updated"}.', type: AlertType.error);
+    GlobalAlertManager.show(context, '${updatedProject.name} project has been ${isNewProject ? "created" : "updated"}.', type: AlertType.success);
 
     configVM.reset();
     Navigator.pop(context, updatedProject);

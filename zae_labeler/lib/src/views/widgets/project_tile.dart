@@ -53,7 +53,7 @@ class ProjectTile extends StatelessWidget {
       await projectListVM.removeProject(vm.project.id);
 
       if (context.mounted) {
-        GlobalAlertManager.show(context, 'Deleted project: ${vm.project.name}', type: AlertType.error);
+        GlobalAlertManager.show(context, 'Deleted project: ${vm.project.name}', type: AlertType.success);
       }
     }
   }
