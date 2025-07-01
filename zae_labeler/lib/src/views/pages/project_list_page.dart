@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zae_labeler/l10n/app_localizations.dart';
-
+import 'package:zae_labeler/common/i18n.dart';
 import 'package:zae_labeler/common/common_widgets.dart';
 import '../../core/services/user_preference_service.dart';
 import '../../core/use_cases/app_use_cases.dart';
@@ -86,38 +86,35 @@ class _ProjectListPageState extends State<ProjectListPage> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.help),
-                tooltip: '온보딩 다시 보기',
+                tooltip: context.l10n.appbar_onboarding,
                 onPressed: () async {
                   final prefs = await SharedPreferences.getInstance();
                   await prefs.setBool('hasSeenOnboarding', false);
                   _checkOnboarding();
                 },
               ),
-              IconButton(icon: const Icon(Icons.refresh), onPressed: () => projectListVM.loadProjects()),
+              IconButton(icon: const Icon(Icons.refresh), tooltip: context.l10n.appbar_refresh, onPressed: () => projectListVM.loadProjects()),
               PopupMenuButton<String>(
                 onSelected: (value) => localeVM.changeLocale(value),
                 itemBuilder: (context) => const [PopupMenuItem(value: 'en', child: Text('English')), PopupMenuItem(value: 'ko', child: Text('한국어'))],
                 icon: const Icon(Icons.language),
+                tooltip: context.l10n.appbar_language,
               ),
               IconButton(
                 icon: const Icon(Icons.add),
+                tooltip: loc.appbar_project_create,
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
                       builder: (_) =>
                           ChangeNotifierProvider(create: (_) => ConfigurationViewModel(appUseCases: appUseCases), child: const ConfigureProjectPage())),
                 ),
-                tooltip: loc.project_create,
               ),
-              IconButton(
-                icon: const Icon(Icons.file_upload),
-                onPressed: () => _importProject(context),
-                tooltip: localeVM.currentLocale.languageCode == 'ko' ? '프로젝트 가져오기' : 'Import Project',
-              ),
+              IconButton(icon: const Icon(Icons.file_upload), tooltip: context.l10n.appbar_project_import, onPressed: () => _importProject(context)),
             ],
           ),
           body: projectListVM.projectVMList.isEmpty
-              ? Center(child: Text(localeVM.currentLocale.languageCode == 'ko' ? '등록된 프로젝트가 없습니다.' : 'No projects available.'))
+              ? Center(child: Text(context.l10n.projectList_empty))
               : ListView.builder(
                   itemCount: projectListVM.projectVMList.length,
                   itemBuilder: (context, index) {
