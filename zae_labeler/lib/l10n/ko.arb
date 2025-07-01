@@ -11,6 +11,7 @@
     "splashPage_guest_cancel": "아뇨",
     "splashPage_guest_confirm": "네",
     "projectList_title": "프로젝트 목록",
+    "projectList_empty": "프로젝트가 없습니다. 프로젝트를 생성해주세요.",
     "appbar_onboarding": "온보딩 다시보기",
     "appbar_refresh": "새로고침",
     "appbar_language": "언어 선택",
