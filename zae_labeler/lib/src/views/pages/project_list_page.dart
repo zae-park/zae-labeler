@@ -63,12 +63,12 @@ class _ProjectListPageState extends State<ProjectListPage> {
         await projectListVM.upsertProject(project);
 
         if (mounted) {
-          GlobalAlertManager.show(context, 'Imported project: ${project.name}', type: AlertType.success);
+          GlobalAlertManager.show(context, '${context.l10n.message_import_project_success}: ${project.name}', type: AlertType.success);
         }
       }
     } catch (e) {
       if (mounted) {
-        GlobalAlertManager.show(context, 'Failed to import project: $e', type: AlertType.error);
+        GlobalAlertManager.show(context, '${context.l10n.message_import_project_failed}: $e', type: AlertType.error);
       }
     }
   }
