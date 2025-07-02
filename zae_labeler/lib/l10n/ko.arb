@@ -33,6 +33,15 @@
     "progressBar_complete": "완료",
     "progressBar_incomplete": "미완료",
     "progressBar_warning": "경고",
+    "labeling_status_summary": "완료: {complete}  |  주의: {warning}  |  미완료: {incomplete}",
+    "@labeling_status_summary": {
+        "description": "라벨링 진행 요약",
+        "placeholders": {
+            "complete": {},
+            "warning": {},
+            "incomplete": {}
+        }
+    },
     "navigation_prev": "이전",
     "navigation_next": "다음",
     "project_name": "프로젝트 이름",
@@ -43,5 +52,5 @@
     "select_directory": "디렉토리 선택",
     "upload_file": "파일 업로드",
     "message_import_project_failed": "프로젝트 가져오기에 실패했습니다.",
-    "message_import_project_success": "프로젝트 가져오기에 성공했습니다.",
+    "message_import_project_success": "프로젝트 가져오기에 성공했습니다."
 }

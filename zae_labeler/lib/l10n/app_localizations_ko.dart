@@ -100,6 +100,27 @@ class AppLocalizationsKo extends AppLocalizations {
   String get configPage_confirm => '확인';
 
   @override
+  String get progressBar_complete => '완료';
+
+  @override
+  String get progressBar_incomplete => '미완료';
+
+  @override
+  String get progressBar_warning => '경고';
+
+  @override
+  String labeling_status_summary(
+      Object complete, Object warning, Object incomplete) {
+    return '완료: $complete  |  주의: $warning  |  미완료: $incomplete';
+  }
+
+  @override
+  String get navigation_prev => '이전';
+
+  @override
+  String get navigation_next => '다음';
+
+  @override
   String get project_name => '프로젝트 이름';
 
   @override
@@ -119,4 +140,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get upload_file => '파일 업로드';
+
+  @override
+  String get message_import_project_failed => '프로젝트 가져오기에 실패했습니다.';
+
+  @override
+  String get message_import_project_success => '프로젝트 가져오기에 성공했습니다.';
 }

@@ -18,7 +18,7 @@
     "appbar_project_create": "Create Project",
     "appbar_project_import": "Import Project",
     "projectTile_mode": "MODE",
-    "projectTile_label": "Lageling",
+    "projectTile_label": "Labeling",
     "projectTile_edit": "Edit",
     "projectTile_download": "Download",
     "projectTile_share": "Share",
@@ -33,6 +33,15 @@
     "progressBar_complete": "complete",
     "progressBar_incomplete": "incomplete",
     "progressBar_warning": "warning",
+    "labeling_status_summary": "Done: {complete}  |  Warning: {warning}  |  Incomplete: {incomplete}",
+    "@labeling_status_summary": {
+        "description": "라벨링 진행 요약",
+        "placeholders": {
+            "complete": {},
+            "warning": {},
+            "incomplete": {}
+        }
+    },
     "navigation_prev": "Prev",
     "navigation_next": "Next",
     "project_name": "Project Name",

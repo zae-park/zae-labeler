@@ -209,7 +209,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectTile_label.
   ///
   /// In en, this message translates to:
-  /// **'Lageling'**
+  /// **'Labeling'**
   String get projectTile_label;
 
   /// No description provided for @projectTile_edit.
@@ -278,6 +278,43 @@ abstract class AppLocalizations {
   /// **'Confirm'**
   String get configPage_confirm;
 
+  /// No description provided for @progressBar_complete.
+  ///
+  /// In en, this message translates to:
+  /// **'complete'**
+  String get progressBar_complete;
+
+  /// No description provided for @progressBar_incomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'incomplete'**
+  String get progressBar_incomplete;
+
+  /// No description provided for @progressBar_warning.
+  ///
+  /// In en, this message translates to:
+  /// **'warning'**
+  String get progressBar_warning;
+
+  /// 라벨링 진행 요약
+  ///
+  /// In en, this message translates to:
+  /// **'Done: {complete}  |  Warning: {warning}  |  Incomplete: {incomplete}'**
+  String labeling_status_summary(
+      Object complete, Object warning, Object incomplete);
+
+  /// No description provided for @navigation_prev.
+  ///
+  /// In en, this message translates to:
+  /// **'Prev'**
+  String get navigation_prev;
+
+  /// No description provided for @navigation_next.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get navigation_next;
+
   /// No description provided for @project_name.
   ///
   /// In en, this message translates to:
@@ -319,6 +356,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Upload File'**
   String get upload_file;
+
+  /// No description provided for @message_import_project_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to import project.'**
+  String get message_import_project_failed;
+
+  /// No description provided for @message_import_project_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Project imported successfully.'**
+  String get message_import_project_success;
 }
 
 class _AppLocalizationsDelegate

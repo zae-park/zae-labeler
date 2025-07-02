@@ -66,7 +66,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get projectTile_mode => 'MODE';
 
   @override
-  String get projectTile_label => 'Lageling';
+  String get projectTile_label => 'Labeling';
 
   @override
   String get projectTile_edit => 'Edit';
@@ -102,6 +102,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get configPage_confirm => 'Confirm';
 
   @override
+  String get progressBar_complete => 'complete';
+
+  @override
+  String get progressBar_incomplete => 'incomplete';
+
+  @override
+  String get progressBar_warning => 'warning';
+
+  @override
+  String labeling_status_summary(
+      Object complete, Object warning, Object incomplete) {
+    return 'Done: $complete  |  Warning: $warning  |  Incomplete: $incomplete';
+  }
+
+  @override
+  String get navigation_prev => 'Prev';
+
+  @override
+  String get navigation_next => 'Next';
+
+  @override
   String get project_name => 'Project Name';
 
   @override
@@ -121,4 +142,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get upload_file => 'Upload File';
+
+  @override
+  String get message_import_project_failed => 'Failed to import project.';
+
+  @override
+  String get message_import_project_success => 'Project imported successfully.';
 }
