@@ -12,6 +12,24 @@ class AppLocalizationsKo extends AppLocalizations {
   String get app_title => 'Zae-Labeler: 데이터 라벨링 앱';
 
   @override
+  String get common_ok => '확인';
+
+  @override
+  String get common_cancel => '취소';
+
+  @override
+  String get common_error => '오류';
+
+  @override
+  String get common_warning => '경고';
+
+  @override
+  String get common_loading => '로딩중';
+
+  @override
+  String get common_success => '성공';
+
+  @override
   String get splashPage_start => '시작하기';
 
   @override

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:zae_labeler/common/common_widgets.dart';
+import 'package:zae_labeler/common/i18n.dart';
 import '../../core/use_cases/app_use_cases.dart';
 import '../../core/models/project_model.dart';
 import '../../view_models/project_view_model.dart';
@@ -42,8 +43,8 @@ class ProjectTile extends StatelessWidget {
         title: const Text('Delete Project'),
         content: Text('Are you sure you want to delete the project "${vm.project.name}"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(context.l10n.common_cancel)),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text(context.l10n.projectTile_delete, style: const TextStyle(color: Colors.red))),
         ],
       ),
     );
@@ -74,14 +75,16 @@ class ProjectTile extends StatelessWidget {
             Wrap(
               spacing: 12,
               children: [
-                ElevatedButton.icon(onPressed: () => _openLabelingPage(context), icon: const Icon(Icons.play_arrow), label: const Text("Label")),
-                OutlinedButton.icon(onPressed: () => _openEditPage(context), icon: const Icon(Icons.edit), label: const Text("Edit")),
-                OutlinedButton.icon(onPressed: () => vm.downloadProjectConfig(), icon: const Icon(Icons.download), label: const Text("Download")),
-                OutlinedButton.icon(onPressed: () => vm.shareProject(context), icon: const Icon(Icons.share), label: const Text("Share")),
+                ElevatedButton.icon(
+                    onPressed: () => _openLabelingPage(context), icon: const Icon(Icons.play_arrow), label: Text(context.l10n.projectTile_label)),
+                OutlinedButton.icon(onPressed: () => _openEditPage(context), icon: const Icon(Icons.edit), label: Text(context.l10n.projectTile_edit)),
+                OutlinedButton.icon(
+                    onPressed: () => vm.downloadProjectConfig(), icon: const Icon(Icons.download), label: Text(context.l10n.projectTile_download)),
+                OutlinedButton.icon(onPressed: () => vm.shareProject(context), icon: const Icon(Icons.share), label: Text(context.l10n.projectTile_share)),
                 TextButton.icon(
                   onPressed: () => _confirmDelete(context),
                   icon: const Icon(Icons.delete, color: Colors.red),
-                  label: const Text("Delete", style: TextStyle(color: Colors.red)),
+                  label: Text(context.l10n.projectTile_delete, style: const TextStyle(color: Colors.red)),
                 ),
               ],
             ),

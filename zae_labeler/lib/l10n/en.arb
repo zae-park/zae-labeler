@@ -1,6 +1,12 @@
 {
     "@@locale": "en",
     "app_title": "Zae-Labeler: Data Labeling App",
+    "common_ok": "OK",
+    "common_cancel": "Cancel",
+    "common_error": "Error",
+    "common_warning": "Warning",
+    "common_loading": "Loading",
+    "common_success": "Success",
     "splashPage_start": "Click to Start",
     "splashPage_error": "e-mail is already registered. Please try another authentication method.",
     "splashPage_google": "Google Login",

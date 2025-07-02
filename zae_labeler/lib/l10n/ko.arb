@@ -1,6 +1,12 @@
 {
     "@@locale": "ko",
     "app_title": "Zae-Labeler: 데이터 라벨링 앱",
+    "common_ok": "확인",
+    "common_cancel": "취소",
+    "common_error": "오류",
+    "common_warning": "경고",
+    "common_loading": "로딩중",
+    "common_success": "성공",
     "splashPage_start": "시작하기",
     "splashPage_error": "계정은 이미 가입되어 있었습니다. 다른 방법으로 다시 시도해주세요.",
     "splashPage_google": "Google 로그인",

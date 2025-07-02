@@ -12,6 +12,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get app_title => 'Zae-Labeler: Data Labeling App';
 
   @override
+  String get common_ok => 'OK';
+
+  @override
+  String get common_cancel => 'Cancel';
+
+  @override
+  String get common_error => 'Error';
+
+  @override
+  String get common_warning => 'Warning';
+
+  @override
+  String get common_loading => 'Loading';
+
+  @override
+  String get common_success => 'Success';
+
+  @override
   String get splashPage_start => 'Click to Start';
 
   @override

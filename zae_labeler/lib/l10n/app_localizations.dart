@@ -104,6 +104,42 @@ abstract class AppLocalizations {
   /// **'Zae-Labeler: Data Labeling App'**
   String get app_title;
 
+  /// No description provided for @common_ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get common_ok;
+
+  /// No description provided for @common_cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get common_cancel;
+
+  /// No description provided for @common_error.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get common_error;
+
+  /// No description provided for @common_warning.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning'**
+  String get common_warning;
+
+  /// No description provided for @common_loading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading'**
+  String get common_loading;
+
+  /// No description provided for @common_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Success'**
+  String get common_success;
+
   /// No description provided for @splashPage_start.
   ///
   /// In en, this message translates to:
