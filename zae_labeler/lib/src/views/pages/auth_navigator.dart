@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:zae_labeler/common/i18n.dart';
 import '../../view_models/auth_view_model.dart';
 import 'project_list_page.dart';
 
@@ -93,24 +94,16 @@ class LoginScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: Text(
-              "⚠️ ${authVM.conflictingEmail} 계정은 이미 가입되어 있었습니다. 다른 방법으로 다시 시도해주세요.",
+              "⚠️ ${authVM.conflictingEmail} ${context.l10n.splashPage_error}",
               style: const TextStyle(color: Colors.yellow, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
           ),
-        ElevatedButton.icon(
-          icon: const Icon(Icons.login),
-          label: const Text("Google로 로그인"),
-          onPressed: () => authVM.signInWithGoogle(),
-        ),
-        ElevatedButton.icon(
-          icon: const Icon(Icons.code),
-          label: const Text("GitHub로 로그인"),
-          onPressed: () => authVM.signInWithGitHub(),
-        ),
+        ElevatedButton.icon(icon: const Icon(Icons.login), label: Text(context.l10n.splashPage_google), onPressed: () => authVM.signInWithGoogle()),
+        ElevatedButton.icon(icon: const Icon(Icons.code), label: Text(context.l10n.splashPage_github), onPressed: () => authVM.signInWithGitHub()),
         TextButton.icon(
           icon: const Icon(Icons.open_in_new),
-          label: const Text("비회원으로 이용하기"),
+          label: Text(context.l10n.splashPage_guest),
           onPressed: () async {
             final url = Uri.parse('https://zae-park.github.io/zae-labeler/');
             if (await canLaunchUrl(url)) {
