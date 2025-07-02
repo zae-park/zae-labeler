@@ -30,11 +30,18 @@
     "configPage_classes": "Classes",
     "configPage_dataList": "Data List",
     "configPage_confirm": "Confirm",
+    "progressBar_complete": "complete",
+    "progressBar_incomplete": "incomplete",
+    "progressBar_warning": "warning",
+    "navigation_prev": "Prev",
+    "navigation_next": "Next",
     "project_name": "Project Name",
     "labeling_mode": "Labeling Mode",
     "add_class": "Add Class",
     "class_list": "Class List",
     "save_project": "Save Project",
     "select_directory": "Select Directory",
-    "upload_file": "Upload File"
+    "upload_file": "Upload File",
+    "message_import_project_failed": "Failed to import project.",
+    "message_import_project_success": "Project imported successfully."
 }
