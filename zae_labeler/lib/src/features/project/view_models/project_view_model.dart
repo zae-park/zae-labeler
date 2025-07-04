@@ -7,7 +7,7 @@ import '../../../core/models/label_model.dart';
 import '../../../core/models/project_model.dart';
 import '../../../platform_helpers/share/interface_share_helper.dart';
 
-import '../use_cases/project_use_cases.dart';
+import '../domain/use_cases/project_use_cases.dart';
 
 /// 🔧 ViewModel: 단일 프로젝트를 관리
 /// ProjectViewModel

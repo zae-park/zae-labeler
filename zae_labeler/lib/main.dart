@@ -11,7 +11,7 @@ import 'firebase_options.dart';
 import 'env.dart';
 import 'src/core/use_cases/app_use_cases.dart';
 import 'src/core/use_cases/label/label_use_cases.dart';
-import 'src/features/project/use_cases/project_use_cases.dart';
+import 'src/features/project/domain/use_cases/project_use_cases.dart';
 import 'src/core/models/project_model.dart';
 import 'src/core/repositories/label_repository.dart';
 import 'src/core/repositories/project_repository.dart';

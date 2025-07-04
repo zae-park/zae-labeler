@@ -1,4 +1,4 @@
-import 'package:zae_labeler/src/features/project/use_cases/project_use_cases.dart';
+import 'package:zae_labeler/src/features/project/domain/use_cases/project_use_cases.dart';
 import '../../repositories/mock_project_repository.dart';
 import 'mock_edit_project_use_case.dart';
 import 'mock_manage_project_io_use_case.dart';

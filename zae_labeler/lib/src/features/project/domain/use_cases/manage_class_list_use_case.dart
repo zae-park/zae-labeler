@@ -1,6 +1,6 @@
 // 📁 Manage class list
-import '../../../core/models/project_model.dart';
-import '../../../core/repositories/project_repository.dart';
+import '../../../../core/models/project_model.dart';
+import '../../../../core/repositories/project_repository.dart';
 
 class ManageClassListUseCase {
   final ProjectRepository repository;

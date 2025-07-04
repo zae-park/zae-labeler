@@ -1,6 +1,6 @@
-import '../../../core/models/project_model.dart';
-import '../../../core/models/label_model.dart';
-import '../../../core/repositories/project_repository.dart';
+import '../../../../core/models/project_model.dart';
+import '../../../../core/models/label_model.dart';
+import '../../../../core/repositories/project_repository.dart';
 
 class EditProjectMetaUseCase {
   final ProjectRepository repository;
