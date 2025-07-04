@@ -1,8 +1,8 @@
 import '../../core/models/project_model.dart';
 import '../../core/models/label_model.dart';
 import '../../core/models/data_model.dart';
-import '../../core/use_cases/label/label_use_cases.dart';
-import '../label_view_model.dart';
+import '../../features/label/use_cases/label_use_cases.dart';
+import '../../features/label/view_models/label_view_model.dart';
 
 /// ✅ StatusManager
 /// - 프로젝트 설정 및 라벨 모델을 기반으로 상태(`LabelStatus`)를 계산하고 업데이트

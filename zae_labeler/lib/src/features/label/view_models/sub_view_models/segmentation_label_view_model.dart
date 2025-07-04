@@ -1,7 +1,7 @@
 // 📁 sub_view_models/segmentation_label_view_model
 
 import 'base_label_view_model.dart';
-import '../../core/models/sub_models/segmentation_label_model.dart';
+import '../../../../core/models/sub_models/segmentation_label_model.dart';
 
 /// ViewModel for segmentation labeling.
 /// Handles pixel-level updates and repository-backed I/O.

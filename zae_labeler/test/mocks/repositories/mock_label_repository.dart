@@ -2,7 +2,7 @@
 import 'package:zae_labeler/src/core/models/project_model.dart';
 import 'package:zae_labeler/src/core/models/label_model.dart';
 import 'package:zae_labeler/src/core/models/data_model.dart';
-import 'package:zae_labeler/src/core/repositories/label_repository.dart';
+import 'package:zae_labeler/src/features/label/repository/label_repository.dart';
 import 'package:zae_labeler/src/utils/label_validator.dart';
 
 import '../helpers/mock_storage_helper.dart';

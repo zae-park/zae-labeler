@@ -1,6 +1,6 @@
 // test/mocks/use_cases/mock_app_use_cases.dart
 import 'package:zae_labeler/src/core/use_cases/app_use_cases.dart';
-import 'package:zae_labeler/src/core/use_cases/label/label_use_cases.dart';
+import 'package:zae_labeler/src/features/label/use_cases/label_use_cases.dart';
 import 'package:zae_labeler/src/features/project/use_cases/project_use_cases.dart';
 import './label/mock_label_use_cases.dart' as labelMocks;
 import './project/mock_project_use_cases.dart' as projectMocks;

@@ -1,4 +1,4 @@
-import 'package:zae_labeler/src/core/use_cases/label/validate_label_use_case.dart';
+import 'package:zae_labeler/src/features/label/use_cases/validate_label_use_case.dart';
 import 'package:zae_labeler/src/core/models/label_model.dart';
 import 'package:zae_labeler/src/core/models/project_model.dart';
 

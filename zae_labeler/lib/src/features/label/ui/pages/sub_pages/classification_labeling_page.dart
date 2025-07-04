@@ -1,9 +1,9 @@
 // 📁 lib/src/views/pages/sub_pages/classification_labeling_page.dart
 import 'package:flutter/material.dart';
 
-import '../../../core/models/project_model.dart';
+import '../../../../../core/models/project_model.dart';
 import '../../../view_models/labeling_view_model.dart';
-import '../../widgets/labeler.dart';
+import '../../../../../views/widgets/labeler.dart';
 import 'base_labeling_page.dart';
 
 class ClassificationLabelingPage extends BaseLabelingPage<LabelingViewModel> {

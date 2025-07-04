@@ -3,11 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:zae_labeler/l10n/app_localizations.dart';
 
-import '../../../core/models/project_model.dart';
+import '../../../../../core/models/project_model.dart';
 import '../../../view_models/labeling_view_model.dart';
-import '../../widgets/navigator.dart';
-import '../../widgets/shared/labeling_progress.dart';
-import '../../widgets/shared/viewer_builder.dart';
+import '../../../../../views/widgets/navigator.dart';
+import '../../../../../views/widgets/shared/labeling_progress.dart';
+import '../../../../../views/widgets/shared/viewer_builder.dart';
 
 /// BaseLabelingPage
 /// - 라벨링 페이지 공통 기능을 제공하는 추상 클래스

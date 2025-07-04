@@ -1,4 +1,4 @@
-import '../../repositories/label_repository.dart';
+import '../repository/label_repository.dart';
 import 'single_label_use_case.dart';
 import 'batch_label_use_case.dart';
 import 'validate_label_use_case.dart';
