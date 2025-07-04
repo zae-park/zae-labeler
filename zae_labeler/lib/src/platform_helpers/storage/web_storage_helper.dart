@@ -7,9 +7,9 @@ import 'package:flutter/services.dart';
 import 'package:archive/archive.dart';
 
 import 'interface_storage_helper.dart';
-import '../../core/models/project_model.dart';
+import '../../features/project/models/project_model.dart';
 import '../../core/models/data_model.dart';
-import '../../core/models/label_model.dart';
+import '../../features/label/models/label_model.dart';
 
 class StorageHelperImpl implements StorageHelperInterface {
   // ==============================

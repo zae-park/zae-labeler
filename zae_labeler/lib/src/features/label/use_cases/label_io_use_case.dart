@@ -1,5 +1,5 @@
-import '../../../core/models/label_model.dart';
-import '../../../core/models/project_model.dart';
+import '../models/label_model.dart';
+import '../../project/models/project_model.dart';
 import '../../../core/models/data_model.dart';
 import '../repository/label_repository.dart';
 

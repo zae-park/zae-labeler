@@ -12,7 +12,7 @@ import 'env.dart';
 import 'src/core/use_cases/app_use_cases.dart';
 import 'src/features/label/use_cases/label_use_cases.dart';
 import 'src/features/project/use_cases/project_use_cases.dart';
-import 'src/core/models/project_model.dart';
+import 'src/features/project/models/project_model.dart';
 import 'src/features/label/repository/label_repository.dart';
 import 'src/features/project/repository/project_repository.dart';
 import 'src/platform_helpers/storage/get_storage_helper.dart';

@@ -12,7 +12,7 @@ import '../../../../core/use_cases/app_use_cases.dart';
 import '../../view_models/project_list_view_model.dart';
 import '../../../../view_models/locale_view_model.dart';
 import '../../view_models/configuration_view_model.dart';
-import '../../../../core/models/project_model.dart';
+import '../../models/project_model.dart';
 import 'configuration_page.dart';
 import '../../../../views/dialogs/onboarding_dialog.dart';
 import '../widgets/project_tile.dart';

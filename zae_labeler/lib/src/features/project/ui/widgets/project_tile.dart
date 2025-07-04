@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:zae_labeler/common/common_widgets.dart';
 import 'package:zae_labeler/common/i18n.dart';
 import '../../../../core/use_cases/app_use_cases.dart';
-import '../../../../core/models/project_model.dart';
+import '../../models/project_model.dart';
 import '../../view_models/project_view_model.dart';
 import '../../view_models/configuration_view_model.dart';
 import '../../../label/ui/pages/labeling_page.dart';

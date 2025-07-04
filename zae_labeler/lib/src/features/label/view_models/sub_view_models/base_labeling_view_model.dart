@@ -2,8 +2,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/use_cases/app_use_cases.dart';
-import '../../../../core/models/label_model.dart';
-import '../../../../core/models/project_model.dart';
+import '../../models/label_model.dart';
+import '../../../project/models/project_model.dart';
 import '../../../../core/models/data_model.dart';
 import '../../../../platform_helpers/storage/interface_storage_helper.dart';
 import '../../../../utils/adaptive/adaptive_data_loader.dart';

@@ -1,4 +1,4 @@
-import '../../../core/models/label_model.dart';
+import '../models/label_model.dart';
 import '../repository/label_repository.dart';
 
 /// ✅ 단일 데이터 항목에 대한 라벨 처리용 UseCase 모음

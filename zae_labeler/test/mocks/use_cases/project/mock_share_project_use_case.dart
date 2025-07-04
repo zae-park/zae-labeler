@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:zae_labeler/src/features/project/use_cases/share_project_use_case.dart';
-import 'package:zae_labeler/src/core/models/project_model.dart';
+import 'package:zae_labeler/src/features/project/models/project_model.dart';
 
 class MockShareProjectUseCase extends ShareProjectUseCase {
   bool wasCalled = false;

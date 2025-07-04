@@ -1,6 +1,6 @@
 // 📁 Manage data
 import '../../../core/models/data_model.dart';
-import '../../../core/models/project_model.dart';
+import '../models/project_model.dart';
 import '../repository/project_repository.dart';
 
 class ManageDataInfoUseCase {

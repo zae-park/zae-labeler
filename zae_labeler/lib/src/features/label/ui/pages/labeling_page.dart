@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../use_cases/label_use_cases.dart';
 import '../../../project/use_cases/project_use_cases.dart';
-import '../../../../core/models/label_model.dart';
-import '../../../../core/models/project_model.dart';
+import '../../models/label_model.dart';
+import '../../../project/models/project_model.dart';
 import '../../../../platform_helpers/storage/get_storage_helper.dart';
 import '../../view_models/labeling_view_model.dart';
 

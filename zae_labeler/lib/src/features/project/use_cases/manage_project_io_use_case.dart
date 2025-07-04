@@ -1,4 +1,4 @@
-import '../../../core/models/project_model.dart';
+import '../models/project_model.dart';
 import '../repository/project_repository.dart';
 import '../../../core/use_cases/validator/project_validator.dart';
 

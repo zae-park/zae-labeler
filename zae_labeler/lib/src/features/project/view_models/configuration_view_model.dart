@@ -5,8 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:uuid/uuid.dart'; // 프로젝트 ID 생성
 import '../../../core/use_cases/app_use_cases.dart';
-import '../../../core/models/label_model.dart';
-import '../../../core/models/project_model.dart';
+import '../../label/models/label_model.dart';
+import '../models/project_model.dart';
 import '../../../core/models/data_model.dart';
 
 /// ✅ **ConfigurationViewModel**

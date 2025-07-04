@@ -1,7 +1,7 @@
 // 📁 sub_view_models/base_label_view_model.dart
 
 import 'package:flutter/foundation.dart';
-import '../../../../core/models/label_model.dart';
+import '../../models/label_model.dart';
 import '../../use_cases/label_use_cases.dart';
 import '../../../../view_models/managers/label_input_mapper.dart';
 

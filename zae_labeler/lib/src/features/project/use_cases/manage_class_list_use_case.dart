@@ -1,5 +1,5 @@
 // 📁 Manage class list
-import '../../../core/models/project_model.dart';
+import '../models/project_model.dart';
 import '../repository/project_repository.dart';
 
 class ManageClassListUseCase {

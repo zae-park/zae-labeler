@@ -1,5 +1,5 @@
 import '../../features/label/view_models/label_view_model.dart';
-import '../../core/models/project_model.dart';
+import '../../features/project/models/project_model.dart';
 import '../../features/label/use_cases/label_use_cases.dart';
 
 /// 🏷️ LabelManager

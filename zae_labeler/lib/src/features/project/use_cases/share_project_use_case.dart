@@ -2,7 +2,7 @@
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import '../../../core/models/project_model.dart';
+import '../models/project_model.dart';
 import '../repository/project_repository.dart';
 import '../../../platform_helpers/share/interface_share_helper.dart';
 import '../../../platform_helpers/share/get_helper.dart';

@@ -1,5 +1,5 @@
-import '../../../core/models/project_model.dart';
-import '../../../core/models/label_model.dart';
+import '../models/project_model.dart';
+import '../../label/models/label_model.dart';
 import '../repository/project_repository.dart';
 
 class EditProjectMetaUseCase {

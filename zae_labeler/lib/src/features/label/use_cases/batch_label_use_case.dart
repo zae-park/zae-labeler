@@ -1,4 +1,4 @@
-import '../../../core/models/label_model.dart';
+import '../models/label_model.dart';
 import '../repository/label_repository.dart';
 
 class BatchLabelUseCase {
