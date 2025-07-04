@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zae_labeler/src/core/use_cases/project/manage_class_list_use_case.dart';
+import 'package:zae_labeler/src/features/project/use_cases/manage_class_list_use_case.dart';
 import 'package:zae_labeler/src/core/models/project_model.dart';
 
 import '../../../mocks/repositories/mock_project_repository.dart';

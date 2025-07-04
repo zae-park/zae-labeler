@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:zae_labeler/common/i18n.dart';
 import '../../view_models/auth_view_model.dart';
-import 'project_list_page.dart';
+import '../../features/project/views/project_list_page.dart';
 
 class AuthNavigator extends StatelessWidget {
   const AuthNavigator({super.key});

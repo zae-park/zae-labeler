@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../core/models/project_model.dart';
-import '../core/use_cases/project/project_use_cases.dart';
-import '../platform_helpers/share/get_helper.dart';
+import '../../../core/models/project_model.dart';
+import '../use_cases/project_use_cases.dart';
+import '../../../platform_helpers/share/get_helper.dart';
 import 'project_view_model.dart';
 
 /// 🔧 ViewModel: 전체 프로젝트 리스트를 관리

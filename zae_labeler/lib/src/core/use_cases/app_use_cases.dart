@@ -1,4 +1,4 @@
-import 'project/project_use_cases.dart';
+import '../../features/project/use_cases/project_use_cases.dart';
 import 'label/label_use_cases.dart';
 
 /// ✅ AppUseCases

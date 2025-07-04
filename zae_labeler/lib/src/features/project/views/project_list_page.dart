@@ -7,14 +7,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zae_labeler/l10n/app_localizations.dart';
 import 'package:zae_labeler/common/i18n.dart';
 import 'package:zae_labeler/common/common_widgets.dart';
-import '../../core/services/user_preference_service.dart';
-import '../../core/use_cases/app_use_cases.dart';
-import '../../view_models/project_list_view_model.dart';
-import '../../view_models/locale_view_model.dart';
-import '../../view_models/configuration_view_model.dart';
-import '../../core/models/project_model.dart';
-import '../pages/configuration_page.dart';
-import '../dialogs/onboarding_dialog.dart';
+import '../../../core/services/user_preference_service.dart';
+import '../../../core/use_cases/app_use_cases.dart';
+import '../view_models/project_list_view_model.dart';
+import '../../../view_models/locale_view_model.dart';
+import '../../../view_models/configuration_view_model.dart';
+import '../../../core/models/project_model.dart';
+import '../../../views/pages/configuration_page.dart';
+import '../../../views/dialogs/onboarding_dialog.dart';
 import '../widgets/project_tile.dart';
 
 class ProjectListPage extends StatefulWidget {

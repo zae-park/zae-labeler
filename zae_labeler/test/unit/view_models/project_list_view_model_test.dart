@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zae_labeler/src/view_models/project_list_view_model.dart';
+import 'package:zae_labeler/src/features/project/view_models/project_list_view_model.dart';
 import 'package:zae_labeler/src/core/models/project_model.dart';
 
 import '../../mocks/repositories/mock_project_repository.dart';

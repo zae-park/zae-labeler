@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:zae_labeler/common/common_widgets.dart';
 
-import '../core/models/data_model.dart';
-import '../core/models/label_model.dart';
-import '../core/models/project_model.dart';
-import '../platform_helpers/share/interface_share_helper.dart';
+import '../../../core/models/data_model.dart';
+import '../../../core/models/label_model.dart';
+import '../../../core/models/project_model.dart';
+import '../../../platform_helpers/share/interface_share_helper.dart';
 
-import '../core/use_cases/project/project_use_cases.dart';
+import '../use_cases/project_use_cases.dart';
 
 /// 🔧 ViewModel: 단일 프로젝트를 관리
 /// ProjectViewModel

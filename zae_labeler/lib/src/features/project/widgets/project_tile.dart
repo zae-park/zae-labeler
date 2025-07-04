@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:zae_labeler/common/common_widgets.dart';
 import 'package:zae_labeler/common/i18n.dart';
-import '../../core/use_cases/app_use_cases.dart';
-import '../../core/models/project_model.dart';
-import '../../view_models/project_view_model.dart';
-import '../../view_models/configuration_view_model.dart';
-import '../pages/labeling_page.dart';
-import '../../views/pages/configuration_page.dart';
+import '../../../core/use_cases/app_use_cases.dart';
+import '../../../core/models/project_model.dart';
+import '../view_models/project_view_model.dart';
+import '../../../view_models/configuration_view_model.dart';
+import '../../../views/pages/labeling_page.dart';
+import '../../../views/pages/configuration_page.dart';
 import 'package:provider/provider.dart';
-import '../../view_models/project_list_view_model.dart';
+import '../view_models/project_list_view_model.dart';
 
 class ProjectTile extends StatelessWidget {
   final ProjectViewModel vm;

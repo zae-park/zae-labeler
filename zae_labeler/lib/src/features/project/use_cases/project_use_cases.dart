@@ -1,4 +1,4 @@
-import '../../repositories/project_repository.dart';
+import '../../../core/repositories/project_repository.dart';
 import 'manage_project_io_use_case.dart';
 import 'edit_project_meta_use_case.dart';
 import 'manage_class_list_use_case.dart';

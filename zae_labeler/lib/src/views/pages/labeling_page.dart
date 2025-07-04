@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/use_cases/label/label_use_cases.dart';
-import '../../core/use_cases/project/project_use_cases.dart';
+import '../../features/project/use_cases/project_use_cases.dart';
 import '../../core/models/label_model.dart';
 import '../../core/models/project_model.dart';
 import '../../platform_helpers/storage/get_storage_helper.dart';

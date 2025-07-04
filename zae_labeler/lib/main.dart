@@ -11,20 +11,20 @@ import 'firebase_options.dart';
 import 'env.dart';
 import 'src/core/use_cases/app_use_cases.dart';
 import 'src/core/use_cases/label/label_use_cases.dart';
-import 'src/core/use_cases/project/project_use_cases.dart';
+import 'src/features/project/use_cases/project_use_cases.dart';
 import 'src/core/models/project_model.dart';
 import 'src/core/repositories/label_repository.dart';
 import 'src/core/repositories/project_repository.dart';
 import 'src/platform_helpers/storage/get_storage_helper.dart';
 import 'src/platform_helpers/storage/cloud_storage_helper.dart';
 import 'src/view_models/auth_view_model.dart';
-import 'src/view_models/project_list_view_model.dart';
+import 'src/features/project/view_models/project_list_view_model.dart';
 import 'src/view_models/locale_view_model.dart';
 import 'src/views/pages/splash_page.dart';
 // import 'src/views/pages/auth_gate.dart';
 import 'src/views/pages/configuration_page.dart';
 import 'src/views/pages/labeling_page.dart';
-import 'src/views/pages/project_list_page.dart';
+import 'src/features/project/views/project_list_page.dart';
 import 'src/views/pages/not_found_page.dart';
 
 void main() async {

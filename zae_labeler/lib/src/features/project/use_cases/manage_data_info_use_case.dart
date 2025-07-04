@@ -1,7 +1,7 @@
 // 📁 Manage data
-import '../../models/data_model.dart';
-import '../../models/project_model.dart';
-import '../../repositories/project_repository.dart';
+import '../../../core/models/data_model.dart';
+import '../../../core/models/project_model.dart';
+import '../../../core/repositories/project_repository.dart';
 
 class ManageDataInfoUseCase {
   final ProjectRepository repository;
