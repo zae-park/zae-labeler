@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../common/common_widgets.dart';
-import '../../view_models/configuration_view_model.dart';
-import '../../features/project/view_models/project_list_view_model.dart';
-import '../widgets/labeling_mode_selector.dart';
+import '../../../../../common/common_widgets.dart';
+import '../../../../view_models/configuration_view_model.dart';
+import '../../view_models/project_list_view_model.dart';
+import '../../../../views/widgets/labeling_mode_selector.dart';
 
 class ConfigureProjectPage extends StatelessWidget {
   const ConfigureProjectPage({Key? key}) : super(key: key);

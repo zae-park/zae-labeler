@@ -1,6 +1,6 @@
-import '../../../../core/models/project_model.dart';
-import '../../../../core/repositories/project_repository.dart';
-import '../../../../core/use_cases/validator/project_validator.dart';
+import '../../../core/models/project_model.dart';
+import '../repository/project_repository.dart';
+import '../../../core/use_cases/validator/project_validator.dart';
 
 /// ✅ UseCase: 프로젝트 IO (단일 or 복수 ID 기준)
 class ManageProjectIOUseCase {
