@@ -1,116 +1,161 @@
-# Zae-Labeler - Dev Readme
+# Zae-Labeler - Dev Readme (Updated)
 
 ## Overview
-This Flutter-based labeling app supports project-based data annotation with a focus on flexibility, multi-mode labeling, and modern UI/UX. It is designed to work cross-platform (Windows & Web) and uses a modular MVVM (Model-View-ViewModel) architecture.
+
+Zae-Labeler is a Flutter-based cross-platform labeling application supporting multi-mode data annotation. It is designed with modular architecture for maintainability, performance, and testability.
+
+The app runs on **Web**, **Windows**, and **macOS** platforms, and supports local and cloud storage modes.
+
+---
 
 ## Key Features
-- **Multi-Mode Labeling**: Single classification, multi classification
-- **Project-Oriented Management**: Projects include label schema, data paths, and modes.
-- **Firebase Authentication**: Google and GitHub sign-in with provider conflict resolution.
-- **Cloud & Local Persistence**: Supports Firebase Firestore and local file-based project/label storage.
-- **Cross-Platform UI**: Fully responsive web and Windows interface.
+
+* **Multi-Mode Labeling**: Single classification, multi classification (more planned)
+* **Project-Oriented Workflow**: Each project holds its schema, data, and label state
+* **Authentication**: Google & GitHub login (Kakao/Naver planned)
+* **Storage**: Firebase Cloud & local filesystem I/O
+* **Cross-Platform UI**: Adaptive, responsive design for desktop and browser
+* **MVVM + Clean Architecture**: Testable, scalable logic
 
 ---
 
-## User Authentication
+## Code Architecture (Clean + Modular Feature-first)
 
-The app supports user authentication using **Firebase Authentication**. Users can sign in with:
+### 1. Feature-First Structure
 
-- Google
-- GitHub
-- (Planned) Kakao, Naver
+The codebase is organized around **feature domains** rather than technical layers:
 
-If the user attempts to log in with a provider different from the one originally used for their email, the app will guide them to use the correct method.
+```
+lib/
+├── features/
+│   ├── project/
+│   │   ├── models/
+│   │   ├── view_models/
+│   │   ├── views/
+│   │   └── use_cases/
+│   ├── label/
+│   └── auth/
+│
+├── core/
+│   ├── models/
+│   ├── services/
+│   ├── use_cases/app_use_cases.dart  // composition root
+│   └── repositories/
+│
+├── shared/
+│   ├── widgets/
+│   ├── utils/
+│   └── helpers/
+│
+├── l10n/
+└── main.dart
+```
 
----
+### 2. Clean Architecture Layers
 
-## Code Architecture
+* **features/**: Contains all feature-specific UI + logic
 
-### 1. MVVM Structure
-- **Model**: Core data types including `Project`, `LabelModel`, and `UnifiedData`
-- **ViewModel**: Centralized business logic layer
-- **View**: Pages and widgets that consume ViewModels reactively
+  * ViewModel, UseCase, and UI scoped per domain
 
-### 2. Project Lifecycle
-- `ConfigureProjectPage`: Create/edit project, set classes, mode, and data directory
-- `ProjectListPage`: View, import, export, share, or delete projects
-- `LabelingPage`: Routes to mode-specific pages
+* **core/**: Shared business logic and composition layer
 
-### 3. Labeling Modes
-Each labeling mode has its own dedicated page:
-- `ClassificationLabelingPage`
-- *(Planned)* `SegmentationLabelingPage`
+  * `AppUseCases` acts as the DI entrypoint bundling all feature use cases
 
-They inherit from `BaseLabelingPage`, which handles:
-- Navigation logic
-- Viewer layout
-- Keyboard shortcuts
+* **shared/**: Common utilities and components reused across features
 
-### 4. Labeling ViewModels
-The app uses two layers of labeling state management:
+* **platform\_helpers/**: Platform-specific logic (e.g. cloud, native, web)
 
-- **`LabelViewModel`**: Represents a single labeled entry. Each entry contains the label value(s), labeled timestamp, and mode-aware logic (e.g., isLabeled, isSelected).
-- **`LabelingViewModel`**: Manages the entire session. It maintains the current index, navigates between items, restores saved labels, and handles grid/keypad/class logic depending on mode.
-
-Labeling pages use a `currentLabelVM` (a `LabelViewModel` instance) that is updated dynamically by `LabelingViewModel` as the user navigates.
-
----
-
-## Common UI Components
-
-Reusable widgets are defined under `lib/views/widgets/`:
-
-- `AppHeader`: Page title, optional leading/back button, and action buttons.
-- `SocialLoginButton`: OAuth buttons with logo and color styling.
-- `LabelingKeyPad`: Renders class-based buttons dynamically.
-- `TimeSeriesChart`: Visualizes sequential or sensor data.
-
-➡️ *Many widgets are in transition to this structure, and more will be modularized going forward.*
+> This approach enables scalable development while preserving separation of concerns, enabling each feature to be modular and self-contained.
 
 ---
 
-## File & Storage System
+## Project Lifecycle
 
-- `StorageHelper`: Native file I/O handler for local mode.
-- `CloudStorageHelper`: Firebase-integrated version for web.
-- `UnifiedData`: Abstract unit of data per label entry across all modes.
+* `ConfigureProjectPage`: Setup label schema, modes, and files
+* `ProjectListPage`: View, import/export/share/delete projects
+* `LabelingPage`: Launch specific labeling mode
 
-➡️ *Storage system is separated by platform (web vs. native), but shares unified interfaces for ViewModel abstraction.*
+### Labeling Modes (Extensible)
+
+* `ClassificationLabelingPage`
+* `SegmentationLabelingPage` (planned)
 
 ---
 
-## Firebase Integration
-- **Authentication**: Google/GitHub login
-- **Hosting**: Firebase Hosting used for production deployment
-- *(Planned)* Firestore-backed project/label persistence
+## ViewModel Structure
+
+### 1. `LabelingViewModel`
+
+* Drives the labeling session
+* Tracks current data, index, status, validation
+
+### 2. `LabelViewModel`
+
+* Controls label logic per data item
+* Manages selected classes, label type, etc.
+
+### 3. `ProjectViewModel`
+
+* Handles project-level edits, class list, sharing
+
+### 4. `LocaleViewModel`
+
+* Tracks and updates locale preference
+
+---
+
+## Authentication
+
+* Based on **Firebase Auth**
+* Supports Google/GitHub (Kakao/Naver planned)
+* Handles provider conflict detection
+
+---
+
+## Storage
+
+* `StorageHelper` → native/local file system
+* `CloudStorageHelper` → Firebase-integrated
+* `UnifiedData` abstraction handles cross-mode data
+
+---
+
+## Common Widgets
+
+* `AppHeader`: Unified page topbar with back button and actions
+* `AutoSeparatedColumn`: Layout helper
+* `LabelingProgress`, `NavigatorButtons`: Session progress and navigation
+
+---
+
+## Firebase
+
+* **Authentication**: Google, GitHub login
+* **Hosting**: Firebase Web + GitHub Pages
 
 ---
 
 ## Web Hosting
 
-The app is hosted in two flavors:
-
-- **Production (Firebase Web App)**
-  👉 https://zae-labeler.firebaseapp.com
-  - Authenticated users (login required)
-
-- **Development (GitHub Pages)**
-  👉 https://zae-park.github.io/zae-labeler/
-  - No login required (for demo/testing)
+* 🔐 [https://zae-labeler.firebaseapp.com](https://zae-labeler.firebaseapp.com) → secure, login required
+* 🧪 [https://zae-park.github.io/zae-labeler/](https://zae-park.github.io/zae-labeler/) → guest access for demo
 
 ---
 
-## Planned Features
-- Segmentation Labeling
-- Kakao & Naver OAuth login
+## Development Notes
+
+* Flutter 3.32.4 recommended
+* Run `flutter test --coverage` to ensure coverage
+* Run `flutter gen-l10n` after editing `.arb` files
+* Feature-first structure helps with scalability & modularity
+* Prefer `AppUseCases` injection for use-case orchestration
+* Avoid mutable state in widgets, use `ChangeNotifier` + Provider
 
 ---
 
-## Development Tips
-- Use Flutter version 3.16.5
-- Use `flutter test --coverage` to ensure high test quality
-- Keep all mutable state inside ViewModels (not in views)
-- Place platform-specific logic in `utils/` or `helpers/`
-- Follow reusable widget patterns for layout and UI reuse
-- Use `AppHeader` for consistent navigation and action structure
+## Planned
 
+* Full segmentation support
+* More OAuth providers
+* Auto backup/export
+* Labeling analytics
