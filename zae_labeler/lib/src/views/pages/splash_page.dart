@@ -36,9 +36,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   void _applySavedLocale() {
-    final prefs = context.read<UserPreferenceService>();
-    final locale = prefs.locale; // ✅ 시스템 locale fallback 포함
-    context.read<LocaleViewModel>().changeLocale(locale.languageCode);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final prefs = context.read<UserPreferenceService>();
+      final locale = prefs.locale;
+      context.read<LocaleViewModel>().changeLocale(locale.languageCode);
+    });
   }
 
   void _handleUserInteraction() {
