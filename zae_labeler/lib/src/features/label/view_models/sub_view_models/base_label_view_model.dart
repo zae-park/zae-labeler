@@ -3,7 +3,7 @@
 import 'package:flutter/foundation.dart';
 import '../../models/label_model.dart';
 import '../../use_cases/label_use_cases.dart';
-import '../../../../view_models/managers/label_input_mapper.dart';
+import '../../logic/label_input_mapper.dart';
 
 abstract class LabelViewModel extends ChangeNotifier {
   final String projectId;

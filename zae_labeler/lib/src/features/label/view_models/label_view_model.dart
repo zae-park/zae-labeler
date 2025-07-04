@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../models/label_model.dart';
 import '../use_cases/label_use_cases.dart';
 import 'label_view_model.dart';
-import '../../../view_models/managers/label_input_mapper.dart';
+import '../logic/label_input_mapper.dart';
 export 'sub_view_models/base_label_view_model.dart';
 export 'sub_view_models/classification_label_view_model.dart';
 export 'sub_view_models/segmentation_label_view_model.dart';
