@@ -19,53 +19,58 @@ The app runs on **Web**, **Windows**, and **macOS** platforms, and supports loca
 
 ---
 
-## Code Architecture (Clean + Modular Feature-first)
+## Code Architecture (Hybrid Feature-Based)
 
-### 1. Feature-First Structure
+### 🔹 Hybrid Structure (Feature + Layer)
 
-The codebase is organized around **feature domains** rather than technical layers:
+We follow a **hybrid feature-first structure** with layered separation inside each feature module.
 
 ```
 lib/
+├── core/                       # Shared domain logic
+│   ├── base/                  # Abstract base classes & interfaces
+│   ├── models/                # Shared data models (Project, Label, etc.)
+│   ├── services/              # Cross-feature services (e.g. UserPreferenceService)
+│   ├── platform/              # Platform-specific helper interfaces
+│   └── use_cases/            # Aggregated app-level use case (AppUseCases)
+│
 ├── features/
+│   ├── auth/
+│   │   ├── ui/
+│   │   ├── view_model/
+│   │   ├── service/
+│   │   └── use_case/
+│   │
 │   ├── project/
-│   │   ├── models/
-│   │   ├── view_models/
-│   │   ├── views/
-│   │   └── use_cases/
-│   ├── label/
-│   └── auth/
+│   │   ├── ui/
+│   │   ├── view_model/
+│   │   ├── use_case/
+│   │   └── repository/
+│   │
+│   └── labeling/
+│       ├── ui/
+│       ├── view_model/
+│       ├── use_case/
+│       ├── model/
+│       └── validator/
 │
-├── core/
-│   ├── models/
-│   ├── services/
-│   ├── use_cases/app_use_cases.dart  // composition root
-│   └── repositories/
-│
-├── shared/
+├── shared/                    # Common reusable widgets and helpers
 │   ├── widgets/
 │   ├── utils/
 │   └── helpers/
 │
-├── l10n/
-└── main.dart
+├── l10n/                      # Localization
+└── main.dart                  # App entry and routing
 ```
 
-### 2. Clean Architecture Layers
+### ✳ Clean Architecture in Practice
 
-* **features/**: Contains all feature-specific UI + logic
+* `features/` → Feature-local presentation, view\_model, domain logic
+* `core/` → App-wide shared domain, services, use case composition
+* `shared/` → Stateless widgets, utilities
+* `AppUseCases` → Bundles all individual feature use cases for injection
 
-  * ViewModel, UseCase, and UI scoped per domain
-
-* **core/**: Shared business logic and composition layer
-
-  * `AppUseCases` acts as the DI entrypoint bundling all feature use cases
-
-* **shared/**: Common utilities and components reused across features
-
-* **platform\_helpers/**: Platform-specific logic (e.g. cloud, native, web)
-
-> This approach enables scalable development while preserving separation of concerns, enabling each feature to be modular and self-contained.
+This structure balances separation of concerns and scalability, making each feature independently testable and modular.
 
 ---
 
@@ -147,9 +152,9 @@ lib/
 * Flutter 3.32.4 recommended
 * Run `flutter test --coverage` to ensure coverage
 * Run `flutter gen-l10n` after editing `.arb` files
-* Feature-first structure helps with scalability & modularity
-* Prefer `AppUseCases` injection for use-case orchestration
-* Avoid mutable state in widgets, use `ChangeNotifier` + Provider
+* Hybrid feature-first structure ensures modular scalability
+* Use `AppUseCases` for feature orchestration
+* Prefer `ChangeNotifier` + Provider for reactive state
 
 ---
 
