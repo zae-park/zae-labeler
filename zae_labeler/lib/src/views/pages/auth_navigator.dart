@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:zae_labeler/common/i18n.dart';
-import '../../view_models/auth_view_model.dart';
+import 'package:zae_labeler/src/features/auth/view_models/auth_view_models.dart';
 import '../../features/project/ui/pages/project_list_page.dart';
 
 class AuthNavigator extends StatelessWidget {
