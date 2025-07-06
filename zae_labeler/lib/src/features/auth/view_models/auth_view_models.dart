@@ -27,6 +27,12 @@ class AuthViewModel extends ChangeNotifier {
     });
   }
 
+  /// ✅ static factory constructor (FirebaseAuth 주입)
+  factory AuthViewModel.withDefaultUseCases(FirebaseAuth auth) {
+    return AuthViewModel(
+        signInWithGoogleUseCase: SignInWithGoogleUseCase(auth), signInWithGitHubUseCase: SignInWithGitHubUseCase(auth), signOutUseCase: SignOutUseCase(auth));
+  }
+
   Future<void> signInWithGoogle() async {
     try {
       user = await _signInWithGoogleUseCase();
