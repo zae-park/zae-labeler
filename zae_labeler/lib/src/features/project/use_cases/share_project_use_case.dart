@@ -6,7 +6,7 @@ import '../models/project_model.dart';
 import '../repository/project_repository.dart';
 import '../../../platform_helpers/share/interface_share_helper.dart';
 import '../../../platform_helpers/share/get_helper.dart';
-import '../../../core/use_cases/validator/project_validator.dart';
+import '../logic/project_validator.dart';
 
 /// ✅ UseCase: 프로젝트 공유
 /// - JSON으로 직렬화한 프로젝트를 플랫폼별 공유 방식으로 전달

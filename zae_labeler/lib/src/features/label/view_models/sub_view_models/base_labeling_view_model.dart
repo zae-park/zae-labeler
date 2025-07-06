@@ -6,7 +6,7 @@ import '../../models/label_model.dart';
 import '../../../project/models/project_model.dart';
 import '../../../../core/models/data_model.dart';
 import '../../../../platform_helpers/storage/interface_storage_helper.dart';
-import '../../../../utils/adaptive/adaptive_data_loader.dart';
+import '../../../../core/services/adaptive_data_loader.dart';
 import '../label_view_model.dart';
 
 /// Abstract base class for all LabelingViewModels.
