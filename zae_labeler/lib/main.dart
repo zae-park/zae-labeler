@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -17,7 +18,7 @@ import 'src/features/label/repository/label_repository.dart';
 import 'src/features/project/repository/project_repository.dart';
 import 'src/platform_helpers/storage/get_storage_helper.dart';
 import 'src/platform_helpers/storage/cloud_storage_helper.dart';
-import 'src/view_models/auth_view_model.dart';
+import 'package:zae_labeler/src/features/auth/view_models/auth_view_models.dart';
 import 'src/features/project/view_models/project_list_view_model.dart';
 import 'src/view_models/locale_view_model.dart';
 import 'src/views/pages/splash_page.dart';
@@ -76,6 +77,8 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
 
   @override
   Widget build(BuildContext context) {
+    final firebaseAuth = FirebaseAuth.instance;
+
     return FutureBuilder<void>(
       future: _initialization,
       builder: (context, snapshot) {
@@ -90,7 +93,7 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
             Provider<UserPreferenceService>.value(value: _userPrefs),
             ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(projectUseCases: _appUseCases.project)),
             ChangeNotifierProvider<LocaleViewModel>(create: (_) => LocaleViewModel(preferenceService: _userPrefs, initial: _initialLocale)),
-            ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel()),
+            ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel.withDefaultUseCases(firebaseAuth)),
           ],
           child: Consumer<LocaleViewModel>(
             builder: (context, localeVM, _) {
