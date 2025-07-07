@@ -272,6 +272,18 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get projectTile_delete;
 
+  /// No description provided for @projectTile_deleteEnsure.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete the project?'**
+  String get projectTile_deleteEnsure;
+
+  /// No description provided for @projectTile_deleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Project deleted successfully'**
+  String get projectTile_deleteMessage;
+
   /// No description provided for @configPage_title_create.
   ///
   /// In en, this message translates to:

@@ -99,6 +99,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get projectTile_delete => 'Delete';
 
   @override
+  String get projectTile_deleteEnsure =>
+      'Are you sure you want to delete the project?';
+
+  @override
+  String get projectTile_deleteMessage => 'Project deleted successfully';
+
+  @override
   String get configPage_title_create => 'Create New Project';
 
   @override

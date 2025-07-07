@@ -29,6 +29,8 @@
     "projectTile_download": "Download",
     "projectTile_share": "Share",
     "projectTile_delete": "Delete",
+    "projectTile_deleteEnsure": "Are you sure you want to delete the project?",
+    "projectTile_deleteMessage": "Project deleted successfully",
     "configPage_title_create": "Create New Project",
     "configPage_title_edit": "Edit Project",
     "configPage_project_name": "Project Name",

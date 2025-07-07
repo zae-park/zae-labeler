@@ -29,6 +29,8 @@
     "projectTile_download": "다운로드",
     "projectTile_share": "공유",
     "projectTile_delete": "삭제",
+    "projectTile_deleteEnsure": "프로젝트를 삭제하시겠습니까?",
+    "projectTile_deleteMessage": "프로젝트가 성공적으로 삭제되었습니다",
     "configPage_title_create": "새 프로젝트 생성",
     "configPage_title_edit": "프로젝트 수정",
     "configPage_project_name": "프로젝트 이름",

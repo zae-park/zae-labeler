@@ -97,6 +97,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get projectTile_delete => '삭제';
 
   @override
+  String get projectTile_deleteEnsure => '프로젝트를 삭제하시겠습니까?';
+
+  @override
+  String get projectTile_deleteMessage => '프로젝트가 성공적으로 삭제되었습니다';
+
+  @override
   String get configPage_title_create => '새 프로젝트 생성';
 
   @override
