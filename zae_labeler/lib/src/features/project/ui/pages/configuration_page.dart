@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:zae_labeler/common/i18n.dart';
 import '../../../../../common/common_widgets.dart';
 import '../../view_models/configuration_view_model.dart';
 import '../../view_models/project_list_view_model.dart';
@@ -61,7 +62,7 @@ class ConfigureProjectPage extends StatelessWidget {
     return Consumer<ConfigurationViewModel>(
       builder: (context, configVM, child) {
         return Scaffold(
-          appBar: AppBar(title: Text(configVM.isEditing ? 'Edit Project' : 'Create Project')),
+          appBar: AppBar(title: Text(configVM.isEditing ? context.l10n.configPage_title_edit : context.l10n.configPage_title_create)),
           body: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Form(
@@ -72,7 +73,7 @@ class ConfigureProjectPage extends StatelessWidget {
                       Expanded(
                         child: TextFormField(
                           initialValue: configVM.project.name,
-                          decoration: const InputDecoration(labelText: 'Project Name'),
+                          decoration: InputDecoration(labelText: context.l10n.project_name),
                           onChanged: (value) => configVM.setProjectName(value),
                           validator: (value) => (value == null || value.isEmpty) ? "Please enter a project name" : null,
                         ),
@@ -100,7 +101,7 @@ class ConfigureProjectPage extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Classes :', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                Text('${context.l10n.configPage_classes} :', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                                 IconButton(icon: const Icon(Icons.add), onPressed: () => _addClass(context), tooltip: 'Add Class'),
                               ],
                             ),
@@ -113,10 +114,7 @@ class ConfigureProjectPage extends StatelessWidget {
                                   itemBuilder: (context, index) {
                                     return ListTile(
                                       title: Text(configVM.project.classes[index]),
-                                      trailing: IconButton(
-                                        icon: const Icon(Icons.delete, color: Colors.red),
-                                        onPressed: () => configVM.removeClass(index),
-                                      ),
+                                      trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => configVM.removeClass(index)),
                                     );
                                   },
                                 ),
@@ -135,7 +133,7 @@ class ConfigureProjectPage extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Selected Data:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                Text('${context.l10n.configPage_dataList}:', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                                 const SizedBox(height: 8),
                                 ElevatedButton.icon(
                                   icon: const Icon(Icons.folder_open),
@@ -156,10 +154,8 @@ class ConfigureProjectPage extends StatelessWidget {
                                     itemBuilder: (context, index) {
                                       return ListTile(
                                         title: Text(configVM.project.dataInfos[index].fileName),
-                                        trailing: IconButton(
-                                          icon: const Icon(Icons.delete, color: Colors.red),
-                                          onPressed: () => configVM.removeDataInfo(index),
-                                        ),
+                                        trailing:
+                                            IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => configVM.removeDataInfo(index)),
                                       );
                                     },
                                   ),
@@ -173,7 +169,7 @@ class ConfigureProjectPage extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 32),
-                  ElevatedButton(onPressed: () => _confirmProject(context), child: Text(configVM.isEditing ? 'Update Project' : 'Create Project')),
+                  ElevatedButton(onPressed: () => _confirmProject(context), child: Text(context.l10n.configPage_confirm)),
                 ],
               ),
             ),

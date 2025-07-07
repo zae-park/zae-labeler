@@ -40,8 +40,8 @@ class ProjectTile extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Project'),
-        content: Text('Are you sure you want to delete the project "${vm.project.name}"?'),
+        title: Text(context.l10n.projectTile_delete),
+        content: Text('${context.l10n.projectTile_deleteEnsure}} "${vm.project.name}"?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: Text(context.l10n.common_cancel)),
           TextButton(onPressed: () => Navigator.pop(context, true), child: Text(context.l10n.projectTile_delete, style: const TextStyle(color: Colors.red))),
@@ -54,7 +54,7 @@ class ProjectTile extends StatelessWidget {
       await projectListVM.removeProject(vm.project.id);
 
       if (context.mounted) {
-        GlobalAlertManager.show(context, 'Deleted project: ${vm.project.name}', type: AlertType.success);
+        GlobalAlertManager.show(context, '${context.l10n.projectTile_deleteMessage}: ${vm.project.name}', type: AlertType.success);
       }
     }
   }
