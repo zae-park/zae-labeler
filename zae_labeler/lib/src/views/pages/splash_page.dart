@@ -8,7 +8,8 @@ import 'package:zae_labeler/common/common_widgets.dart';
 import 'package:zae_labeler/common/i18n.dart';
 
 import 'package:zae_labeler/src/features/auth/view_models/auth_view_models.dart';
-import '../../view_models/locale_view_model.dart';
+import 'package:zae_labeler/src/features/locale/view_models/locale_view_model.dart';
+// import '../../view_models/locale_view_model.dart';
 import '../../core/services/user_preference_service.dart';
 
 class SplashScreen extends StatefulWidget {

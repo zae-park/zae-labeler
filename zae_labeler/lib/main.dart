@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zae_labeler/src/core/services/user_preference_service.dart';
+import 'package:zae_labeler/src/features/locale/view_models/locale_view_model.dart';
 import '../l10n/app_localizations.dart';
 
 import 'firebase_options.dart';
@@ -20,7 +21,7 @@ import 'src/platform_helpers/storage/get_storage_helper.dart';
 import 'src/platform_helpers/storage/cloud_storage_helper.dart';
 import 'package:zae_labeler/src/features/auth/view_models/auth_view_models.dart';
 import 'src/features/project/view_models/project_list_view_model.dart';
-import 'src/view_models/locale_view_model.dart';
+// import 'src/view_models/locale_view_model.dart';
 import 'src/views/pages/splash_page.dart';
 // import 'src/views/pages/auth_gate.dart';
 import 'src/features/project/ui/pages/configuration_page.dart';
@@ -52,8 +53,9 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
   late StorageHelperInterface _storageHelper;
   late AppUseCases _appUseCases;
   late SharedPreferences _prefs;
-  late Locale _initialLocale;
+  // late Locale _initialLocale;
   late UserPreferenceService _userPrefs;
+  late LocaleViewModel _localeViewModel;
 
   @override
   void initState() {
@@ -72,7 +74,8 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
 
     _prefs = await SharedPreferences.getInstance();
     _userPrefs = UserPreferenceService(_prefs);
-    _initialLocale = _userPrefs.locale;
+    // _initialLocale = _userPrefs.locale;
+    _localeViewModel = await LocaleViewModel.create();
   }
 
   @override
@@ -92,7 +95,7 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
             Provider<AppUseCases>.value(value: _appUseCases),
             Provider<UserPreferenceService>.value(value: _userPrefs),
             ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(projectUseCases: _appUseCases.project)),
-            ChangeNotifierProvider<LocaleViewModel>(create: (_) => LocaleViewModel(preferenceService: _userPrefs, initial: _initialLocale)),
+            ChangeNotifierProvider<LocaleViewModel>.value(value: _localeViewModel),
             ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel.withDefaultUseCases(firebaseAuth)),
           ],
           child: Consumer<LocaleViewModel>(
