@@ -1,6 +1,6 @@
 // lib/src/utils/cross_pairing.dart
 
-import '../core/models/sub_models/classification_label_model.dart';
+import '../features/label/models/sub_models/classification_label_model.dart';
 
 /// ✅ 선택한 데이터 ID 목록으로 CrossDataPair 쌍을 생성
 List<CrossDataPair> generateCrossPairs(List<String> dataIds) {

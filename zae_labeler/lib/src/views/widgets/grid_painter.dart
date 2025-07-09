@@ -1,7 +1,7 @@
 // 📁 views/widgets/grid_painter.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../view_models/sub_view_models/segmentation_labeling_view_model.dart';
+import '../../features/label/view_models/sub_view_models/segmentation_labeling_view_model.dart';
 
 enum SegmentationMode { pixelMask }
 
@@ -112,7 +112,6 @@ class Point {
 
   const Point(this.dx, this.dy);
 }
-
 
 // import 'package:flutter/material.dart';
 // import 'package:provider/provider.dart';

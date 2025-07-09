@@ -1,7 +1,7 @@
 // lib/src/utils/storage_helper.dart
 import '../../core/models/data_model.dart';
-import '../../core/models/label_model.dart';
-import '../../core/models/project_model.dart';
+import '../../features/label/models/label_model.dart';
+import '../../features/project/models/project_model.dart';
 import 'interface_storage_helper.dart';
 import 'stub_storage_helper.dart' if (dart.library.io) 'native_storage_helper.dart' if (dart.library.html) 'web_storage_helper.dart';
 export 'interface_storage_helper.dart';

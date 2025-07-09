@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zae_labeler/src/core/models/label_model.dart';
+import 'package:zae_labeler/src/features/label/models/label_model.dart';
 
 import '../../../mocks/repositories/mock_label_repository.dart';
 import '../../../mocks/use_cases/label/mock_batch_label_use_case.dart';

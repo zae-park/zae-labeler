@@ -12,6 +12,24 @@ class AppLocalizationsKo extends AppLocalizations {
   String get app_title => 'Zae-Labeler: 데이터 라벨링 앱';
 
   @override
+  String get common_ok => '확인';
+
+  @override
+  String get common_cancel => '취소';
+
+  @override
+  String get common_error => '오류';
+
+  @override
+  String get common_warning => '경고';
+
+  @override
+  String get common_loading => '로딩중';
+
+  @override
+  String get common_success => '성공';
+
+  @override
   String get splashPage_start => '시작하기';
 
   @override
@@ -40,10 +58,91 @@ class AppLocalizationsKo extends AppLocalizations {
   String get splashPage_guest_confirm => '네';
 
   @override
-  String get project_create => '프로젝트 생성';
+  String get projectList_title => '프로젝트 목록';
 
   @override
-  String get project_update => '프로젝트 수정';
+  String get projectList_empty => '프로젝트가 없습니다. 프로젝트를 생성해주세요.';
+
+  @override
+  String get appbar_onboarding => '온보딩 다시보기';
+
+  @override
+  String get appbar_refresh => '새로고침';
+
+  @override
+  String get appbar_language => '언어 선택';
+
+  @override
+  String get appbar_project_create => '프로젝트 생성';
+
+  @override
+  String get appbar_project_import => '프로젝트 가져오기';
+
+  @override
+  String get projectTile_mode => '모드';
+
+  @override
+  String get projectTile_label => '레이블링';
+
+  @override
+  String get projectTile_edit => '수정';
+
+  @override
+  String get projectTile_download => '다운로드';
+
+  @override
+  String get projectTile_share => '공유';
+
+  @override
+  String get projectTile_delete => '삭제';
+
+  @override
+  String get projectTile_deleteEnsure => '프로젝트를 삭제하시겠습니까?';
+
+  @override
+  String get projectTile_deleteMessage => '프로젝트가 성공적으로 삭제되었습니다';
+
+  @override
+  String get configPage_title_create => '새 프로젝트 생성';
+
+  @override
+  String get configPage_title_edit => '프로젝트 수정';
+
+  @override
+  String get configPage_project_name => '프로젝트 이름';
+
+  @override
+  String get configPage_labeling_mode => '레이블링 모드';
+
+  @override
+  String get configPage_classes => '클래스';
+
+  @override
+  String get configPage_dataList => '데이터 목록';
+
+  @override
+  String get configPage_confirm => '확인';
+
+  @override
+  String get progressBar_complete => '완료';
+
+  @override
+  String get progressBar_incomplete => '미완료';
+
+  @override
+  String get progressBar_warning => '경고';
+
+  @override
+  String labeling_status_summary(
+      Object complete, Object warning, Object incomplete) {
+    return '완료: $complete  |  주의: $warning  |  미완료: $incomplete';
+  }
+
+  @override
+  String get navigation_prev => '이전';
+
+  @override
+  String get navigation_next => '다음';
 
   @override
   String get project_name => '프로젝트 이름';
@@ -65,4 +164,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get upload_file => '파일 업로드';
+
+  @override
+  String get message_import_project_failed => '프로젝트 가져오기에 실패했습니다.';
+
+  @override
+  String get message_import_project_success => '프로젝트 가져오기에 성공했습니다.';
 }

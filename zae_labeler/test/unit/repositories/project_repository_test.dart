@@ -1,8 +1,8 @@
 // test/unit/repositories/project_repository_test.dart
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zae_labeler/src/core/models/label_model.dart';
-import 'package:zae_labeler/src/core/models/project_model.dart';
+import 'package:zae_labeler/src/features/label/models/label_model.dart';
+import 'package:zae_labeler/src/features/project/models/project_model.dart';
 import 'package:zae_labeler/src/core/models/data_model.dart';
 import '../../mocks/repositories/mock_project_repository.dart';
 

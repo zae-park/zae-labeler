@@ -1,7 +1,7 @@
 // 📁 views/widgets/shared/class_selector.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../view_models/labeling_view_model.dart';
+import '../../../features/label/view_models/labeling_view_model.dart';
 import '../../../../theme/theme.dart';
 
 class ClassSelectorWidget extends StatelessWidget {
