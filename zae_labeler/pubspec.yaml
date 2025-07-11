@@ -1,7 +1,7 @@
 name: zae_labeler
 description: "ZAE Labeler - A Flutter-based multi-modal data labeling tool supporting classification and segmentation."
 publish_to: 'none'
-version: 1.1.0
+version: 1.1.1
 
 environment:
   sdk: '>=3.2.3 <4.0.0'

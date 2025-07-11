@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zae_labeler/src/core/models/label_model.dart';
-import 'package:zae_labeler/src/core/models/sub_models/segmentation_label_model.dart';
-import 'package:zae_labeler/src/view_models/managers/label_input_mapper.dart';
-import 'package:zae_labeler/src/view_models/sub_view_models/segmentation_label_view_model.dart';
+import 'package:zae_labeler/src/features/label/models/label_model.dart';
+import 'package:zae_labeler/src/features/label/models/sub_models/segmentation_label_model.dart';
+import 'package:zae_labeler/src/features/label/logic/label_input_mapper.dart';
+import 'package:zae_labeler/src/features/label/view_models/sub_view_models/segmentation_label_view_model.dart';
 
 import '../../../mocks/use_cases/label/mock_label_use_cases.dart';
 

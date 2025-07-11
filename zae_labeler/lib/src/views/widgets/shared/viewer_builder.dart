@@ -1,9 +1,9 @@
 // 📁 views/widgets/shared/viewer_builder.dart
 import 'package:flutter/material.dart';
 import '../../../core/models/data_model.dart';
-import '../../viewers/image_viewer.dart';
-import '../../viewers/object_viewer.dart';
-import '../../viewers/time_series_viewer.dart';
+import '../../../features/label/ui/widgets/viewers/image_viewer.dart';
+import '../../../features/label/ui/widgets/viewers/object_viewer.dart';
+import '../../../features/label/ui/widgets/viewers/time_series_viewer.dart';
 
 class ViewerBuilder extends StatelessWidget {
   final UnifiedData data;

@@ -1,7 +1,7 @@
-import '../models/project_model.dart';
+import '../../features/project/models/project_model.dart';
 import '../models/data_model.dart';
 import '../../platform_helpers/storage/interface_storage_helper.dart';
-import '../../utils/adaptive/adaptive_data_loader.dart';
+import '../services/adaptive_data_loader.dart';
 
 /// ✅ DataRepository
 /// - 프로젝트에 포함된 데이터(dataInfos, UnifiedData)를 로드/저장/관리하는 역할을 담당합니다.

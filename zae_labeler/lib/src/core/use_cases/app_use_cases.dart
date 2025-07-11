@@ -1,5 +1,5 @@
-import 'project/project_use_cases.dart';
-import 'label/label_use_cases.dart';
+import '../../features/project/use_cases/project_use_cases.dart';
+import '../../features/label/use_cases/label_use_cases.dart';
 
 /// ✅ AppUseCases
 /// - 앱 전체에서 사용할 UseCase를 통합 제공

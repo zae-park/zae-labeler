@@ -1,5 +1,5 @@
-import 'package:zae_labeler/src/core/use_cases/label/single_label_use_case.dart';
-import 'package:zae_labeler/src/core/models/label_model.dart';
+import 'package:zae_labeler/src/features/label/use_cases/single_label_use_case.dart';
+import 'package:zae_labeler/src/features/label/models/label_model.dart';
 
 class MockSingleLabelUseCase extends SingleLabelUseCase {
   final Map<String, LabelModel> _labelMap = {};

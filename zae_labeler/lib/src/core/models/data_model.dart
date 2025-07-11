@@ -11,7 +11,7 @@ import 'dart:io';
 
 import 'package:uuid/uuid.dart';
 
-import 'label_model.dart';
+import '../../features/label/models/label_model.dart';
 
 enum FileType { series, object, image, unsupported }
 

@@ -1,6 +1,6 @@
 // 📁 views/widgets/shared/labeling_progress.dart
 import 'package:flutter/material.dart';
-import '../../../view_models/labeling_view_model.dart';
+import '../../../features/label/view_models/labeling_view_model.dart';
 
 class LabelingProgress extends StatelessWidget {
   final LabelingViewModel labelingVM;

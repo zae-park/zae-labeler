@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zae_labeler/src/core/models/label_model.dart';
-import 'package:zae_labeler/src/core/models/project_model.dart';
+import 'package:zae_labeler/src/features/label/models/label_model.dart';
+import 'package:zae_labeler/src/features/project/models/project_model.dart';
 import 'package:zae_labeler/src/core/models/data_model.dart';
-import 'package:zae_labeler/src/view_models/sub_view_models/classification_labeling_view_model.dart';
+import 'package:zae_labeler/src/features/label/view_models/sub_view_models/classification_labeling_view_model.dart';
 
 import '../../../mocks/helpers/mock_storage_helper.dart';
 import '../../../mocks/use_cases/mock_app_use_cases.dart';

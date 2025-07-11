@@ -63,7 +63,7 @@ import 'app_localizations_ko.dart';
 /// property.
 abstract class AppLocalizations {
   AppLocalizations(String locale)
-    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -86,16 +86,16 @@ abstract class AppLocalizations {
   /// of delegates is preferred or required.
   static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
       <LocalizationsDelegate<dynamic>>[
-        delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ];
+    delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+  ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
-    Locale('ko'),
+    Locale('ko')
   ];
 
   /// No description provided for @app_title.
@@ -103,6 +103,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Zae-Labeler: Data Labeling App'**
   String get app_title;
+
+  /// No description provided for @common_ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get common_ok;
+
+  /// No description provided for @common_cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get common_cancel;
+
+  /// No description provided for @common_error.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get common_error;
+
+  /// No description provided for @common_warning.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning'**
+  String get common_warning;
+
+  /// No description provided for @common_loading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading'**
+  String get common_loading;
+
+  /// No description provided for @common_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Success'**
+  String get common_success;
 
   /// No description provided for @splashPage_start.
   ///
@@ -158,17 +194,174 @@ abstract class AppLocalizations {
   /// **'Yes'**
   String get splashPage_guest_confirm;
 
-  /// No description provided for @project_create.
+  /// No description provided for @projectList_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Project List'**
+  String get projectList_title;
+
+  /// No description provided for @projectList_empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No projects available. Please create a project.'**
+  String get projectList_empty;
+
+  /// No description provided for @appbar_onboarding.
+  ///
+  /// In en, this message translates to:
+  /// **'Onboarding Again'**
+  String get appbar_onboarding;
+
+  /// No description provided for @appbar_refresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get appbar_refresh;
+
+  /// No description provided for @appbar_language.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Language'**
+  String get appbar_language;
+
+  /// No description provided for @appbar_project_create.
   ///
   /// In en, this message translates to:
   /// **'Create Project'**
-  String get project_create;
+  String get appbar_project_create;
 
-  /// No description provided for @project_update.
+  /// No description provided for @appbar_project_import.
   ///
   /// In en, this message translates to:
-  /// **'Update Project'**
-  String get project_update;
+  /// **'Import Project'**
+  String get appbar_project_import;
+
+  /// No description provided for @projectTile_mode.
+  ///
+  /// In en, this message translates to:
+  /// **'MODE'**
+  String get projectTile_mode;
+
+  /// No description provided for @projectTile_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Labeling'**
+  String get projectTile_label;
+
+  /// No description provided for @projectTile_edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get projectTile_edit;
+
+  /// No description provided for @projectTile_download.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get projectTile_download;
+
+  /// No description provided for @projectTile_share.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get projectTile_share;
+
+  /// No description provided for @projectTile_delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get projectTile_delete;
+
+  /// No description provided for @projectTile_deleteEnsure.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete the project?'**
+  String get projectTile_deleteEnsure;
+
+  /// No description provided for @projectTile_deleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Project deleted successfully'**
+  String get projectTile_deleteMessage;
+
+  /// No description provided for @configPage_title_create.
+  ///
+  /// In en, this message translates to:
+  /// **'Create New Project'**
+  String get configPage_title_create;
+
+  /// No description provided for @configPage_title_edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Project'**
+  String get configPage_title_edit;
+
+  /// No description provided for @configPage_project_name.
+  ///
+  /// In en, this message translates to:
+  /// **'Project Name'**
+  String get configPage_project_name;
+
+  /// No description provided for @configPage_labeling_mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Labeling Mode'**
+  String get configPage_labeling_mode;
+
+  /// No description provided for @configPage_classes.
+  ///
+  /// In en, this message translates to:
+  /// **'Classes'**
+  String get configPage_classes;
+
+  /// No description provided for @configPage_dataList.
+  ///
+  /// In en, this message translates to:
+  /// **'Data List'**
+  String get configPage_dataList;
+
+  /// No description provided for @configPage_confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get configPage_confirm;
+
+  /// No description provided for @progressBar_complete.
+  ///
+  /// In en, this message translates to:
+  /// **'complete'**
+  String get progressBar_complete;
+
+  /// No description provided for @progressBar_incomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'incomplete'**
+  String get progressBar_incomplete;
+
+  /// No description provided for @progressBar_warning.
+  ///
+  /// In en, this message translates to:
+  /// **'warning'**
+  String get progressBar_warning;
+
+  /// 라벨링 진행 요약
+  ///
+  /// In en, this message translates to:
+  /// **'Done: {complete}  |  Warning: {warning}  |  Incomplete: {incomplete}'**
+  String labeling_status_summary(
+      Object complete, Object warning, Object incomplete);
+
+  /// No description provided for @navigation_prev.
+  ///
+  /// In en, this message translates to:
+  /// **'Prev'**
+  String get navigation_prev;
+
+  /// No description provided for @navigation_next.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get navigation_next;
 
   /// No description provided for @project_name.
   ///
@@ -211,6 +404,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Upload File'**
   String get upload_file;
+
+  /// No description provided for @message_import_project_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to import project.'**
+  String get message_import_project_failed;
+
+  /// No description provided for @message_import_project_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Project imported successfully.'**
+  String get message_import_project_success;
 }
 
 class _AppLocalizationsDelegate
@@ -240,9 +445,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   }
 
   throw FlutterError(
-    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
-    'an issue with the localizations generation tool. Please file an issue '
-    'on GitHub with a reproducible sample app and the gen-l10n configuration '
-    'that was used.',
-  );
+      'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+      'an issue with the localizations generation tool. Please file an issue '
+      'on GitHub with a reproducible sample app and the gen-l10n configuration '
+      'that was used.');
 }
