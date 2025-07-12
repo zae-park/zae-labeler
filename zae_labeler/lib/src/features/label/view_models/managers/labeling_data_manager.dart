@@ -1,6 +1,6 @@
-import '../../features/project/models/project_model.dart';
-import '../../core/models/data_model.dart';
-import '../../platform_helpers/storage/interface_storage_helper.dart';
+import '../../../project/models/project_model.dart';
+import '../../../../core/models/data_model.dart';
+import '../../../../platform_helpers/storage/interface_storage_helper.dart';
 
 /// 📦 DataManager
 /// - 프로젝트 데이터를 로드하고, 현재 위치 관리, 이동 기능을 담당.
