@@ -1,0 +1,46 @@
+import 'package:zae_labeler/src/features/label/use_cases/validate_label_use_case.dart';
+import 'package:zae_labeler/src/features/project/models/project_model.dart';
+import 'package:zae_labeler/src/features/label/models/label_model.dart';
+import 'package:zae_labeler/src/features/label/repository/label_repository.dart';
+
+class LabelingSummary {
+  final int total;
+  final int complete;
+  final int warning;
+  final int incomplete;
+
+  LabelingSummary({required this.total, required this.complete, required this.warning, required this.incomplete});
+
+  double get progressRatio => total == 0 ? 0 : complete / total;
+}
+
+class LabelingSummaryUseCase {
+  final LabelRepository labelRepository;
+  final LabelValidationUseCase labelValidationUseCase;
+
+  LabelingSummaryUseCase({required this.labelRepository, required this.labelValidationUseCase});
+
+  Future<LabelingSummary> load(Project project) async {
+    final Map<String, LabelModel> labelMap = await labelRepository.loadLabelMap(project.id);
+    final dataInfos = project.dataInfos;
+
+    int complete = 0;
+    int warning = 0;
+
+    for (final data in dataInfos) {
+      final label = labelMap[data.id];
+      final status = labelValidationUseCase.getStatus(project, label);
+
+      if (status == LabelStatus.complete) {
+        complete++;
+      } else if (status == LabelStatus.warning) {
+        warning++;
+      }
+    }
+
+    final total = dataInfos.length;
+    final incomplete = total - complete;
+
+    return LabelingSummary(total: total, complete: complete, warning: warning, incomplete: incomplete);
+  }
+}
