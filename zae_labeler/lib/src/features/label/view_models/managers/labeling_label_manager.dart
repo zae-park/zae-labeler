@@ -76,4 +76,13 @@ class LabelingLabelManager {
     }
     _labelCache.clear();
   }
+
+  LabelViewModel getOrCreateLabelVM({required String dataId, required String filename, required String path, required LabelingMode mode}) {
+    return _labelCache.putIfAbsent(dataId, () {
+      final vm = LabelViewModelFactory.create(
+          projectId: project.id, dataId: dataId, dataFilename: filename, dataPath: path, mode: mode, labelUseCases: appUseCases.label);
+      vm.addListener(() {});
+      return vm;
+    });
+  }
 }
