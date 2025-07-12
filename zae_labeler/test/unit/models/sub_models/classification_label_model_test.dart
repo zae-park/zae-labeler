@@ -18,7 +18,7 @@ void main() {
     test('CrossClassificationLabelModel isSelected works', () {
       final model = CrossClassificationLabelModel(
         dataId: 'test',
-        label: const CrossDataPair(sourceId: 'A', targetId: 'B', relation: 'Positive'),
+        label: CrossDataPair(sourceId: 'A', targetId: 'B', relation: 'Positive'),
         labeledAt: DateTime.now(),
       );
 
@@ -29,7 +29,7 @@ void main() {
     test('CrossClassificationLabelModel toJson and fromJson work', () {
       final original = CrossClassificationLabelModel(
         dataId: 'test',
-        label: const CrossDataPair(sourceId: 'A', targetId: 'B', relation: 'Positive'),
+        label: CrossDataPair(sourceId: 'A', targetId: 'B', relation: 'Positive'),
         labeledAt: DateTime.now(),
       );
 
