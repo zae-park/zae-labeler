@@ -1,8 +1,6 @@
 // 📁 sub_view_models/base_labeling_view_model.dart
-import 'package:flutter/material.dart';
 
 import '../../../../core/models/data_model.dart';
-import '../../../../utils/cross_pairing.dart';
 import '../label_view_model.dart';
 import 'base_labeling_view_model.dart';
 import '../../models/sub_models/classification_label_model.dart';
@@ -14,28 +12,40 @@ class ClassificationLabelingViewModel extends LabelingViewModel {
 
   @override
   Future<void> updateLabel(dynamic labelData) async {
-    final labelVM = currentLabelVM;
-    await labelVM.updateLabelFromInput(labelData); // ✅ LabelViewModel 내부 책임으로 위임
-    await refreshStatus(currentUnifiedData.dataId);
+    final labelVM = labelManager.currentLabelVM;
+    await labelVM!.updateLabelFromInput(labelData);
+    await labelManager.refreshStatusFor(dataManager.currentData, (status) {
+      dataManager.updateStatus(dataManager.currentData.dataId, status);
+    });
     notifyListeners();
   }
 
   @override
   Future<void> toggleLabel(String labelItem) async {
-    final labelVM = currentLabelVM;
-    labelVM.toggleLabel(labelItem);
-    await refreshStatus(currentUnifiedData.dataId);
+    final labelVM = labelManager.currentLabelVM;
+    await labelVM!.toggleLabel(labelItem);
+    await labelManager.refreshStatusFor(dataManager.currentData, (status) {
+      dataManager.updateStatus(dataManager.currentData.dataId, status);
+    });
     notifyListeners();
   }
 
   @override
-  bool isLabelSelected(String labelItem) => currentLabelVM.isLabelSelected(labelItem);
+  bool isLabelSelected(String labelItem) {
+    final labelVM = labelManager.currentLabelVM;
+    return labelVM?.isLabelSelected(labelItem) ?? false;
+  }
 }
 
 /// ViewModel for cross classification mode, labeling pairs of data.
 /// Uses nC2 pairing logic and custom progress tracking per relation.
 class CrossClassificationLabelingViewModel extends LabelingViewModel {
-  CrossClassificationLabelingViewModel({required super.project, required super.storageHelper, required super.appUseCases, super.initialDataList});
+  CrossClassificationLabelingViewModel({
+    required super.project,
+    required super.storageHelper,
+    required super.appUseCases,
+    super.initialDataList,
+  });
 
   int _sourceIndex = 0;
   int _targetIndex = 1;
@@ -58,14 +68,20 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
   @override
   double get progressRatio => totalCount == 0 ? 0 : completeCount / totalCount;
 
-  int get currentPairIndex => _sourceIndex * (_selectedDataIds.length - 1) - (_sourceIndex * (_sourceIndex - 1)) ~/ 2 + (_targetIndex - _sourceIndex - 1);
+  int get currentPairIndex => _sourceIndex * (selectedLength - 1) - (_sourceIndex * (_sourceIndex - 1)) ~/ 2 + (_targetIndex - _sourceIndex - 1);
+
+  int get selectedLength => _selectedDataIds.length;
 
   CrossDataPair? get currentPair => (currentPairIndex >= 0 && currentPairIndex < _crossPairs.length) ? _crossPairs[currentPairIndex] : null;
+
+  UnifiedData get currentSourceData => dataManager.allData.firstWhere((e) => e.dataId == _selectedDataIds[_sourceIndex]);
+  UnifiedData get currentTargetData => dataManager.allData.firstWhere((e) => e.dataId == _selectedDataIds[_targetIndex]);
 
   @override
   Future<void> initialize() async {
     await super.initialize();
-    _selectedDataIds = unifiedDataList.map((e) => e.dataId).toList();
+
+    _selectedDataIds = dataManager.allData.map((e) => e.dataId).toList();
     _crossPairs = generateCrossPairs(_selectedDataIds);
     _sourceIndex = 0;
     _targetIndex = 1;
@@ -80,10 +96,8 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
 
     final labelVM = getOrCreateLabelVMForCrossPair(updatedPair);
     labelVM.updateLabelFromInput(updatedPair);
-
-    debugPrint("[CrossClsLabelingVM.updateLabel] source=\${updatedPair.sourceId}, target=\${updatedPair.targetId}, relation=\${updatedPair.relation}");
-
     await labelVM.saveLabel();
+
     notifyListeners();
   }
 
@@ -96,23 +110,22 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
 
     final labelVM = getOrCreateLabelVMForCrossPair(currentPair!);
     labelVM.toggleLabel(labelItem);
-    await refreshStatus("${currentPair!.sourceId}_${currentPair!.targetId}");
+    await labelVM.saveLabel();
+
     notifyListeners();
   }
 
   @override
   bool isLabelSelected(String labelItem) {
+    if (currentPair == null) return false;
     return getOrCreateLabelVMForCrossPair(currentPair!).isLabelSelected(labelItem);
-    // if (currentPair == null) return false;
-    // final labelVM = getOrCreateLabelVMForCrossPair(currentPair!);
-    // return labelVM.isLabelSelected(labelItem);
   }
 
   @override
   Future<void> moveNext() async {
-    if (_targetIndex < _selectedDataIds.length - 1) {
+    if (_targetIndex < selectedLength - 1) {
       _targetIndex++;
-    } else if (_sourceIndex < _selectedDataIds.length - 2) {
+    } else if (_sourceIndex < selectedLength - 2) {
       _sourceIndex++;
       _targetIndex = _sourceIndex + 1;
     }
@@ -125,20 +138,23 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
       _targetIndex--;
     } else if (_sourceIndex > 0) {
       _sourceIndex--;
-      _targetIndex = _selectedDataIds.length - 1;
+      _targetIndex = selectedLength - 1;
     }
     notifyListeners();
   }
 
   LabelViewModel getOrCreateLabelVMForCrossPair(CrossDataPair pair) {
     String id = "${pair.sourceId}_${pair.targetId}";
-    return labelCache.putIfAbsent(
-      id,
-      () =>
-          LabelViewModelFactory.create(projectId: project.id, dataId: id, dataFilename: id, dataPath: '', mode: project.mode, labelUseCases: appUseCases.label),
-    );
+    return labelManager.getOrCreateLabelVM(dataId: id, filename: id, path: '', mode: project.mode);
   }
 
-  UnifiedData get currentSourceData => unifiedDataList.firstWhere((e) => e.dataId == _selectedDataIds[_sourceIndex]);
-  UnifiedData get currentTargetData => unifiedDataList.firstWhere((e) => e.dataId == _selectedDataIds[_targetIndex]);
+  List<CrossDataPair> generateCrossPairs(List<String> ids) {
+    final pairs = <CrossDataPair>[];
+    for (int i = 0; i < ids.length - 1; i++) {
+      for (int j = i + 1; j < ids.length; j++) {
+        pairs.add(CrossDataPair(sourceId: ids[i], targetId: ids[j]));
+      }
+    }
+    return pairs;
+  }
 }
