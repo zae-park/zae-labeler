@@ -155,7 +155,7 @@ class CrossDataPair {
   final String targetId;
   final String relation;
 
-  const CrossDataPair({required this.sourceId, required this.targetId, required this.relation});
+  CrossDataPair({required this.sourceId, required this.targetId, this.relation = ''});
 
   CrossDataPair copyWith({String? sourceId, String? targetId, String? relation}) =>
       CrossDataPair(sourceId: sourceId ?? this.sourceId, targetId: targetId ?? this.targetId, relation: relation ?? this.relation);
