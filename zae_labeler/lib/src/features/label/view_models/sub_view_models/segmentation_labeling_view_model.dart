@@ -1,7 +1,6 @@
 // lib/view_models/sub_view_models/segmentation_labeling_view_model.dart
 import 'package:flutter/material.dart';
 
-import '../../models/label_model.dart';
 import '../../models/sub_models/segmentation_label_model.dart';
 import '../label_view_model.dart';
 import 'base_labeling_view_model.dart';
@@ -14,23 +13,73 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
 
   SegmentationLabelingViewModel({required super.project, required super.storageHelper, required super.appUseCases, super.initialDataList});
 
-  /// Restores grid from saved label and sets default class if needed
+  // --- 상태 로직 ---
   @override
   Future<void> postInitialize() async {
     restoreGridFromLabel();
     if (_selectedClass == null && project.classes.isNotEmpty) {
       _selectedClass = project.classes.first;
     }
-    await refreshStatus(currentUnifiedData.dataId);
+    await labelManager.refreshStatusFor(dataManager.currentData, (status) {
+      dataManager.updateStatus(dataManager.currentData.dataId, status);
+    });
+    notifyListeners();
   }
 
   @override
   Future<void> postMove() async {
     restoreGridFromLabel();
-    await refreshStatus(currentUnifiedData.dataId);
+    await labelManager.refreshStatusFor(dataManager.currentData, (status) {
+      dataManager.updateStatus(dataManager.currentData.dataId, status);
+    });
+    notifyListeners();
   }
 
-  // --- Grid 상태 관리 ---
+  @override
+  Future<void> updateLabel(dynamic labelData) async {
+    final labelVM = labelManager.currentLabelVM!;
+    await labelVM.updateLabel(labelData);
+    await labelVM.saveLabel();
+    await labelManager.refreshStatusFor(dataManager.currentData, (status) {
+      dataManager.updateStatus(dataManager.currentData.dataId, status);
+    });
+    notifyListeners();
+  }
+
+  Future<void> saveCurrentGridAsLabel() async {
+    if (_selectedClass == null) {
+      debugPrint("[saveCurrentGridAsLabel] No class selected.");
+      return;
+    }
+
+    final selectedPixels = <(int, int)>{};
+    for (int y = 0; y < _gridSize; y++) {
+      for (int x = 0; x < _gridSize; x++) {
+        if (_labelGrid[y][x] == 1) {
+          selectedPixels.add((x, y));
+        }
+      }
+    }
+
+    await updateLabel(Segment(indices: selectedPixels, classLabel: _selectedClass!));
+  }
+
+  void restoreGridFromLabel() {
+    final label = labelManager.currentLabelVM?.labelModel.label;
+    if (label is! SegmentationData) return;
+
+    _labelGrid = List.generate(_gridSize, (_) => List.filled(_gridSize, 0));
+
+    for (var segment in label.segments.values) {
+      for (final (x, y) in segment.indices) {
+        if (x < _gridSize && y < _gridSize) {
+          _labelGrid[y][x] = 1;
+        }
+      }
+    }
+  }
+
+  // --- Grid 상태 ---
   int _gridSize = 32;
   int get gridSize => _gridSize;
 
@@ -68,23 +117,22 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
   }
 
   void addPixel(int x, int y) {
-    final classLabel = _selectedClass;
-    if (classLabel == null) return;
+    if (_selectedClass == null) return;
 
-    final labelVM = currentLabelVM;
+    final labelVM = labelManager.currentLabelVM;
     if (labelVM is SegmentationLabelViewModel) {
-      labelVM.addPixel(x, y, classLabel);
+      labelVM.addPixel(x, y, _selectedClass!);
     }
   }
 
   void removePixel(int x, int y) {
-    final labelVM = currentLabelVM;
+    final labelVM = labelManager.currentLabelVM;
     if (labelVM is SegmentationLabelViewModel) {
       labelVM.removePixel(x, y);
     }
   }
 
-  // --- 박스 선택 드래그 ---
+  // --- 드래그 선택 박스 ---
   Offset? _startDrag;
   Offset? _currentPointerPosition;
 
@@ -107,73 +155,19 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
     notifyListeners();
   }
 
-  /// Applies label model update and status refresh
+  // --- 상태 요약 ---
   @override
-  Future<void> updateLabel(dynamic labelData) async {
-    currentLabelVM.updateLabel(labelData);
-    await appUseCases.label.single.saveLabel(
-      projectId: project.id,
-      dataId: currentUnifiedData.dataId,
-      dataPath: currentUnifiedData.file?.path ?? '',
-      labelModel: currentLabelVM.labelModel,
-    );
-    await refreshStatus(currentUnifiedData.dataId);
-    notifyListeners();
-  }
-
-  /// Converts current grid to SegmentationData and saves as label
-  Future<void> saveCurrentGridAsLabel() async {
-    if (_selectedClass == null) {
-      debugPrint("[saveCurrentGridAsLabel] No class selected.");
-      return;
-    }
-
-    final selectedPixels = <(int, int)>{};
-    for (int y = 0; y < _gridSize; y++) {
-      for (int x = 0; x < _gridSize; x++) {
-        if (_labelGrid[y][x] == 1) {
-          selectedPixels.add((x, y));
-        }
-      }
-    }
-
-    // final segmentation = SegmentationData(
-    //   segments: {_selectedClass!: Segment(indices: selectedPixels, classLabel: _selectedClass!)},
-    // );
-
-    await updateLabel(Segment(indices: selectedPixels, classLabel: _selectedClass!));
-  }
-
-  /// Restores grid state from saved SegmentationData
-  void restoreGridFromLabel() {
-    final label = currentLabelVM.labelModel.label;
-    if (label is! SegmentationData) return;
-
-    _labelGrid = List.generate(_gridSize, (_) => List.filled(_gridSize, 0));
-
-    for (var segment in label.segments.values) {
-      for (final (x, y) in segment.indices) {
-        if (x < _gridSize && y < _gridSize) {
-          _labelGrid[y][x] = 1;
-        }
-      }
-    }
-
-    notifyListeners();
-  }
+  int get totalCount => dataManager.totalCount;
 
   @override
-  int get totalCount => unifiedDataList.length;
+  int get completeCount => dataManager.completeCount;
 
   @override
-  int get completeCount => unifiedDataList.where((e) => e.status == LabelStatus.complete).length;
+  int get warningCount => dataManager.warningCount;
 
   @override
-  int get warningCount => unifiedDataList.where((e) => e.status == LabelStatus.warning).length;
+  int get incompleteCount => dataManager.incompleteCount;
 
   @override
-  int get incompleteCount => totalCount - completeCount;
-
-  @override
-  double get progressRatio => totalCount == 0 ? 0 : completeCount / totalCount;
+  double get progressRatio => dataManager.progressRatio;
 }
