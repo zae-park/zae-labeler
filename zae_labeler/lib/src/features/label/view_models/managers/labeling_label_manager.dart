@@ -1,6 +1,9 @@
+import 'package:zae_labeler/src/core/models/data_model.dart';
+import 'package:zae_labeler/src/core/use_cases/app_use_cases.dart';
+import 'package:zae_labeler/src/features/label/models/label_model.dart';
+
 import '../label_view_model.dart';
 import '../../../project/models/project_model.dart';
-import '../../use_cases/label_use_cases.dart';
 
 /// 🏷️ LabelManager
 /// - LabelViewModel의 생성, 캐싱, 라벨 저장 및 불러오기 담당.
@@ -10,36 +13,50 @@ import '../../use_cases/label_use_cases.dart';
 /// - getOrCreateLabelVM
 /// - saveLabel, loadLabel
 /// - toggle, update
-class LabelManager {
+class LabelingLabelManager {
   final Project project;
-  final LabelUseCases useCases;
+  final AppUseCases appUseCases;
 
   final Map<String, LabelViewModel> _labelCache = {};
+  LabelViewModel? _current;
 
-  LabelManager({required this.project, required this.useCases});
+  LabelingLabelManager({
+    required this.project,
+    required this.appUseCases,
+  });
 
-  /// 라벨 뷰모델을 생성하거나 기존 것을 반환
-  LabelViewModel getOrCreate(String dataId) {
-    // TODO: 라벨 캐시 활용
-    throw UnimplementedError();
+  LabelViewModel? get currentLabelVM => _current;
+
+  Future<void> loadLabelFor(UnifiedData data) async {
+    final id = data.dataId;
+
+    _current = _labelCache.putIfAbsent(id, () {
+      final vm = LabelViewModelFactory.create(
+        projectId: project.id,
+        dataId: data.dataId,
+        dataFilename: data.fileName,
+        dataPath: data.dataPath ?? '',
+        mode: project.mode,
+        labelUseCases: appUseCases.label,
+      );
+      vm.addListener(() {});
+      return vm;
+    });
+
+    await _current!.loadLabel();
   }
 
-  /// 주어진 데이터에 대해 라벨 불러오기
-  Future<void> load(String dataId) async {
-    // TODO: 내부 cache로부터
+  Future<void> refreshStatusFor(UnifiedData data, Function(LabelStatus) onStatusEvaluated) async {
+    await loadLabelFor(data);
+    final status = appUseCases.label.validation.getStatus(project, _current!.labelModel);
+    onStatusEvaluated(status);
   }
 
-  /// 주어진 데이터에 대해 라벨 저장
-  Future<void> save(String dataId) async {
-    // TODO: 저장 처리
-  }
-
-  /// 현재 라벨에 대해 labelData를 toggle 또는 update
-  Future<void> updateLabel(String dataId, dynamic labelData) async {
-    // TODO: 단일/다중 classification 분기 처리
-  }
-
-  void clearCache() {
+  Future<void> disposeAll() async {
+    for (final vm in _labelCache.values) {
+      vm.removeListener(() {});
+      vm.dispose();
+    }
     _labelCache.clear();
   }
 }
