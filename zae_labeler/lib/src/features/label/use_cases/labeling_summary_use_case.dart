@@ -16,9 +16,9 @@ class LabelingSummary {
 
 class LabelingSummaryUseCase {
   final LabelRepository repository;
-  final LabelValidationUseCase validationUseCase;
+  final LabelValidationUseCase validUseCase;
 
-  LabelingSummaryUseCase({required this.repository, required this.validationUseCase});
+  LabelingSummaryUseCase({required this.repository, required this.validUseCase});
 
   Future<LabelingSummary> load(Project project) async {
     final Map<String, LabelModel> labelMap = await repository.loadLabelMap(project.id);
@@ -29,7 +29,7 @@ class LabelingSummaryUseCase {
 
     for (final data in dataInfos) {
       final label = labelMap[data.id];
-      final status = validationUseCase.getStatus(project, label);
+      final status = validUseCase.getStatus(project, label);
 
       if (status == LabelStatus.complete) {
         complete++;
