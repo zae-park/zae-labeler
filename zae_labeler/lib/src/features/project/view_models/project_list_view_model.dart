@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:zae_labeler/src/core/use_cases/app_use_cases.dart';
+import 'package:zae_labeler/src/features/label/use_cases/labeling_summary_use_case.dart';
 import '../models/project_model.dart';
-import '../use_cases/project_use_cases.dart';
 import '../../../platform_helpers/share/get_helper.dart';
 import 'project_view_model.dart';
 
@@ -13,15 +14,19 @@ import 'project_view_model.dart';
 /// └── clearAllProjectsCache()      // 캐시 비우고 리스트 초기화
 
 class ProjectListViewModel extends ChangeNotifier {
-  final ProjectUseCases projectUseCases;
+  final AppUseCases appUseCases;
 
   final Map<String, ProjectViewModel> _projectVMs = {};
+  final Map<String, LabelingSummary?> _summaries = {};
+  final Set<String> _requestedSummaryIds = {};
   bool _isLoading = false;
 
   bool get isLoading => _isLoading;
   List<ProjectViewModel> get projectVMList => _projectVMs.values.toList();
 
-  ProjectListViewModel({required this.projectUseCases}) {
+  Map<String, LabelingSummary?> get summaries => _summaries;
+
+  ProjectListViewModel({required this.appUseCases}) {
     loadProjects();
   }
 
@@ -33,12 +38,12 @@ class ProjectListViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final loadedProjects = await projectUseCases.io.fetchAll();
+    final loadedProjects = await appUseCases.project.io.fetchAll();
     _projectVMs
       ..clear()
       ..addEntries(loadedProjects.map((p) => MapEntry(
             p.id,
-            ProjectViewModel(project: p, useCases: projectUseCases, shareHelper: getShareHelper(), onChanged: (updated) => upsertProject(updated)),
+            ProjectViewModel(project: p, useCases: appUseCases.project, shareHelper: getShareHelper(), onChanged: (updated) => upsertProject(updated)),
           )));
 
     _isLoading = false;
@@ -53,26 +58,53 @@ class ProjectListViewModel extends ChangeNotifier {
     } else {
       _projectVMs[project.id] = ProjectViewModel(
         project: project,
-        useCases: projectUseCases,
+        useCases: appUseCases.project,
         shareHelper: getShareHelper(),
         onChanged: (updated) => upsertProject(updated),
       );
     }
-    await projectUseCases.io.saveAll(_projectVMs.values.map((vm) => vm.project).toList());
+    await appUseCases.project.io.saveAll(_projectVMs.values.map((vm) => vm.project).toList());
     notifyListeners();
   }
 
   /// ✅ 프로젝트 삭제
   /// - 저장소에서도 삭제 후, 전체 목록을 다시 로드
   Future<void> removeProject(String projectId) async {
-    await projectUseCases.io.deleteById(projectId);
+    await appUseCases.project.io.deleteById(projectId);
     await loadProjects(); // 내부적으로 notifyListeners 호출
   }
 
   /// ✅ 프로젝트 캐시 비우기
   Future<void> clearAllProjectsCache() async {
-    await projectUseCases.io.clearCache();
+    await appUseCases.project.io.clearCache();
     _projectVMs.clear();
+    notifyListeners();
+  }
+
+  Future<void> fetchSummary(String projectId, AppUseCases appUseCases) async {
+    if (_requestedSummaryIds.contains(projectId)) return;
+    _requestedSummaryIds.add(projectId);
+
+    _summaries[projectId] = null;
+    notifyListeners(); // 로딩 표시
+
+    try {
+      final project = _projectVMs[projectId]?.project;
+      if (project == null) return;
+
+      final summary = await appUseCases.label.summary.load(project);
+      _summaries[projectId] = summary;
+    } catch (e) {
+      debugPrint("❌ Failed to fetch summary for project $projectId: $e");
+      _summaries[projectId] = LabelingSummary.dummy();
+    }
+
+    notifyListeners(); // UI 업데이트
+  }
+
+  void clearSummaries() {
+    _summaries.clear();
+    _requestedSummaryIds.clear();
     notifyListeners();
   }
 }
