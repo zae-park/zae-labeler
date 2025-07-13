@@ -94,7 +94,7 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
             Provider<StorageHelperInterface>.value(value: _storageHelper),
             Provider<AppUseCases>.value(value: _appUseCases),
             Provider<UserPreferenceService>.value(value: _userPrefs),
-            ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(projectUseCases: _appUseCases.project)),
+            ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(appUseCases: _appUseCases)),
             ChangeNotifierProvider<LocaleViewModel>.value(value: _localeViewModel),
             ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel.withDefaultUseCases(firebaseAuth)),
           ],
