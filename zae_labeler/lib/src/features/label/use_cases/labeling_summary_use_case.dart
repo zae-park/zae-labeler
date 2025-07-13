@@ -11,6 +11,8 @@ class LabelingSummary {
 
   LabelingSummary({required this.total, required this.complete, required this.warning, required this.incomplete});
 
+  factory LabelingSummary.dummy() => LabelingSummary(total: 0, complete: 0, warning: 0, incomplete: 0);
+
   double get progressRatio => total == 0 ? 0 : complete / total;
 }
 
