@@ -1,74 +1,48 @@
 // 📁 sub_view_models/base_labeling_view_model.dart
 import 'package:flutter/material.dart';
+import 'package:zae_labeler/src/features/label/view_models/managers/labeling_data_manager.dart';
+import 'package:zae_labeler/src/features/label/view_models/managers/labeling_label_manager.dart';
 
 import '../../../../core/use_cases/app_use_cases.dart';
 import '../../models/label_model.dart';
 import '../../../project/models/project_model.dart';
 import '../../../../core/models/data_model.dart';
 import '../../../../platform_helpers/storage/interface_storage_helper.dart';
-import '../../../../core/services/adaptive_data_loader.dart';
 import '../label_view_model.dart';
 
 /// Abstract base class for all LabelingViewModels.
 abstract class LabelingViewModel extends ChangeNotifier {
   late Project _project;
-  final StorageHelperInterface storageHelper;
   final AppUseCases appUseCases;
+  final StorageHelperInterface storageHelper;
   final List<UnifiedData>? initialDataList;
 
+  late final LabelingDataManager _dataManager;
+  late final LabelingLabelManager _labelManager;
+
   bool _isInitialized = false;
-  final bool _memoryOptimized = false;
+  bool get isInitialized => _isInitialized;
 
-  int _currentIndex = 0;
-  List<UnifiedData> _unifiedDataList = [];
-  UnifiedData _currentUnifiedData = UnifiedData.empty();
-
-  final Map<String, LabelViewModel> labelCache = {};
-  void clearLabelCache() => labelCache.clear();
-
-  LabelingViewModel({required Project project, required this.storageHelper, required this.appUseCases, this.initialDataList}) {
+  LabelingViewModel({required Project project, required this.appUseCases, required this.storageHelper, this.initialDataList}) {
     _project = project;
+    _dataManager = LabelingDataManager(project: _project, storageHelper: storageHelper, initialDataList: initialDataList);
+    _labelManager = LabelingLabelManager(project: _project, appUseCases: appUseCases, onNotify: notifyListeners);
   }
+
+  Project get project => _project;
 
   set project(Project updated) {
     _project = updated;
     notifyListeners();
   }
 
-  Project get project => _project;
-  bool get isInitialized => _isInitialized;
-  int get currentIndex => _currentIndex;
-  List<UnifiedData> get unifiedDataList => _unifiedDataList;
-  UnifiedData get currentUnifiedData => _currentUnifiedData;
-  LabelViewModel get currentLabelVM => getOrCreateLabelVM();
-
-  String get currentDataFileName => _currentUnifiedData.fileName;
-  List<double>? get currentSeriesData => _currentUnifiedData.seriesData;
-  Map<String, dynamic>? get currentObjectData => _currentUnifiedData.objectData;
-
-  int get totalCount => _unifiedDataList.length;
-  int get completeCount => _unifiedDataList.where((e) => e.status == LabelStatus.complete).length;
-  int get warningCount => _unifiedDataList.where((e) => e.status == LabelStatus.warning).length;
-  int get incompleteCount => totalCount - completeCount;
-  double get progressRatio => totalCount == 0 ? 0 : completeCount / totalCount;
-
   Future<void> initialize() async {
-    debugPrint("[LabelingVM.initialize] : ${project.mode}");
-    if (_isInitialized && project.mode != currentLabelVM.mode) {
-      debugPrint("[LabelingVM.initialize] : LabelVM mismatch!");
-      labelCache.clear();
-    }
+    if (_isInitialized) return;
 
-    if (_memoryOptimized) {
-      _unifiedDataList = initialDataList ?? [];
-      _currentUnifiedData = _unifiedDataList.isNotEmpty ? _unifiedDataList.first : UnifiedData.empty();
-    } else {
-      _unifiedDataList = initialDataList ?? await loadDataAdaptively(project, storageHelper);
-      _currentUnifiedData = _unifiedDataList.isNotEmpty ? _unifiedDataList.first : UnifiedData.empty();
-    }
+    await _dataManager.load();
+    await _labelManager.loadLabelFor(_dataManager.currentData);
+    await _validateLabelModelType();
 
-    await getOrCreateLabelVM().loadLabel();
-    await validateLabelModelType();
     await refreshAllStatuses();
     await postInitialize();
 
@@ -79,120 +53,105 @@ abstract class LabelingViewModel extends ChangeNotifier {
   Future<void> postInitialize() async {}
   Future<void> postMove() async {}
 
-  Future<void> validateLabelModelType() async {
-    final labelVM = currentLabelVM;
+  Future<void> moveNext() async {
+    _dataManager.moveNext();
+    await _labelManager.loadLabelFor(_dataManager.currentData);
+    await refreshStatus();
+    await postMove();
+    notifyListeners();
+  }
+
+  Future<void> movePrevious() async {
+    _dataManager.movePrevious();
+    await _labelManager.loadLabelFor(_dataManager.currentData);
+    await refreshStatus();
+    await postMove();
+    notifyListeners();
+  }
+
+  /// LabelViewModel 타입 일치 검증
+  Future<void> _validateLabelModelType() async {
+    final vm = _labelManager.currentLabelVM;
+    if (vm == null) return;
+
     final expectedType = LabelModelFactory.expectedType(project.mode);
-
-    if (labelVM.labelModel.runtimeType != expectedType) {
-      debugPrint("⚠️ 라벨 모델 타입 불일치 → 초기화");
-
-      // 기존 VM 제거
-      labelCache.remove(_currentUnifiedData.dataId);
-
-      // 새로운 VM 생성 및 교체
-      final newVM = LabelViewModelFactory.create(
+    if (vm.labelModel.runtimeType != expectedType) {
+      final data = _dataManager.currentData;
+      final refreshed = LabelViewModelFactory.create(
         projectId: project.id,
-        dataId: _currentUnifiedData.dataId,
-        dataFilename: _currentUnifiedData.fileName,
-        dataPath: _currentUnifiedData.dataPath ?? '',
+        dataId: data.dataId,
+        dataFilename: data.fileName,
+        dataPath: data.dataPath ?? '',
         mode: project.mode,
         labelUseCases: appUseCases.label,
       );
-      await newVM.loadLabel();
+      await refreshed.loadLabel();
 
-      // 새로 캐시 및 리스너 등록
-      newVM.addListener(notifyListeners);
-      labelCache[_currentUnifiedData.dataId] = newVM;
-
-      final refreshed = getOrCreateLabelVM();
-      debugPrint("✅ [validateLabelModelType] refreshed: ${refreshed.labelModel.runtimeType}, multi=${refreshed.labelModel.isMultiClass}");
+      _labelManager.disposeAll();
+      _labelManager.loadLabelFor(data); // reattach new VM
     }
   }
 
-  Future<void> moveNext() async => _move(1);
-  Future<void> movePrevious() async => _move(-1);
-
-  Future<void> _move(int delta) async {
-    final newIndex = _currentIndex + delta;
-    if (newIndex >= 0 && newIndex < _unifiedDataList.length) {
-      _currentIndex = newIndex;
-      _currentUnifiedData = _unifiedDataList[newIndex];
-      await getOrCreateLabelVM().loadLabel();
-      await refreshStatus(currentUnifiedData.dataId);
-      await postMove();
-      notifyListeners();
-    }
-  }
-
-  LabelViewModel getOrCreateLabelVM() {
-    final id = _currentUnifiedData.dataId;
-    return labelCache.putIfAbsent(id, () {
-      final vm = LabelViewModelFactory.create(
-        projectId: project.id,
-        dataId: id,
-        dataFilename: _currentUnifiedData.fileName,
-        dataPath: _currentUnifiedData.dataPath ?? '',
-        mode: project.mode,
-        labelUseCases: appUseCases.label,
-      );
-      debugPrint("[Factory.created] mode=${vm.mode}, dataId=${vm.dataId}, dataPath=${vm.dataPath}");
-      vm.addListener(notifyListeners);
-      return vm;
+  /// 라벨 상태 갱신
+  Future<void> refreshStatus() async {
+    final data = _dataManager.currentData;
+    await _labelManager.refreshStatusFor(data, (status) {
+      _dataManager.updateStatus(data.dataId, status);
     });
   }
 
-  Future<void> refreshStatus(String dataId) async {
-    final vm = getOrCreateLabelVM();
-    await vm.loadLabel();
-    final status = appUseCases.label.validation.getStatus(project, vm.labelModel);
-    final index = _unifiedDataList.indexWhere((e) => e.dataId == dataId);
-    if (index != -1) {
-      _unifiedDataList[index] = _unifiedDataList[index].copyWith(status: status);
-    }
-  }
-
+  /// 전체 라벨 상태 갱신
   Future<void> refreshAllStatuses() async {
     if (project.labels.isEmpty) {
       project.labels = await appUseCases.label.batch.loadAllLabels(project.id);
     }
 
-    for (final data in _unifiedDataList) {
-      final vm = labelCache.putIfAbsent(data.dataId, () {
-        return LabelViewModelFactory.create(
-          projectId: project.id,
-          dataId: data.dataId,
-          dataFilename: data.fileName,
-          dataPath: data.dataPath ?? '',
-          mode: project.mode,
-          labelUseCases: appUseCases.label,
-        );
+    for (final data in _dataManager.allData) {
+      await _labelManager.refreshStatusFor(data, (status) {
+        _dataManager.updateStatus(data.dataId, status);
       });
-
-      await vm.loadLabel();
-      final status = appUseCases.label.validation.getStatus(project, vm.labelModel);
-      final idx = _unifiedDataList.indexWhere((e) => e.dataId == data.dataId);
-      if (idx != -1) {
-        _unifiedDataList[idx] = _unifiedDataList[idx].copyWith(status: status);
-      }
     }
+    notifyListeners();
   }
+  // =============================
+  // 📌 Interface
+  // =============================
 
+  @protected
+  LabelingDataManager get dataManager => _dataManager;
+
+  @protected
+  LabelingLabelManager get labelManager => _labelManager;
+
+  UnifiedData get currentUnifiedData => _dataManager.currentData;
+  int get currentIndex => _dataManager.currentIndex;
+  List<UnifiedData> get unifiedDataList => _dataManager.allData;
+
+  LabelViewModel get currentLabelVM => _labelManager.currentLabelVM!;
+  int get totalCount => _dataManager.totalCount;
+  int get completeCount => _dataManager.completeCount;
+  int get warningCount => _dataManager.warningCount;
+  int get incompleteCount => _dataManager.incompleteCount;
+  double get progressRatio => _dataManager.progressRatio;
+
+  String get currentDataFileName => currentUnifiedData.fileName;
+  List<double>? get currentSeriesData => currentUnifiedData.seriesData;
+  Map<String, dynamic>? get currentObjectData => currentUnifiedData.objectData;
+
+  // abstract labeling control
   Future<void> updateLabel(dynamic labelData);
   void toggleLabel(String labelItem) => throw UnimplementedError();
   bool isLabelSelected(String labelItem) => throw UnimplementedError();
 
   Future<String> exportAllLabels() async {
-    final allLabels = labelCache.values.map((vm) => vm.labelModel).toList();
-    final dataInfos = _unifiedDataList.map((e) => e.toDataInfo()).toList();
-    return await appUseCases.label.io.exportLabelsWithData(project, allLabels, dataInfos);
+    final labelModels = _labelManager.allLabelModels;
+    final dataInfos = unifiedDataList.map((e) => e.toDataInfo()).toList();
+    return await appUseCases.label.io.exportLabelsWithData(project, labelModels, dataInfos);
   }
 
   @override
   void dispose() {
-    for (final vm in labelCache.values) {
-      vm.removeListener(notifyListeners);
-      vm.dispose();
-    }
+    _labelManager.disposeAll();
     super.dispose();
   }
 }
