@@ -18,32 +18,34 @@ class LabelingCircularProgressButton extends StatelessWidget {
     return GestureDetector(
       onTap: onPressed,
       child: SizedBox(
-        width: 110, // 🔹 확대
+        width: 110,
         height: 110,
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // 회색: 전체 배경
-            CircularProgressIndicator(value: 1.0, strokeWidth: 6, valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[300]!)),
-            // 노랑: warning 포함 영역
-            CircularProgressIndicator(
-              value: warningRatio + completeRatio,
-              strokeWidth: 6,
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
+            // 회색 베이스
+            SizedBox.expand(
+              child: CircularProgressIndicator(value: 1.0, strokeWidth: 8, valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[300]!)),
             ),
-            // 파랑: 정상 완료 영역
-            CircularProgressIndicator(
-              value: completeRatio,
-              strokeWidth: 6,
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+
+            // 노란 경고 표시 (complete + warning)
+            SizedBox.expand(
+              child: CircularProgressIndicator(
+                  value: completeRatio + warningRatio, strokeWidth: 8, valueColor: const AlwaysStoppedAnimation<Color>(Colors.orange)),
             ),
-            // 중앙 컨텐츠
+
+            // 파란 정상 표시 (complete)
+            SizedBox.expand(
+              child: CircularProgressIndicator(value: completeRatio, strokeWidth: 8, valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue)),
+            ),
+
+            // 중앙 텍스트 및 아이콘
             Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(Icons.play_arrow, size: 28),
                 const SizedBox(height: 4),
-                Text('${summary.complete} / ${summary.total}', style: const TextStyle(fontSize: 13)),
+                Text('${summary.complete} / ${summary.total}', style: const TextStyle(fontSize: 12)),
               ],
             ),
           ],
