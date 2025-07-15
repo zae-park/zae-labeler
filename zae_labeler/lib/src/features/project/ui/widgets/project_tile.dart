@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:zae_labeler/common/common_widgets.dart';
+
 import 'package:zae_labeler/common/i18n.dart';
+import 'package:zae_labeler/common/common_widgets.dart';
 import 'package:zae_labeler/src/features/project/ui/widgets/progress_indicator.dart';
 import '../../../../core/use_cases/app_use_cases.dart';
-
 import '../../models/project_model.dart';
 import '../../view_models/project_view_model.dart';
 import '../../view_models/configuration_view_model.dart';
@@ -18,13 +18,7 @@ class ProjectTile extends StatelessWidget {
   const ProjectTile({Key? key, required this.vm}) : super(key: key);
 
   void _openLabelingPage(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        settings: const RouteSettings(name: '/labeling'),
-        builder: (_) => LabelingPage(project: vm.project),
-      ),
-    );
+    Navigator.push(context, MaterialPageRoute(settings: const RouteSettings(name: '/labeling'), builder: (_) => LabelingPage(project: vm.project)));
   }
 
   void _openEditPage(BuildContext context) async {
@@ -34,10 +28,7 @@ class ProjectTile extends StatelessWidget {
       MaterialPageRoute(
         settings: const RouteSettings(name: '/configuration'),
         builder: (_) => ChangeNotifierProvider(
-          create: (_) => ConfigurationViewModel.fromProject(
-            vm.project,
-            appUseCases: appUseCases,
-          ),
+          create: (_) => ConfigurationViewModel.fromProject(vm.project, appUseCases: appUseCases),
           child: const ConfigureProjectPage(),
         ),
       ),
@@ -70,11 +61,7 @@ class ProjectTile extends StatelessWidget {
       await projectListVM.removeProject(vm.project.id);
 
       if (context.mounted) {
-        GlobalAlertManager.show(
-          context,
-          '${context.l10n.projectTile_deleteMessage}: ${vm.project.name}',
-          type: AlertType.success,
-        );
+        GlobalAlertManager.show(context, '${context.l10n.projectTile_deleteMessage}: ${vm.project.name}', type: AlertType.success);
       }
     }
   }
