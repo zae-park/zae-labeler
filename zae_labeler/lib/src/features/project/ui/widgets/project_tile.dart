@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:zae_labeler/common/common_widgets.dart';
 import 'package:zae_labeler/common/i18n.dart';
+import 'package:zae_labeler/src/features/project/ui/widgets/progress_indicator.dart';
 import '../../../../core/use_cases/app_use_cases.dart';
 import '../../models/project_model.dart';
 import '../../view_models/project_view_model.dart';
@@ -14,6 +15,23 @@ class ProjectTile extends StatelessWidget {
   final ProjectViewModel vm;
 
   const ProjectTile({Key? key, required this.vm}) : super(key: key);
+
+  Widget _buildSummaryIndicator(BuildContext context) {
+    final projectId = vm.project.id;
+    final projectListVM = context.watch<ProjectListViewModel>();
+    final summary = projectListVM.summaries[projectId];
+
+    if (summary == null) {
+      Future.microtask(() {
+        final appUseCases = context.read<AppUseCases>();
+        projectListVM.fetchSummary(projectId, appUseCases);
+      });
+
+      return const SizedBox(width: 64, height: 64, child: Center(child: CircularProgressIndicator(strokeWidth: 3)));
+    }
+
+    return LabelingCircularProgressButton(summary: summary, onPressed: () => _openLabelingPage(context));
+  }
 
   void _openLabelingPage(BuildContext context) {
     Navigator.push(context, MaterialPageRoute(settings: const RouteSettings(name: '/labeling'), builder: (_) => LabelingPage(project: vm.project)));
