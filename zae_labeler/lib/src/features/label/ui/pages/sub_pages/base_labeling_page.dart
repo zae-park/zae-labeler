@@ -20,22 +20,26 @@ abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatelessWi
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<T>.value(
-      value: viewModel,
-      child: Consumer<T>(
-        builder: (context, vm, _) {
-          return Scaffold(
-            appBar: buildAppBar(context),
-            body: KeyboardListener(
-              focusNode: FocusNode(),
-              autofocus: true,
-              onKeyEvent: (event) => _handleKeyEvent(event, vm),
-              child: Column(
-                children: [Expanded(child: buildViewer(vm)), buildProgressBar(context, vm), buildModeSpecificUI(vm), buildNavigator(vm)],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) Navigator.pop(context, true);
+      },
+      child: ChangeNotifierProvider<T>.value(
+        value: viewModel,
+        child: Consumer<T>(
+          builder: (context, vm, _) {
+            return Scaffold(
+              appBar: buildAppBar(context),
+              body: KeyboardListener(
+                focusNode: FocusNode(),
+                autofocus: true,
+                onKeyEvent: (event) => _handleKeyEvent(event, vm),
+                child: Column(children: [Expanded(child: buildViewer(vm)), buildProgressBar(context, vm), buildModeSpecificUI(vm), buildNavigator(vm)]),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
