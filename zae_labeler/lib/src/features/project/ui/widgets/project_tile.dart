@@ -19,18 +19,13 @@ class ProjectTile extends StatelessWidget {
 
   void _openLabelingPage(BuildContext context) async {
     final result = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(
-        settings: const RouteSettings(name: '/labeling'),
-        builder: (_) => LabelingPage(project: vm.project),
-      ),
-    );
+        context, MaterialPageRoute(settings: const RouteSettings(name: '/labeling'), builder: (_) => LabelingPage(project: vm.project)));
 
     // ✅ 라벨링 후 summary 갱신
     if (result == true && context.mounted) {
       final appUseCases = context.read<AppUseCases>();
       final listVM = context.read<ProjectListViewModel>();
-      await listVM.fetchSummary(vm.project.id, appUseCases);
+      await listVM.fetchSummary(vm.project.id, appUseCases, forceRefresh: true);
     }
   }
 

@@ -81,12 +81,13 @@ class ProjectListViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchSummary(String projectId, AppUseCases appUseCases) async {
-    if (_requestedSummaryIds.contains(projectId)) return;
+  /// 🔧 외부에서도 강제 summary 재계산이 가능하도록 개선
+  Future<void> fetchSummary(String projectId, AppUseCases appUseCases, {bool force = false}) async {
+    if (!force && _requestedSummaryIds.contains(projectId)) return;
     _requestedSummaryIds.add(projectId);
 
     _summaries[projectId] = null;
-    notifyListeners(); // 로딩 표시
+    notifyListeners();
 
     try {
       final project = _projectVMs[projectId]?.project;
@@ -99,7 +100,7 @@ class ProjectListViewModel extends ChangeNotifier {
       _summaries[projectId] = LabelingSummary.dummy();
     }
 
-    notifyListeners(); // UI 업데이트
+    notifyListeners();
   }
 
   void clearSummaries() {
