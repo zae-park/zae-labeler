@@ -25,7 +25,7 @@ class ProjectTile extends StatelessWidget {
     if (result == true && context.mounted) {
       final appUseCases = context.read<AppUseCases>();
       final listVM = context.read<ProjectListViewModel>();
-      await listVM.fetchSummary(vm.project.id, appUseCases, forceRefresh: true);
+      await listVM.fetchSummary(vm.project.id, appUseCases, force: true);
     }
   }
 
