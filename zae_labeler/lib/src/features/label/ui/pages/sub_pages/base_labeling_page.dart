@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:zae_labeler/l10n/app_localizations.dart';
+import 'package:zae_labeler/src/features/project/view_models/managers/progress_notifier.dart';
 
 import '../../../../project/models/project_model.dart';
 import '../../../view_models/labeling_view_model.dart';
@@ -18,12 +19,19 @@ abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatelessWi
 
   const BaseLabelingPage({super.key, required this.project, required this.viewModel});
 
+  void _finishLabelingAndPop(BuildContext context, T vm) {
+    final ratio = vm.progressRatio;
+    final project = vm.project;
+    context.read<ProgressNotifier>().updateProgress(project.id, ratio);
+    Navigator.pop(context, true);
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) Navigator.pop(context, true);
+        if (!didPop) _finishLabelingAndPop(context, viewModel);
       },
       child: ChangeNotifierProvider<T>.value(
         value: viewModel,
