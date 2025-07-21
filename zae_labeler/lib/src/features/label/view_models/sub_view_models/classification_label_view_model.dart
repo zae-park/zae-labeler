@@ -46,7 +46,18 @@ class ClassificationLabelViewModel extends LabelViewModel {
 
   @override
   Future<void> toggleLabel(String labelItem) async {
-    await updateLabelFromInput(labelItem);
+    if (isMultiLabel) {
+      // ✅ 다중 분류: 기존 로직 그대로 사용 (선택/해제 토글)
+      await updateLabelFromInput(labelItem);
+    } else {
+      // ✅ 단일 분류: 같은 라벨을 다시 누르면 선택 해제 (null로 설정)
+      final currentLabel = labelModel.label;
+      final newLabel = (currentLabel == labelItem) ? null : labelItem;
+      await super.updateLabelFromInput(newLabel);
+      // 🔍 설명: super.updateLabelFromInput을 호출하면
+      // LabelInputMapper를 통해 SingleClassificationLabelModel을 생성하고,
+      // LabelViewModel.updateLabel() → saveLabel()을 거쳐 상태를 저장합니다.
+    }
   }
 
   @override
