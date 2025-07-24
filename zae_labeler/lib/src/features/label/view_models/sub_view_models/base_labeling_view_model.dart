@@ -41,13 +41,15 @@ abstract class LabelingViewModel extends ChangeNotifier {
 
     await _dataManager.load();
     await _labelManager.loadLabelFor(_dataManager.currentData);
-    await _validateLabelModelType();
 
+    notifyListeners();
+
+    await _validateLabelModelType();
     await refreshAllStatuses();
     await postInitialize();
 
     _isInitialized = true;
-    notifyListeners();
+    notifyListeners(); // ✅ 전체 초기화 완료 알림
   }
 
   Future<void> postInitialize() async {}
