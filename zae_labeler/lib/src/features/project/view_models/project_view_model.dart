@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:zae_labeler/common/common_widgets.dart';
+import 'package:zae_labeler/src/core/use_cases/app_use_cases.dart';
+import 'package:zae_labeler/src/features/label/view_models/labeling_view_model.dart';
+import 'package:zae_labeler/src/platform_helpers/storage/get_storage_helper.dart';
 
 import '../../../core/models/data_model.dart';
 import '../../label/models/label_model.dart';
@@ -34,6 +37,15 @@ class ProjectViewModel extends ChangeNotifier {
   final void Function(Project updated)? onChanged;
   late final LabelingMode _initialMode;
 
+  // ────────────────────────────────────────────
+  // 📦 진행률 정보를 위한 필드
+  // ────────────────────────────────────────────
+  double progressRatio = 0.0;
+  int completeCount = 0;
+  int warningCount = 0;
+  int incompleteCount = 0;
+  bool progressLoaded = false;
+
   ProjectViewModel({required this.shareHelper, required this.useCases, this.onChanged, Project? project})
       : project = project ??
             Project(
@@ -43,6 +55,19 @@ class ProjectViewModel extends ChangeNotifier {
               classes: project?.classes ?? [],
             ) {
     _initialMode = this.project.mode;
+  }
+
+  /// 진행률 정보를 로딩하는 메서드
+  /// // LabelingViewModel을 생성하여 진행률 정보를 얻는다.
+  Future<void> loadProgress(StorageHelperInterface helper, AppUseCases appUseCases) async {
+    final labelingVM = await LabelingViewModelFactory.createAsync(project, helper, appUseCases);
+    progressRatio = labelingVM.progressRatio;
+    completeCount = labelingVM.completeCount;
+    warningCount = labelingVM.warningCount;
+    incompleteCount = labelingVM.incompleteCount;
+    progressLoaded = true;
+    labelingVM.dispose();
+    notifyListeners();
   }
 
   // ==============================
