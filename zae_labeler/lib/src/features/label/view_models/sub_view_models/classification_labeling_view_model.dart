@@ -78,13 +78,30 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
   UnifiedData get currentTargetData => dataManager.allData.firstWhere((e) => e.dataId == _selectedDataIds[_targetIndex]);
 
   @override
-  Future<void> initialize() async {
+  Future initialize() async {
     await super.initialize();
 
     _selectedDataIds = dataManager.allData.map((e) => e.dataId).toList();
     _crossPairs = generateCrossPairs(_selectedDataIds);
     _sourceIndex = 0;
     _targetIndex = 1;
+
+    // 저장된 교차 라벨을 로드하여 _crossPairs에 반영
+    for (int i = 0; i < _crossPairs.length; i++) {
+      final pair = _crossPairs[i];
+      // pair sourceId와 targetId를 조합한 데이터ID로 라벨을 읽어온다.
+      final id = '${pair.sourceId}_${pair.targetId}';
+      final vm = labelManager.getOrCreateLabelVM(dataId: id, filename: id, path: '', mode: project.mode);
+      // 기존 라벨을 저장소에서 불러온다.
+      await vm.loadLabel();
+      final relation = vm.labelModel.label;
+      if (relation != null && relation.toString().isNotEmpty) {
+        _crossPairs[i] = pair.copyWith(relation: relation);
+      }
+    }
+
+    // 라벨 상태가 반영되었음을 알리기 위해 notifyListeners 호출
+    notifyListeners();
   }
 
   @override

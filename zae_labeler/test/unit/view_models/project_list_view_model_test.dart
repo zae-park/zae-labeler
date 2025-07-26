@@ -3,18 +3,21 @@ import 'package:zae_labeler/src/features/project/view_models/project_list_view_m
 import 'package:zae_labeler/src/features/project/models/project_model.dart';
 
 import '../../mocks/repositories/mock_project_repository.dart';
+import '../../mocks/use_cases/mock_app_use_cases.dart';
 import '../../mocks/use_cases/project/mock_project_use_cases.dart';
 
 void main() {
   group('ProjectListViewModel', () {
     late MockProjectRepository repo;
-    late MockProjectUseCases mockUseCases;
+    late MockProjectUseCases mockProjectUseCases;
+    late MockAppUseCases mockAppUseCases;
     late ProjectListViewModel viewModel;
 
     setUp(() {
       repo = MockProjectRepository();
-      mockUseCases = MockProjectUseCases(repository: repo);
-      viewModel = ProjectListViewModel(projectUseCases: mockUseCases);
+      mockProjectUseCases = MockProjectUseCases(repository: repo);
+      mockAppUseCases = MockAppUseCases(project: mockProjectUseCases);
+      viewModel = ProjectListViewModel(appUseCases: mockAppUseCases);
     });
 
     test('loadProjects populates projectVMList', () async {
@@ -25,7 +28,7 @@ void main() {
       ]);
 
       // ✅ viewModel을 다시 생성하여 mockUseCases 연결
-      viewModel = ProjectListViewModel(projectUseCases: mockUseCases);
+      viewModel = ProjectListViewModel(appUseCases: mockAppUseCases);
 
       await viewModel.loadProjects();
 

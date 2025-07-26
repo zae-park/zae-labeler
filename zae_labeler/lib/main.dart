@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zae_labeler/src/core/services/user_preference_service.dart';
 import 'package:zae_labeler/src/features/locale/view_models/locale_view_model.dart';
+import 'package:zae_labeler/src/features/project/view_models/managers/progress_notifier.dart';
 import '../l10n/app_localizations.dart';
 
 import 'firebase_options.dart';
@@ -94,9 +95,10 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
             Provider<StorageHelperInterface>.value(value: _storageHelper),
             Provider<AppUseCases>.value(value: _appUseCases),
             Provider<UserPreferenceService>.value(value: _userPrefs),
-            ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(projectUseCases: _appUseCases.project)),
+            ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(appUseCases: _appUseCases)),
             ChangeNotifierProvider<LocaleViewModel>.value(value: _localeViewModel),
             ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel.withDefaultUseCases(firebaseAuth)),
+            ChangeNotifierProvider(create: (_) => ProgressNotifier()),
           ],
           child: Consumer<LocaleViewModel>(
             builder: (context, localeVM, _) {
