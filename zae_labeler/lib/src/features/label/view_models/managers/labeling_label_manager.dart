@@ -46,10 +46,22 @@ class LabelingLabelManager {
   }
 
   /// 해당 데이터에 대한 라벨 상태를 갱신하고, 콜백으로 전달
-  Future<void> refreshStatusFor(UnifiedData data, void Function(LabelStatus) onStatusEvaluated) async {
-    await loadLabelFor(data);
-    final status = appUseCases.label.validation.getStatus(project, _current!.labelModel);
+  Future refreshStatusFor(UnifiedData data, void Function(LabelStatus) onStatusEvaluated) async {
+    // 현재 current VM을 보존
+    final previousCurrent = _current;
+
+    // 대상 데이터의 VM을 캐시에서 가져오거나 새로 생성
+    final vm = getOrCreateLabelVM(dataId: data.dataId, filename: data.fileName, path: data.dataPath ?? '', mode: project.mode);
+
+    // 해당 데이터의 라벨 로드
+    await vm.loadLabel();
+
+    // 상태 계산
+    final status = appUseCases.label.validation.getStatus(project, vm.labelModel);
     onStatusEvaluated(status);
+
+    // current VM을 원래대로 복원
+    _current = previousCurrent;
   }
 
   /// 현재 라벨 저장
