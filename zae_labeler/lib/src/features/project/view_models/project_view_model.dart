@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
-import 'package:zae_labeler/common/common_widgets.dart';
 import 'package:zae_labeler/src/core/use_cases/app_use_cases.dart';
 import 'package:zae_labeler/src/features/label/view_models/labeling_view_model.dart';
+import 'package:zae_labeler/src/features/project/use_cases/share_project_use_case.dart';
 import 'package:zae_labeler/src/platform_helpers/storage/get_storage_helper.dart';
 
 import '../../../core/models/data_model.dart';
@@ -36,6 +36,7 @@ class ProjectViewModel extends ChangeNotifier {
 
   final void Function(Project updated)? onChanged;
   late final LabelingMode _initialMode;
+  ShareProjectResult? lastShareResult;
 
   // ────────────────────────────────────────────
   // 📦 진행률 정보를 위한 필드
@@ -155,14 +156,9 @@ class ProjectViewModel extends ChangeNotifier {
   // 📌 다운로드 및 공유
   // ==============================
 
-  Future<void> shareProject(BuildContext context) async {
-    try {
-      await useCases.share.call(project);
-    } catch (e) {
-      if (context.mounted) {
-        GlobalAlertManager.show(context, '⚠️ 프로젝트 공유에 실패했습니다: $e', type: AlertType.error);
-      }
-    }
+  Future<void> shareProject() async {
+    lastShareResult = await useCases.share.call(project);
+    notifyListeners();
   }
 
   Future<void> downloadProjectConfig() async {
