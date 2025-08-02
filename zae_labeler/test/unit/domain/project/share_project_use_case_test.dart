@@ -3,7 +3,6 @@ import 'package:zae_labeler/src/features/project/use_cases/share_project_use_cas
 import 'package:zae_labeler/src/features/project/models/project_model.dart';
 
 import '../../../mocks/helpers/mock_share_helper.dart';
-import '../../../mocks/mock_context.dart';
 import '../../../mocks/repositories/mock_project_repository.dart';
 
 void main() {
@@ -23,9 +22,7 @@ void main() {
       final project = Project.empty().copyWith(id: 'p1', name: 'TestProj');
       await repo.saveProject(project);
 
-      final dummyContext = MockDummyContext();
-
-      expectLater(() async => await useCase.call(dummyContext, project), throwsA(isA<ArgumentError>()));
+      expectLater(() async => await useCase.call(project), throwsA(isA<ArgumentError>()));
     });
   });
 }
