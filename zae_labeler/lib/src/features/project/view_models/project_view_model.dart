@@ -157,7 +157,7 @@ class ProjectViewModel extends ChangeNotifier {
 
   Future<void> shareProject(BuildContext context) async {
     try {
-      await useCases.share.call(context, project);
+      await useCases.share.call(project);
     } catch (e) {
       if (context.mounted) {
         GlobalAlertManager.show(context, '⚠️ 프로젝트 공유에 실패했습니다: $e', type: AlertType.error);
