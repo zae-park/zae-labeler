@@ -109,7 +109,7 @@ void main() {
     });
 
     test('shareProject triggers helper', () async {
-      await viewModel.shareProject(FakeBuildContext());
+      await viewModel.shareProject();
       expect((viewModel.useCases.share as MockShareProjectUseCase).wasCalled, isTrue);
     });
 
