@@ -82,45 +82,84 @@ class ProjectViewModel extends ChangeNotifier {
       project = updated;
       notifyListeners();
       onChanged?.call(project);
+    } else {
+      // 실패 처리
     }
   }
 
   Future<void> setLabelingMode(LabelingMode mode) async {
     if (project.mode != mode) {
-      project = (await useCases.edit.changeLabelingMode(project.id, mode))!;
+      final updated = await useCases.edit.changeLabelingMode(project.id, mode);
+      if (updated != null) {
+        project = updated;
+        notifyListeners();
+        onChanged?.call(project);
+      } else {
+        // 실패 처리(로그 출력, UI 알림 등)
+      }
+      // project = (await useCases.edit.changeLabelingMode(project.id, mode))!;
+      // notifyListeners();
+      // onChanged?.call(project);
+    }
+  }
+
+  Future addClass(String className) async {
+    final updated = await useCases.classList.addClass(project.id, className);
+    if (updated != null) {
+      project = updated;
+      notifyListeners();
+      onChanged?.call(project);
+    } else {
+      // 실패 처리: 예를 들어 이미 존재하는 클래스이거나 프로젝트 미존재.
+    }
+  }
+
+  Future editClass(int index, String newName) async {
+    final updated = await useCases.classList.editClass(project.id, index, newName);
+    if (updated != null) {
+      project = updated;
       notifyListeners();
       onChanged?.call(project);
     }
   }
 
-  Future<void> addClass(String className) async {
-    project = await useCases.classList.addClass(project.id, className);
-    notifyListeners();
-    onChanged?.call(project);
-  }
-
-  Future<void> editClass(int index, String newName) async {
-    useCases.classList.editClass(project.id, index, newName);
-  }
-
-  Future<void> removeClass(int index) async {
-    project = await useCases.classList.removeClass(project.id, index);
-    notifyListeners();
-    onChanged?.call(project);
-  }
-
-  Future<void> addDataInfo(DataInfo dataInfo) async {
-    project = await useCases.dataInfo.addData(projectId: project.id, dataInfo: dataInfo);
-    notifyListeners();
-    onChanged?.call(project);
-  }
-
-  Future<void> removeDataInfo(String dataId) async {
-    final index = project.dataInfos.indexWhere((e) => e.id == dataId);
-    if (index != -1) {
-      project = await useCases.dataInfo.removeData(projectId: project.id, dataIndex: index);
+  Future removeClass(int index) async {
+    final updated = await useCases.classList.removeClass(project.id, index);
+    if (updated != null) {
+      project = updated;
       notifyListeners();
       onChanged?.call(project);
+    }
+  }
+
+  Future addDataInfo(DataInfo dataInfo) async {
+    try {
+      final updated = await useCases.dataInfo.addData(projectId: project.id, dataInfo: dataInfo);
+      if (updated != null) {
+        project = updated;
+        notifyListeners();
+        onChanged?.call(project);
+      } else {
+        // 프로젝트가 없을 때의 처리
+      }
+    } catch (e) {
+      // 예외 처리 (예: 프로젝트 미존재)
+    }
+  }
+
+  Future removeDataInfo(String dataId) async {
+    final index = project.dataInfos.indexWhere((e) => e.id == dataId);
+    if (index != -1) {
+      try {
+        final updated = await useCases.dataInfo.removeData(projectId: project.id, dataIndex: index);
+        if (updated != null) {
+          project = updated;
+          notifyListeners();
+          onChanged?.call(project);
+        }
+      } catch (e) {
+        // 예외 처리
+      }
     }
   }
 
