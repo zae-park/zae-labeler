@@ -122,7 +122,7 @@ class ProjectTile extends StatelessWidget {
                         label: Text(context.l10n.projectTile_download),
                       ),
                       OutlinedButton.icon(
-                        onPressed: () => vm.shareProject(),
+                        onPressed: () => vm.shareProject(context),
                         icon: const Icon(Icons.share),
                         label: Text(context.l10n.projectTile_share),
                       ),
