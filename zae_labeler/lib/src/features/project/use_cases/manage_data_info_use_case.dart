@@ -8,35 +8,21 @@ class ManageDataInfoUseCase {
 
   ManageDataInfoUseCase({required this.repository});
 
-  Future<Project> addData({required String projectId, required DataInfo dataInfo}) async {
-    final project = await repository.findById(projectId);
-    if (project != null) {
-      final updatedList = [...project.dataInfos, dataInfo];
-      final updatedProject = project.copyWith(dataInfos: updatedList);
-      await repository.saveProject(updatedProject);
-      return updatedProject;
-    }
-    throw Exception('Project not found');
+  Future<Project?> addData({required String projectId, required DataInfo dataInfo}) async {
+    await repository.addDataInfo(projectId, dataInfo);
+    return await repository.findById(projectId);
   }
 
-  Future<Project> removeData({required String projectId, required int dataIndex}) async {
+  Future<Project?> removeData({required String projectId, required int dataIndex}) async {
     final project = await repository.findById(projectId);
-    if (project != null && dataIndex >= 0 && dataIndex < project.dataInfos.length) {
-      final updatedList = List<DataInfo>.from(project.dataInfos)..removeAt(dataIndex);
-      final updatedProject = project.copyWith(dataInfos: updatedList);
-      await repository.saveProject(updatedProject);
-      return updatedProject;
-    }
-    throw Exception('Invalid project or data index');
+    if (project == null || dataIndex < 0 || dataIndex >= project.dataInfos.length) return project;
+    final removeId = project.dataInfos[dataIndex].id;
+    await repository.removeDataInfoById(projectId, removeId);
+    return await repository.findById(projectId);
   }
 
-  Future<Project> removeAll(String projectId) async {
-    final project = await repository.findById(projectId);
-    if (project != null) {
-      final updatedProject = project.copyWith(dataInfos: []);
-      await repository.saveProject(updatedProject);
-      return updatedProject;
-    }
-    throw Exception('Project not found');
+  Future<Project?> removeAll(String projectId) async {
+    await repository.updateDataInfos(projectId, []);
+    return await repository.findById(projectId);
   }
 }
