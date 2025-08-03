@@ -104,7 +104,8 @@ abstract class LabelingViewModel extends ChangeNotifier {
 
   /// 전체 라벨 상태 갱신
   Future<void> refreshAllStatuses() async {
-    project.labels = await appUseCases.label.batch.loadAllLabels(project.id);
+    project.labels = await appUseCases.label.repository.loadAllLabels(project.id);
+    // project.labels = await appUseCases.label.batch.loadAllLabels(project.id);
 
     for (final data in _dataManager.allData) {
       await _labelManager.refreshStatusFor(data, (status) {
