@@ -31,9 +31,14 @@ class ConfigurationViewModel extends ChangeNotifier {
   bool get isEditing => _isEditing; // ✅ 수정 모드 여부 반환
 
   /// ✅ 프로젝트 이름 설정
-  Future<void> setProjectName(String name) async {
-    await appUseCases.project.edit.rename(_project.id, name);
-    _project = _project.copyWith(name: name);
+  Future setProjectName(String name) async {
+    final updated = await appUseCases.project.edit.rename(_project.id, name);
+    if (updated != null) {
+      // Repository에 저장된 값과 _project를 동기화
+      _project = _project.copyWith(name: name);
+    } else {
+      // 실패 처리
+    }
     notifyListeners();
   }
 
