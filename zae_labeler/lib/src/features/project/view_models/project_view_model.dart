@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+import 'package:zae_labeler/common/widgets/global_alert.dart';
 import 'package:zae_labeler/src/core/use_cases/app_use_cases.dart';
 import 'package:zae_labeler/src/features/label/view_models/labeling_view_model.dart';
 import 'package:zae_labeler/src/features/project/use_cases/share_project_use_case.dart';
@@ -156,9 +157,15 @@ class ProjectViewModel extends ChangeNotifier {
   // 📌 다운로드 및 공유
   // ==============================
 
-  Future<void> shareProject() async {
-    lastShareResult = await useCases.share.call(project);
-    notifyListeners();
+  Future<void> shareProject(BuildContext context) async {
+    try {
+      lastShareResult = await useCases.share.call(project);
+      notifyListeners();
+    } catch (e) {
+      if (context.mounted) {
+        GlobalAlertManager.show(context, '⚠️ 프로젝트 공유에 실패했습니다: $e', type: AlertType.error);
+      }
+    }
   }
 
   Future<void> downloadProjectConfig() async {
