@@ -1,5 +1,6 @@
 // 📁 sub_view_models/base_labeling_view_model.dart
 import 'package:flutter/material.dart';
+import 'package:zae_labeler/src/features/label/logic/labeling_status_manager.dart';
 import 'package:zae_labeler/src/features/label/view_models/managers/labeling_data_manager.dart';
 import 'package:zae_labeler/src/features/label/view_models/managers/labeling_label_manager.dart';
 
@@ -103,15 +104,16 @@ abstract class LabelingViewModel extends ChangeNotifier {
   }
 
   /// 전체 라벨 상태 갱신
-  Future<void> refreshAllStatuses() async {
-    project.labels = await appUseCases.label.repository.loadAllLabels(project.id);
-    // project.labels = await appUseCases.label.batch.loadAllLabels(project.id);
-
-    for (final data in _dataManager.allData) {
-      await _labelManager.refreshStatusFor(data, (status) {
-        _dataManager.updateStatus(data.dataId, status);
-      });
-    }
+  Future refreshAllStatuses() async {
+    final statusMgr = StatusManager(project: project, useCases: appUseCases.label);
+    final vmMap = {
+      for (var data in dataManager.allData)
+        data.dataId: labelManager.getOrCreateLabelVM(dataId: data.dataId, filename: data.fileName, path: data.dataPath ?? '', mode: project.mode)
+    };
+    final statuses = await statusMgr.refreshAll(dataManager.allData, vmMap);
+    statuses.forEach((id, status) {
+      dataManager.updateStatus(id, status);
+    });
     notifyListeners();
   }
   // =============================
