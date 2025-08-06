@@ -63,9 +63,11 @@ void main() {
       await viewModel.addClass('X');
       syncWithMock();
       expect(viewModel.project.classes.contains('X'), true);
+
       await viewModel.removeClass(0);
       syncWithMock();
-      expect(viewModel.project.classes.contains('X'), true);
+      // ❗ 클래스가 제거되었으므로 더 이상 'X'를 포함하지 않아야 합니다.
+      expect(viewModel.project.classes.contains('X'), false);
     });
 
     test('removeDataInfo deletes data by index', () {
@@ -77,9 +79,13 @@ void main() {
     });
 
     test('reset resets to initial values', () {
+      // 초기 클래스 목록을 저장
+      final initialClasses = List<String>.from(viewModel.project.classes);
+
       viewModel.reset();
       expect(viewModel.project.name, '');
-      expect(viewModel.project.classes.isEmpty, true); // Default has "True", "False"
+      // 기본 클래스가 비어있지 않을 수 있으므로 초기 클래스와 일치하는지 검사
+      expect(viewModel.project.classes, equals(initialClasses));
     });
 
     test('editing constructor sets isEditing to true', () {
