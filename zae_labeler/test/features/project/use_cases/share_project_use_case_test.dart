@@ -18,11 +18,14 @@ void main() {
       useCase.shareHelper = mockHelper; // ❗ setter를 통해 shareHelper를 외부 주입
     });
 
-    test('shareProject calls helper with config', () async {
+    test('shareProject returns failure when project is invalid', () async {
       final project = Project.empty().copyWith(id: 'p1', name: 'TestProj');
       await repo.saveProject(project);
 
-      expectLater(() async => await useCase.call(project), throwsA(isA<ArgumentError>()));
+      final result = await useCase.call(project);
+
+      expect(result.success, isFalse);
+      expect(result.message, contains('Invalid')); // 또는 ArgumentError, ProjectValidator 관련 키워드
     });
   });
 }
