@@ -17,13 +17,17 @@ class LabelingDataManager {
   final Project project;
   final StorageHelperInterface storageHelper;
   final List<UnifiedData>? initialDataList;
-  final bool memoryOptimized;
-
   late List<UnifiedData> _dataList;
+  final Map<String, LabelStatus> _statusMap = {};
+  // final bool memoryOptimized;
+
   int _currentIndex = 0;
+  int _completeCount = 0;
+  int _warningCount = 0;
   bool _isLoaded = false;
 
-  LabelingDataManager({required this.project, required this.storageHelper, this.initialDataList, this.memoryOptimized = false});
+  LabelingDataManager({required this.project, required this.storageHelper, this.initialDataList});
+  // LabelingDataManager({required this.project, required this.storageHelper, this.initialDataList, this.memoryOptimized = false});
 
   /// ✅ 데이터 로드
   Future<void> load() async {
@@ -32,53 +36,42 @@ class LabelingDataManager {
     _isLoaded = true;
   }
 
-  bool get isLoaded => _isLoaded;
-  List<UnifiedData> get allData => _dataList;
-  UnifiedData get currentData => _dataList[_currentIndex];
-
-  int get totalCount => _dataList.length;
-  int get currentIndex => _currentIndex;
-  bool get hasNext => _currentIndex < _dataList.length - 1;
-  bool get hasPrevious => _currentIndex > 0;
-
   /// ✅ 인덱스 이동
-  void moveNext() {
-    if (hasNext) _currentIndex++;
+  void moveNext() => {if (hasNext) _currentIndex++};
+  void movePrevious() => {if (hasPrevious) _currentIndex--};
+  void jumpTo(int index) => {if (index >= 0 && index < _dataList.length) _currentIndex = index};
+
+  void updateStatusForCurrent(LabelStatus status) => {_dataList[_currentIndex] = _dataList[_currentIndex].copyWith(status: status)};
+  void updateStatus(String dataId, LabelStatus newStatus) {
+    final oldStatus = _statusMap[dataId];
+    if (oldStatus == LabelStatus.complete) _completeCount--;
+    if (oldStatus == LabelStatus.warning) _warningCount--;
+    if (newStatus == LabelStatus.complete) _completeCount++;
+    if (newStatus == LabelStatus.warning) _warningCount++;
+    _statusMap[dataId] = newStatus;
   }
-
-  void movePrevious() {
-    if (hasPrevious) _currentIndex--;
-  }
-
-  void jumpTo(int index) {
-    if (index >= 0 && index < _dataList.length) {
-      _currentIndex = index;
-    }
-  }
-
-  /// ✅ 상태 갱신
-  LabelStatus get currentStatus => _dataList[_currentIndex].status;
-
-  void updateStatusForCurrent(LabelStatus status) {
-    _dataList[_currentIndex] = _dataList[_currentIndex].copyWith(status: status);
-  }
-
-  void updateStatus(String dataId, LabelStatus status) {
-    final index = _dataList.indexWhere((e) => e.dataId == dataId);
-    if (index != -1) {
-      _dataList[index] = _dataList[index].copyWith(status: status);
-    }
-  }
-
-  /// ✅ 통계 정보
-  int get completeCount => _dataList.where((e) => e.status == LabelStatus.complete).length;
-  int get warningCount => _dataList.where((e) => e.status == LabelStatus.warning).length;
-  int get incompleteCount => totalCount - completeCount;
-  double get progressRatio => totalCount == 0 ? 0 : completeCount / totalCount;
 
   void reset() {
     _currentIndex = 0;
     _isLoaded = false;
     _dataList = [];
   }
+
+  /// ✅ Getter & Setter
+
+  bool get isLoaded => _isLoaded;
+  List<UnifiedData> get allData => _dataList;
+  UnifiedData get currentData => _dataList[_currentIndex];
+
+  LabelStatus get currentStatus => _dataList[_currentIndex].status;
+  int get totalCount => _dataList.length;
+  int get currentIndex => _currentIndex;
+  bool get hasNext => _currentIndex < _dataList.length - 1;
+  bool get hasPrevious => _currentIndex > 0;
+
+  /// ✅ 통계 정보
+  int get completeCount => _completeCount;
+  int get warningCount => _warningCount;
+  int get incompleteCount => totalCount - _completeCount;
+  double get progressRatio => totalCount == 0 ? 0.0 : _completeCount / totalCount;
 }

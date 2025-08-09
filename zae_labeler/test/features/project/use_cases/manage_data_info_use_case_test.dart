@@ -24,7 +24,7 @@ void main() {
         dataInfo: DataInfo(fileName: 'file.csv'),
       );
 
-      expect(added.dataInfos.length, 1);
+      expect(added!.dataInfos.length, 1);
       expect(added.dataInfos.first.fileName, 'file.csv');
     });
 
@@ -34,7 +34,7 @@ void main() {
       await repo.saveProject(project);
 
       final removed = await useCase.removeData(projectId: 'p2', dataIndex: 0);
-      expect(removed.dataInfos, isEmpty);
+      expect(removed!.dataInfos, isEmpty);
     });
 
     test('removeData throws on invalid index', () async {
@@ -54,7 +54,7 @@ void main() {
       await repo.saveProject(project);
 
       final cleared = await useCase.removeAll('p4');
-      expect(cleared.dataInfos, isEmpty);
+      expect(cleared!.dataInfos, isEmpty);
     });
   });
 }
