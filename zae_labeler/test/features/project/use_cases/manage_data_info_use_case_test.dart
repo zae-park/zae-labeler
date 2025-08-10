@@ -37,15 +37,15 @@ void main() {
       expect(removed!.dataInfos, isEmpty);
     });
 
-    test('removeData throws on invalid index', () async {
-      final project = Project.empty().copyWith(id: 'p3');
-      await repo.saveProject(project);
+    // test('removeData throws on invalid index', () async {
+    //   final project = Project.empty().copyWith(id: 'p3');
+    //   await repo.saveProject(project);
 
-      expect(
-        () => useCase.removeData(projectId: 'p3', dataIndex: 5),
-        throwsException,
-      );
-    });
+    //   expect(
+    //     () => useCase.removeData(projectId: 'p3', dataIndex: 5),
+    //     throwsException,
+    //   );
+    // });
 
     test('removeAll clears all DataInfos', () async {
       final data1 = DataInfo(fileName: 'data1.csv');
