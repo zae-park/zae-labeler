@@ -13,7 +13,7 @@ class SignInWithGitHubUseCase {
       final result = kIsWeb ? await _auth.signInWithPopup(githubProvider) : await _auth.signInWithProvider(githubProvider);
 
       return result.user;
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException catch (_) {
       rethrow;
     }
   }

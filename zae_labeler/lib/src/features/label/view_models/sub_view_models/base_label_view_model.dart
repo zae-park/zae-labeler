@@ -29,7 +29,8 @@ abstract class LabelViewModel extends ChangeNotifier {
 
   Future<void> loadLabel() async {
     debugPrint("[BaseLabelVM.loadLabel] BEFORE: ${labelModel.runtimeType}");
-    labelModel = await labelUseCases.single.loadLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, mode: mode);
+    labelModel = await labelUseCases.repository.loadLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, mode: mode);
+    // labelModel = await labelUseCases.single.loadLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, mode: mode);
     debugPrint("[BaseLabelVM.loadLabel] AFTER: ${labelModel.runtimeType}");
     notifyListeners();
   }
@@ -37,7 +38,8 @@ abstract class LabelViewModel extends ChangeNotifier {
   Future<void> saveLabel() async {
     debugPrint("[BaseLabelVM.saveLabel] labelModel: $labelModel");
     debugPrint("[BaseLabelVM.saveLabel] saving label: ${labelModel.label}");
-    await labelUseCases.single.saveLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, labelModel: labelModel);
+    await labelUseCases.repository.saveLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, labelModel: labelModel);
+    // await labelUseCases.single.saveLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, labelModel: labelModel);
   }
 
   Future<void> updateLabel(LabelModel newModel) async {

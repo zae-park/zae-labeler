@@ -5,13 +5,13 @@ import 'package:zae_labeler/src/features/label/models/label_model.dart';
 import 'package:zae_labeler/src/features/project/models/project_model.dart';
 import 'package:zae_labeler/src/features/project/view_models/project_view_model.dart';
 
-import '../../mocks/helpers/mock_share_helper.dart';
-import '../../mocks/repositories/mock_project_repository.dart';
-import '../../mocks/use_cases/project/mock_edit_project_use_case.dart';
-import '../../mocks/use_cases/project/mock_manage_class_list_use_case.dart';
-import '../../mocks/use_cases/project/mock_manage_data_info_use_case.dart';
-import '../../mocks/use_cases/project/mock_project_use_cases.dart';
-import '../../mocks/use_cases/project/mock_share_project_use_case.dart';
+import '../../../mocks/helpers/mock_share_helper.dart';
+import '../../../mocks/repositories/mock_project_repository.dart';
+import '../../../mocks/use_cases/project/mock_edit_project_use_case.dart';
+import '../../../mocks/use_cases/project/mock_manage_class_list_use_case.dart';
+import '../../../mocks/use_cases/project/mock_manage_data_info_use_case.dart';
+import '../../../mocks/use_cases/project/mock_project_use_cases.dart';
+import '../../../mocks/use_cases/project/mock_share_project_use_case.dart';
 
 void main() {
   group('ProjectViewModel', () {

@@ -7,36 +7,28 @@ class ManageClassListUseCase {
 
   ManageClassListUseCase({required this.repository});
 
-  Future<Project> addClass(String projectId, String newClass) async {
+  Future<Project?> addClass(String projectId, String newClass) async {
     final project = await repository.findById(projectId);
-    if (project != null && !project.classes.contains(newClass)) {
-      final updated = [...project.classes, newClass];
-      final updatedProject = project.copyWith(classes: updated);
-      await repository.saveProject(updatedProject);
-      return updatedProject;
-    }
-    return project!;
+    if (project == null) return null;
+    if (project.classes.contains(newClass)) return project;
+    final updated = [...project.classes, newClass];
+    await repository.updateProjectClasses(projectId, updated);
+    return await repository.findById(projectId);
   }
 
-  Future<Project> removeClass(String projectId, int index) async {
+  Future<Project?> removeClass(String projectId, int index) async {
     final project = await repository.findById(projectId);
-    if (project != null && index >= 0 && index < project.classes.length) {
-      final updated = List<String>.from(project.classes)..removeAt(index);
-      final updatedProject = project.copyWith(classes: updated);
-      await repository.saveProject(updatedProject);
-      return updatedProject;
-    }
-    return project!;
+    if (project == null || index < 0 || index >= project.classes.length) return project;
+    final updated = List<String>.from(project.classes)..removeAt(index);
+    await repository.updateProjectClasses(projectId, updated);
+    return await repository.findById(projectId);
   }
 
-  Future<Project> editClass(String projectId, int index, String newName) async {
+  Future<Project?> editClass(String projectId, int index, String newName) async {
     final project = await repository.findById(projectId);
-    if (project != null && index >= 0 && index < project.classes.length) {
-      final updated = List<String>.from(project.classes)..[index] = newName;
-      final updatedProject = project.copyWith(classes: updated);
-      await repository.saveProject(updatedProject);
-      return updatedProject;
-    }
-    return project!;
+    if (project == null || index < 0 || index >= project.classes.length) return project;
+    final updated = List<String>.from(project.classes)..[index] = newName;
+    await repository.updateProjectClasses(projectId, updated);
+    return await repository.findById(projectId);
   }
 }
