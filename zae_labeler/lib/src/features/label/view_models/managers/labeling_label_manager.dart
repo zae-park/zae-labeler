@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:zae_labeler/src/core/models/data_model.dart';
+import 'package:zae_labeler/src/core/models/data/data_model.dart';
 import 'package:zae_labeler/src/core/use_cases/app_use_cases.dart';
 import 'package:zae_labeler/src/features/label/models/label_model.dart';
 

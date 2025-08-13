@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:universal_html/html.dart' as html;
 
 import '../../features/project/models/project_model.dart';
-import '../../core/models/data_model.dart';
+import '../../core/models/data/data_model.dart';
 import '../../features/label/models/label_model.dart';
 import 'interface_storage_helper.dart';
 

@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
-import '../../../core/models/data_model.dart';
+import '../../../core/models/data/data_model.dart';
 import '../../label/models/label_model.dart';
 import '../../../platform_helpers/storage/get_storage_helper.dart';
 

@@ -6,7 +6,7 @@ import 'package:zae_labeler/src/features/label/view_models/labeling_view_model.d
 import 'package:zae_labeler/src/features/project/use_cases/share_project_use_case.dart';
 import 'package:zae_labeler/src/platform_helpers/storage/get_storage_helper.dart';
 
-import '../../../core/models/data_model.dart';
+import '../../../core/models/data/data_model.dart';
 import '../../label/models/label_model.dart';
 import '../models/project_model.dart';
 import '../../../platform_helpers/share/interface_share_helper.dart';

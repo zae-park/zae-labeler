@@ -1,6 +1,6 @@
 // 📁 sub_view_models/base_labeling_view_model.dart
 
-import '../../../../core/models/data_model.dart';
+import '../../../../core/models/data/data_model.dart';
 import '../label_view_model.dart';
 import 'base_labeling_view_model.dart';
 import '../../models/sub_models/classification_label_model.dart';

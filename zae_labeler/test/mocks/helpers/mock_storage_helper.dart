@@ -3,7 +3,7 @@ import 'package:zae_labeler/src/features/label/models/sub_models/segmentation_la
 import 'package:zae_labeler/src/platform_helpers/storage/interface_storage_helper.dart';
 import 'package:zae_labeler/src/features/project/models/project_model.dart';
 import 'package:zae_labeler/src/features/label/models/label_model.dart';
-import 'package:zae_labeler/src/core/models/data_model.dart';
+import 'package:zae_labeler/src/core/models/data/data_model.dart';
 
 class MockStorageHelper implements StorageHelperInterface {
   final Map<String, Map<String, LabelModel>> _labelStorage = {}; // 📦 label 저장소

@@ -1,6 +1,6 @@
 import '../models/label_model.dart';
 import '../../project/models/project_model.dart';
-import '../../../core/models/data_model.dart';
+import '../../../core/models/data/data_model.dart';
 import '../repository/label_repository.dart';
 
 /// ✅ 라벨의 외부 입출력 처리용 UseCase 모음

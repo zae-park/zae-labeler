@@ -1,6 +1,6 @@
 // 📁 views/widgets/shared/viewer_builder.dart
 import 'package:flutter/material.dart';
-import '../../../core/models/data_model.dart';
+import '../../../core/models/data/data_model.dart';
 import '../../../features/label/ui/widgets/viewers/image_viewer.dart';
 import '../../../features/label/ui/widgets/viewers/object_viewer.dart';
 import '../../../features/label/ui/widgets/viewers/time_series_viewer.dart';

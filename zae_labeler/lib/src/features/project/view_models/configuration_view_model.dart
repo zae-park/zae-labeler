@@ -7,7 +7,7 @@ import 'package:uuid/uuid.dart'; // 프로젝트 ID 생성
 import '../../../core/use_cases/app_use_cases.dart';
 import '../../label/models/label_model.dart';
 import '../models/project_model.dart';
-import '../../../core/models/data_model.dart';
+import '../../../core/models/data/data_model.dart';
 
 /// ✅ **ConfigurationViewModel**
 /// - 프로젝트 생성 및 설정을 관리하는 ViewModel

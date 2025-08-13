@@ -1,6 +1,6 @@
 import 'package:zae_labeler/src/features/project/models/project_model.dart';
 import 'package:zae_labeler/src/features/label/models/label_model.dart';
-import 'package:zae_labeler/src/core/models/data_model.dart';
+import 'package:zae_labeler/src/core/models/data/data_model.dart';
 import 'package:zae_labeler/src/platform_helpers/storage/get_storage_helper.dart';
 import 'package:zae_labeler/src/utils/label_validator.dart';
 

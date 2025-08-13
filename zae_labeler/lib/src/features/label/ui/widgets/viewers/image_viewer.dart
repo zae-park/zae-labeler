@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:convert';
-import '../../../../../core/models/data_model.dart'; // ✅ UnifiedData 모델 불러오기
+import '../../../../../core/models/data/data_model.dart'; // ✅ UnifiedData 모델 불러오기
 
 class ImageViewer extends StatelessWidget {
   final File? imageFile; // ✅ Native 파일 지원
