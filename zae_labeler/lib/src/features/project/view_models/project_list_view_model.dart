@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:zae_labeler/src/core/use_cases/app_use_cases.dart';
 import 'package:zae_labeler/src/features/label/use_cases/labeling_summary_use_case.dart';
-import '../models/project_model.dart';
+import '../../../core/models/project/project_model.dart';
 import '../../../platform_helpers/share/get_helper.dart';
 import 'project_view_model.dart';
 

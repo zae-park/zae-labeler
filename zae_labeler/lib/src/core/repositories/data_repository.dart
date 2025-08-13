@@ -1,4 +1,4 @@
-import '../../features/project/models/project_model.dart';
+import '../models/project/project_model.dart';
 import '../models/data/data_model.dart';
 import '../../platform_helpers/storage/interface_storage_helper.dart';
 import '../services/adaptive_data_loader.dart';

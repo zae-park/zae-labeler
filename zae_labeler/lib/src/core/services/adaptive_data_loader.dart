@@ -1,6 +1,6 @@
 // lib/utils/adaptive/adaptive_data_loader.dart
 import 'package:flutter/foundation.dart';
-import '../../features/project/models/project_model.dart';
+import '../models/project/project_model.dart';
 import '../models/data/data_model.dart';
 import '../../features/label/models/label_model.dart';
 import '../../platform_helpers/storage/interface_storage_helper.dart';

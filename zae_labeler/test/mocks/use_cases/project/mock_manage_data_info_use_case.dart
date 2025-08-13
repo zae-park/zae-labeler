@@ -1,6 +1,6 @@
 import 'package:zae_labeler/src/features/project/use_cases/manage_data_info_use_case.dart';
 import 'package:zae_labeler/src/core/models/data/data_model.dart';
-import 'package:zae_labeler/src/features/project/models/project_model.dart';
+import 'package:zae_labeler/src/core/models/project/project_model.dart';
 
 /// ManageDataInfoUseCase의 테스트용 모의 구현
 /// 실패 상황에서는 예외를 던지는 대신 null 또는 원본 프로젝트를 반환하도록 수정했습니다.

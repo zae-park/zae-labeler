@@ -13,7 +13,7 @@ import 'env.dart';
 import 'package:provider/provider.dart';
 
 import 'src/features/auth/view_models/auth_view_models.dart';
-import 'src/features/project/models/project_model.dart';
+import 'src/core/models/project/project_model.dart';
 
 import 'src/views/pages/not_found_page.dart';
 import 'src/views/pages/splash_page.dart';

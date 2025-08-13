@@ -1,4 +1,4 @@
-import '../models/project_model.dart';
+import '../../../core/models/project/project_model.dart';
 import '../repository/project_repository.dart';
 import '../logic/project_validator.dart';
 

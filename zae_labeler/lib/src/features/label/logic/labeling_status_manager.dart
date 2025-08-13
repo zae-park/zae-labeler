@@ -1,6 +1,6 @@
 import 'package:zae_labeler/src/features/label/use_cases/validate_label_use_case.dart';
 
-import '../../project/models/project_model.dart';
+import '../../../core/models/project/project_model.dart';
 import '../models/label_model.dart';
 import '../../../core/models/data/data_model.dart';
 import '../use_cases/label_use_cases.dart';

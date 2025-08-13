@@ -1,5 +1,5 @@
 // test/mocks/repositories/mock_label_repository.dart
-import 'package:zae_labeler/src/features/project/models/project_model.dart';
+import 'package:zae_labeler/src/core/models/project/project_model.dart';
 import 'package:zae_labeler/src/features/label/models/label_model.dart';
 import 'package:zae_labeler/src/core/models/data/data_model.dart';
 import 'package:zae_labeler/src/features/label/repository/label_repository.dart';

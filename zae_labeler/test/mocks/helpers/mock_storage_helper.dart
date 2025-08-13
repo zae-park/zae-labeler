@@ -1,7 +1,7 @@
 import 'package:zae_labeler/src/features/label/models/sub_models/classification_label_model.dart';
 import 'package:zae_labeler/src/features/label/models/sub_models/segmentation_label_model.dart';
 import 'package:zae_labeler/src/platform_helpers/storage/interface_storage_helper.dart';
-import 'package:zae_labeler/src/features/project/models/project_model.dart';
+import 'package:zae_labeler/src/core/models/project/project_model.dart';
 import 'package:zae_labeler/src/features/label/models/label_model.dart';
 import 'package:zae_labeler/src/core/models/data/data_model.dart';
 

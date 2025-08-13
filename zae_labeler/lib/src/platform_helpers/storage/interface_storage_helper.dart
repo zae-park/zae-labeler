@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../core/models/data/data_model.dart';
 import '../../features/label/models/label_model.dart';
-import '../../features/project/models/project_model.dart';
+import '../../core/models/project/project_model.dart';
 import '../../features/label/models/sub_models/classification_label_model.dart';
 import '../../features/label/models/sub_models/segmentation_label_model.dart';
 

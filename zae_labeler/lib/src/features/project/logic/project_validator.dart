@@ -1,4 +1,4 @@
-import '../models/project_model.dart';
+import '../../../core/models/project/project_model.dart';
 
 class ProjectValidator {
   /// ✅ 프로젝트 유효성 검증

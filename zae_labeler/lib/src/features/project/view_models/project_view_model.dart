@@ -8,7 +8,7 @@ import 'package:zae_labeler/src/platform_helpers/storage/get_storage_helper.dart
 
 import '../../../core/models/data/data_model.dart';
 import '../../label/models/label_model.dart';
-import '../models/project_model.dart';
+import '../../../core/models/project/project_model.dart';
 import '../../../platform_helpers/share/interface_share_helper.dart';
 
 import '../use_cases/project_use_cases.dart';

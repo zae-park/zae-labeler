@@ -1,7 +1,7 @@
 // 📁 lib/src/views/pages/sub_pages/cross_classification_labeling_page.dart
 import 'package:flutter/material.dart';
 
-import '../../../../project/models/project_model.dart';
+import '../../../../../core/models/project/project_model.dart';
 import '../../../view_models/labeling_view_model.dart';
 import '../../../../../views/widgets/shared/viewer_builder.dart';
 import 'base_labeling_page.dart';

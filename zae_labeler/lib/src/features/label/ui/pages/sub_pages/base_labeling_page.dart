@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:zae_labeler/l10n/app_localizations.dart';
 import 'package:zae_labeler/src/features/project/view_models/managers/progress_notifier.dart';
 
-import '../../../../project/models/project_model.dart';
+import '../../../../../core/models/project/project_model.dart';
 import '../../../view_models/labeling_view_model.dart';
 import '../../../../../views/widgets/navigator.dart';
 import '../../../../../views/widgets/shared/labeling_progress.dart';

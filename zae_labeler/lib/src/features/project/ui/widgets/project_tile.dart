@@ -5,7 +5,7 @@ import 'package:zae_labeler/common/i18n.dart';
 import 'package:zae_labeler/common/common_widgets.dart';
 import 'package:zae_labeler/src/features/project/ui/widgets/progress_indicator.dart';
 import '../../../../core/use_cases/app_use_cases.dart';
-import '../../models/project_model.dart';
+import '../../../../core/models/project/project_model.dart';
 import '../../view_models/project_view_model.dart';
 import '../../view_models/configuration_view_model.dart';
 import '../../../label/ui/pages/labeling_page.dart';
