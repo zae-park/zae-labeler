@@ -1,116 +1,82 @@
-// lib/src/models/project_model.dart
+// lib/src/models/project_model.dart  (또는 이동: lib/src/core/models/project/project_model.dart)
 import 'dart:convert';
-
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:zae_labeler/src/platform_helpers/storage/get_storage_helper.dart';
 
 import '../data/data_model.dart';
+// ✅ label_model은 아직 core로 안 옮겼으므로 기존 경로 그대로 유지
 import '../../../features/label/models/label_model.dart';
-import '../../../platform_helpers/storage/get_storage_helper.dart';
 
-/*
-이 파일은 프로젝트 모델을 정의하며, 프로젝트의 주요 정보와 라벨 데이터를 관리하는 기능을 포함합니다.
-Project 클래스는 프로젝트 ID, 이름, 라벨링 모드, 클래스 목록, 데이터 경로 등을 저장하며,
-라벨 데이터를 `LabelModel`을 기반으로 로드하고 JSON 형식으로 변환할 수 있습니다.
-*/
+/// 프로젝트 도메인 엔티티(순수 객체).
+/// - 저장소/뷰모델/페이지에 의존하지 않음 (ChangeNotifier 제거)
+/// - 모든 필드는 불변(final), 상태 변경은 copyWith로만 수행
+/// - JSON 직렬화/역직렬화만 담당
+class Project {
+  final String id; // 프로젝트 고유 ID
+  final String name; // 프로젝트 이름
+  final LabelingMode mode; // 라벨링 모드 (label_model에서 제공)
+  final List<String> classes; // 프로젝트에서 사용하는 클래스 목록
+  final List<DataInfo> dataInfos; // 데이터 경로/메타 정보 (웹/네이티브 공용 구조)
+  final List<LabelModel> labels; // 라벨 데이터 (보관만 함. 가공/검증/변환은 UseCase/VM에서)
 
-/// ✅ 프로젝트 정보를 저장하는 클래스
-class Project extends ChangeNotifier {
-  String id; // 프로젝트 고유 ID
-  String name; // 프로젝트 이름
-  LabelingMode mode; // 라벨링 모드
-  List<String> classes; // 설정된 클래스 목록
-  List<DataInfo> dataInfos; // 데이터 경로
-  List<LabelModel> labels; // ✅ 라벨 데이터 관리
+  const Project({required this.id, required this.name, required this.mode, required this.classes, this.dataInfos = const [], this.labels = const []});
 
-  Project({required this.id, required this.name, required this.mode, required this.classes, this.dataInfos = const [], this.labels = const []});
+  /// 테스트/초기화용 빈 프로젝트
+  factory Project.empty() => const Project(id: 'empty', name: '', mode: LabelingMode.singleClassification, classes: <String>[]);
 
-  /// ✅ 테스트 및 초기화용 빈 프로젝트 생성자
-  factory Project.empty() => Project(id: 'empty', name: '', mode: LabelingMode.singleClassification, classes: const []);
-
-  /// ✅ 프로젝트 복사본을 생성하는 `copyWith` 메소드
+  /// 불변 객체 갱신 (얕은 복사)
   Project copyWith({String? id, String? name, LabelingMode? mode, List<String>? classes, List<DataInfo>? dataInfos, List<LabelModel>? labels}) {
     return Project(
       id: id ?? this.id,
       name: name ?? this.name,
       mode: mode ?? this.mode,
-      classes: classes ?? List.from(this.classes),
-      dataInfos: dataInfos ?? List.from(this.dataInfos),
-      labels: labels ?? List.from(this.labels),
+      classes: classes ?? List<String>.unmodifiable(this.classes),
+      dataInfos: dataInfos ?? List<DataInfo>.unmodifiable(this.dataInfos),
+      labels: labels ?? List<LabelModel>.unmodifiable(this.labels),
     );
   }
 
-  void updateName(String newName) {
-    name = newName;
-    notifyListeners();
-  }
-
-  void updateMode(LabelingMode newMode) {
-    mode = newMode;
-    notifyListeners();
-  }
-
-  void updateClasses(List<String> newClasses) {
-    classes = newClasses;
-    notifyListeners();
-  }
-
-  void updateDataInfos(List<DataInfo> newDataInfos) {
-    dataInfos = newDataInfos;
-    notifyListeners();
-  }
-
-  void addDataInfo(DataInfo newDataInfo) {
-    dataInfos = [...dataInfos, newDataInfo];
-    notifyListeners();
-  }
-
-  void removeDataInfoById(String dataId) {
-    dataInfos = dataInfos.where((d) => d.id != dataId).toList();
-    notifyListeners();
-  }
-
-  void resetLabels() {
-    labels = [];
-    notifyListeners();
-  }
-
-  void clearLabels() {
-    labels.clear();
-    notifyListeners();
-  }
-
-  /// ✅ JSON 데이터를 기반으로 `Project` 객체 생성
+  /// JSON → Project (라벨 키: 'label' | 'labels' 모두 허용)
   factory Project.fromJson(Map<String, dynamic> json) {
     final modeStr = json['mode'];
-    late final LabelingMode mode;
+    late final LabelingMode resolvedMode;
 
     try {
-      mode = LabelingMode.values.byName(modeStr);
+      resolvedMode = LabelingMode.values.byName(modeStr);
     } catch (_) {
       debugPrint("⚠️ Invalid labeling mode: $modeStr → fallback to singleClassification");
-      mode = LabelingMode.singleClassification;
+      resolvedMode = LabelingMode.singleClassification;
     }
 
+    // labels: 'label' or 'labels' 키 허용
+    final dynamic labelsRaw = json['label'] ?? json['labels'];
+
     return Project(
-      id: json['id'],
-      name: json['name'],
-      mode: mode,
-      classes: List<String>.from(json['classes']),
-      dataInfos: (json['dataInfos'] as List?)?.map((e) => DataInfo.fromJson(e)).toList() ?? [],
-      labels: (json['label'] as List?)?.map((e) => LabelModelConverter.fromJson(mode, e)).toList() ?? [],
+      id: json['id'] as String,
+      name: json['name'] as String,
+      mode: resolvedMode,
+      classes: List<String>.from(json['classes'] ?? const []),
+      dataInfos: (json['dataInfos'] as List?)?.map((e) => DataInfo.fromJson(e as Map<String, dynamic>)).toList().cast<DataInfo>() ?? const <DataInfo>[],
+      labels: (labelsRaw as List?)?.map((e) => LabelModelConverter.fromJson(resolvedMode, e)).toList().cast<LabelModel>() ?? const <LabelModel>[],
     );
   }
 
-  String toJsonString() => jsonEncode(toJson());
-
-  /// ✅ `Project` 객체를 JSON 형식으로 변환
+  /// Project → JSON
+  /// - includeLabels=false면 라벨은 제외 (목록 전송/목록 캐시 등에 유용)
   Map<String, dynamic> toJson({bool includeLabels = true}) {
-    final map = {'id': id, 'name': name, 'mode': mode.name, 'classes': classes, 'dataInfos': dataInfos.map((e) => e.toJson()).toList()};
+    final map = <String, dynamic>{
+      'id': id,
+      'name': name,
+      'mode': mode.name,
+      'classes': classes,
+      'dataInfos': dataInfos.map((e) => e.toJson()).toList(),
+    };
 
     if (includeLabels) {
       map['label'] = labels.map((e) => LabelModelConverter.toJson(e)).toList();
     }
-
     return map;
   }
+
+  String toJsonString({bool includeLabels = true}) => jsonEncode(toJson(includeLabels: includeLabels));
 }
