@@ -1,11 +1,13 @@
+// lib/src/features/project/repository/project_repository.dart
+import 'package:collection/collection.dart' show IterableExtension; // firstWhereOrNull
 import '../../../core/models/data/data_model.dart';
 import '../../label/models/label_model.dart';
 import '../../../core/models/project/project_model.dart';
 import '../../../platform_helpers/storage/get_storage_helper.dart';
 
 /// ✅ Repository: 프로젝트 데이터와 관련된 도메인 연산을 담당
-/// - 프로젝트의 CRUD 및 설정 변경을 추상화하여, 도메인 로직과 저장소(StorageHelper) 간의 결합을 낮춤
-/// - UseCase는 ProjectRepository만을 의존하므로 테스트가 용이하고, 향후 구현체가 바뀌어도 영향을 최소화함
+/// - CRUD 및 설정 변경을 추상화 (StorageHelper ←→ Domain 사이 결합도↓)
+/// - Project는 불변이므로, 모든 '수정'은 copyWith로 새 인스턴스를 생성해 저장
 class ProjectRepository {
   final StorageHelperInterface storageHelper;
 
@@ -23,7 +25,8 @@ class ProjectRepository {
   /// 🔹 특정 ID의 프로젝트를 찾습니다. 없으면 null 반환
   Future<Project?> findById(String id) async {
     final list = await fetchAllProjects();
-    return list.where((p) => p.id == id).firstOrNull;
+    return list.firstWhereOrNull((p) => p.id == id);
+    // (컬렉션 의존을 피하려면 try/catch로 firstWhere를 감싸도 됩니다)
   }
 
   /// 🔹 단일 프로젝트를 저장 (존재 시 갱신, 없으면 추가)
@@ -36,7 +39,6 @@ class ProjectRepository {
     } else {
       current.add(project);
     }
-
     await saveAll(current);
   }
 
@@ -45,7 +47,7 @@ class ProjectRepository {
     await storageHelper.saveProjectList(list);
   }
 
-  /// 🔹 특정 ID의 프로젝트를 삭제 + 라벨도 함께 삭제
+  /// 🔹 특정 ID의 프로젝트를 삭제 + 라벨도 함께 삭제(스토리지 기준)
   Future<void> deleteById(String id) async {
     final list = await fetchAllProjects();
     final updated = list.where((p) => p.id != id).toList();
@@ -58,73 +60,64 @@ class ProjectRepository {
     await saveAll([]);
   }
 
-  /// 🔹 특정 프로젝트의 라벨만 삭제
+  /// 🔹 특정 프로젝트의 라벨만 삭제 (스토리지 측)
+  ///
+  /// ⚠️ 프로젝트 엔티티 내부의 labels 필드까지 비우고 싶다면
+  ///     `clearLabelsInProjectJson`을 추가로 호출하세요.
   Future<void> clearLabels(String projectId) async {
     await storageHelper.deleteProjectLabels(projectId);
   }
 
+  /// (선택) 🔹 프로젝트 JSON 내부의 labels도 빈 배열로 저장
+  Future<void> clearLabelsInProjectJson(String projectId) async {
+    final project = await findById(projectId);
+    if (project == null) return;
+    final updated = project.copyWith(labels: const <LabelModel>[]);
+    await saveProject(updated);
+  }
+
   // =========================
-  // ⚙️ 프로젝트 속성 변경
+  // ⚙️ 프로젝트 속성 변경 (copyWith 기반)
   // =========================
 
   /// 🔹 라벨링 모드 변경 후 저장
   Future<Project?> updateProjectMode(String id, LabelingMode newMode) async {
-    final project = await findById(id);
-    if (project != null) {
-      project.updateMode(newMode);
-      await saveProject(project);
-    }
-    return project;
+    return _update(id, (p) => p.copyWith(mode: newMode));
   }
 
   /// 🔹 클래스 목록 변경 후 저장
-  Future<void> updateProjectClasses(String id, List<String> newClasses) async {
-    final project = await findById(id);
-    if (project != null) {
-      project.updateClasses(newClasses);
-      await saveProject(project);
-    }
+  Future<Project?> updateProjectClasses(String id, List<String> newClasses) async {
+    return _update(id, (p) => p.copyWith(classes: List<String>.unmodifiable(newClasses)));
   }
 
   /// 🔹 이름 변경 후 저장
   Future<Project?> updateProjectName(String id, String newName) async {
-    final project = await findById(id);
-    if (project != null) {
-      project.updateName(newName);
-      await saveProject(project);
-    }
-    return project;
+    return _update(id, (p) => p.copyWith(name: newName));
   }
 
   // =========================
-  // 📂 데이터 경로 관리
+  // 📂 데이터 경로 관리 (copyWith 기반)
   // =========================
 
   /// 🔹 데이터 목록 전체 교체 후 저장
-  Future<void> updateDataInfos(String id, List<DataInfo> newDataInfos) async {
-    final project = await findById(id);
-    if (project != null) {
-      project.updateDataInfos(newDataInfos);
-      await saveProject(project);
-    }
+  Future<Project?> updateDataInfos(String id, List<DataInfo> newDataInfos) async {
+    return _update(id, (p) => p.copyWith(dataInfos: List<DataInfo>.unmodifiable(newDataInfos)));
   }
 
   /// 🔹 단일 데이터 추가 후 저장
-  Future<void> addDataInfo(String id, DataInfo newDataInfo) async {
-    final project = await findById(id);
-    if (project != null) {
-      project.addDataInfo(newDataInfo);
-      await saveProject(project);
-    }
+  Future<Project?> addDataInfo(String id, DataInfo newDataInfo) async {
+    return _update(id, (p) {
+      final next = List<DataInfo>.from(p.dataInfos)..add(newDataInfo);
+      return p.copyWith(dataInfos: List<DataInfo>.unmodifiable(next));
+    });
   }
 
   /// 🔹 특정 데이터 ID 기준으로 제거 후 저장
-  Future<void> removeDataInfoById(String id, String dataInfoId) async {
-    final project = await findById(id);
-    if (project != null) {
-      project.removeDataInfoById(dataInfoId);
-      await saveProject(project);
-    }
+  Future<Project?> removeDataInfoById(String id, String dataInfoId) async {
+    return _update(id, (p) {
+      final next = p.dataInfos.where((d) => d.id != dataInfoId).toList();
+      return p.copyWith(dataInfos: List<DataInfo>.unmodifiable(next));
+    });
   }
 
   // =========================
@@ -139,5 +132,17 @@ class ProjectRepository {
   /// 🔹 프로젝트 설정을 외부로 내보냄 (예: 다운로드 가능한 JSON 경로 반환)
   Future<String> exportConfig(Project project) async {
     return await storageHelper.downloadProjectConfig(project);
+  }
+
+  // =========================
+  // 🔧 내부 공통 업데이트 헬퍼
+  // =========================
+
+  Future<Project?> _update(String id, Project Function(Project) update) async {
+    final project = await findById(id);
+    if (project == null) return null;
+    final updated = update(project);
+    await saveProject(updated);
+    return updated;
   }
 }
