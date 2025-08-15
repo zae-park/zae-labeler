@@ -10,9 +10,6 @@ import 'package:zae_labeler/src/features/label/models/sub_models/classification_
 
 import '../models/label_model.dart';
 import '../repository/label_repository.dart';
-import 'validate_label_use_case.dart';
-import 'labeling_summary_use_case.dart';
-import 'label_io_use_case.dart';
 
 class LabelUseCases {
   final LabelRepository repository;
