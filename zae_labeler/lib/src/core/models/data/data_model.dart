@@ -11,9 +11,8 @@ import 'dart:io';
 
 import 'package:uuid/uuid.dart';
 
+import 'package:zae_labeler/features/label/models/file_type.dart';
 import '../../../features/label/models/label_model.dart';
-
-enum FileType { series, object, image, unsupported }
 
 /// ✅ Represents a data path that can be used to load file content (Web or Native)
 class DataInfo {
