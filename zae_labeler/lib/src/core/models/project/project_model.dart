@@ -1,9 +1,9 @@
 // lib/src/models/project_model.dart  (또는 이동: lib/src/core/models/project/project_model.dart)
 import 'dart:convert';
 import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:zae_labeler/src/core/models/data/data_info.dart';
 import 'package:zae_labeler/src/platform_helpers/storage/get_storage_helper.dart';
 
-import '../data/data_model.dart';
 // ✅ label_model은 아직 core로 안 옮겼으므로 기존 경로 그대로 유지
 import '../../../features/label/models/label_model.dart';
 
