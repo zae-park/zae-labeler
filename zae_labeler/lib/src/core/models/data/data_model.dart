@@ -9,48 +9,9 @@ UnifiedData: 실제 파싱된 콘텐츠 및 라벨링 상태
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:uuid/uuid.dart';
-
+import 'package:zae_labeler/src/core/models/data/data_info.dart';
 import 'package:zae_labeler/src/core/models/data/file_type.dart';
 import '../../../features/label/models/label_model.dart';
-
-/// ✅ Represents a data path that can be used to load file content (Web or Native)
-class DataInfo {
-  final String id; // 고유 식별자
-  final String fileName; // 파일 이름
-  final String? base64Content; // Web용 base64 인코딩 데이터
-  final String? filePath; // Native용 파일 경로
-
-  DataInfo({String? id, required this.fileName, this.base64Content, this.filePath}) : id = id ?? const Uuid().v4();
-
-  /// 실제 파일 내용 로드 (Web/Naitve 환경 자동 대응)
-  Future<String?> loadData() async {
-    if (base64Content != null) {
-      if ([".png", ".jpg", ".jpeg"].any((ext) => fileName.endsWith(ext))) {
-        return base64Content; // 이미지일 경우 디코딩 없음
-      }
-      return utf8.decode(base64Decode(base64Content!));
-    } else if (filePath != null) {
-      final file = File(filePath!);
-      if (file.existsSync()) return await file.readAsString();
-    }
-    return null;
-  }
-
-  factory DataInfo.fromJson(Map<String, dynamic> json) => DataInfo(
-        id: json['id'],
-        fileName: json['fileName'],
-        base64Content: json['base64Content'],
-        filePath: json['filePath'],
-      );
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'fileName': fileName,
-        'base64Content': base64Content,
-        'filePath': filePath,
-      };
-}
 
 /// ✅ Unified data object after loading/parsing the content
 class UnifiedData {
@@ -76,7 +37,7 @@ class UnifiedData {
     this.status = LabelStatus.incomplete,
   });
 
-  factory UnifiedData.empty() => UnifiedData(dataInfo: DataInfo(fileName: 'empty'), fileType: FileType.unsupported);
+  factory UnifiedData.empty() => UnifiedData(dataInfo: const DataInfo(fileName: 'empty'), fileType: FileType.unsupported);
 
   DataInfo toDataInfo() => DataInfo(id: dataId, fileName: fileName, filePath: file?.path, base64Content: content);
 
