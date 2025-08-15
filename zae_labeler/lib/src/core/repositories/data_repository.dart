@@ -1,5 +1,6 @@
 import 'package:zae_labeler/src/core/models/data/data_info.dart';
-import 'package:zae_labeler/src/core/models/data/unified_data.dart';
+import 'package:zae_labeler/src/features/data/models/data_with_status.dart';
+import 'package:zae_labeler/src/features/data/services/adaptive_unified_data_loader.dart';
 
 import '../models/project/project_model.dart';
 import '../../platform_helpers/storage/interface_storage_helper.dart';
@@ -20,7 +21,7 @@ class DataRepository {
   ///
   /// - 플랫폼(web/native)에 따라 라벨 기반 혹은 파일 경로 기반으로 데이터를 구성합니다.
   /// - ViewModel 등 상위 계층은 플랫폼 구분 없이 동일하게 접근할 수 있습니다.
-  Future<List<UnifiedData>> loadUnifiedData(Project project) async {
+  Future<List<DataWithStatus>> loadUnifiedData(Project project) async {
     return await loadDataAdaptively(project, storageHelper);
   }
 
