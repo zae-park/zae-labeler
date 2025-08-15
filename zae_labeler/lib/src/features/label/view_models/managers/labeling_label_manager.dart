@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:zae_labeler/src/core/models/data/data_model.dart';
 import 'package:zae_labeler/src/core/use_cases/app_use_cases.dart';
+import 'package:zae_labeler/src/features/data/models/data_with_status.dart';
 import 'package:zae_labeler/src/features/label/models/label_model.dart';
 
 import '../label_view_model.dart';
@@ -26,15 +26,15 @@ class LabelingLabelManager {
   LabelViewModel? get currentLabelVM => _current;
 
   /// 데이터에 대응하는 라벨을 로드하거나 생성 (cache 유지)
-  Future<void> loadLabelFor(UnifiedData data) async {
-    final id = data.dataId;
+  Future<void> loadLabelFor(DataWithStatus dws) async {
+    final id = dws.data.dataId;
 
     _current = _labelCache.putIfAbsent(id, () {
       final vm = LabelViewModelFactory.create(
         projectId: project.id,
-        dataId: data.dataId,
-        dataFilename: data.fileName,
-        dataPath: data.dataPath ?? '',
+        dataId: dws.data.dataId,
+        dataFilename: dws.data.fileName,
+        dataPath: dws.data.dataInfo.filePath ?? '',
         mode: project.mode,
         labelUseCases: appUseCases.label,
       );
@@ -46,12 +46,12 @@ class LabelingLabelManager {
   }
 
   /// 해당 데이터에 대한 라벨 상태를 갱신하고, 콜백으로 전달
-  Future refreshStatusFor(UnifiedData data, void Function(LabelStatus) onStatusEvaluated) async {
+  Future refreshStatusFor(DataWithStatus dws, void Function(LabelStatus) onStatusEvaluated) async {
     // 현재 current VM을 보존
     final previousCurrent = _current;
 
     // 대상 데이터의 VM을 캐시에서 가져오거나 새로 생성
-    final vm = getOrCreateLabelVM(dataId: data.dataId, filename: data.fileName, path: data.dataPath ?? '', mode: project.mode);
+    final vm = getOrCreateLabelVM(dataId: dws.data.dataId, filename: dws.data.fileName, path: dws.data.dataInfo.filePath ?? '', mode: project.mode);
 
     // 해당 데이터의 라벨 로드
     await vm.loadLabel();
