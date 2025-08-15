@@ -96,3 +96,26 @@ Firebase Authentication을 통해 로그인 기능을 제공합니다. 현재 �
 - View에서의 UI 다양성/재사용성을 고려한 reusable widget을 구현해야합니다.
 - 각 page에서는 공통 AppHeader를 사용하여 일관성을 유지합니다.
 
+
+### FSD
+
+```
+lib/src/core/models/data/           # ✅ 코어: 값(모델)만, IO/라벨/플랫폼 모름
+├─ file_type.dart                   # 파일 확장자→유형 판정 유틸
+├─ data_info.dart                   # 원본 데이터 메타(파일명, base64, 경로)
+└─ unified_data.dart                # 파싱 결과 컨테이너(값만 보관)
+
+lib/src/features/data/              # ✅ 피처: IO, 파싱, 조합(상태 합성)
+├─ services/
+│  ├─ data_loader_interface.dart    # DataInfo → raw 로딩 인터페이스
+│  ├─ data_loader.dart              # createDataLoader() 팩토리(조건부 import)
+│  ├─ data_loader_io_impl.dart      # (io) 파일/바이트 읽기→텍스트/베이스64
+│  ├─ data_loader_web_impl.dart     # (web) base64 그대로 사용
+│  ├─ data_parser.dart              # raw → UnifiedData 변환(csv/json/image)
+│  ├─ unified_data_service.dart     # fromDataInfo / fromDataId / toDataInfo(집약)
+│  └─ adaptive_unified_data_loader.dart # 프로젝트 단위 일괄 로딩 + 라벨 상태 합성
+└─ models/
+   └─ data_with_status.dart         # (선택) UI용 DTO: UnifiedData + LabelStatus
+
+111
+
