@@ -22,40 +22,27 @@ class LabelRepository {
   // 📌 단일 라벨 처리
   // ─────────────────────────────────────────────────────────────────────────────
 
-  Future<void> saveLabel({
-    required String projectId,
-    required String dataId,
-    required String dataPath,
-    required LabelModel labelModel,
-  }) async {
+  Future<void> saveLabel({required String projectId, required String dataId, required String dataPath, required LabelModel labelModel}) async {
     await storageHelper.saveLabelData(projectId, dataId, dataPath, labelModel);
   }
 
-  Future<LabelModel> loadLabel({
-    required String projectId,
-    required String dataId,
-    required String dataPath,
-    required LabelingMode mode,
-  }) async {
+  Future<LabelModel> loadLabel({required String projectId, required String dataId, required String dataPath, required LabelingMode mode}) async {
     return await storageHelper.loadLabelData(projectId, dataId, dataPath, mode);
   }
 
-  Future<LabelModel> loadOrCreateLabel({
-    required String projectId,
-    required String dataId,
-    required String dataPath,
-    required LabelingMode mode,
-  }) async {
+  Future<LabelModel> loadOrCreateLabel({required String projectId, required String dataId, required String dataPath, required LabelingMode mode}) async {
     try {
-      return await loadLabel(
-        projectId: projectId,
-        dataId: dataId,
-        dataPath: dataPath,
-        mode: mode,
-      );
+      return await loadLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, mode: mode);
     } catch (_) {
       return LabelModelFactory.createNew(mode, dataId: dataId);
     }
+  }
+
+  Future<void> deleteLabelByDataId({required String projectId, required String dataId}) async {
+    // storageHelper 쪽에 대응 API가 없으면, 임시로 전체 로드 → 필터 → saveAll 로 처리
+    final all = await loadAllLabels(projectId);
+    final filtered = all.where((e) => e.dataId != dataId).toList();
+    await saveAllLabels(projectId, filtered);
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -87,11 +74,7 @@ class LabelRepository {
     return await storageHelper.exportAllLabels(project, labels, []);
   }
 
-  Future<String> exportLabelsWithData(
-    Project project,
-    List<LabelModel> labels,
-    List<DataInfo> dataInfos,
-  ) async {
+  Future<String> exportLabelsWithData(Project project, List<LabelModel> labels, List<DataInfo> dataInfos) async {
     return await storageHelper.exportAllLabels(project, labels, dataInfos);
   }
 
