@@ -117,5 +117,15 @@ lib/src/features/data/              # ✅ 피처: IO, 파싱, 조합(상태 합�
 └─ models/
    └─ data_with_status.dart         # (선택) UI용 DTO: UnifiedData + LabelStatus
 
-111
+```
+
+```
+ViewModel/UseCase
+  └─ AdaptiveUnifiedDataLoader.load(Project)
+       ├─ StorageHelper.loadAllLabelModels(project.id)  // 상태 합성용
+       └─ UnifiedDataService.fromDataInfo(DataInfo)
+            ├─ DataLoader.loadRaw(info)                 // 웹/네이티브 분기
+            └─ DataParser.parse(info, type, raw)        // csv/json/image 파싱
+
+```
 
