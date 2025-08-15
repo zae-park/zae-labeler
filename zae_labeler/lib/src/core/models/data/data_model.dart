@@ -11,7 +11,7 @@ import 'dart:io';
 
 import 'package:uuid/uuid.dart';
 
-import 'package:zae_labeler/features/label/models/file_type.dart';
+import 'package:zae_labeler/src/core/models/data/file_type.dart';
 import '../../../features/label/models/label_model.dart';
 
 /// ✅ Represents a data path that can be used to load file content (Web or Native)
