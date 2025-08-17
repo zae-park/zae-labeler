@@ -12,6 +12,15 @@ import '../../core/models/project/project_model.dart';
 
 class StorageHelperImpl implements StorageHelperInterface {
   // ==============================
+  // 📌 **Utility**
+  // ==============================
+
+  String _stripDataUrl(String s) {
+    final i = s.indexOf(',');
+    return s.startsWith('data:') && i != -1 ? s.substring(i + 1) : s;
+  }
+
+  // ==============================
   // 📌 **Project Configuration IO**
   // ==============================
 
@@ -195,64 +204,73 @@ class StorageHelperImpl implements StorageHelperInterface {
   // ==============================
 
   @override
-  Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataInfo> fileDataList) async {
+  Future<String> exportAllLabels(Project project, List<LabelModel> labels, List<DataInfo> fileDataList) async {
     final archive = Archive();
 
-    // 1) 원본 파일 추가 (바이트 기준 처리)
+    // 1) 원본 파일들을 zip에 포함 (바이너리 안전)
     for (final info in fileDataList) {
       List<int>? bytes;
-
       if (info.filePath != null) {
         final f = File(info.filePath!);
-        if (await f.exists()) {
-          bytes = await f.readAsBytes(); // ✅ 바이너리 안전
-        }
-      } else if (info.base64Content != null) {
-        final raw = info.base64Content!;
-        final b64 = raw.startsWith('data:') ? raw.substring(raw.indexOf(',') + 1) : raw;
-        bytes = base64Decode(b64); // ✅ 웹 업로드 base64 대응
+        if (await f.exists()) bytes = await f.readAsBytes();
+      } else if (info.base64Content != null && info.base64Content!.isNotEmpty) {
+        bytes = base64Decode(_stripDataUrl(info.base64Content!));
       }
-
       if (bytes != null) {
-        final name = info.fileName;
-        archive.addFile(ArchiveFile(name, bytes.length, bytes));
+        archive.addFile(ArchiveFile(info.fileName, bytes.length, bytes));
       }
     }
 
-    // 2) labels.json 추가
-    final entries = labelModels
-        .map((label) => {
-              'data_id': label.dataId,
-              'labeled_at': label.labeledAt.toIso8601String(),
-              'label_data': LabelModelConverter.toJson(label),
+    // 2) labels.json 생성 (표준 래퍼)
+    final entries = labels
+        .map((m) => {
+              'data_id': m.dataId,
+              'data_path': m.dataPath,
+              'labeled_at': m.labeledAt.toIso8601String(),
+              'mode': project.mode.name, // 있으면 좋음
+              'label_data': LabelModelConverter.toJson(m),
             })
         .toList();
 
     final labelsJson = jsonEncode(entries);
     archive.addFile(ArchiveFile('labels.json', labelsJson.length, utf8.encode(labelsJson)));
 
-    // 3) zip 생성
-    final dir = await getApplicationDocumentsDirectory();
-    final zipFile = File(p.join(dir.path, '${project.name}_labels.zip'));
-    final zipData = ZipEncoder().encode(archive);
-    await zipFile.writeAsBytes(zipData!);
-    return zipFile.path;
+    // 3) zip 파일 저장
+    final dir = await Directory.systemTemp.createTemp('zae_label_export');
+    final outPath = p.join(dir.path, '${project.name}_labels.zip');
+    final data = ZipEncoder().encode(archive)!;
+    await File(outPath).writeAsBytes(data);
+    return outPath; // 저장된 경로 반환
   }
 
   @override
   Future<List<LabelModel>> importAllLabels() async {
+    // 1) read
     final directory = await getApplicationDocumentsDirectory();
     final file = File('${directory.path}/labels_import.json');
 
-    if (await file.exists()) {
-      final content = await file.readAsString();
-      final jsonData = jsonDecode(content);
-      return (jsonData as List).map((entry) {
-        final mode = LabelingMode.values.firstWhere((e) => e.toString() == entry['mode']);
-        return LabelModelConverter.fromJson(mode, entry['label_data']);
-      }).toList();
+    final text = await file.readAsString();
+
+    // 2) parse
+    final list = (jsonDecode(text) as List).cast<Map<String, dynamic>>();
+
+    // 3) entry별 LabelModel로 변환
+    final result = <LabelModel>[];
+    for (final e in list) {
+      final modeStr = e['mode'] as String?;
+      LabelingMode mode;
+      if (modeStr != null) {
+        mode = LabelingMode.values.firstWhere(
+          (m) => m.name == modeStr,
+          orElse: () => LabelingMode.singleClassification,
+        );
+      } else {
+        // ⚠️ 여기서 프로젝트 모드를 주입할 수 있으면 더 안전합니다.
+        mode = LabelingMode.singleClassification;
+      }
+      result.add(LabelModelConverter.fromJson(mode, e));
     }
-    return [];
+    return result;
   }
 
   // ==============================

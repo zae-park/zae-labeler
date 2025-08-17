@@ -12,6 +12,14 @@ import '../../features/label/models/label_model.dart';
 
 class StorageHelperImpl implements StorageHelperInterface {
   // ==============================
+  // 📌 **Utility**
+  // ==============================
+  String _stripDataUrl(String s) {
+    final i = s.indexOf(',');
+    return s.startsWith('data:') && i != -1 ? s.substring(i + 1) : s;
+  }
+
+  // ==============================
   // 📌 **Project Configuration IO**
   // ==============================
 
@@ -167,78 +175,69 @@ class StorageHelperImpl implements StorageHelperInterface {
   // ==============================
 
   @override
-  Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataInfo> fileDataList) async {
+  Future<String> exportAllLabels(
+    Project project,
+    List<LabelModel> labels,
+    List<DataInfo> fileDataList,
+  ) async {
     final archive = Archive();
 
-    // 1) 원본 파일(base64) → 바이트로 변환 후 포함
+    // 1) 원본 파일: base64 → bytes
     for (final info in fileDataList) {
       if (info.base64Content == null || info.base64Content!.isEmpty) continue;
-      final raw = info.base64Content!;
-      final b64 = raw.startsWith('data:') ? raw.substring(raw.indexOf(',') + 1) : raw;
-      final bytes = base64Decode(b64);
+      final bytes = base64Decode(_stripDataUrl(info.base64Content!));
       archive.addFile(ArchiveFile(info.fileName, bytes.length, bytes));
     }
 
     // 2) labels.json
-    final entries = labelModels
-        .map((label) => {
-              'data_id': label.dataId,
-              'labeled_at': label.labeledAt.toIso8601String(),
-              'label_data': LabelModelConverter.toJson(label),
+    final entries = labels
+        .map((m) => {
+              'data_id': m.dataId,
+              'data_path': m.dataPath,
+              'labeled_at': m.labeledAt.toIso8601String(),
+              'mode': project.mode.name,
+              'label_data': LabelModelConverter.toJson(m),
             })
         .toList();
     final labelsJson = jsonEncode(entries);
     archive.addFile(ArchiveFile('labels.json', labelsJson.length, utf8.encode(labelsJson)));
 
     // 3) 브라우저 다운로드 트리거
-    final zipData = ZipEncoder().encode(archive)!;
-    final blob = html.Blob([zipData]);
+    final zip = ZipEncoder().encode(archive)!;
+    final blob = html.Blob([zip]);
     final url = html.Url.createObjectUrlFromBlob(blob);
     html.AnchorElement(href: url)
       ..setAttribute('download', '${project.name}_labels.zip')
       ..click();
     html.Url.revokeObjectUrl(url);
-    return '${project.name}_labels.zip (downloaded)';
+    return '${project.name}_labels.zip';
   }
 
   @override
   Future<List<LabelModel>> importAllLabels() async {
-    final completer = Completer<List<LabelModel>>();
-
-    final input = html.FileUploadInputElement();
-    input.accept = '.json';
-    input.multiple = false;
-
-    input.onChange.listen((event) async {
-      final files = input.files;
-      if (files != null && files.isNotEmpty) {
-        final reader = html.FileReader();
-        reader.readAsText(files[0]);
-
-        reader.onLoadEnd.listen((event) {
-          try {
-            final jsonData = jsonDecode(reader.result as String);
-            if (jsonData is List) {
-              final labels = jsonData.map((entry) {
-                final mode = LabelingMode.values.firstWhere((e) => e.toString() == entry['mode']);
-                return LabelModelConverter.fromJson(mode, entry['label_data']);
-              }).toList();
-              completer.complete(labels);
-            } else {
-              throw const FormatException('Invalid JSON format. Expected a list.');
-            }
-          } catch (e) {
-            completer.completeError(e);
-          }
-        });
-        reader.onError.listen((error) => completer.completeError(error));
-      } else {
-        completer.completeError(Exception('No file selected.'));
-      }
-    });
-
+    // 1) 파일 input 활용(기존 코드 유지)
+    final input = html.FileUploadInputElement()..accept = '.json,application/json';
     input.click();
-    return completer.future;
+    await input.onChange.first;
+    if (input.files == null || input.files!.isEmpty) return const [];
+
+    final file = input.files!.first;
+    final reader = html.FileReader()..readAsText(file);
+    await reader.onLoadEnd.first;
+
+    final text = reader.result as String;
+    final list = (jsonDecode(text) as List).cast<Map<String, dynamic>>();
+
+    // 2) entry별 변환
+    final result = <LabelModel>[];
+    for (final e in list) {
+      final modeStr = e['mode'] as String?;
+      final mode = modeStr != null
+          ? LabelingMode.values.firstWhere((m) => m.name == modeStr, orElse: () => LabelingMode.singleClassification)
+          : LabelingMode.singleClassification; // ⚠️ 가능하면 주입 모드 사용
+      result.add(LabelModelConverter.fromJson(mode, e));
+    }
+    return result;
   }
 
   // ==============================
@@ -247,13 +246,5 @@ class StorageHelperImpl implements StorageHelperInterface {
   @override
   Future<void> clearAllCache() async {
     html.window.localStorage.clear(); // ✅ localStorage 전체 삭제
-  }
-
-  // ==============================
-  // 📌 **Utility**
-  // ==============================
-  String stripDataUrlPrefix(String s) {
-    final i = s.indexOf(',');
-    return s.startsWith('data:') && i != -1 ? s.substring(i + 1) : s;
   }
 }
