@@ -100,7 +100,7 @@ class StorageHelperImpl implements StorageHelperInterface {
     Map<String, dynamic> labelEntry = {
       'data_id': dataId,
       'data_path': dataPath,
-      'mode': labelModel.mode.toString(),
+      'mode': labelModel.mode.name,
       'labeled_at': labelModel.labeledAt.toIso8601String(),
       'label_data': LabelModelConverter.toJson(labelModel),
     };
@@ -146,7 +146,7 @@ class StorageHelperImpl implements StorageHelperInterface {
     // ✅ LabelModel을 JSON으로 변환 후 저장
     List<Map<String, dynamic>> labelEntries = labels
         .map((label) => {
-              'mode': label.mode.toString(),
+              'mode': label.mode.name,
               'labeled_at': label.labeledAt.toIso8601String(),
               'label_data': LabelModelConverter.toJson(label),
             })
@@ -207,7 +207,7 @@ class StorageHelperImpl implements StorageHelperInterface {
   Future<String> exportAllLabels(Project project, List<LabelModel> labels, List<DataInfo> fileDataList) async {
     final archive = Archive();
 
-    // 1) 원본 파일들을 zip에 포함 (바이너리 안전)
+    // 1) 원본 파일(바이너리) 추가
     for (final info in fileDataList) {
       List<int>? bytes;
       if (info.filePath != null) {
@@ -221,26 +221,26 @@ class StorageHelperImpl implements StorageHelperInterface {
       }
     }
 
-    // 2) labels.json 생성 (표준 래퍼)
+    // 2) labels.json (표준 래퍼)
     final entries = labels
         .map((m) => {
               'data_id': m.dataId,
               'data_path': m.dataPath,
               'labeled_at': m.labeledAt.toIso8601String(),
-              'mode': project.mode.name, // 있으면 좋음
+              'mode': project.mode.name, // name 사용
               'label_data': LabelModelConverter.toJson(m),
             })
         .toList();
 
-    final labelsJson = jsonEncode(entries);
-    archive.addFile(ArchiveFile('labels.json', labelsJson.length, utf8.encode(labelsJson)));
+    final jsonText = jsonEncode(entries);
+    archive.addFile(ArchiveFile('labels.json', jsonText.length, utf8.encode(jsonText)));
 
-    // 3) zip 파일 저장
-    final dir = await Directory.systemTemp.createTemp('zae_label_export');
-    final outPath = p.join(dir.path, '${project.name}_labels.zip');
-    final data = ZipEncoder().encode(archive)!;
-    await File(outPath).writeAsBytes(data);
-    return outPath; // 저장된 경로 반환
+    // 3) zip 파일로 쓰기
+    final tmp = Directory.systemTemp;
+    final outPath = p.join(tmp.path, '${project.name}_labels.zip');
+    final zipData = ZipEncoder().encode(archive)!;
+    await File(outPath).writeAsBytes(zipData);
+    return outPath;
   }
 
   @override
@@ -251,26 +251,16 @@ class StorageHelperImpl implements StorageHelperInterface {
 
     final text = await file.readAsString();
 
-    // 2) parse
     final list = (jsonDecode(text) as List).cast<Map<String, dynamic>>();
-
-    // 3) entry별 LabelModel로 변환
-    final result = <LabelModel>[];
+    final models = <LabelModel>[];
     for (final e in list) {
-      final modeStr = e['mode'] as String?;
-      LabelingMode mode;
-      if (modeStr != null) {
-        mode = LabelingMode.values.firstWhere(
-          (m) => m.name == modeStr,
-          orElse: () => LabelingMode.singleClassification,
-        );
-      } else {
-        // ⚠️ 여기서 프로젝트 모드를 주입할 수 있으면 더 안전합니다.
-        mode = LabelingMode.singleClassification;
-      }
-      result.add(LabelModelConverter.fromJson(mode, e));
+      final modeName = e['mode'] as String?;
+      final mode = modeName != null
+          ? LabelingMode.values.firstWhere((m) => m.name == modeName, orElse: () => LabelingMode.singleClassification)
+          : LabelingMode.singleClassification; // 또는 호출부에서 주입된 프로젝트 모드
+      models.add(LabelModelConverter.fromJson(mode, e)); // ← 래퍼 전체를 전달
     }
-    return result;
+    return models;
   }
 
   // ==============================

@@ -89,7 +89,7 @@ class StorageHelperImpl implements StorageHelperInterface {
     Map<String, dynamic> labelEntry = {
       'data_id': dataId,
       'data_path': dataPath,
-      'mode': labelModel.mode.toString(),
+      'mode': labelModel.mode.name,
       'labeled_at': labelModel.labeledAt.toIso8601String(),
       'label_data': LabelModelConverter.toJson(labelModel),
     };
@@ -134,7 +134,7 @@ class StorageHelperImpl implements StorageHelperInterface {
 
     List<Map<String, dynamic>> labelEntries = labels
         .map((label) => {
-              'mode': label.mode.toString(),
+              'mode': label.mode.name,
               'labeled_at': label.labeledAt.toIso8601String(),
               'label_data': LabelModelConverter.toJson(label),
             })
@@ -175,34 +175,30 @@ class StorageHelperImpl implements StorageHelperInterface {
   // ==============================
 
   @override
-  Future<String> exportAllLabels(
-    Project project,
-    List<LabelModel> labels,
-    List<DataInfo> fileDataList,
-  ) async {
+  Future<String> exportAllLabels(Project project, List<LabelModel> labels, List<DataInfo> fileDataList) async {
     final archive = Archive();
 
-    // 1) 원본 파일: base64 → bytes
+    // 1) 원본 파일(base64 → bytes)
     for (final info in fileDataList) {
       if (info.base64Content == null || info.base64Content!.isEmpty) continue;
       final bytes = base64Decode(_stripDataUrl(info.base64Content!));
       archive.addFile(ArchiveFile(info.fileName, bytes.length, bytes));
     }
 
-    // 2) labels.json
+    // 2) labels.json (표준 래퍼)
     final entries = labels
         .map((m) => {
               'data_id': m.dataId,
-              'data_path': m.dataPath,
+              'data_path': m.dataPath, // web에선 보통 null
               'labeled_at': m.labeledAt.toIso8601String(),
               'mode': project.mode.name,
               'label_data': LabelModelConverter.toJson(m),
             })
         .toList();
-    final labelsJson = jsonEncode(entries);
-    archive.addFile(ArchiveFile('labels.json', labelsJson.length, utf8.encode(labelsJson)));
+    final text = jsonEncode(entries);
+    archive.addFile(ArchiveFile('labels.json', text.length, utf8.encode(text)));
 
-    // 3) 브라우저 다운로드 트리거
+    // 3) ZIP → 브라우저 다운로드 트리거
     final zip = ZipEncoder().encode(archive)!;
     final blob = html.Blob([zip]);
     final url = html.Url.createObjectUrlFromBlob(blob);
@@ -215,7 +211,6 @@ class StorageHelperImpl implements StorageHelperInterface {
 
   @override
   Future<List<LabelModel>> importAllLabels() async {
-    // 1) 파일 input 활용(기존 코드 유지)
     final input = html.FileUploadInputElement()..accept = '.json,application/json';
     input.click();
     await input.onChange.first;
@@ -228,16 +223,18 @@ class StorageHelperImpl implements StorageHelperInterface {
     final text = reader.result as String;
     final list = (jsonDecode(text) as List).cast<Map<String, dynamic>>();
 
-    // 2) entry별 변환
-    final result = <LabelModel>[];
+    final models = <LabelModel>[];
     for (final e in list) {
-      final modeStr = e['mode'] as String?;
-      final mode = modeStr != null
-          ? LabelingMode.values.firstWhere((m) => m.name == modeStr, orElse: () => LabelingMode.singleClassification)
-          : LabelingMode.singleClassification; // ⚠️ 가능하면 주입 모드 사용
-      result.add(LabelModelConverter.fromJson(mode, e));
+      final modeName = e['mode'] as String?;
+      final mode = modeName != null
+          ? LabelingMode.values.firstWhere(
+              (m) => m.name == modeName,
+              orElse: () => LabelingMode.singleClassification,
+            )
+          : LabelingMode.singleClassification;
+      models.add(LabelModelConverter.fromJson(mode, e)); // 래퍼 전체
     }
-    return result;
+    return models;
   }
 
   // ==============================
