@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:convert';
 
 import 'package:archive/archive.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import 'interface_storage_helper.dart';
@@ -197,33 +198,44 @@ class StorageHelperImpl implements StorageHelperInterface {
   Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataInfo> fileDataList) async {
     final archive = Archive();
 
-    // ✅ DataPath에서 데이터 로드 및 ZIP 추가
-    for (var dataInfo in fileDataList) {
-      final content = await dataInfo.loadData();
-      if (content != null) {
-        final fileBytes = utf8.encode(content);
-        archive.addFile(ArchiveFile(dataInfo.fileName, fileBytes.length, fileBytes));
+    // 1) 원본 파일 추가 (바이트 기준 처리)
+    for (final info in fileDataList) {
+      List<int>? bytes;
+
+      if (info.filePath != null) {
+        final f = File(info.filePath!);
+        if (await f.exists()) {
+          bytes = await f.readAsBytes(); // ✅ 바이너리 안전
+        }
+      } else if (info.base64Content != null) {
+        final raw = info.base64Content!;
+        final b64 = raw.startsWith('data:') ? raw.substring(raw.indexOf(',') + 1) : raw;
+        bytes = base64Decode(b64); // ✅ 웹 업로드 base64 대응
+      }
+
+      if (bytes != null) {
+        final name = info.fileName;
+        archive.addFile(ArchiveFile(name, bytes.length, bytes));
       }
     }
 
-    // ✅ JSON 직렬화된 라벨 데이터 추가 (LabelModel.toJson() 사용)
-    List<Map<String, dynamic>> labelEntries = labelModels
+    // 2) labels.json 추가
+    final entries = labelModels
         .map((label) => {
-              'mode': label.mode.toString(),
+              'data_id': label.dataId,
               'labeled_at': label.labeledAt.toIso8601String(),
               'label_data': LabelModelConverter.toJson(label),
             })
         .toList();
 
-    final labelsJson = jsonEncode(labelEntries);
+    final labelsJson = jsonEncode(entries);
     archive.addFile(ArchiveFile('labels.json', labelsJson.length, utf8.encode(labelsJson)));
 
-    // ✅ ZIP 파일 생성
-    final directory = await getApplicationDocumentsDirectory();
-    final zipFile = File('${directory.path}/${project.name}_labels.zip');
+    // 3) zip 생성
+    final dir = await getApplicationDocumentsDirectory();
+    final zipFile = File(p.join(dir.path, '${project.name}_labels.zip'));
     final zipData = ZipEncoder().encode(archive);
     await zipFile.writeAsBytes(zipData!);
-
     return zipFile.path;
   }
 

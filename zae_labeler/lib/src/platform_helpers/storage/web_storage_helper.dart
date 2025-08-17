@@ -3,7 +3,6 @@ import 'dart:convert';
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
 
-import 'package:flutter/services.dart';
 import 'package:archive/archive.dart';
 
 import 'interface_storage_helper.dart';
@@ -171,39 +170,35 @@ class StorageHelperImpl implements StorageHelperInterface {
   Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataInfo> fileDataList) async {
     final archive = Archive();
 
-    // ✅ DataInfo에서 데이터 로드 및 ZIP 추가
-    for (var dataInfo in fileDataList) {
-      final content = await dataInfo.loadData();
-      if (content != null) {
-        final fileBytes = utf8.encode(content);
-        archive.addFile(ArchiveFile(dataInfo.fileName, fileBytes.length, fileBytes));
-      }
+    // 1) 원본 파일(base64) → 바이트로 변환 후 포함
+    for (final info in fileDataList) {
+      if (info.base64Content == null || info.base64Content!.isEmpty) continue;
+      final raw = info.base64Content!;
+      final b64 = raw.startsWith('data:') ? raw.substring(raw.indexOf(',') + 1) : raw;
+      final bytes = base64Decode(b64);
+      archive.addFile(ArchiveFile(info.fileName, bytes.length, bytes));
     }
 
-    // ✅ JSON 직렬화된 라벨 데이터 추가 (LabelModel.toJson() 사용)
-    List<Map<String, dynamic>> labelEntries = labelModels
+    // 2) labels.json
+    final entries = labelModels
         .map((label) => {
-              'mode': label.mode.toString(),
+              'data_id': label.dataId,
               'labeled_at': label.labeledAt.toIso8601String(),
               'label_data': LabelModelConverter.toJson(label),
             })
         .toList();
-
-    final labelsJson = jsonEncode(labelEntries);
+    final labelsJson = jsonEncode(entries);
     archive.addFile(ArchiveFile('labels.json', labelsJson.length, utf8.encode(labelsJson)));
 
-    // ✅ ZIP 파일 생성
-    final zipData = ZipEncoder().encode(archive);
-
-    // ✅ Blob 생성 및 다운로드 링크 구성
-    final blob = html.Blob([Uint8List.fromList(zipData!)]);
+    // 3) 브라우저 다운로드 트리거
+    final zipData = ZipEncoder().encode(archive)!;
+    final blob = html.Blob([zipData]);
     final url = html.Url.createObjectUrlFromBlob(blob);
     html.AnchorElement(href: url)
-      ..setAttribute("download", "${project.name}_labels.zip")
+      ..setAttribute('download', '${project.name}_labels.zip')
       ..click();
     html.Url.revokeObjectUrl(url);
-
-    return "${project.name}_labels.zip (downloaded in browser)";
+    return '${project.name}_labels.zip (downloaded)';
   }
 
   @override
