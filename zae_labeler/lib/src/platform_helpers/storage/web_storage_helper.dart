@@ -248,4 +248,12 @@ class StorageHelperImpl implements StorageHelperInterface {
   Future<void> clearAllCache() async {
     html.window.localStorage.clear(); // ✅ localStorage 전체 삭제
   }
+
+  // ==============================
+  // 📌 **Utility**
+  // ==============================
+  String stripDataUrlPrefix(String s) {
+    final i = s.indexOf(',');
+    return s.startsWith('data:') && i != -1 ? s.substring(i + 1) : s;
+  }
 }
