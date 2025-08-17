@@ -1,7 +1,8 @@
 // lib/src/utils/storage_helper.dart
-import '../../core/models/data/data_info.dart';
-import '../../features/label/models/label_model.dart';
-import '../../core/models/project/project_model.dart';
+import 'package:zae_labeler/src/core/models/data/data_info.dart';
+import 'package:zae_labeler/src/core/models/project/project_model.dart';
+import 'package:zae_labeler/src/features/label/models/label_model.dart';
+
 import 'interface_storage_helper.dart';
 import 'stub_storage_helper.dart' if (dart.library.io) 'native_storage_helper.dart' if (dart.library.html) 'web_storage_helper.dart';
 export 'interface_storage_helper.dart';
