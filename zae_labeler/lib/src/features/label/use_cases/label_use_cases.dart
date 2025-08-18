@@ -1,8 +1,7 @@
 // lib/src/features/label/use_cases/label_use_cases.dart
 
 import '../../../core/models/project/project_model.dart';
-import '../../../core/models/data/data_info.dart';
-import '../../label/models/label_model.dart' show LabelModel, LabelingMode, LabelModelFactory, LabelStatus;
+import '../../label/models/label_model.dart' show LabelModel, LabelingMode, LabelStatus;
 import '../../label/repository/label_repository.dart';
 import '../../project/repository/project_repository.dart';
 import 'package:zae_labeler/src/utils/label_validator.dart';
