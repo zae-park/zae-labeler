@@ -28,8 +28,11 @@ import 'src/features/project/use_cases/project_use_cases.dart';
 import 'src/features/label/repository/label_repository.dart';
 import 'src/features/project/repository/project_repository.dart';
 
+// ✅ 타입 선언 (interface)
 import 'src/platform_helpers/storage/interface_storage_helper.dart';
-import 'src/platform_helpers/storage/get_storage_helper.dart';
+// ✅ 로컬 구현 선택 팩토리 (web/native/stub를 조건부 import로 매핑)
+import 'src/platform_helpers/storage/storage_helper_factory.dart';
+// ✅ 클라우드 구현
 import 'src/platform_helpers/storage/cloud_storage_helper.dart';
 
 /// 의존성 컨테이너: 부트스트랩 결과를 한 번에 담아 위젯 트리에 주입합니다.
@@ -55,7 +58,7 @@ class BootstrapResult {
 
 /// 실행 환경에 맞춰 StorageHelper 구현을 선택합니다.
 /// - Prod + Web + (로그인됨) → CloudStorageHelper
-/// - 그 외 → 로컬(StorageHelper.instance)
+/// - 그 외 → 로컬(createLocalStorageHelper)
 Future<StorageHelperInterface> _chooseStorage() async {
   final bool cloudCandidate = isProd && kIsWeb;
   if (cloudCandidate) {
@@ -66,11 +69,11 @@ Future<StorageHelperInterface> _chooseStorage() async {
     } else {
       // 웹 프로덕션이지만 아직 로그인 전 → 로컬로 폴백
       debugPrint("[bootstrap] Prod+Web 이지만 로그인 정보가 없어 Local Storage로 폴백합니다.");
-      return StorageHelper.instance;
+      return createLocalStorageHelper();
     }
   }
   // 개발환경(웹/네이티브) 또는 네이티브 프로덕션 → 로컬
-  return StorageHelper.instance;
+  return createLocalStorageHelper();
 }
 
 /// 앱 실행 전에 한 번 호출해 의존성을 준비합니다.
