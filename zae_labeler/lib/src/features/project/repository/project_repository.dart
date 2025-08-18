@@ -1,9 +1,9 @@
 // lib/src/features/project/repository/project_repository.dart
 import 'package:collection/collection.dart' show IterableExtension; // firstWhereOrNull
-import '../../../core/models/data/data_model.dart';
+import '../../../core/models/data/data_info.dart';
 import '../../label/models/label_model.dart';
 import '../../../core/models/project/project_model.dart';
-import '../../../platform_helpers/storage/get_storage_helper.dart';
+import '../../../platform_helpers/storage/interface_storage_helper.dart';
 
 /// ✅ Repository: 프로젝트 데이터와 관련된 도메인 연산을 담당
 /// - CRUD 및 설정 변경을 추상화 (StorageHelper ←→ Domain 사이 결합도↓)
@@ -57,6 +57,7 @@ class ProjectRepository {
 
   /// 🔹 모든 프로젝트 삭제 (주의: 라벨은 별도 삭제 필요)
   Future<void> deleteAll() async {
+    // 필요 시 상위 UseCase에서 fetchAllProjects → storageHelper.deleteProject(id) 반복 호출
     await saveAll([]);
   }
 
@@ -69,6 +70,7 @@ class ProjectRepository {
   }
 
   /// (선택) 🔹 프로젝트 JSON 내부의 labels도 빈 배열로 저장
+  @Deprecated('Use [clearLabels]')
   Future<void> clearLabelsInProjectJson(String projectId) async {
     final project = await findById(projectId);
     if (project == null) return;
@@ -107,6 +109,9 @@ class ProjectRepository {
   /// 🔹 단일 데이터 추가 후 저장
   Future<Project?> addDataInfo(String id, DataInfo newDataInfo) async {
     return _update(id, (p) {
+      if (p.dataInfos.any((e) => e.id == newDataInfo.id)) {
+        return p;
+      }
       final next = List<DataInfo>.from(p.dataInfos)..add(newDataInfo);
       return p.copyWith(dataInfos: List<DataInfo>.unmodifiable(next));
     });
@@ -126,7 +131,13 @@ class ProjectRepository {
 
   /// 🔹 외부 파일에서 프로젝트들을 가져옴 (예: JSON)
   Future<List<Project>> importFromExternal() async {
-    return await storageHelper.loadProjectFromConfig('import');
+    try {
+      // Native, Web에서만 동작
+      return await storageHelper.loadProjectFromConfig('import');
+    } catch (_) {
+      // Cloud 등 미구현 스토리지에서는 빈 리스트 반환 (상위 UseCase/UI에서 경고/안내)
+      return const [];
+    }
   }
 
   /// 🔹 프로젝트 설정을 외부로 내보냄 (예: 다운로드 가능한 JSON 경로 반환)
