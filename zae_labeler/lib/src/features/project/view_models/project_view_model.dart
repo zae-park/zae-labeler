@@ -1,46 +1,31 @@
+// lib/src/features/project/view_models/project_view_model.dart
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+
 import 'package:zae_labeler/common/widgets/global_alert.dart';
 import 'package:zae_labeler/src/core/use_cases/app_use_cases.dart';
 import 'package:zae_labeler/src/features/label/view_models/labeling_view_model.dart';
-import 'package:zae_labeler/src/features/project/use_cases/share_project_use_case.dart';
-import 'package:zae_labeler/src/platform_helpers/storage/get_storage_helper.dart';
 
-import '../../../core/models/data/data_model.dart';
-import '../../label/models/label_model.dart';
+import '../../../core/models/data/data_info.dart';
+import '../../label/models/label_model.dart' show LabelingMode; // 임시: 모드 여기 위치
 import '../../../core/models/project/project_model.dart';
+
 import '../../../platform_helpers/share/interface_share_helper.dart';
+import '../../../platform_helpers/storage/interface_storage_helper.dart';
 
-import '../use_cases/project_use_cases.dart';
-
-/// 🔧 ViewModel: 단일 프로젝트를 관리
-/// ProjectViewModel
-/// ├── setName(String)                        // 프로젝트 이름 변경
-/// ├── setLabelingMode(LabelingMode)         // 라벨링 모드 변경 (라벨 초기화 포함)
-/// ├── addClass(String)                       // 클래스 추가
-/// ├── editClass(int, String)                // 클래스 이름 수정
-/// ├── removeClass(int)                      // 클래스 제거
-/// ├── addDataInfo(DataInfo)                 // 데이터 추가
-/// ├── removeDataInfo(String)                // 데이터 제거
-/// │
-/// ├── isLabelingModeChanged()               // 모드 변경 여부 확인
-/// │
-/// ├── clearProjectLabels()                    // 라벨 초기화
-/// │
-/// ├── downloadProjectConfig()               // 설정 다운로드
-/// └── shareProject(BuildContext)            // 프로젝트 공유
-
+/// 🔧 ViewModel: 단일 프로젝트 화면 상태 & 액션
+/// - 이름/모드/클래스/데이터 편집을 ProjectUseCases(파사드)로 위임
+/// - 라벨 초기화/진행률/공유/다운로드 유틸 제공
 class ProjectViewModel extends ChangeNotifier {
   Project project;
   final ShareHelperInterface shareHelper;
-  final ProjectUseCases useCases;
+  final AppUseCases appUseCases;
 
   final void Function(Project updated)? onChanged;
   late final LabelingMode _initialMode;
-  ShareProjectResult? lastShareResult;
 
   // ────────────────────────────────────────────
-  // 📦 진행률 정보를 위한 필드
+  // 📦 진행률 정보 (LabelingViewModel에서 계산)
   // ────────────────────────────────────────────
   double progressRatio = 0.0;
   int completeCount = 0;
@@ -48,20 +33,22 @@ class ProjectViewModel extends ChangeNotifier {
   int incompleteCount = 0;
   bool progressLoaded = false;
 
-  ProjectViewModel({required this.shareHelper, required this.useCases, this.onChanged, Project? project})
+  ProjectViewModel({required this.shareHelper, required this.appUseCases, this.onChanged, Project? project})
       : project = project ??
             Project(
               id: project?.id ?? const Uuid().v4(),
               name: project?.name ?? '',
               mode: project?.mode ?? LabelingMode.singleClassification,
-              classes: project?.classes ?? [],
+              classes: project?.classes ?? const [],
             ) {
     _initialMode = this.project.mode;
   }
 
-  /// 진행률 정보를 로딩하는 메서드
-  /// // LabelingViewModel을 생성하여 진행률 정보를 얻는다.
-  Future<void> loadProgress(StorageHelperInterface helper, AppUseCases appUseCases) async {
+  // ────────────────────────────────────────────
+  // 📊 진행률 로딩
+  // ────────────────────────────────────────────
+  /// LabelingViewModel 팩토리를 사용해 현재 프로젝트의 진행률을 계산합니다.
+  Future<void> loadProgress(StorageHelperInterface helper) async {
     final labelingVM = await LabelingViewModelFactory.createAsync(project, helper, appUseCases);
     progressRatio = labelingVM.progressRatio;
     completeCount = labelingVM.completeCount;
@@ -77,45 +64,18 @@ class ProjectViewModel extends ChangeNotifier {
   // ==============================
 
   Future<void> setName(String name) async {
-    final updated = await useCases.edit.rename(project.id, name);
+    final updated = await appUseCases.project.rename(project.id, name);
     if (updated != null) {
       project = updated;
       notifyListeners();
       onChanged?.call(project);
-    } else {
-      // 실패 처리
     }
   }
 
+  /// 권장: 내부에서 라벨 초기화까지 수행하는 별칭 사용 (changeModeAndReset)
   Future<void> setLabelingMode(LabelingMode mode) async {
-    if (project.mode != mode) {
-      final updated = await useCases.edit.changeLabelingMode(project.id, mode);
-      if (updated != null) {
-        project = updated;
-        notifyListeners();
-        onChanged?.call(project);
-      } else {
-        // 실패 처리(로그 출력, UI 알림 등)
-      }
-      // project = (await useCases.edit.changeLabelingMode(project.id, mode))!;
-      // notifyListeners();
-      // onChanged?.call(project);
-    }
-  }
-
-  Future addClass(String className) async {
-    final updated = await useCases.classList.addClass(project.id, className);
-    if (updated != null) {
-      project = updated;
-      notifyListeners();
-      onChanged?.call(project);
-    } else {
-      // 실패 처리: 예를 들어 이미 존재하는 클래스이거나 프로젝트 미존재.
-    }
-  }
-
-  Future editClass(int index, String newName) async {
-    final updated = await useCases.classList.editClass(project.id, index, newName);
+    if (project.mode == mode) return;
+    final updated = await appUseCases.project.changeModeAndReset(project.id, mode);
     if (updated != null) {
       project = updated;
       notifyListeners();
@@ -123,8 +83,17 @@ class ProjectViewModel extends ChangeNotifier {
     }
   }
 
-  Future removeClass(int index) async {
-    final updated = await useCases.classList.removeClass(project.id, index);
+  // ==============================
+  // 🧩 클래스 편집 (전체 교체 방식)
+  // ==============================
+
+  Future<void> addClass(String className) async {
+    final name = className.trim();
+    if (name.isEmpty) return;
+    if (project.classes.contains(name)) return;
+
+    final next = List<String>.from(project.classes)..add(name);
+    final updated = await appUseCases.project.updateClasses(project.id, next);
     if (updated != null) {
       project = updated;
       notifyListeners();
@@ -132,34 +101,53 @@ class ProjectViewModel extends ChangeNotifier {
     }
   }
 
-  Future addDataInfo(DataInfo dataInfo) async {
-    try {
-      final updated = await useCases.dataInfo.addData(projectId: project.id, dataInfo: dataInfo);
-      if (updated != null) {
-        project = updated;
-        notifyListeners();
-        onChanged?.call(project);
-      } else {
-        // 프로젝트가 없을 때의 처리
-      }
-    } catch (e) {
-      // 예외 처리 (예: 프로젝트 미존재)
+  Future<void> editClass(int index, String newName) async {
+    if (index < 0 || index >= project.classes.length) return;
+    final name = newName.trim();
+    if (name.isEmpty) return;
+
+    final next = List<String>.from(project.classes)..[index] = name;
+    final updated = await appUseCases.project.updateClasses(project.id, next);
+    if (updated != null) {
+      project = updated;
+      notifyListeners();
+      onChanged?.call(project);
     }
   }
 
-  Future removeDataInfo(String dataId) async {
-    final index = project.dataInfos.indexWhere((e) => e.id == dataId);
-    if (index != -1) {
-      try {
-        final updated = await useCases.dataInfo.removeData(projectId: project.id, dataIndex: index);
-        if (updated != null) {
-          project = updated;
-          notifyListeners();
-          onChanged?.call(project);
-        }
-      } catch (e) {
-        // 예외 처리
-      }
+  Future<void> removeClass(int index) async {
+    if (index < 0 || index >= project.classes.length) return;
+
+    final next = List<String>.from(project.classes)..removeAt(index);
+    final updated = await appUseCases.project.updateClasses(project.id, next);
+    if (updated != null) {
+      project = updated;
+      notifyListeners();
+      onChanged?.call(project);
+    }
+  }
+
+  // ==============================
+  // 📂 데이터 추가/제거
+  // ==============================
+
+  /// 단일 데이터 추가 (파일 선택 로직은 외부/VM 상단에서 수행했다고 가정)
+  Future<void> addDataInfo(DataInfo dataInfo) async {
+    final updated = await appUseCases.project.addDataInfo(project.id, dataInfo);
+    if (updated != null) {
+      project = updated;
+      notifyListeners();
+      onChanged?.call(project);
+    }
+  }
+
+  /// dataId 기준으로 제거
+  Future<void> removeDataInfo(String dataId) async {
+    final updated = await appUseCases.project.removeDataInfo(project.id, dataId);
+    if (updated != null) {
+      project = updated;
+      notifyListeners();
+      onChanged?.call(project);
     }
   }
 
@@ -167,22 +155,22 @@ class ProjectViewModel extends ChangeNotifier {
   // 📌 변경 감지
   // ==============================
 
-  bool isLabelingModeChanged() {
-    return project.mode != _initialMode;
-  }
+  bool isLabelingModeChanged() => project.mode != _initialMode;
 
   // ==============================
-  // 📌 저장 / 삭제 / 초기화
+  // 💾 저장 / 삭제 / 초기화
   // ==============================
 
-  Future<void> saveProject(bool isNew) async {
-    await useCases.io.saveOne(project);
+  /// 현재 스냅샷 저장(업서트)
+  Future<void> saveProject() async {
+    await appUseCases.project.save(project);
     notifyListeners();
     onChanged?.call(project);
   }
 
+  /// 프로젝트의 모든 라벨 삭제
   Future<void> clearProjectLabels() async {
-    await useCases.edit.clearLabels(project.id);
+    await appUseCases.label.clearAll(project.id);
     notifyListeners();
     onChanged?.call(project);
   }
@@ -193,25 +181,31 @@ class ProjectViewModel extends ChangeNotifier {
   }
 
   // ==============================
-  // 📌 다운로드 및 공유
+  // ⬇️ 다운로드 & 공유
   // ==============================
 
+  Future<void> downloadProjectConfig() async {
+    try {
+      await appUseCases.project.exportConfig(project);
+    } catch (e) {
+      debugPrint("❌ Failed to download config: $e");
+    }
+  }
+
+  /// 구성 JSON(혹은 링크)을 공유
   Future<void> shareProject(BuildContext context) async {
     try {
-      lastShareResult = await useCases.share.call(project);
-      notifyListeners();
+      final pathOrUrl = await appUseCases.project.exportConfig(project);
+      // ShareHelper가 파일/텍스트 중 무엇을 지원하는지에 따라 분기
+      // 아래는 간단히 텍스트 공유로 처리(필요시 shareFile로 교체)
+      await shareHelper.shareText(pathOrUrl);
+      if (context.mounted) {
+        GlobalAlertManager.show(context, '✅ 프로젝트 공유 준비가 완료되었습니다.', type: AlertType.success);
+      }
     } catch (e) {
       if (context.mounted) {
         GlobalAlertManager.show(context, '⚠️ 프로젝트 공유에 실패했습니다: $e', type: AlertType.error);
       }
-    }
-  }
-
-  Future<void> downloadProjectConfig() async {
-    try {
-      await useCases.repository.exportConfig(project);
-    } catch (e) {
-      debugPrint("❌ Failed to download config: $e");
     }
   }
 }
