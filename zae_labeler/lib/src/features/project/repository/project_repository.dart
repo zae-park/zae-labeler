@@ -155,8 +155,10 @@ class ProjectRepository {
   /// - 미구현 스토리지에서는 빈 배열을 반환합니다(상위에서 안내 처리 권장).
   Future<List<Project>> importFromExternal() async {
     try {
+      // Native, Web에서만 동작
       return await storageHelper.loadProjectFromConfig('import');
     } catch (_) {
+      // Cloud 등 미구현 스토리지에서는 빈 리스트 반환 (상위 UseCase/UI에서 경고/안내)
       return const [];
     }
   }
