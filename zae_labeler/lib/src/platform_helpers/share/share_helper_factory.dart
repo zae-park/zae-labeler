@@ -3,4 +3,4 @@ import 'interface_share_helper.dart';
 import 'stub_share_helper.dart' if (dart.library.html) 'web_share_helper.dart' if (dart.library.io) 'native_share_helper.dart' as platform;
 
 /// 로컬(클라우드 제외)에서 사용할 StorageHelper 구현체 생성
-ShareHelperInterface createLocalStorageHelper() => platform.ShareHelperImpl();
+ShareHelperInterface createLocalShareHelper() => platform.ShareHelperImpl();
