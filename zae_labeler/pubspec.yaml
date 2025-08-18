@@ -34,6 +34,7 @@ dependencies:
   universal_html: ^2.2.4
   # web: ^0.5.0 # Uncomment if you need web support
   win32: ^5.0.0
+  firebase_storage: ^11.7.7
 
 dev_dependencies:
   flutter_test:
