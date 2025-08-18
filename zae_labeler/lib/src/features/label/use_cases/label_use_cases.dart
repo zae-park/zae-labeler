@@ -1,226 +1,175 @@
 // lib/src/features/label/use_cases/label_use_cases.dart
-import 'package:collection/collection.dart' show IterableExtension;
 
-import 'package:zae_labeler/src/core/models/project/project_model.dart';
-import 'package:zae_labeler/src/core/models/data/data_info.dart';
-import 'package:zae_labeler/src/features/data/models/data_with_status.dart';
-import 'package:zae_labeler/src/features/data/services/adaptive_unified_data_loader.dart';
-import 'package:zae_labeler/src/features/data/services/unified_data_service.dart';
-import 'package:zae_labeler/src/features/label/models/sub_models/classification_label_model.dart';
+import '../../../core/models/project/project_model.dart';
+import '../../../core/models/data/data_info.dart';
+import '../../label/models/label_model.dart' show LabelModel, LabelingMode, LabelModelFactory, LabelStatus;
+import '../../label/repository/label_repository.dart';
+import '../../project/repository/project_repository.dart';
+import 'package:zae_labeler/src/utils/label_validator.dart';
 
-import '../models/label_model.dart';
-import '../repository/label_repository.dart';
+/// ---------------------------------------------------------------------------
+/// 📊 라벨링 요약 DTO
+/// ---------------------------------------------------------------------------
+/// 프로젝트/라벨 컬렉션에 대한 진행 현황을 간단히 표현합니다.
+class LabelingSummary {
+  final int total; // 전체 데이터 개수 (= project.dataInfos.length)
+  final int complete; // 완료 상태 개수
+  final int warning; // 경고 상태 개수(불완전/의심 등)
+  final int incomplete; // 미완료 개수
+  final double progress; // 0.0 ~ 1.0
 
-class LabelUseCases {
-  final LabelRepository repository;
-  final LabelValidationUseCase validation;
-  final LabelingSummaryUseCase summary;
-  final LabelIOUseCase io;
+  const LabelingSummary({required this.total, required this.complete, required this.warning, required this.incomplete, required this.progress});
 
-  final AdaptiveUnifiedDataLoader adaptiveLoader; // 데이터+상태 일괄 로딩용
-  final UnifiedDataService uds; // 단건 데이터 로딩용
-
-  LabelUseCases({
-    required this.repository,
-    LabelValidationUseCase? validation,
-    LabelingSummaryUseCase? summary,
-    LabelIOUseCase? io,
-    AdaptiveUnifiedDataLoader? loader,
-    UnifiedDataService? uds,
-  })  : validation = validation ?? LabelValidationUseCase(repository: repository),
-        summary = summary ?? LabelingSummaryUseCase(repository: repository, validUseCase: LabelValidationUseCase(repository: repository)),
-        io = io ?? LabelIOUseCase(repository: repository),
-        adaptiveLoader = loader ?? AdaptiveUnifiedDataLoader(uds: UnifiedDataService(), storage: repository.storageHelper),
-        uds = uds ?? UnifiedDataService();
-
-  // =========================
-  //           Query
-  // =========================
-
-  /// 프로젝트의 모든 데이터 + 상태 로딩 (플랫폼 적응형)
-  Future<List<DataWithStatus>> loadItems(Project project) async {
-    return adaptiveLoader.load(project); // 내부에서 라벨맵·상태 계산까지 수행
-  }
-
-  /// 단일 데이터 + 상태 로딩
-  Future<DataWithStatus?> loadItem(Project project, String dataId) async {
-    final info = _resolve(project, dataId);
-    if (info == null) return null;
-
-    // 데이터(파일/베이스64 등) 파싱
-    final data = await uds.fromDataInfo(info);
-
-    // 현재 저장된 라벨(있으면) 로드
-    LabelModel? label;
-    try {
-      label = await repository.loadLabel(
-        projectId: project.id,
-        dataId: dataId,
-        dataPath: info.filePath ?? info.fileName, // 웹이면 파일명으로 대체
-        mode: project.mode,
-      ); // 없으면 스토리지가 throw 할 수 있음
-    } catch (_) {
-      label = null;
-    }
-
-    final status = repository.getStatus(project, label); // 완료/주의/미완료
-    return DataWithStatus(data: data, status: status);
-  }
-
-  /// 진행 요약(총계/완료/주의/미완료)
-  Future<LabelingSummary> getProgress(Project project) => summary.load(project);
-
-  /// 단일 라벨(있으면) 조회
-  Future<LabelModel?> getLabel(Project project, String dataId) async {
-    final info = _resolve(project, dataId);
-    if (info == null) return null;
-    try {
-      return await repository.loadLabel(
-        projectId: project.id,
-        dataId: dataId,
-        dataPath: info.filePath ?? info.fileName,
-        mode: project.mode,
-      );
-    } catch (_) {
-      return null; // 없으면 null
-    }
-  }
-
-  // =========================
-  //          Command
-  // =========================
-
-  /// 단일 업서트
-  Future<LabelModel?> upsert({
-    required Project project,
-    required String dataId,
-    required Object value, // single: String, multi: List<String>, ...
-  }) async {
-    final info = _resolve(project, dataId);
-    if (info == null) return null;
-
-    final model = _buildLabel(project.mode, dataId, value);
-    await repository.saveLabel(
-      projectId: project.id,
-      dataId: dataId,
-      dataPath: info.filePath ?? info.fileName,
-      labelModel: model,
-    );
-    return model;
-  }
-
-  /// 단건 삭제 (레포에 전용 API 없으면 fallback)
-  Future<void> remove({required Project project, required String dataId}) async {
-    // fallback: 전체 로드 → 필터 → saveAll
-    final all = await repository.loadAllLabels(project.id);
-    final filtered = all.where((e) => e.dataId != dataId).toList();
-    await repository.saveAllLabels(project.id, filtered);
-  }
-
-  /// 전체 삭제
-  Future<void> clearAll(Project project) => repository.deleteAllLabels(project.id);
-
-  /// 배치 업서트 (성공/스킵/에러 요약)
-  Future<BatchResult> batchUpsert({
-    required Project project,
-    required Map<String, Object> entries, // dataId -> value
-    bool skipUnknown = true,
-  }) async {
-    final ids = project.dataInfos.map((e) => e.id).toSet();
-    final toSave = <LabelModel>[];
-    final skipped = <String>[];
-    final errors = <String, String>{};
-
-    for (final entry in entries.entries) {
-      final dataId = entry.key;
-      final value = entry.value;
-
-      if (skipUnknown && !ids.contains(dataId)) {
-        skipped.add(dataId);
-        continue;
-      }
-
-      try {
-        toSave.add(_buildLabel(project.mode, dataId, value));
-      } catch (e) {
-        errors[dataId] = e.toString();
-      }
-    }
-
-    if (toSave.isNotEmpty) {
-      await repository.saveAllLabels(project.id, toSave);
-    }
-
-    return BatchResult(
-      saved: toSave.length,
-      skipped: skipped,
-      errors: errors,
-      total: entries.length,
-    );
-  }
-
-  /// 배치 삭제
-  Future<BatchResult> batchRemove({
-    required Project project,
-    required List<String> dataIds,
-  }) async {
-    // fallback 구현: 전체 로드 → 필터 → saveAll
-    final all = await repository.loadAllLabels(project.id);
-    final set = dataIds.toSet();
-    final filtered = all.where((e) => !set.contains(e.dataId)).toList();
-
-    final removed = all.length - filtered.length;
-    await repository.saveAllLabels(project.id, filtered);
-
-    return BatchResult(saved: removed, skipped: const [], errors: const {}, total: dataIds.length);
-  }
-
-  // =========================
-  //             IO
-  // =========================
-
-  Future<String> exportJson(Project project) async {
-    final labels = await repository.loadAllLabels(project.id);
-    return io.exportLabels(project, labels);
-  }
-
-  Future<String> exportWithData(Project project) async {
-    final labels = await repository.loadAllLabels(project.id);
-    return io.exportLabelsWithData(project, labels, project.dataInfos);
-  }
-
-  Future<List<LabelModel>> importFromPicker() => io.importLabels();
-
-  // =========================
-  //           helpers
-  // =========================
-
-  DataInfo? _resolve(Project project, String dataId) => project.dataInfos.firstWhereOrNull((e) => e.id == dataId);
-
-  LabelModel _buildLabel(LabelingMode mode, String dataId, Object value) {
-    switch (mode) {
-      case LabelingMode.singleClassification:
-        return SingleClassificationLabelModel(dataId: dataId, label: value as String);
-      case LabelingMode.multiClassification:
-        return MultiClassificationLabelModel(dataId: dataId, label: (value as List).cast<String>());
-      case LabelingMode.segmentation:
-        throw UnimplementedError('Segmentation labeling is not implemented yet.');
-    }
-  }
+  @override
+  String toString() =>
+      'LabelingSummary(total=$total, complete=$complete, warning=$warning, incomplete=$incomplete, progress=${(progress * 100).toStringAsFixed(1)}%)';
 }
 
-class BatchResult {
-  final int saved;
-  final List<String> skipped;
-  final Map<String, String> errors;
-  final int total;
+/// ---------------------------------------------------------------------------
+/// ✅ LabelUseCases (최종 파사드)
+/// ---------------------------------------------------------------------------
+/// 라벨 관련 시나리오를 한 곳에서 오케스트레이션합니다.
+///
+/// - 단일/일괄 저장·조회는 LabelRepository에 위임
+/// - Import/Export는 필요 시 Project 컨텍스트를 같이 사용
+/// - 검증/상태 및 요약 계산은 여기서 수행 (Repo는 IO만 담당)
+///
+/// 기존 구버전 유스케이스 매핑:
+///  - SingleLabelUseCase.load/save/delete → loadOrCreate / save / deleteByDataId
+///  - BatchLabelUseCase.loadAll/saveAll/clear → loadAll / saveAll / clearAll
+///  - LabelIoUseCase.export/import → exportProjectLabels / importLabelsAndSaveAll
+///  - ValidateLabelUseCase.isValid/status → isValid / statusOf
+///  - LabelingSummaryUseCase.summary → computeSummary / computeSummaryFor
+class LabelUseCases {
+  final LabelRepository labelRepo;
+  final ProjectRepository projectRepo;
 
-  const BatchResult({
-    required this.saved,
-    required this.skipped,
-    required this.errors,
-    required this.total,
-  });
+  const LabelUseCases({required this.labelRepo, required this.projectRepo});
 
-  int get failed => errors.length;
+  /// 부트스트랩 편의 생성자
+  factory LabelUseCases.from(LabelRepository labelRepo, ProjectRepository projectRepo) {
+    return LabelUseCases(labelRepo: labelRepo, projectRepo: projectRepo);
+    // Note: 기존 AppUseCases에서 label: LabelUseCases.from(labelRepo, projectRepo) 형태로 주입
+  }
+
+  // ===========================================================================
+  // 📌 단일 CRUD
+  // ===========================================================================
+
+  /// 단일 라벨 로드(없으면 생성하여 반환).
+  /// - dataPath는 Native에선 파일 경로, Web/Cloud에서는 보통 빈 문자열/nullable
+  Future<LabelModel> loadOrCreate({required String projectId, required String dataId, String dataPath = '', required LabelingMode mode}) {
+    return labelRepo.loadOrCreateLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, mode: mode);
+  }
+
+  /// 단일 라벨 저장/갱신.
+  Future<void> save({required String projectId, required String dataId, String dataPath = '', required LabelModel model}) {
+    return labelRepo.saveLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, labelModel: model);
+  }
+
+  /// 단일 라벨 삭제.
+  /// - StorageHelper에 단건 삭제 API가 없으므로 전체 로드→필터→재저장 방식으로 위임 처리.
+  Future<void> deleteByDataId({required String projectId, required String dataId}) {
+    return labelRepo.deleteLabelByDataId(projectId: projectId, dataId: dataId);
+  }
+
+  // ===========================================================================
+  // 📌 일괄 처리
+  // ===========================================================================
+
+  /// 프로젝트의 모든 라벨 로드.
+  Future<List<LabelModel>> loadAll(String projectId) {
+    return labelRepo.loadAllLabels(projectId);
+  }
+
+  /// dataId → LabelModel 매핑으로 반환.
+  Future<Map<String, LabelModel>> loadMap(String projectId) {
+    return labelRepo.loadLabelMap(projectId);
+  }
+
+  /// 라벨 일괄 저장.
+  Future<void> saveAll(String projectId, List<LabelModel> labels) {
+    return labelRepo.saveAllLabels(projectId, labels);
+  }
+
+  /// 전체 라벨 삭제.
+  Future<void> clearAll(String projectId) {
+    return labelRepo.deleteAllLabels(projectId);
+  }
+
+  // ===========================================================================
+  // 📌 Import / Export
+  // ===========================================================================
+
+  /// 현재 프로젝트의 라벨을 내보냅니다.
+  /// - withData=true 이면 가능한 범위에서 원본 데이터 포함(Web base64 / Native 파일)
+  /// - Cloud는 일반적으로 labels.json 스냅샷 업로드(파일 동반 X)
+  Future<String> exportProjectLabels(String projectId, {bool withData = false}) async {
+    final project = await projectRepo.findById(projectId);
+    if (project == null) {
+      throw StateError('Project not found: $projectId');
+    }
+    final labels = await labelRepo.loadAllLabels(projectId);
+    if (withData) {
+      return labelRepo.exportLabelsWithData(project, labels, project.dataInfos);
+    }
+    return labelRepo.exportLabels(project, labels);
+  }
+
+  /// 라벨을 임포트하여 프로젝트에 저장하고, 저장된 개수를 반환합니다.
+  /// - Web: 파일 선택 → 파싱 후 저장
+  /// - Cloud: latest.json 다운로드 → 파싱 후 저장
+  Future<int> importLabelsAndSaveAll(String projectId) async {
+    final imported = await labelRepo.importLabels();
+    if (imported.isEmpty) return 0;
+    await labelRepo.saveAllLabels(projectId, imported);
+    return imported.length;
+  }
+
+  // ===========================================================================
+  // 📌 검증 / 상태
+  // ===========================================================================
+
+  /// 단일 라벨 유효성 검사.
+  bool isValid(Project project, LabelModel label) {
+    return LabelValidator.isValid(label, project);
+  }
+
+  /// 단일 라벨 상태 계산.
+  LabelStatus statusOf(Project project, LabelModel? label) {
+    return LabelValidator.getStatus(project, label);
+  }
+
+  // ===========================================================================
+  // 📌 요약 / 통계
+  // ===========================================================================
+
+  /// 프로젝트 기준 전체 라벨링 진행 요약(스토리지 조회 포함).
+  Future<LabelingSummary> computeSummary(String projectId) async {
+    final project = await projectRepo.findById(projectId);
+    if (project == null) {
+      return const LabelingSummary(total: 0, complete: 0, warning: 0, incomplete: 0, progress: 0.0);
+    }
+    final labels = await labelRepo.loadAllLabels(projectId);
+    return computeSummaryFor(project, labels);
+  }
+
+  /// 주어진 프로젝트/라벨 컬렉션을 기반으로 진행 요약 계산.
+  LabelingSummary computeSummaryFor(Project project, List<LabelModel> labels) {
+    final total = project.dataInfos.length;
+    int complete = 0, warning = 0;
+
+    // dataId 기준으로 상태 계산(프로젝트의 dataInfos를 기준으로 함)
+    final labelMap = {for (final m in labels) m.dataId: m};
+    for (final info in project.dataInfos) {
+      final lbl = labelMap[info.id];
+      final status = LabelValidator.getStatus(project, lbl);
+      if (status == LabelStatus.complete) complete++;
+      if (status == LabelStatus.warning) warning++;
+    }
+
+    final incomplete = (total - complete).clamp(0, total);
+    final progress = total == 0 ? 0.0 : complete / total;
+    return LabelingSummary(total: total, complete: complete, warning: warning, incomplete: incomplete, progress: progress);
+  }
 }
