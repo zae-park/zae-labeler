@@ -6,7 +6,7 @@ import 'package:zae_labeler/src/features/data/models/data_with_status.dart';
 import 'package:zae_labeler/src/features/data/services/adaptive_unified_data_loader.dart';
 import 'package:zae_labeler/src/features/data/services/unified_data_service.dart';
 import 'package:zae_labeler/src/features/label/models/label_model.dart';
-import 'package:zae_labeler/src/platform_helpers/storage/get_storage_helper.dart';
+import 'package:zae_labeler/src/platform_helpers/storage/interface_storage_helper.dart';
 
 /// 📦 LabelingDataManager
 /// - 프로젝트 데이터를 로드하고, 현재 위치 관리, 이동 기능을 담당.

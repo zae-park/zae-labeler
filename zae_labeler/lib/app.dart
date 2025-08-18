@@ -10,6 +10,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:zae_labeler/src/platform_helpers/storage/interface_storage_helper.dart';
 
 import 'bootstrap.dart';
 import 'app_router.dart';
@@ -22,7 +23,6 @@ import 'src/features/project/view_models/managers/progress_notifier.dart';
 
 import 'src/core/services/user_preference_service.dart';
 import 'src/core/use_cases/app_use_cases.dart';
-import 'src/platform_helpers/storage/get_storage_helper.dart';
 
 /// 앱 루트 위젯.
 ///

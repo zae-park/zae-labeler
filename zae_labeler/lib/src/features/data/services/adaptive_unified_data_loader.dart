@@ -5,7 +5,7 @@ import 'package:zae_labeler/src/core/models/project/project_model.dart';
 import 'package:zae_labeler/src/features/data/models/data_with_status.dart';
 import 'package:zae_labeler/src/features/data/services/unified_data_service.dart';
 import 'package:zae_labeler/src/features/label/models/label_model.dart';
-import 'package:zae_labeler/src/platform_helpers/storage/get_storage_helper.dart';
+import 'package:zae_labeler/src/platform_helpers/storage/interface_storage_helper.dart';
 
 // (선택) 기존 스타일의 함수형 API 유지용
 Future<List<DataWithStatus>> loadDataAdaptively(Project project, StorageHelperInterface storageHelper) {
