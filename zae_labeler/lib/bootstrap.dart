@@ -30,30 +30,30 @@ import 'src/features/project/repository/project_repository.dart';
 
 // ✅ 타입 선언 (interface)
 import 'src/platform_helpers/storage/interface_storage_helper.dart';
+import 'src/platform_helpers/share/interface_share_helper.dart';
 // ✅ 로컬 구현 선택 팩토리 (web/native/stub를 조건부 import로 매핑)
 import 'src/platform_helpers/storage/storage_helper_factory.dart';
+import 'src/platform_helpers/share/share_helper_factory.dart';
 // ✅ 클라우드 구현
 import 'src/platform_helpers/storage/cloud_storage_helper.dart';
 
 /// 의존성 컨테이너: 부트스트랩 결과를 한 번에 담아 위젯 트리에 주입합니다.
 class BootstrapResult {
-  /// 영속화 추상화 (로컬/클라우드 선택)
-  final StorageHelperInterface storageHelper;
+  final AppUseCases appUseCases; // 앱 전반 파사드(use-cases 묶음)
+  final UserPreferenceService userPrefs; // 유저 환경설정 서비스 (SharedPreferences 래핑)
+  final LocaleViewModel localeViewModel; // 로케일 관리 뷰모델 (비동기 생성)
+  final FirebaseAuth firebaseAuth; // 인증 핸들 (AuthViewModel 생성에 사용)
+  final StorageHelperInterface storageHelper; // 영속화 추상화 (로컬/클라우드 선택)
+  final ShareHelperInterface shareHelper;
 
-  /// 앱 전반 파사드(use-cases 묶음)
-  final AppUseCases appUseCases;
-
-  /// 유저 환경설정 서비스 (SharedPreferences 래핑)
-  final UserPreferenceService userPrefs;
-
-  /// 로케일 관리 뷰모델 (비동기 생성)
-  final LocaleViewModel localeViewModel;
-
-  /// 인증 핸들 (AuthViewModel 생성에 사용)
-  final FirebaseAuth firebaseAuth;
-
-  const BootstrapResult(
-      {required this.storageHelper, required this.appUseCases, required this.userPrefs, required this.localeViewModel, required this.firebaseAuth});
+  const BootstrapResult({
+    required this.appUseCases,
+    required this.userPrefs,
+    required this.localeViewModel,
+    required this.firebaseAuth,
+    required this.storageHelper,
+    required this.shareHelper,
+  });
 }
 
 /// 실행 환경에 맞춰 StorageHelper 구현을 선택합니다.
@@ -76,6 +76,10 @@ Future<StorageHelperInterface> _chooseStorage() async {
   return createLocalStorageHelper();
 }
 
+Future<ShareHelperInterface> _chooseShareHelper() async {
+  return createLocalShareHelper();
+}
+
 /// 앱 실행 전에 한 번 호출해 의존성을 준비합니다.
 ///
 /// [systemLocale]은 필요 시 LocaleViewModel 초기 기본값 결정 등에 활용할 수 있으나,
@@ -83,6 +87,7 @@ Future<StorageHelperInterface> _chooseStorage() async {
 Future<BootstrapResult> bootstrap({required Locale systemLocale}) async {
   // 1) 실행 환경에 맞춘 Storage 선택 (안전 폴백 포함)
   final storage = await _chooseStorage();
+  final share = await _chooseShareHelper();
 
   // 2) Repository & UseCases 구성
   final projectRepo = ProjectRepository(storageHelper: storage);
@@ -102,5 +107,6 @@ Future<BootstrapResult> bootstrap({required Locale systemLocale}) async {
   // 4) Firebase Auth 핸들
   final firebaseAuth = FirebaseAuth.instance;
 
-  return BootstrapResult(storageHelper: storage, appUseCases: appUC, userPrefs: userPrefs, localeViewModel: localeVM, firebaseAuth: firebaseAuth);
+  return BootstrapResult(
+      appUseCases: appUC, userPrefs: userPrefs, localeViewModel: localeVM, firebaseAuth: firebaseAuth, storageHelper: storage, shareHelper: share);
 }
