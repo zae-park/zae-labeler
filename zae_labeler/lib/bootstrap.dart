@@ -86,7 +86,10 @@ Future<BootstrapResult> bootstrap({required Locale systemLocale}) async {
   final labelRepo = LabelRepository(storageHelper: storage);
 
   // AppUseCases는 프로젝트/라벨용 유스케이스 파사드를 한데 모은 파사드
-  final appUC = AppUseCases(project: ProjectUseCases.from(projectRepo), label: LabelUseCases.from(labelRepo));
+  final appUC = AppUseCases.from(
+    project: ProjectUseCases.from(projectRepo, labelRepo: labelRepo),
+    label: LabelUseCases.from(labelRepo, projectRepo),
+  );
 
   // 3) User preferences & Locale VM
   final prefs = await SharedPreferences.getInstance();
