@@ -6,7 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'interface_share_helper.dart';
 // (필요시) import 'package:share_plus/share_plus.dart';
 
-class NativeShareHelper implements ShareHelperInterface {
+class ShareHelperImpl implements ShareHelperInterface {
   @override
   Future<void> shareText(String text) async {
     // Share.share(text); // share_plus 예시

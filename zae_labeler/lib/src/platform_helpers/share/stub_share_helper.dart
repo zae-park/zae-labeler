@@ -2,7 +2,7 @@
 import 'dart:typed_data';
 import 'interface_share_helper.dart';
 
-class StubShareHelper implements ShareHelperInterface {
+class ShareHelperImpl implements ShareHelperInterface {
   @override
   Future<void> shareText(String text) async {
     // no-op (로그만 남기거나 Snackbar/Toast로 "미지원" 안내)

@@ -5,7 +5,7 @@ import 'dart:typed_data';
 
 import 'interface_share_helper.dart';
 
-class WebShareHelper implements ShareHelperInterface {
+class ShareHelperImpl implements ShareHelperInterface {
   bool get _canUseWebShare {
     final nav = html.window.navigator as dynamic;
     return nav != null && nav.share != null;
