@@ -69,14 +69,14 @@ class ProjectRepository {
     await storageHelper.deleteProjectLabels(projectId);
   }
 
-  /// (선택) 🔹 프로젝트 JSON 내부의 labels도 빈 배열로 저장
-  @Deprecated('Use [clearLabels]')
-  Future<void> clearLabelsInProjectJson(String projectId) async {
-    final project = await findById(projectId);
-    if (project == null) return;
-    final updated = project.copyWith(labels: const <LabelModel>[]);
-    await saveProject(updated);
-  }
+  // /// (선택) 🔹 프로젝트 JSON 내부의 labels도 빈 배열로 저장
+  // @Deprecated('Use [clearLabels]')
+  // Future<void> clearLabelsInProjectJson(String projectId) async {
+  //   final project = await findById(projectId);
+  //   if (project == null) return;
+  //   final updated = project.copyWith(labels: const <LabelModel>[]);
+  //   await saveProject(updated);
+  // }
 
   // =========================
   // ⚙️ 프로젝트 속성 변경 (copyWith 기반)
