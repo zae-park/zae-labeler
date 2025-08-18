@@ -66,6 +66,19 @@ class ProjectUseCases {
 
   Future<Project?> addDataInfo(String projectId, DataInfo info) => projectRepo.addDataInfo(projectId, info);
 
+  /// ✅ 배치 추가: 중복 제거 후 머지 저장
+  Future<Project?> addDataInfos(String projectId, List<DataInfo> infos) async {
+    final current = await projectRepo.findById(projectId);
+    if (current == null) return null;
+
+    final existing = {for (final d in current.dataInfos) d.id: d};
+    for (final n in infos) {
+      existing[n.id] = n; // 같은 id면 덮어씀
+    }
+    final merged = existing.values.toList(growable: false);
+    return projectRepo.updateDataInfos(projectId, merged);
+  }
+
   Future<Project?> removeDataInfo(String projectId, String dataInfoId) => projectRepo.removeDataInfoById(projectId, dataInfoId);
 
   // ────────────────────────────────────────────────────────────────────────────
@@ -81,6 +94,12 @@ class ProjectUseCases {
   // ────────────────────────────────────────────────────────────────────────────
   // 📌 라이프사이클
   // ────────────────────────────────────────────────────────────────────────────
+
+  /// 단일 프로젝트 저장(업서트: 있으면 갱신, 없으면 추가)
+  Future<void> save(Project project) => projectRepo.saveProject(project);
+
+  /// (선택) 여러 프로젝트 일괄 저장
+  Future<void> saveAll(List<Project> list) => projectRepo.saveAll(list);
 
   /// 프로젝트 완전 삭제
   /// - labelRepo가 있으면 모든 라벨을 명시적으로 삭제 후 프로젝트 삭제
