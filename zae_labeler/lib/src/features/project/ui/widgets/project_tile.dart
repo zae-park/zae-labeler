@@ -19,13 +19,14 @@ class ProjectTile extends StatelessWidget {
 
   void _openLabelingPage(BuildContext context) async {
     final result = await Navigator.push<bool>(
-        context, MaterialPageRoute(settings: const RouteSettings(name: '/labeling'), builder: (_) => LabelingPage(project: vm.project)));
+      context,
+      MaterialPageRoute(settings: const RouteSettings(name: '/labeling'), builder: (_) => LabelingPage(project: vm.project)),
+    );
 
-    // ✅ 라벨링 후 summary 갱신
+    // ✅ 라벨링 후 summary 갱신 (ProjectListVM 리팩토링 시그니처 반영)
     if (result == true && context.mounted) {
-      final appUseCases = context.read<AppUseCases>();
       final listVM = context.read<ProjectListViewModel>();
-      await listVM.fetchSummary(vm.project.id, appUseCases, force: true);
+      await listVM.fetchSummary(vm.project.id, force: true);
     }
   }
 
@@ -77,14 +78,20 @@ class ProjectTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final projectId = vm.project.id;
-    final appUseCases = context.read<AppUseCases>();
-    final summary = context.watch<ProjectListViewModel>().summaries[projectId];
+    final listVM = context.watch<ProjectListViewModel>();
+    final summary = listVM.summaries[projectId];
 
+    // ✅ 요약이 아직 없으면 최초 1회 로드
     if (summary == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.read<ProjectListViewModel>().fetchSummary(projectId, appUseCases);
+        if (context.mounted) {
+          context.read<ProjectListViewModel>().fetchSummary(projectId);
+        }
       });
     }
+
+    // 모드 텍스트(전역 익스텐션이 있으면 vm.project.mode.displayName 사용)
+    final modeText = vm.project.mode.name;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -100,32 +107,19 @@ class ProjectTile extends StatelessWidget {
                 children: [
                   Text(vm.project.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
-                  Text("Mode: ${vm.project.mode.displayName}"),
+                  Text("Mode: $modeText"),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 12,
                     runSpacing: 8,
                     children: [
                       ElevatedButton.icon(
-                        onPressed: () => _openLabelingPage(context),
-                        icon: const Icon(Icons.play_arrow),
-                        label: Text(context.l10n.projectTile_label),
-                      ),
+                          onPressed: () => _openLabelingPage(context), icon: const Icon(Icons.play_arrow), label: Text(context.l10n.projectTile_label)),
+                      OutlinedButton.icon(onPressed: () => _openEditPage(context), icon: const Icon(Icons.edit), label: Text(context.l10n.projectTile_edit)),
                       OutlinedButton.icon(
-                        onPressed: () => _openEditPage(context),
-                        icon: const Icon(Icons.edit),
-                        label: Text(context.l10n.projectTile_edit),
-                      ),
+                          onPressed: () => vm.downloadProjectConfig(), icon: const Icon(Icons.download), label: Text(context.l10n.projectTile_download)),
                       OutlinedButton.icon(
-                        onPressed: () => vm.downloadProjectConfig(),
-                        icon: const Icon(Icons.download),
-                        label: Text(context.l10n.projectTile_download),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: () => vm.shareProject(context),
-                        icon: const Icon(Icons.share),
-                        label: Text(context.l10n.projectTile_share),
-                      ),
+                          onPressed: () => vm.shareProject(context), icon: const Icon(Icons.share), label: Text(context.l10n.projectTile_share)),
                       TextButton.icon(
                         onPressed: () => _confirmDelete(context),
                         icon: const Icon(Icons.delete, color: Colors.red),
