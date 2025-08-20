@@ -1,5 +1,4 @@
 // lib/src/features/label/use_cases/label_use_cases.dart
-
 import '../../../core/models/project/project_model.dart';
 import '../../label/models/label_model.dart' show LabelModel, LabelingMode, LabelStatus;
 import '../../label/repository/label_repository.dart';
@@ -9,13 +8,12 @@ import 'package:zae_labeler/src/utils/label_validator.dart';
 /// ---------------------------------------------------------------------------
 /// 📊 라벨링 요약 DTO
 /// ---------------------------------------------------------------------------
-/// 프로젝트/라벨 컬렉션에 대한 진행 현황을 간단히 표현합니다.
 class LabelingSummary {
   final int total; // 전체 데이터 개수 (= project.dataInfos.length)
   final int complete; // 완료 상태 개수
   final int warning; // 경고 상태 개수(불완전/의심 등)
-  final int incomplete; // 미완료 개수
-  final double progress; // 0.0 ~ 1.0
+  final int incomplete; // 미완료 개수 (= total - complete)
+  final double progress; // 진행률(0.0~1.0) = complete / total
 
   const LabelingSummary({required this.total, required this.complete, required this.warning, required this.incomplete, required this.progress});
 
@@ -33,7 +31,7 @@ class LabelingSummary {
 /// - Import/Export는 필요 시 Project 컨텍스트를 같이 사용
 /// - 검증/상태 및 요약 계산은 여기서 수행 (Repo는 IO만 담당)
 ///
-/// 기존 구버전 유스케이스 매핑:
+/// 구버전 매핑:
 ///  - SingleLabelUseCase.load/save/delete → loadOrCreate / save / deleteByDataId
 ///  - BatchLabelUseCase.loadAll/saveAll/clear → loadAll / saveAll / clearAll
 ///  - LabelIoUseCase.export/import → exportProjectLabels / importLabelsAndSaveAll
@@ -48,7 +46,6 @@ class LabelUseCases {
   /// 부트스트랩 편의 생성자
   factory LabelUseCases.from(LabelRepository labelRepo, ProjectRepository projectRepo) {
     return LabelUseCases(labelRepo: labelRepo, projectRepo: projectRepo);
-    // Note: 기존 AppUseCases에서 label: LabelUseCases.from(labelRepo, projectRepo) 형태로 주입
   }
 
   // ===========================================================================
@@ -56,9 +53,10 @@ class LabelUseCases {
   // ===========================================================================
 
   /// 단일 라벨 로드(없으면 생성하여 반환).
-  /// - dataPath는 Native에선 파일 경로, Web/Cloud에서는 보통 빈 문자열/nullable
+  /// - [dataPath]는 Native에선 파일 경로, Web/Cloud에서는 보통 빈 문자열/nullable
   Future<LabelModel> loadOrCreate({required String projectId, required String dataId, String dataPath = '', required LabelingMode mode}) {
     return labelRepo.loadOrCreateLabel(projectId: projectId, dataId: dataId, dataPath: dataPath, mode: mode);
+    // 참고: storageHelper는 표준 래퍼 {data_id, data_path, mode(name), labeled_at, label_data}를 사용해야 일관됩니다.
   }
 
   /// 단일 라벨 저장/갱신.
@@ -101,7 +99,7 @@ class LabelUseCases {
   // ===========================================================================
 
   /// 현재 프로젝트의 라벨을 내보냅니다.
-  /// - withData=true 이면 가능한 범위에서 원본 데이터 포함(Web base64 / Native 파일)
+  /// - [withData] = true 이면 가능한 범위에서 원본 데이터 포함(Web base64 / Native 파일)
   /// - Cloud는 일반적으로 labels.json 스냅샷 업로드(파일 동반 X)
   Future<String> exportProjectLabels(String projectId, {bool withData = false}) async {
     final project = await projectRepo.findById(projectId);
@@ -143,7 +141,7 @@ class LabelUseCases {
   // 📌 요약 / 통계
   // ===========================================================================
 
-  /// 프로젝트 기준 전체 라벨링 진행 요약(스토리지 조회 포함).
+  /// 프로젝트 ID 기준 전체 라벨링 진행 요약(스토리지 조회 포함).
   Future<LabelingSummary> computeSummary(String projectId) async {
     final project = await projectRepo.findById(projectId);
     if (project == null) {
@@ -153,12 +151,19 @@ class LabelUseCases {
     return computeSummaryFor(project, labels);
   }
 
+  /// (편의) 프로젝트 객체로 직접 요약 계산(라벨은 내부 조회).
+  Future<LabelingSummary> computeSummaryByProject(Project project) async {
+    final labels = await labelRepo.loadAllLabels(project.id);
+    return computeSummaryFor(project, labels);
+  }
+
   /// 주어진 프로젝트/라벨 컬렉션을 기반으로 진행 요약 계산.
+  /// - 경고는 완료와 별도 집계(불완전/의심치가 있는 경우)
+  /// - 미완료 = total - complete
   LabelingSummary computeSummaryFor(Project project, List<LabelModel> labels) {
     final total = project.dataInfos.length;
     int complete = 0, warning = 0;
 
-    // dataId 기준으로 상태 계산(프로젝트의 dataInfos를 기준으로 함)
     final labelMap = {for (final m in labels) m.dataId: m};
     for (final info in project.dataInfos) {
       final lbl = labelMap[info.id];
@@ -170,5 +175,15 @@ class LabelUseCases {
     final incomplete = (total - complete).clamp(0, total);
     final progress = total == 0 ? 0.0 : complete / total;
     return LabelingSummary(total: total, complete: complete, warning: warning, incomplete: incomplete, progress: progress);
+  }
+
+  /// (편의) 상태 맵 계산: dataId → LabelStatus
+  Map<String, LabelStatus> statusMapFor(Project project, List<LabelModel> labels) {
+    final map = <String, LabelStatus>{};
+    final labelMap = {for (final m in labels) m.dataId: m};
+    for (final info in project.dataInfos) {
+      map[info.id] = LabelValidator.getStatus(project, labelMap[info.id]);
+    }
+    return map;
   }
 }
