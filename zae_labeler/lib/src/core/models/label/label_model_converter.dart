@@ -1,6 +1,7 @@
 // lib/src/features/label/models/label_model_converter.dart
 import 'package:flutter/foundation.dart';
-import 'label_model.dart';
+import 'package:zae_labeler/src/core/models/label/label_types.dart';
+import 'base_label_model.dart';
 import 'classification_label_model.dart';
 import 'segmentation_label_model.dart';
 

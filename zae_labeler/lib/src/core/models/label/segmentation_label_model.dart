@@ -1,4 +1,5 @@
-import 'label_model.dart';
+import 'label_types.dart';
+import 'base_label_model.dart';
 import '../../../utils/run_length_codec.dart';
 
 /// ✅ Segmentation Label의 최상위 클래스

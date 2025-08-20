@@ -11,7 +11,7 @@
   LabelModelConverter가 생성/파싱합니다.
 */
 
-import 'label_model.dart'; // LabelingMode 등 공용 정의
+import 'label_types.dart'; // LabelingMode 등 공용 정의
 
 /// ✅ LabelModel의 최상위 추상 클래스 (Base Model)
 ///
