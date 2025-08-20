@@ -6,16 +6,7 @@ import '../../models/sub_models/segmentation_label_model.dart';
 /// ViewModel for segmentation labeling.
 /// Handles pixel-level updates and repository-backed I/O.
 class SegmentationLabelViewModel extends LabelViewModel {
-  SegmentationLabelViewModel({
-    required super.projectId,
-    required super.dataId,
-    required super.dataFilename,
-    required super.dataPath,
-    required super.mode,
-    required super.labelModel,
-    required super.labelUseCases,
-    required super.labelInputMapper,
-  });
+  SegmentationLabelViewModel({required super.project, required super.data, required super.labelUseCases, required super.initialLabel, required super.mapper});
 
   @override
   Future<void> addPixel(int x, int y, String classLabel) async {

@@ -5,16 +5,7 @@ import '../../models/sub_models/classification_label_model.dart';
 
 /// ViewModel for single and multi classification labeling
 class ClassificationLabelViewModel extends LabelViewModel {
-  ClassificationLabelViewModel({
-    required super.projectId,
-    required super.dataId,
-    required super.dataFilename,
-    required super.dataPath,
-    required super.mode,
-    required super.labelModel,
-    required super.labelUseCases,
-    required super.labelInputMapper,
-  });
+  ClassificationLabelViewModel({required super.project, required super.data, required super.labelUseCases, required super.initialLabel, required super.mapper});
 
   bool get isMultiLabel => labelModel.isMultiClass;
 
@@ -73,16 +64,8 @@ class ClassificationLabelViewModel extends LabelViewModel {
 
 /// ViewModel for labeling data pairs (nC2 cross classification)
 class CrossClassificationLabelViewModel extends LabelViewModel {
-  CrossClassificationLabelViewModel({
-    required super.projectId,
-    required super.dataId,
-    required super.dataFilename,
-    required super.dataPath,
-    required super.mode,
-    required super.labelModel,
-    required super.labelUseCases,
-    required super.labelInputMapper,
-  });
+  CrossClassificationLabelViewModel(
+      {required super.project, required super.data, required super.labelUseCases, required super.initialLabel, required super.mapper});
 
   @override
   Future<void> toggleLabel(String labelItem) async {
