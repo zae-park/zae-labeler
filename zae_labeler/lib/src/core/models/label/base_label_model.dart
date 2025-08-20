@@ -4,7 +4,7 @@
 이 파일은 라벨링 모드 클래스를 위한 추상 클래스를 포함합니다.
 */
 
-import '../label_model.dart';
+import 'label_model.dart';
 
 /// ✅ LabelModel의 최상위 추상 클래스 (Base Model)
 abstract class LabelModel<T> {

@@ -1,8 +1,8 @@
 // lib/src/features/label/models/label_model_converter.dart
 import 'package:flutter/foundation.dart';
 import 'label_model.dart';
-import 'sub_models/classification_label_model.dart';
-import 'sub_models/segmentation_label_model.dart';
+import 'classification_label_model.dart';
+import 'segmentation_label_model.dart';
 
 class LabelModelConverter {
   // ---- Public API ----------------------------------------------------------
@@ -43,12 +43,7 @@ class LabelModelConverter {
     final payload = _reqMap(j, 'label_data');
     final label = _reqString(payload, 'label');
 
-    return SingleClassificationLabelModel(
-      dataId: dataId,
-      dataPath: dataPath,
-      label: label,
-      labeledAt: labeledAt,
-    );
+    return SingleClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: label, labeledAt: labeledAt);
   }
 
   static LabelModel _multiClassification(Map<String, dynamic> j) {
@@ -59,12 +54,7 @@ class LabelModelConverter {
     final payload = _reqMap(j, 'label_data');
     final labels = _reqStringList(payload, 'labels');
 
-    return MultiClassificationLabelModel(
-      dataId: dataId,
-      dataPath: dataPath,
-      label: labels.toSet(),
-      labeledAt: labeledAt,
-    );
+    return MultiClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: labels.toSet(), labeledAt: labeledAt);
   }
 
   static LabelModel _crossClassification(Map<String, dynamic> j) {
@@ -73,12 +63,7 @@ class LabelModelConverter {
     final labeledAt = _readIsoDate(j, 'labeled_at');
     final payload = _reqMap(j, 'label_data'); // CrossDataPair JSON 전체
 
-    return CrossClassificationLabelModel(
-      dataId: dataId,
-      dataPath: dataPath,
-      label: CrossDataPair.fromJson(payload),
-      labeledAt: labeledAt,
-    );
+    return CrossClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: CrossDataPair.fromJson(payload), labeledAt: labeledAt);
   }
 
   static LabelModel _singleSeg(Map<String, dynamic> j) {
@@ -87,12 +72,7 @@ class LabelModelConverter {
     final labeledAt = _readIsoDate(j, 'labeled_at');
     final payload = _reqMap(j, 'label_data');
 
-    return SingleClassSegmentationLabelModel(
-      dataId: dataId,
-      dataPath: dataPath,
-      label: SegmentationData.fromJson(payload),
-      labeledAt: labeledAt,
-    );
+    return SingleClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: SegmentationData.fromJson(payload), labeledAt: labeledAt);
   }
 
   static LabelModel _multiSeg(Map<String, dynamic> j) {
@@ -101,12 +81,7 @@ class LabelModelConverter {
     final labeledAt = _readIsoDate(j, 'labeled_at');
     final payload = _reqMap(j, 'label_data');
 
-    return MultiClassSegmentationLabelModel(
-      dataId: dataId,
-      dataPath: dataPath,
-      label: SegmentationData.fromJson(payload),
-      labeledAt: labeledAt,
-    );
+    return MultiClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: SegmentationData.fromJson(payload), labeledAt: labeledAt);
   }
 
   // ---- Normalize: 레거시 입력을 표준 스키마로 변환 --------------------------

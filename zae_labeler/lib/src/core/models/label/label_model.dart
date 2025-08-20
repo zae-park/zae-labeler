@@ -1,9 +1,9 @@
 // lib/src/models/label_model.dart
 
-import 'sub_models/base_label_model.dart';
-export 'sub_models/base_label_model.dart';
-import 'sub_models/classification_label_model.dart';
-import 'sub_models/segmentation_label_model.dart';
+import 'base_label_model.dart';
+export 'base_label_model.dart';
+import 'classification_label_model.dart';
+import 'segmentation_label_model.dart';
 
 enum LabelStatus { complete, warning, incomplete }
 

@@ -1,5 +1,5 @@
-import 'package:zae_labeler/src/core/models/label/sub_models/classification_label_model.dart';
-import 'package:zae_labeler/src/core/models/label/sub_models/segmentation_label_model.dart';
+import 'package:zae_labeler/src/core/models/label/classification_label_model.dart';
+import 'package:zae_labeler/src/core/models/label/segmentation_label_model.dart';
 import 'package:zae_labeler/src/platform_helpers/storage/interface_storage_helper.dart';
 import 'package:zae_labeler/src/core/models/project/project_model.dart';
 import 'package:zae_labeler/src/core/models/label/label_model.dart';

@@ -1,7 +1,7 @@
 // lib/view_models/sub_view_models/segmentation_labeling_view_model.dart
 import 'package:flutter/material.dart';
 
-import '../../../../core/models/label/sub_models/segmentation_label_model.dart';
+import '../../../../core/models/label/segmentation_label_model.dart';
 import '../label_view_model.dart';
 import 'base_labeling_view_model.dart';
 

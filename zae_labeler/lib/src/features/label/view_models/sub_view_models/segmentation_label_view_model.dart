@@ -6,7 +6,7 @@ import '../../../../core/models/project/project_model.dart';
 import '../../../../core/models/data/unified_data.dart';
 
 import '../../../../core/models/label/label_model.dart';
-import '../../../../core/models/label/sub_models/segmentation_label_model.dart';
+import '../../../../core/models/label/segmentation_label_model.dart';
 import 'base_label_view_model.dart';
 
 /// ViewModel for segmentation labeling.

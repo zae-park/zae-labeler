@@ -5,7 +5,7 @@ import '../../../../core/models/project/project_model.dart';
 import '../../../../core/models/data/unified_data.dart';
 
 import '../../../../core/models/label/label_model.dart';
-import '../../../../core/models/label/sub_models/classification_label_model.dart';
+import '../../../../core/models/label/classification_label_model.dart';
 import 'base_label_view_model.dart';
 
 /// 단일/다중 분류 공용 ViewModel
