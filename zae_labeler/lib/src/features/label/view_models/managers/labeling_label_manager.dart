@@ -5,7 +5,7 @@ import 'package:zae_labeler/src/core/models/project/project_model.dart';
 import 'package:zae_labeler/src/core/models/data/unified_data.dart';
 import 'package:zae_labeler/src/core/use_cases/app_use_cases.dart';
 
-import '../../models/label_model.dart' show LabelModel, LabelStatus;
+import '../../../../core/models/label/label_model.dart' show LabelModel, LabelStatus;
 import '../label_view_model.dart';
 
 /// 🏷️ LabelingLabelManager

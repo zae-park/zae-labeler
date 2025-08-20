@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zae_labeler/src/core/models/project/project_model.dart';
-import 'package:zae_labeler/src/features/label/models/label_model.dart';
+import 'package:zae_labeler/src/core/models/label/label_model.dart';
 import 'package:zae_labeler/src/core/models/data/data_model.dart';
 
 import '../../../mocks/repositories/mock_label_repository.dart';
@@ -15,7 +15,7 @@ void main() {
 
     setUp(() {
       useCase = MockLabelIOUseCase(repository: MockLabelRepository());
-      testProject = Project(id: 'p1', name: 'Project 1', mode: LabelingMode.singleClassification, classes: [], dataInfos: []);
+      testProject = const Project(id: 'p1', name: 'Project 1', mode: LabelingMode.singleClassification, classes: [], dataInfos: []);
       label1 = LabelModelFactory.createNew(LabelingMode.singleClassification, dataId: '1');
       label2 = LabelModelFactory.createNew(LabelingMode.singleClassification, dataId: '2');
     });

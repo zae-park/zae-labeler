@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/use_cases/app_use_cases.dart';
-import '../../label/models/label_model.dart' show LabelingMode; // 임시: 모드가 여기 있음
+import '../../../core/models/label/label_model.dart' show LabelingMode; // 임시: 모드가 여기 있음
 import '../../../core/models/project/project_model.dart';
 import '../../../core/models/data/data_info.dart';
 

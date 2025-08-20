@@ -1,5 +1,5 @@
 // lib/src/features/project/use_cases/project_use_cases.dart
-import '../../label/models/label_model.dart' show LabelingMode; // TODO: Mode 분리 후 제거
+import '../../../core/models/label/label_model.dart' show LabelingMode; // TODO: Mode 분리 후 제거
 import '../../../core/models/data/data_info.dart';
 import '../../../core/models/project/project_model.dart';
 import '../../label/repository/label_repository.dart';

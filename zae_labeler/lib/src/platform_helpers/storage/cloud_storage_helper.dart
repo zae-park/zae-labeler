@@ -10,7 +10,7 @@ import 'package:universal_html/html.dart' as html;
 
 import '../../core/models/project/project_model.dart';
 import '../../core/models/data/data_info.dart';
-import '../../features/label/models/label_model.dart';
+import '../../core/models/label/label_model.dart';
 import 'interface_storage_helper.dart';
 
 /// Cloud(Firebase Firestore + Firebase Storage) 기반 StorageHelper 구현체.

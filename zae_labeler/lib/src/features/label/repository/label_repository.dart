@@ -1,7 +1,7 @@
 // lib/src/features/label/repository/label_repository.dart
 import '../../../core/models/data/data_info.dart';
 import '../../../core/models/project/project_model.dart';
-import '../../label/models/label_model.dart';
+import '../../../core/models/label/label_model.dart';
 import '../../../platform_helpers/storage/interface_storage_helper.dart';
 // (임시) 검증 로직은 향후 UseCase/Service로 이전 예정
 import 'package:zae_labeler/src/utils/label_validator.dart';

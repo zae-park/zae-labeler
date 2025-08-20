@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zae_labeler/src/features/label/models/label_model.dart';
+import 'package:zae_labeler/src/core/models/label/label_model.dart';
 import 'package:zae_labeler/src/core/models/project/project_model.dart';
 
 import '../../../mocks/repositories/mock_label_repository.dart';
@@ -13,7 +13,7 @@ void main() {
 
     setUp(() {
       useCase = MockLabelValidationUseCase(repository: MockLabelRepository());
-      dummyProject = Project(id: 'p1', name: 'Test Project', mode: LabelingMode.singleClassification, classes: ['A', 'B'], dataInfos: []);
+      dummyProject = const Project(id: 'p1', name: 'Test Project', mode: LabelingMode.singleClassification, classes: ['A', 'B'], dataInfos: []);
       dummyLabel = LabelModelFactory.createNew(LabelingMode.singleClassification, dataId: 'd1');
     });
 

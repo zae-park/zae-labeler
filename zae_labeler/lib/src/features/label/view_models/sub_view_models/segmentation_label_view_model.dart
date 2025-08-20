@@ -5,8 +5,8 @@ import 'package:zae_labeler/src/features/label/logic/label_input_mapper.dart';
 import '../../../../core/models/project/project_model.dart';
 import '../../../../core/models/data/unified_data.dart';
 
-import '../../models/label_model.dart';
-import '../../models/sub_models/segmentation_label_model.dart';
+import '../../../../core/models/label/label_model.dart';
+import '../../../../core/models/label/sub_models/segmentation_label_model.dart';
 import 'base_label_view_model.dart';
 
 /// ViewModel for segmentation labeling.

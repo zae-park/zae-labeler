@@ -2,7 +2,7 @@
 import 'package:zae_labeler/src/core/models/data/unified_data.dart';
 import 'package:zae_labeler/src/features/data/services/adaptive_unified_data_loader.dart' show loadDataAdaptively;
 
-import '../models/label_model.dart' show LabelingMode;
+import '../../../core/models/label/label_model.dart' show LabelingMode;
 import '../../../core/models/project/project_model.dart';
 import '../../../platform_helpers/storage/interface_storage_helper.dart';
 import '../../../core/use_cases/app_use_cases.dart';

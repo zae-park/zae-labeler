@@ -9,7 +9,7 @@ import 'package:zae_labeler/src/core/models/data/unified_data.dart';
 import 'package:zae_labeler/src/features/data/services/adaptive_unified_data_loader.dart';
 import 'package:zae_labeler/src/features/data/services/unified_data_service.dart';
 
-import 'package:zae_labeler/src/features/label/models/label_model.dart';
+import 'package:zae_labeler/src/core/models/label/label_model.dart';
 import 'package:zae_labeler/src/platform_helpers/storage/interface_storage_helper.dart';
 import 'package:zae_labeler/src/utils/label_validator.dart';
 

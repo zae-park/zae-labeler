@@ -1,7 +1,7 @@
 // lib/src/features/label/logic/label_input_mapper.dart
-import '../models/label_model.dart';
-import '../models/sub_models/classification_label_model.dart';
-import '../models/sub_models/segmentation_label_model.dart';
+import '../../../core/models/label/label_model.dart';
+import '../../../core/models/label/sub_models/classification_label_model.dart';
+import '../../../core/models/label/sub_models/segmentation_label_model.dart';
 
 /// [labelData] 기대 타입 요약:
 /// - SingleClassification: String? (null 허용)

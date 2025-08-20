@@ -2,10 +2,10 @@
 import 'package:flutter/foundation.dart';
 
 import '../../core/models/data/data_info.dart';
-import '../../features/label/models/label_model.dart';
+import '../../core/models/label/label_model.dart';
 import '../../core/models/project/project_model.dart';
-import '../../features/label/models/sub_models/classification_label_model.dart';
-import '../../features/label/models/sub_models/segmentation_label_model.dart';
+import '../../core/models/label/sub_models/classification_label_model.dart';
+import '../../core/models/label/sub_models/segmentation_label_model.dart';
 
 /// 앱의 영속 계층(네이티브/웹/클라우드)에서 **프로젝트 구성(설계도)**, **프로젝트 목록(레지스트리)**,
 /// **라벨(annotations)**, **라벨 Import/Export**를 처리하는 공통 인터페이스입니다.

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zae_labeler/src/features/label/models/label_model.dart';
+import 'package:zae_labeler/src/core/models/label/label_model.dart';
 import 'package:zae_labeler/src/core/models/project/project_model.dart';
 import 'package:zae_labeler/src/core/models/data/data_model.dart';
 import 'package:zae_labeler/src/features/label/view_models/sub_view_models/classification_labeling_view_model.dart';
@@ -10,7 +10,7 @@ import '../../../mocks/use_cases/mock_app_use_cases.dart';
 void main() {
   group('ClassificationLabelingViewModel', () {
     late ClassificationLabelingViewModel viewModel;
-    final mockProject = Project(
+    const mockProject = Project(
       id: 'test_project',
       name: 'Test Project',
       mode: LabelingMode.singleClassification,

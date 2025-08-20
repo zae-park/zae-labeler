@@ -2,10 +2,10 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:zae_labeler/src/core/models/data/data_info.dart';
-import 'package:zae_labeler/src/features/label/models/label_model_converter.dart';
+import 'package:zae_labeler/src/core/models/label/label_model_converter.dart';
 
 // ✅ label_model은 아직 core로 안 옮겼으므로 기존 경로 그대로 유지
-import '../../../features/label/models/label_model.dart';
+import '../label/label_model.dart';
 
 /// 프로젝트 도메인 엔티티(순수 객체).
 /// - 저장소/뷰모델/페이지에 의존하지 않음 (ChangeNotifier 제거)

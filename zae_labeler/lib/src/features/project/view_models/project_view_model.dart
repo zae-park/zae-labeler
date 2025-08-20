@@ -7,7 +7,7 @@ import 'package:zae_labeler/src/core/use_cases/app_use_cases.dart';
 import 'package:zae_labeler/src/features/label/view_models/labeling_view_model.dart';
 
 import '../../../core/models/data/data_info.dart';
-import '../../label/models/label_model.dart' show LabelingMode; // 임시: 모드 여기 위치
+import '../../../core/models/label/label_model.dart' show LabelingMode; // 임시: 모드 여기 위치
 import '../../../core/models/project/project_model.dart';
 
 import '../../../platform_helpers/share/interface_share_helper.dart';

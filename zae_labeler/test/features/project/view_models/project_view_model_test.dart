@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zae_labeler/src/core/models/data/data_model.dart';
-import 'package:zae_labeler/src/features/label/models/label_model.dart';
+import 'package:zae_labeler/src/core/models/label/label_model.dart';
 import 'package:zae_labeler/src/core/models/project/project_model.dart';
 import 'package:zae_labeler/src/features/project/view_models/project_view_model.dart';
 

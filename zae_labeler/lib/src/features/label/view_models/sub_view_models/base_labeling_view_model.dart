@@ -5,7 +5,7 @@ import 'package:zae_labeler/src/features/label/view_models/managers/labeling_dat
 import 'package:zae_labeler/src/features/label/view_models/managers/labeling_label_manager.dart';
 
 import '../../../../core/use_cases/app_use_cases.dart';
-import '../../models/label_model.dart';
+import '../../../../core/models/label/label_model.dart';
 import '../../../../core/models/project/project_model.dart';
 import '../../../../core/models/data/data_model.dart';
 import '../../../../platform_helpers/storage/interface_storage_helper.dart';

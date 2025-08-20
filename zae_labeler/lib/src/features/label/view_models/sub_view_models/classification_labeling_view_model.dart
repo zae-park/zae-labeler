@@ -3,7 +3,7 @@
 import '../../../../core/models/data/data_model.dart';
 import '../label_view_model.dart';
 import 'base_labeling_view_model.dart';
-import '../../models/sub_models/classification_label_model.dart';
+import '../../../../core/models/label/sub_models/classification_label_model.dart';
 
 /// ViewModel for single and multi classification labeling modes.
 /// Handles label toggling and status tracking per data item.

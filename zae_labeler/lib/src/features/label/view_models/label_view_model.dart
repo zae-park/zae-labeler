@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../../../core/models/project/project_model.dart';
 import '../../../core/models/data/unified_data.dart';
 
-import '../models/label_model.dart';
+import '../../../core/models/label/label_model.dart';
 import '../logic/label_input_mapper.dart';
 import '../use_cases/label_use_cases.dart';
 

@@ -9,7 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'interface_storage_helper.dart'; // ← 현재는 여기에 LabelModelConverter가 있다고 가정
 import '../../core/models/data/data_info.dart';
 import '../../core/models/project/project_model.dart';
-import '../../features/label/models/label_model.dart';
+import '../../core/models/label/label_model.dart';
 // 필요 시 LabelModelFactory 경로가 다르면 import 추가
 
 /// Native(모바일/데스크톱) 환경용 StorageHelper 구현.

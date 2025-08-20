@@ -2,7 +2,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:zae_labeler/src/core/models/data/unified_data.dart';
 import 'package:zae_labeler/src/core/models/project/project_model.dart';
-import '../../models/label_model.dart' show LabelModel, LabelingMode, LabelModelFactory;
+import '../../../../core/models/label/label_model.dart' show LabelModel, LabelingMode, LabelModelFactory;
 import '../../logic/label_input_mapper.dart';
 import '../../use_cases/label_use_cases.dart';
 

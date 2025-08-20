@@ -10,7 +10,7 @@ import 'package:archive/archive.dart';
 import 'interface_storage_helper.dart'; // ← 현재는 여기에 LabelModelConverter가 있다고 가정
 import '../../core/models/project/project_model.dart';
 import '../../core/models/data/data_info.dart';
-import '../../features/label/models/label_model.dart';
+import '../../core/models/label/label_model.dart';
 // 필요 시 LabelModelFactory가 다른 파일이면 import 경로를 맞춰주세요.
 
 /// Web(브라우저) 환경용 StorageHelper 구현.

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../features/label/models/label_model.dart';
+import '../../core/models/label/label_model.dart';
 import '../../../theme/theme.dart';
 
 class LabelingModeSelector extends StatelessWidget {

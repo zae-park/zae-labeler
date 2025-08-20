@@ -4,7 +4,7 @@ import 'package:zae_labeler/src/platform_helpers/storage/interface_storage_helpe
 
 import '../../use_cases/label_use_cases.dart';
 import '../../../project/use_cases/project_use_cases.dart';
-import '../../models/label_model.dart';
+import '../../../../core/models/label/label_model.dart';
 import '../../../../core/models/project/project_model.dart';
 import '../../view_models/labeling_view_model.dart';
 

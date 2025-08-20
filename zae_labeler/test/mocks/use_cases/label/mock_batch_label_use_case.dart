@@ -1,5 +1,5 @@
 import 'package:zae_labeler/src/features/label/use_cases/batch_label_use_case.dart';
-import 'package:zae_labeler/src/features/label/models/label_model.dart';
+import 'package:zae_labeler/src/core/models/label/label_model.dart';
 
 class MockBatchLabelUseCase extends BatchLabelUseCase {
   List<LabelModel> mockLabels = [];
