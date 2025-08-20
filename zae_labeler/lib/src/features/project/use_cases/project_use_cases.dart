@@ -62,11 +62,13 @@ class ProjectUseCases {
   // 📌 DataInfo 관리
   // ────────────────────────────────────────────────────────────────────────────
 
+  /// 전체 교체
   Future<Project?> replaceDataInfos(String projectId, List<DataInfo> infos) => projectRepo.updateDataInfos(projectId, infos);
 
+  /// 단건 추가
   Future<Project?> addDataInfo(String projectId, DataInfo info) => projectRepo.addDataInfo(projectId, info);
 
-  /// ✅ 배치 추가: 중복 제거 후 머지 저장
+  /// ✅ 배치 추가: 중복 제거 후 병합 저장
   Future<Project?> addDataInfos(String projectId, List<DataInfo> infos) async {
     final current = await projectRepo.findById(projectId);
     if (current == null) return null;
@@ -79,6 +81,7 @@ class ProjectUseCases {
     return projectRepo.updateDataInfos(projectId, merged);
   }
 
+  /// 단건 제거 (id 기준)
   Future<Project?> removeDataInfo(String projectId, String dataInfoId) => projectRepo.removeDataInfoById(projectId, dataInfoId);
 
   // ────────────────────────────────────────────────────────────────────────────
@@ -98,8 +101,16 @@ class ProjectUseCases {
   /// 단일 프로젝트 저장(업서트: 있으면 갱신, 없으면 추가)
   Future<void> save(Project project) => projectRepo.saveProject(project);
 
-  /// (선택) 여러 프로젝트 일괄 저장
+  /// 여러 프로젝트 일괄 저장
   Future<void> saveAll(List<Project> list) => projectRepo.saveAll(list);
+
+  /// ✅ 단일 프로젝트 삭제(레이어 최소 책임: Project만 삭제)
+  /// - 라벨까지 확실히 지우려면 [deleteProjectFully] 사용
+  Future<void> deleteById(String projectId) => projectRepo.deleteById(projectId);
+
+  /// ✅ 전체 삭제
+  /// - 라벨까지 지우려면 상위 유스케이스에서 전체 프로젝트를 순회하며 `deleteProjectFully`를 호출하세요.
+  Future<void> deleteAll() => projectRepo.deleteAll();
 
   /// 프로젝트 완전 삭제
   /// - labelRepo가 있으면 모든 라벨을 명시적으로 삭제 후 프로젝트 삭제
