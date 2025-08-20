@@ -17,6 +17,13 @@ class LabelingSummary {
 
   const LabelingSummary({required this.total, required this.complete, required this.warning, required this.incomplete, required this.progress});
 
+  LabelingSummary.empty()
+      : total = 0,
+        complete = 0,
+        warning = 0,
+        incomplete = 0,
+        progress = 0.0;
+
   @override
   String toString() =>
       'LabelingSummary(total=$total, complete=$complete, warning=$warning, incomplete=$incomplete, progress=${(progress * 100).toStringAsFixed(1)}%)';
