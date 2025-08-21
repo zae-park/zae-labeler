@@ -43,14 +43,36 @@ class SegmentationData {
 
   /// ✅ JSON 데이터를 기반으로 `SegmentationData` 객체 생성.
   factory SegmentationData.fromJson(Map<String, dynamic> json) {
-    final raw = (json['segments'] as Map<String, dynamic>? ?? const {});
-    return SegmentationData(segments: raw.map((key, value) => MapEntry(key, Segment.fromJson(value))));
+    final segs = json['segments'];
+    if (segs is! Map) {
+      // 방어: 잘못된 구조면 빈 데이터로 복구
+      return const SegmentationData(segments: {});
+    }
+    final map = <String, Segment>{};
+    segs.forEach((key, value) {
+      if (value is Map<String, dynamic>) {
+        map[key] = Segment.fromJson(value);
+      } else if (value is Map) {
+        map[key] = Segment.fromJson(Map<String, dynamic>.from(value));
+      }
+      // 그 외 타입은 skip (유효성 방어)
+    });
+    return SegmentationData(segments: map);
   }
 
   /// ✅ 특정 클래스에 대해 픽셀 추가.
   SegmentationData addPixel(int x, int y, String classLabel) {
     final updated = segments[classLabel]?.addPixel(x, y) ?? Segment(indices: {(x, y)}, classLabel: classLabel);
     return SegmentationData(segments: {...segments, classLabel: updated});
+  }
+
+  /// ✅ 여러 픽셀을 한 번에 추가(편의)
+  SegmentationData addPixels(Iterable<(int, int)> coords, String classLabel) {
+    var seg = segments[classLabel] ?? Segment(indices: const {}, classLabel: classLabel);
+    for (final (x, y) in coords) {
+      seg = seg.addPixel(x, y);
+    }
+    return SegmentationData(segments: {...segments, classLabel: seg});
   }
 
   /// ✅ 특정 픽셀을 삭제하는 메서드.
@@ -63,6 +85,19 @@ class SegmentationData {
       }
     }
     return SegmentationData(segments: updatedSegments);
+  }
+
+  /// ✅ 여러 픽셀을 한 번에 삭제(편의)
+  SegmentationData removePixels(Iterable<(int, int)> coords) {
+    final updated = <String, Segment>{};
+    for (final entry in segments.entries) {
+      var seg = entry.value;
+      for (final (x, y) in coords) {
+        if (seg.containsPixel(x, y)) seg = seg.removePixel(x, y);
+      }
+      if (seg.indices.isNotEmpty) updated[entry.key] = seg;
+    }
+    return SegmentationData(segments: updated);
   }
 }
 
@@ -110,18 +145,33 @@ class Segment {
   /// ✅ JSON → Segment
   /// - RLE/비RLE 모두 수용(레거시 호환)
   factory Segment.fromJson(Map<String, dynamic> json) {
-    final rawIndices = json['indices'];
-    Set<(int, int)> idx;
-    if (rawIndices is List && rawIndices.isNotEmpty && rawIndices.first is Map && rawIndices.first.containsKey('count')) {
-      // RLE
-      idx = RunLengthCodec.decode(List<Map<String, dynamic>>.from(rawIndices));
-    } else if (rawIndices is List) {
-      // (레거시) {x,y} 배열
-      idx = rawIndices.map((e) => (e['x'] as int, e['y'] as int)).toSet();
-    } else {
-      idx = <(int, int)>{};
+    final raw = json['indices'];
+    Set<(int, int)> idx = const <(int, int)>{};
+
+    if (raw is List && raw.isNotEmpty) {
+      final first = raw.first;
+
+      // 1) RLE: [{x:.., y:.., count:..}, ...]
+      if (first is Map && first.containsKey('count')) {
+        idx = RunLengthCodec.decode(List<Map<String, dynamic>>.from(raw));
+      }
+      // 2) 좌표 객체 배열: [{x:.., y:..}, ...]
+      else if (first is Map && (first.containsKey('x') || first.containsKey('y'))) {
+        idx = raw
+            .whereType<Map>()
+            .map<Map<String, dynamic>>((e) => Map<String, dynamic>.from(e))
+            .map<(int, int)>((m) => ((m['x'] as num).toInt(), (m['y'] as num).toInt()))
+            .toSet();
+      }
+      // 3) 2원소 배열: [[x,y], [x,y], ...]
+      else if (first is List && first.length == 2) {
+        idx = raw.whereType<List>().where((e) => e.length == 2).map<(int, int)>((e) => ((e[0] as num).toInt(), (e[1] as num).toInt())).toSet();
+      }
+      // 그 외 포맷은 무시(방어)
     }
-    return Segment(indices: idx, classLabel: json['class_label'] as String);
+
+    final label = json['class_label'];
+    return Segment(indices: idx, classLabel: label is String ? label : '');
   }
 
   Segment addPixel(int x, int y) {
