@@ -135,11 +135,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
   void toggleLabel(String labelItem) => throw UnimplementedError();
   bool isLabelSelected(String labelItem) => throw UnimplementedError();
 
-  Future<String> exportAllLabels() async {
-    final labelModels = _labelManager.allLabelModels;
-    final dataInfos = unifiedDataList.map((e) => e.toDataInfo()).toList();
-    return await appUseCases.label.io.exportLabelsWithData(project, labelModels, dataInfos);
-  }
+  Future<String> exportAllLabels() => appUseCases.label.exportProjectLabels(project.id, withData: true);
 
   @override
   void dispose() {
