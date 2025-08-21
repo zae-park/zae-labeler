@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 class TimeSeriesChart extends StatelessWidget {
   final List<double> data;
 
-  const TimeSeriesChart({Key? key, required this.data}) : super(key: key);
+  const TimeSeriesChart({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -49,18 +49,8 @@ class TimeSeriesChart extends StatelessWidget {
                 showTitles: true,
                 reservedSize: 32,
                 interval: (maxY + margin - (minY - margin)) / 10, // 적절한 간격 설정
-                getTitlesWidget: (value, meta) {
-                  return SideTitleWidget(
-                    axisSide: meta.axisSide,
-                    child: Text(
-                      value.toStringAsFixed(1),
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 10,
-                      ),
-                    ),
-                  );
-                },
+                getTitlesWidget: (value, meta) =>
+                    SideTitleWidget(meta: meta, child: Text(value.toStringAsFixed(1), style: const TextStyle(color: Colors.black, fontSize: 10))),
               ),
             ),
             rightTitles: AxisTitles(
@@ -68,18 +58,8 @@ class TimeSeriesChart extends StatelessWidget {
                 showTitles: true,
                 reservedSize: 40,
                 interval: (maxY + margin - (minY - margin)) / 5, // 적절한 간격 설정
-                getTitlesWidget: (value, meta) {
-                  return SideTitleWidget(
-                    axisSide: meta.axisSide,
-                    child: Text(
-                      value.toStringAsFixed(1),
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 10,
-                      ),
-                    ),
-                  );
-                },
+                getTitlesWidget: (value, meta) =>
+                    SideTitleWidget(meta: meta, child: Text(value.toStringAsFixed(1), style: const TextStyle(color: Colors.black, fontSize: 10))),
               ),
             ),
           ),
