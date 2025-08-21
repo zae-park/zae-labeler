@@ -69,7 +69,7 @@ abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatelessWi
   }
 
   /// 라벨링 뷰어 (이미지, 시계열 등)
-  Widget buildViewer(T vm) => ViewerBuilder(data: vm.currentUnifiedData);
+  Widget buildViewer(T vm) => ViewerBuilder(data: vm.currentData);
 
   /// 하단 네비게이터
   Widget buildNavigator(T vm) => Column(children: [LabelingProgress(labelingVM: vm), NavigationButtons(onPrevious: vm.movePrevious, onNext: vm.moveNext)]);
