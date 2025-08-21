@@ -1,11 +1,7 @@
 // lib/src/utils/interface_storage_helper.dart
-import 'package:flutter/foundation.dart';
-
 import '../../core/models/data/data_info.dart';
 import '../../core/models/label/label_model.dart';
 import '../../core/models/project/project_model.dart';
-import '../../core/models/label/classification_label_model.dart';
-import '../../core/models/label/segmentation_label_model.dart';
 
 /// 앱의 영속 계층(네이티브/웹/클라우드)에서 **프로젝트 구성(설계도)**, **프로젝트 목록(레지스트리)**,
 /// **라벨(annotations)**, **라벨 Import/Export**를 처리하는 공통 인터페이스입니다.
@@ -143,35 +139,4 @@ abstract class StorageHelperInterface {
   /// - Web: Blob URL revoke, 인메모리 버퍼 정리
   /// - Cloud: 로컬 캐시가 없다면 보통 no-op
   Future<void> clearAllCache();
-}
-
-class LabelModelConverter {
-  /// ✅ `LabelModel`을 JSON으로 변환하는 메서드
-  static Map<String, dynamic> toJson(LabelModel model) => model.toJson();
-
-  /// ✅ JSON 데이터를 `LabelModel` 객체로 변환하는 메서드
-  static LabelModel fromJson(LabelingMode mode, Map<String, dynamic> json) {
-    try {
-      final dataId = json['data_id'] ?? '';
-      final dataPath = json['data_path'];
-      final labeledAt = DateTime.parse(json['labeled_at']);
-      debugPrint("[LabelModelConverter.fromJson] 📥 LabelModel 생성: $mode / $dataId");
-
-      switch (mode) {
-        case LabelingMode.singleClassification:
-          return SingleClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: json['label'], labeledAt: labeledAt);
-        case LabelingMode.multiClassification:
-          return MultiClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: Set<String>.from(json['label']), labeledAt: labeledAt);
-        case LabelingMode.crossClassification:
-          return CrossClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: CrossDataPair.fromJson(json), labeledAt: labeledAt);
-        case LabelingMode.singleClassSegmentation:
-          return SingleClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: SegmentationData.fromJson(json['label']), labeledAt: labeledAt);
-        case LabelingMode.multiClassSegmentation:
-          return MultiClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: SegmentationData.fromJson(json['label']), labeledAt: labeledAt);
-      }
-    } catch (e) {
-      debugPrint("[LabelModelConverter.fromJson] ❌ LabelModel 생성 실패: $e");
-      return SingleClassificationLabelModel.empty();
-    }
-  }
 }
