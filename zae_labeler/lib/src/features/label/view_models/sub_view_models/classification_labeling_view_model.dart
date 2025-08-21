@@ -1,6 +1,7 @@
 // 📁 sub_view_models/base_labeling_view_model.dart
 
-import '../../../../core/models/data/data_model.dart';
+import 'package:zae_labeler/src/core/models/data/unified_data.dart';
+
 import '../label_view_model.dart';
 import 'base_labeling_view_model.dart';
 import '../../../../core/models/label/classification_label_model.dart';
@@ -15,7 +16,7 @@ class ClassificationLabelingViewModel extends LabelingViewModel {
     final labelVM = labelManager.currentLabelVM;
     await labelVM!.updateLabelFromInput(labelData);
     await labelManager.refreshStatusFor(dataManager.currentData, (status) {
-      dataManager.updateStatus(dataManager.currentData.dataId, status);
+      dataManager.updateStatusById(dataManager.currentData.dataId, status);
     });
     notifyListeners();
   }
@@ -25,7 +26,7 @@ class ClassificationLabelingViewModel extends LabelingViewModel {
     final labelVM = labelManager.currentLabelVM;
     await labelVM!.toggleLabel(labelItem);
     await labelManager.refreshStatusFor(dataManager.currentData, (status) {
-      dataManager.updateStatus(dataManager.currentData.dataId, status);
+      dataManager.updateStatusById(dataManager.currentData.dataId, status);
     });
     notifyListeners();
   }

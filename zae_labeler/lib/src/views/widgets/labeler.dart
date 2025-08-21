@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../features/label/view_models/labeling_view_model.dart';
+import 'package:zae_labeler/src/features/label/view_models/sub_view_models/base_labeling_view_model.dart';
+import 'package:zae_labeler/src/features/label/view_models/sub_view_models/segmentation_labeling_view_model.dart';
 import 'core/buttons.dart';
 
 class LabelSelectorWidget extends StatelessWidget {

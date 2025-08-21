@@ -1,5 +1,6 @@
 // 📁 sub_view_models/base_labeling_view_model.dart
 import 'package:flutter/material.dart';
+import 'package:zae_labeler/src/core/models/data/unified_data.dart';
 import 'package:zae_labeler/src/features/label/logic/labeling_status_manager.dart';
 import 'package:zae_labeler/src/features/label/view_models/managers/labeling_data_manager.dart';
 import 'package:zae_labeler/src/features/label/view_models/managers/labeling_label_manager.dart';
@@ -7,7 +8,6 @@ import 'package:zae_labeler/src/features/label/view_models/managers/labeling_lab
 import '../../../../core/use_cases/app_use_cases.dart';
 import '../../../../core/models/label/label_model.dart';
 import '../../../../core/models/project/project_model.dart';
-import '../../../../core/models/data/data_model.dart';
 import '../../../../platform_helpers/storage/interface_storage_helper.dart';
 import '../label_view_model.dart';
 
@@ -80,14 +80,7 @@ abstract class LabelingViewModel extends ChangeNotifier {
     final expectedType = LabelModelFactory.expectedType(project.mode);
     if (vm.labelModel.runtimeType != expectedType) {
       final data = _dataManager.currentData;
-      final refreshed = LabelViewModelFactory.create(
-        projectId: project.id,
-        dataId: data.dataId,
-        dataFilename: data.fileName,
-        dataPath: data.dataPath ?? '',
-        mode: project.mode,
-        labelUseCases: appUseCases.label,
-      );
+      final refreshed = LabelViewModelFactory.create(project: project, data: data, labelUseCases: appUseCases.label);
       await refreshed.loadLabel();
 
       _labelManager.disposeAll();
@@ -99,20 +92,16 @@ abstract class LabelingViewModel extends ChangeNotifier {
   Future<void> refreshStatus() async {
     final data = _dataManager.currentData;
     await _labelManager.refreshStatusFor(data, (status) {
-      _dataManager.updateStatus(data.dataId, status);
+      _dataManager.updateStatusById(data.dataId, status);
     });
   }
 
   /// 전체 라벨 상태 갱신
   Future refreshAllStatuses() async {
     final statusMgr = StatusManager(project: project, useCases: appUseCases.label);
-    final vmMap = {
-      for (var data in dataManager.allData)
-        data.dataId: labelManager.getOrCreateLabelVM(dataId: data.dataId, filename: data.fileName, path: data.dataPath ?? '', mode: project.mode)
-    };
-    final statuses = await statusMgr.refreshAll(dataManager.allData, vmMap);
+    final statuses = await statusMgr.refreshAll(dataManager.allData);
     statuses.forEach((id, status) {
-      dataManager.updateStatus(id, status);
+      dataManager.updateStatusById(id, status);
     });
     notifyListeners();
   }

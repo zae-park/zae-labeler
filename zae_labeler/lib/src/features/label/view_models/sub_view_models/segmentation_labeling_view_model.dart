@@ -1,7 +1,7 @@
 // lib/view_models/sub_view_models/segmentation_labeling_view_model.dart
 import 'package:flutter/material.dart';
+import 'package:zae_labeler/src/core/models/label/label_model.dart';
 
-import '../../../../core/models/label/segmentation_label_model.dart';
 import '../label_view_model.dart';
 import 'base_labeling_view_model.dart';
 
@@ -21,7 +21,7 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
       _selectedClass = project.classes.first;
     }
     await labelManager.refreshStatusFor(dataManager.currentData, (status) {
-      dataManager.updateStatus(dataManager.currentData.dataId, status);
+      dataManager.updateStatusById(dataManager.currentData.dataId, status);
     });
     notifyListeners();
   }
@@ -30,7 +30,7 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
   Future<void> postMove() async {
     restoreGridFromLabel();
     await labelManager.refreshStatusFor(dataManager.currentData, (status) {
-      dataManager.updateStatus(dataManager.currentData.dataId, status);
+      dataManager.updateStatusById(dataManager.currentData.dataId, status);
     });
     notifyListeners();
   }
@@ -41,7 +41,7 @@ class SegmentationLabelingViewModel extends LabelingViewModel {
     await labelVM.updateLabel(labelData);
     await labelVM.saveLabel();
     await labelManager.refreshStatusFor(dataManager.currentData, (status) {
-      dataManager.updateStatus(dataManager.currentData.dataId, status);
+      dataManager.updateStatusById(dataManager.currentData.dataId, status);
     });
     notifyListeners();
   }
