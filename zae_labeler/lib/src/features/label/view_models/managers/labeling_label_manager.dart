@@ -1,5 +1,7 @@
 // lib/src/features/label/view_models/managers/labeling_label_manager.dart
 import 'package:flutter/foundation.dart';
+import 'package:zae_labeler/src/core/models/data/data_info.dart';
+import 'package:zae_labeler/src/core/models/data/file_type.dart';
 
 import 'package:zae_labeler/src/core/models/project/project_model.dart';
 import 'package:zae_labeler/src/core/models/data/unified_data.dart';
@@ -95,5 +97,13 @@ class LabelingLabelManager {
       if (onNotify != null) vm.addListener(onNotify!);
       return vm;
     });
+  }
+
+  /// (편의) dataId만으로 가상 UnifiedData를 만들어 VM을 가져온다.
+  /// - 크로스 분류처럼 "실제 파일 1개"가 아닌 경우에 사용.
+  LabelViewModel getOrCreateLabelVMById({required String dataId, String? fileName, String? filePath}) {
+    final info = DataInfo(id: dataId, fileName: fileName ?? dataId, filePath: filePath);
+    final virtual = UnifiedData(dataInfo: info, fileType: FileType.unsupported);
+    return getOrCreateLabelVM(virtual);
   }
 }
