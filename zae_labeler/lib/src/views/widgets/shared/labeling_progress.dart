@@ -11,7 +11,7 @@ class LabelingProgress extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Text('데이터 ${labelingVM.currentIndex + 1} / ${labelingVM.totalCount} - ${labelingVM.currentDataFileName}', style: const TextStyle(fontSize: 16)),
+      child: Text('데이터 ${labelingVM.currentIndex + 1} / ${labelingVM.totalCount} - ${labelingVM.currentData.fileName}', style: const TextStyle(fontSize: 16)),
     );
   }
 }
