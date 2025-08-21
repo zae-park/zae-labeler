@@ -5,15 +5,20 @@ import 'label_types.dart';
 
 /// ✅ ClassificationLabelModel (추상)
 /// - 분류(단일/다중/크로스) 라벨 모델의 공통 기반.
-/// - **toJson()은 반드시 라벨 페이로드만 반환**합니다. (래퍼 키는 금지)
+/// - **toPayloadJson()은 반드시 라벨 페이로드만 반환**합니다. (래퍼 키는 금지)
 ///   - Single: {"label": "..."}
 ///   - Multi : {"labels": ["...", "..."]}
 ///   - Cross : {"sourceId": "...", "targetId": "...", "relation": "..." }
 abstract class ClassificationLabelModel<T> extends LabelModel<T> {
   ClassificationLabelModel({required super.dataId, super.dataPath, required super.label, required super.labeledAt});
 
+  /// 이 모델이 표현하는 라벨링 모드 (서브클래스가 명시)
   @override
-  LabelingMode get mode; // 서브클래스에서 명시
+  LabelingMode get mode;
+
+  /// 동일 인스턴스의 메타(시간)/payload만 바꿔 새 객체 반환
+  /// - 세그멘테이션과 인터페이스 일관성 유지
+  ClassificationLabelModel<T> copyWith({DateTime? labeledAt, T? label});
 }
 
 /// ✅ Single Classification
@@ -33,18 +38,19 @@ class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
 
   /// ⚠️ payload는 **label_data**에 해당하는 JSON이어야 합니다.
   /// 예: {"label": "cat"}
-  factory SingleClassificationLabelModel.fromPayloadJson({
-    required String dataId,
-    String? dataPath,
-    required DateTime labeledAt,
-    required Map<String, dynamic> payload,
-  }) {
+  factory SingleClassificationLabelModel.fromPayloadJson(
+      {required String dataId, String? dataPath, required DateTime labeledAt, required Map<String, dynamic> payload}) {
     return SingleClassificationLabelModel(
       dataId: dataId,
       dataPath: dataPath,
       label: payload['label'] as String?,
       labeledAt: labeledAt,
     );
+  }
+
+  @override
+  SingleClassificationLabelModel copyWith({DateTime? labeledAt, String? label}) {
+    return SingleClassificationLabelModel(dataId: dataId, dataPath: dataPath, labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
   }
 
   @override
@@ -68,12 +74,8 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
 
   /// ⚠️ payload는 **label_data**에 해당하는 JSON이어야 합니다.
   /// 예: {"labels": ["cat","dog"]}
-  factory MultiClassificationLabelModel.fromPayloadJson({
-    required String dataId,
-    String? dataPath,
-    required DateTime labeledAt,
-    required Map<String, dynamic> payload,
-  }) {
+  factory MultiClassificationLabelModel.fromPayloadJson(
+      {required String dataId, String? dataPath, required DateTime labeledAt, required Map<String, dynamic> payload}) {
     final raw = payload['labels'];
     return MultiClassificationLabelModel(
       dataId: dataId,
@@ -81,6 +83,11 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
       label: raw == null ? null : Set<String>.from(raw as List),
       labeledAt: labeledAt,
     );
+  }
+
+  @override
+  MultiClassificationLabelModel copyWith({DateTime? labeledAt, Set<String>? label}) {
+    return MultiClassificationLabelModel(dataId: dataId, dataPath: dataPath, labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
   }
 
   @override
@@ -100,17 +107,18 @@ class CrossClassificationLabelModel extends ClassificationLabelModel<CrossDataPa
   /// ⚠️ 페이로드만 반환합니다. (래퍼 키 포함 금지)
   /// 예: { "sourceId": "...", "targetId": "...", "relation": "..." }
   @override
-  Map<String, dynamic> toPayloadJson() => label?.toJson() ?? <String, dynamic>{};
+  Map<String, dynamic> toPayloadJson() => label?.toJson() ?? const {};
 
   /// ⚠️ payload는 **label_data**에 해당하는 JSON이어야 합니다.
   /// 예: {"sourceId":"...", "targetId":"...", "relation":"..."}
-  factory CrossClassificationLabelModel.fromPayloadJson({
-    required String dataId,
-    String? dataPath,
-    required DateTime labeledAt,
-    required Map<String, dynamic> payload,
-  }) {
+  factory CrossClassificationLabelModel.fromPayloadJson(
+      {required String dataId, String? dataPath, required DateTime labeledAt, required Map<String, dynamic> payload}) {
     return CrossClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: CrossDataPair.fromJson(payload), labeledAt: labeledAt);
+  }
+
+  @override
+  CrossClassificationLabelModel copyWith({DateTime? labeledAt, CrossDataPair? label}) {
+    return CrossClassificationLabelModel(dataId: dataId, dataPath: dataPath, labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
   }
 
   @override
