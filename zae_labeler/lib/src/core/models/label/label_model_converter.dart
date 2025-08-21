@@ -1,15 +1,30 @@
-// lib/src/features/label/models/label_model_converter.dart
+// lib/src/core/models/label/label_model_converter.dart
 import 'package:flutter/foundation.dart';
-import 'package:zae_labeler/src/core/models/label/label_types.dart';
+
+import 'label_types.dart';
 import 'base_label_model.dart';
 import 'classification_label_model.dart';
 import 'segmentation_label_model.dart';
+import 'segmentation_data.dart';
 
+/// ✅ LabelModelConverter
+/// - 모델 ↔ JSON 변환을 담당 (레거시 입력도 안전하게 수용)
+/// - 표준 래퍼 스키마:
+///   {
+///     "data_id": "...",
+///     "data_path": "...",          // opt
+///     "labeled_at": "ISO-8601",
+///     "mode": "singleClassification" | ...,
+///     "label_data": { ... }        // 모델별 페이로드
+///   }
 class LabelModelConverter {
-  // ---- Public API ----------------------------------------------------------
-
+  /// 모델 → (모델 고유 페이로드) JSON
+  /// - 주의: 래퍼를 포함하지 않습니다. (스토리지에서 래퍼를 씌우세요)
   static Map<String, dynamic> toJson(LabelModel model) => model.toJson();
 
+  /// JSON → 모델
+  /// - `raw`는 표준 래퍼 혹은 레거시 페이로드 모두 허용
+  /// - 내부에서 정규화 후, 최소 검증을 거쳐 안전 파싱
   static LabelModel fromJson(LabelingMode mode, Map<String, dynamic> raw) {
     final j = _normalize(raw); // 1) 표준화
     _validateWrapper(j); // 2) 공통 래퍼 최소 검증
@@ -34,7 +49,9 @@ class LabelModelConverter {
     }
   }
 
-  // ---- Strict parsers (표준 스키마만 신뢰) -----------------------------------
+  // ───────────────────────────────────────────────────────────────────────────
+  // Strict parsers (표준 스키마만 신뢰)
+  // ───────────────────────────────────────────────────────────────────────────
 
   static LabelModel _singleClassification(Map<String, dynamic> j) {
     final dataId = _reqString(j, 'data_id');
@@ -42,7 +59,7 @@ class LabelModelConverter {
     final labeledAt = _readIsoDate(j, 'labeled_at');
 
     final payload = _reqMap(j, 'label_data');
-    final label = _reqString(payload, 'label');
+    final label = _optString(payload, 'label');
 
     return SingleClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: label, labeledAt: labeledAt);
   }
@@ -53,39 +70,48 @@ class LabelModelConverter {
     final labeledAt = _readIsoDate(j, 'labeled_at');
 
     final payload = _reqMap(j, 'label_data');
-    final labels = _reqStringList(payload, 'labels');
+    // 표준은 'labels' 배열을 기대
+    final labels = _optStringList(payload, 'labels')?.toSet();
 
-    return MultiClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: labels.toSet(), labeledAt: labeledAt);
+    return MultiClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: labels, labeledAt: labeledAt);
   }
 
   static LabelModel _crossClassification(Map<String, dynamic> j) {
     final dataId = _reqString(j, 'data_id');
     final dataPath = _optString(j, 'data_path');
     final labeledAt = _readIsoDate(j, 'labeled_at');
-    final payload = _reqMap(j, 'label_data'); // CrossDataPair JSON 전체
 
-    return CrossClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: CrossDataPair.fromJson(payload), labeledAt: labeledAt);
+    final payload = _reqMap(j, 'label_data'); // CrossDataPair JSON 전체
+    final pair = CrossDataPair.fromJson(payload);
+
+    return CrossClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: pair, labeledAt: labeledAt);
   }
 
   static LabelModel _singleSeg(Map<String, dynamic> j) {
     final dataId = _reqString(j, 'data_id');
     final dataPath = _optString(j, 'data_path');
     final labeledAt = _readIsoDate(j, 'labeled_at');
-    final payload = _reqMap(j, 'label_data');
 
-    return SingleClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: SegmentationData.fromJson(payload), labeledAt: labeledAt);
+    final payload = _reqMap(j, 'label_data');
+    final seg = SegmentationData.fromJson(payload);
+
+    return SingleClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: seg, labeledAt: labeledAt);
   }
 
   static LabelModel _multiSeg(Map<String, dynamic> j) {
     final dataId = _reqString(j, 'data_id');
     final dataPath = _optString(j, 'data_path');
     final labeledAt = _readIsoDate(j, 'labeled_at');
-    final payload = _reqMap(j, 'label_data');
 
-    return MultiClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: SegmentationData.fromJson(payload), labeledAt: labeledAt);
+    final payload = _reqMap(j, 'label_data');
+    final seg = SegmentationData.fromJson(payload);
+
+    return MultiClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: seg, labeledAt: labeledAt);
   }
 
-  // ---- Normalize: 레거시 입력을 표준 스키마로 변환 --------------------------
+  // ───────────────────────────────────────────────────────────────────────────
+  // Normalize: 레거시 입력을 표준 스키마로 변환
+  // ───────────────────────────────────────────────────────────────────────────
 
   static Map<String, dynamic> _normalize(Map<String, dynamic> raw) {
     // 1) 키 표준화
@@ -99,12 +125,21 @@ class LabelModelConverter {
     // 2) payload 정규화
     if (raw['label_data'] is Map) {
       normalized['label_data'] = Map<String, dynamic>.from(raw['label_data'] as Map);
-    } else if (raw['label'] is String) {
-      normalized['label_data'] = {'label': raw['label']};
     } else if (raw['labels'] is List) {
-      normalized['label_data'] = {'labels': List<String>.from((raw['labels'] as List).map((e) => e.toString()))};
+      // 다중 분류 레거시: labels가 배열
+      normalized['label_data'] = {
+        'labels': List<String>.from((raw['labels'] as List).map((e) => e.toString())),
+      };
+    } else if (raw['label'] is String) {
+      // 단일 분류 레거시: label이 문자열
+      normalized['label_data'] = {'label': raw['label']};
+    } else if (raw['label'] is List) {
+      // 일부 레거시 구현에서 multi를 label(List)로 저장했을 수 있음 → 표준화
+      normalized['label_data'] = {
+        'labels': List<String>.from((raw['label'] as List).map((e) => e.toString())),
+      };
     } else if (raw['label'] is Map) {
-      // segmentation 등: 기존에 label 키 안에 오브젝트가 있었던 경우
+      // 세그멘테이션/크로스 라벨: label 키 안에 오브젝트가 있었던 경우
       normalized['label_data'] = Map<String, dynamic>.from(raw['label'] as Map);
     } else {
       normalized['label_data'] = <String, dynamic>{};
@@ -123,7 +158,47 @@ class LabelModelConverter {
     // labeled_at은 _readIsoDate에서 폴백 처리
   }
 
-  // ---- tiny readers (타입 안전 리더) ---------------------------------------
+  /// 모델 + 공통 메타를 표준 래퍼 스키마로 감싼 JSON을 만들어줍니다.
+  /// 저장소(Firestore/Storage)에 기록할 때 이걸 그대로 쓰면 됩니다.
+  static Map<String, dynamic> wrap(LabelModel model) {
+    // 모델의 toJson()이 래퍼/페이로드 중 무엇을 내보내는지 구현이 혼재할 수 있으므로,
+    // 여기서 모드 기반으로 "표준 페이로드"를 생성해 주입합니다.
+    final Map<String, dynamic> payload;
+    switch (model.mode) {
+      case LabelingMode.singleClassification:
+        final m = model as SingleClassificationLabelModel;
+        payload = {'label': m.label};
+        break;
+      case LabelingMode.multiClassification:
+        final m = model as MultiClassificationLabelModel;
+        payload = {'labels': m.label?.toList()};
+        break;
+      case LabelingMode.crossClassification:
+        final m = model as CrossClassificationLabelModel;
+        payload = m.label?.toJson() ?? <String, dynamic>{};
+        break;
+      case LabelingMode.singleClassSegmentation:
+        final m = model as SingleClassSegmentationLabelModel;
+        payload = m.label?.toJson() ?? <String, dynamic>{};
+        break;
+      case LabelingMode.multiClassSegmentation:
+        final m = model as MultiClassSegmentationLabelModel;
+        payload = m.label?.toJson() ?? <String, dynamic>{};
+        break;
+    }
+
+    return {
+      'data_id': model.dataId,
+      'data_path': model.dataPath,
+      'labeled_at': model.labeledAt.toIso8601String(),
+      'mode': model.mode.name,
+      'label_data': payload, // ← 표준화된 페이로드
+    };
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // tiny readers (타입 안전 리더)
+  // ───────────────────────────────────────────────────────────────────────────
 
   static String _reqString(Map<String, dynamic> j, String key) {
     final v = j[key];
@@ -142,10 +217,10 @@ class LabelModelConverter {
     throw FormatException("Missing object '$key'");
   }
 
-  static List<String> _reqStringList(Map<String, dynamic> j, String key) {
+  static List<String>? _optStringList(Map<String, dynamic> j, String key) {
     final v = j[key];
     if (v is List) return v.map((e) => e.toString()).toList();
-    throw FormatException("Missing array '$key'");
+    return null;
   }
 
   static DateTime _readIsoDate(Map<String, dynamic> j, String key) {
