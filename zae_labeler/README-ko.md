@@ -129,3 +129,43 @@ ViewModel/UseCase
 
 ```
 
+```
+src/
+├─ core/
+│  └─ models/
+│     └─ auth/
+│        ├─ auth_user.dart              // 앱에서 쓰는 User(표준화된 도메인 모델)
+│        ├─ auth_credentials.dart       // 이메일/패스워드, OAuth code 등 로그인 입력 DTO
+│        ├─ auth_token.dart             // access/refresh 토큰, 만료 시각
+│        └─ auth_failure.dart           // 로그인 실패/네트워크 오류 등 에러 타입
+│
+└─ features/
+   └─ auth/
+      ├─ repository/
+      │  ├─ auth_repository.dart        // 추상화(인터페이스)
+      │  ├─ rest_auth_repository.dart   // REST 백엔드 구현(선택)
+      │  └─ firebase_auth_repository.dart // FirebaseAuth 구현(선택)
+      │
+      ├─ services/
+      │  ├─ auth_service.dart           // 저수준 API 호출/SDK 래퍼(플랫폼별)
+      │  ├─ token_storage.dart          // 토큰 영속화(secure storage/web localStorage)
+      │  └─ session_manager.dart        // 메모리 세션/자동 갱신/로그아웃 브로커
+      │
+      ├─ use_cases/
+      │  └─ auth_use_cases.dart         // signIn/signOut/refresh/currentUser 등 파사드
+      │
+      ├─ view_models/
+      │  ├─ auth_view_model.dart        // 로그인/회원가입 화면 VM
+      │  └─ session_notifier.dart       // 전역 인증 상태(로그인/로그아웃) Notifier
+      │
+      └─ ui/
+         ├─ pages/
+         │  ├─ sign_in_page.dart
+         │  ├─ sign_up_page.dart
+         │  ├─ forgot_password_page.dart
+         │  └─ auth_gate.dart           // AuthGuard 위젯: 로그인 여부에 따라 라우팅
+         └─ widgets/
+            ├─ email_field.dart
+            ├─ password_field.dart
+            └─ social_buttons.dart
+```
