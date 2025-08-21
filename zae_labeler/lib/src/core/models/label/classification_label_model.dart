@@ -33,7 +33,7 @@ class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
 
   /// ⚠️ payload는 **label_data**에 해당하는 JSON이어야 합니다.
   /// 예: {"label": "cat"}
-  factory SingleClassificationLabelModel.fromJsonPayload({
+  factory SingleClassificationLabelModel.fromPayloadJson({
     required String dataId,
     String? dataPath,
     required DateTime labeledAt,
@@ -44,15 +44,6 @@ class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
       dataPath: dataPath,
       label: payload['label'] as String?,
       labeledAt: labeledAt,
-    );
-  }
-
-  factory SingleClassificationLabelModel.empty() {
-    return SingleClassificationLabelModel(
-      dataId: '',
-      dataPath: null,
-      label: null,
-      labeledAt: DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
 
@@ -77,7 +68,7 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
 
   /// ⚠️ payload는 **label_data**에 해당하는 JSON이어야 합니다.
   /// 예: {"labels": ["cat","dog"]}
-  factory MultiClassificationLabelModel.fromJsonPayload({
+  factory MultiClassificationLabelModel.fromPayloadJson({
     required String dataId,
     String? dataPath,
     required DateTime labeledAt,
@@ -89,15 +80,6 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
       dataPath: dataPath,
       label: raw == null ? null : Set<String>.from(raw as List),
       labeledAt: labeledAt,
-    );
-  }
-
-  factory MultiClassificationLabelModel.empty() {
-    return MultiClassificationLabelModel(
-      dataId: '',
-      dataPath: null,
-      label: null,
-      labeledAt: DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
 
@@ -122,22 +104,13 @@ class CrossClassificationLabelModel extends ClassificationLabelModel<CrossDataPa
 
   /// ⚠️ payload는 **label_data**에 해당하는 JSON이어야 합니다.
   /// 예: {"sourceId":"...", "targetId":"...", "relation":"..."}
-  factory CrossClassificationLabelModel.fromJsonPayload({
+  factory CrossClassificationLabelModel.fromPayloadJson({
     required String dataId,
     String? dataPath,
     required DateTime labeledAt,
     required Map<String, dynamic> payload,
   }) {
     return CrossClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: CrossDataPair.fromJson(payload), labeledAt: labeledAt);
-  }
-
-  factory CrossClassificationLabelModel.empty() {
-    return CrossClassificationLabelModel(
-      dataId: '',
-      dataPath: null,
-      label: null,
-      labeledAt: DateTime.fromMillisecondsSinceEpoch(0),
-    );
   }
 
   @override

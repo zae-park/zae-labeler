@@ -44,7 +44,7 @@ class SingleClassSegmentationLabelModel extends SegmentationLabelModel<Segmentat
 
   /// ⚠️ `payload`는 **label_data**에 해당하는 JSON이어야 합니다.
   /// 즉, `{"segments": {...}}` 같은 형태만 받습니다.
-  factory SingleClassSegmentationLabelModel.fromJsonPayload({
+  factory SingleClassSegmentationLabelModel.fromPayloadJson({
     required String dataId,
     String? dataPath,
     required DateTime labeledAt,
@@ -52,13 +52,6 @@ class SingleClassSegmentationLabelModel extends SegmentationLabelModel<Segmentat
   }) {
     return SingleClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: SegmentationData.fromJson(payload), labeledAt: labeledAt);
   }
-
-  factory SingleClassSegmentationLabelModel.empty() => SingleClassSegmentationLabelModel(
-        dataId: '',
-        dataPath: null,
-        label: const SegmentationData(segments: {}),
-        labeledAt: DateTime.fromMillisecondsSinceEpoch(0),
-      );
 
   @override
   SingleClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) {
@@ -89,7 +82,7 @@ class MultiClassSegmentationLabelModel extends SegmentationLabelModel<Segmentati
   Map<String, dynamic> toPayloadJson() => label?.toJson() ?? <String, dynamic>{};
 
   /// ⚠️ `payload`는 **label_data**에 해당하는 JSON이어야 합니다.
-  factory MultiClassSegmentationLabelModel.fromJsonPayload({
+  factory MultiClassSegmentationLabelModel.fromPayloadJson({
     required String dataId,
     String? dataPath,
     required DateTime labeledAt,
@@ -97,13 +90,6 @@ class MultiClassSegmentationLabelModel extends SegmentationLabelModel<Segmentati
   }) {
     return MultiClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: SegmentationData.fromJson(payload), labeledAt: labeledAt);
   }
-
-  factory MultiClassSegmentationLabelModel.empty() => MultiClassSegmentationLabelModel(
-        dataId: '',
-        dataPath: null,
-        label: const SegmentationData(segments: {}),
-        labeledAt: DateTime.fromMillisecondsSinceEpoch(0),
-      );
 
   @override
   MultiClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) {
