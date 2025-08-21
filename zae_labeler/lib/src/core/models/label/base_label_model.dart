@@ -30,7 +30,10 @@ import 'label_types.dart'; // LabelingMode 등 공용 정의
 /// - [isMultiClass] : 다중 클래스(멀티 라벨)인지 여부
 /// - [isLabeled] : “라벨이 유효하게 채워졌는지” 판단(모드별 기준 상이)
 /// - [mode] : 모델이 표현하는 라벨링 모드
-/// - [toJson] : "내부(label_data) JSON"만 반환
+/// - [toJson] :
+/// - [toPayloadJson] : "내부(label_data) JSON"만 반환
+/// - [fromJson] :
+/// - [fromPayloadJson] :
 abstract class LabelModel<T> {
   /// 프로젝트 데이터와 매칭되는 식별자(조인 키).
   /// 저장/조회 시 이 값으로 해당 데이터의 라벨을 찾습니다.
@@ -74,18 +77,5 @@ abstract class LabelModel<T> {
   /// ✍️ 내부(label_data) 전용 JSON 직렬화.
   /// - 외부 래퍼( data_id, data_path, labeled_at, mode )는 포함하지 않습니다.
   /// - 래퍼 생성/파싱은 LabelModelConverter가 담당합니다.
-  Map<String, dynamic> toJson();
-
-  // --------------------------------------------------------------------------
-  // ⛔️ 베이스에서의 fromJson/empty 팩토리는 사용하지 않습니다.
-  //     실제 파싱은 LabelModelConverter.fromJson(mode, wrapper)로 수행하세요.
-  // --------------------------------------------------------------------------
-
-  /// @deprecated 베이스에서 직접 사용하지 마세요.
-  @Deprecated('Use LabelModelConverter.fromJson(mode, wrapper) instead.')
-  factory LabelModel.fromJson(Map<String, dynamic> json) => throw UnimplementedError('Use LabelModelConverter.fromJson(mode, wrapper).');
-
-  /// @deprecated 필요 시 서브모델의 팩토리나 LabelModelFactory.createNew(mode, dataId)를 사용하세요.
-  @Deprecated('Use LabelModelFactory.createNew(mode, dataId) instead.')
-  factory LabelModel.empty() => throw UnimplementedError('Use LabelModelFactory.createNew(mode, dataId).');
+  Map<String, dynamic> toPayloadJson();
 }

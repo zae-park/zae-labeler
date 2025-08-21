@@ -40,7 +40,7 @@ class SingleClassSegmentationLabelModel extends SegmentationLabelModel<Segmentat
   /// ⚠️ 페이로드만 반환합니다. (래퍼 키 포함 금지)
   /// 예: { "segments": { ... } }
   @override
-  Map<String, dynamic> toJson() => label?.toJson() ?? <String, dynamic>{};
+  Map<String, dynamic> toPayloadJson() => label?.toJson() ?? <String, dynamic>{};
 
   /// ⚠️ `payload`는 **label_data**에 해당하는 JSON이어야 합니다.
   /// 즉, `{"segments": {...}}` 같은 형태만 받습니다.
@@ -86,7 +86,7 @@ class MultiClassSegmentationLabelModel extends SegmentationLabelModel<Segmentati
 
   /// ⚠️ 페이로드만 반환합니다. (래퍼 키 포함 금지)
   @override
-  Map<String, dynamic> toJson() => label?.toJson() ?? <String, dynamic>{};
+  Map<String, dynamic> toPayloadJson() => label?.toJson() ?? <String, dynamic>{};
 
   /// ⚠️ `payload`는 **label_data**에 해당하는 JSON이어야 합니다.
   factory MultiClassSegmentationLabelModel.fromJsonPayload({

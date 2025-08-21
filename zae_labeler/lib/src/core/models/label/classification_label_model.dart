@@ -29,7 +29,7 @@ class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
   /// ⚠️ 페이로드만 반환합니다. (래퍼 키 포함 금지)
   /// 예: { "label": "cat" }
   @override
-  Map<String, dynamic> toJson() => {'label': label};
+  Map<String, dynamic> toPayloadJson() => {'label': label};
 
   /// ⚠️ payload는 **label_data**에 해당하는 JSON이어야 합니다.
   /// 예: {"label": "cat"}
@@ -73,7 +73,7 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
   /// ⚠️ 페이로드만 반환합니다. (래퍼 키 포함 금지)
   /// 예: { "labels": ["cat", "dog"] }
   @override
-  Map<String, dynamic> toJson() => {'labels': label?.toList()};
+  Map<String, dynamic> toPayloadJson() => {'labels': label?.toList()};
 
   /// ⚠️ payload는 **label_data**에 해당하는 JSON이어야 합니다.
   /// 예: {"labels": ["cat","dog"]}
@@ -118,7 +118,7 @@ class CrossClassificationLabelModel extends ClassificationLabelModel<CrossDataPa
   /// ⚠️ 페이로드만 반환합니다. (래퍼 키 포함 금지)
   /// 예: { "sourceId": "...", "targetId": "...", "relation": "..." }
   @override
-  Map<String, dynamic> toJson() => label?.toJson() ?? <String, dynamic>{};
+  Map<String, dynamic> toPayloadJson() => label?.toJson() ?? <String, dynamic>{};
 
   /// ⚠️ payload는 **label_data**에 해당하는 JSON이어야 합니다.
   /// 예: {"sourceId":"...", "targetId":"...", "relation":"..."}
