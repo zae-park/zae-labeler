@@ -35,6 +35,8 @@ class SegmentationData {
 
   const SegmentationData({required this.segments});
 
+  static const SegmentationData empty = SegmentationData(segments: {});
+
   bool get isEmpty => segments.isEmpty || segments.values.every((s) => s.indices.isEmpty);
   bool get isNotEmpty => !isEmpty;
 
