@@ -1,4 +1,4 @@
-// 📁 sub_view_models/base_labeling_view_model.dart
+// 📁 lib/src/features/label/view_models/sub_view_models/base_labeling_view_model.dart
 import 'package:flutter/foundation.dart';
 
 import 'package:zae_labeler/src/core/models/project/project_model.dart';
