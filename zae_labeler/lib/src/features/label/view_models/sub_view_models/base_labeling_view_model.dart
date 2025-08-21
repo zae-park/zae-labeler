@@ -1,145 +1,144 @@
 // 📁 sub_view_models/base_labeling_view_model.dart
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+
+import 'package:zae_labeler/src/core/models/project/project_model.dart';
 import 'package:zae_labeler/src/core/models/data/unified_data.dart';
-import 'package:zae_labeler/src/features/label/logic/labeling_status_manager.dart';
+import 'package:zae_labeler/src/core/use_cases/app_use_cases.dart';
+import 'package:zae_labeler/src/platform_helpers/storage/interface_storage_helper.dart';
+
 import 'package:zae_labeler/src/features/label/view_models/managers/labeling_data_manager.dart';
 import 'package:zae_labeler/src/features/label/view_models/managers/labeling_label_manager.dart';
+import 'package:zae_labeler/src/features/label/view_models/label_view_model.dart' show LabelViewModel; // 타입만 사용
 
-import '../../../../core/use_cases/app_use_cases.dart';
-import '../../../../core/models/label/label_model.dart';
-import '../../../../core/models/project/project_model.dart';
-import '../../../../platform_helpers/storage/interface_storage_helper.dart';
-import '../label_view_model.dart';
+import 'package:zae_labeler/src/features/label/use_cases/label_use_cases.dart' show LabelingSummary;
 
-/// Abstract base class for all LabelingViewModels.
+/// 공통 라벨링 화면 VM (분류/세그멘테이션이 상속)
+/// - 데이터 로딩/네비게이션(LabelingDataManager)
+/// - 라벨 단건 VM 캐시/IO(LabelingLabelManager)
+/// - 진행 요약(LabelingSummary) 캐시
 abstract class LabelingViewModel extends ChangeNotifier {
-  late Project _project;
-  final AppUseCases appUseCases;
+  // ──────────────────────────────────────────────────────────────────────────
+  // DI
+  // ──────────────────────────────────────────────────────────────────────────
+  final Project project;
   final StorageHelperInterface storageHelper;
-  final List<UnifiedData>? initialDataList;
+  final AppUseCases appUseCases;
 
-  late final LabelingDataManager _dataManager;
-  late final LabelingLabelManager _labelManager;
+  // ──────────────────────────────────────────────────────────────────────────
+  // Managers
+  // ──────────────────────────────────────────────────────────────────────────
+  late final LabelingDataManager dataManager;
+  late final LabelingLabelManager labelManager;
 
-  bool _isInitialized = false;
-  bool get isInitialized => _isInitialized;
+  // ──────────────────────────────────────────────────────────────────────────
+  // Summary cache
+  // ──────────────────────────────────────────────────────────────────────────
+  LabelingSummary _summary = const LabelingSummary(total: 0, complete: 0, warning: 0, incomplete: 0, progress: 0.0);
 
-  LabelingViewModel({required Project project, required this.appUseCases, required this.storageHelper, this.initialDataList}) {
-    _project = project;
-    _dataManager = LabelingDataManager(project: _project, storageHelper: storageHelper, initialDataList: initialDataList);
-    _labelManager = LabelingLabelManager(project: _project, appUseCases: appUseCases, onNotify: notifyListeners);
+  LabelingViewModel({required this.project, required this.storageHelper, required this.appUseCases}) {
+    dataManager = LabelingDataManager(project: project, storageHelper: storageHelper);
+    labelManager = LabelingLabelManager(project: project, appUseCases: appUseCases, onNotify: notifyListeners);
   }
 
-  Project get project => _project;
-
-  set project(Project updated) {
-    _project = updated;
-    notifyListeners();
-  }
-
+  // ──────────────────────────────────────────────────────────────────────────
+  // Lifecycle
+  // ──────────────────────────────────────────────────────────────────────────
+  /// 데이터 로드 + 첫 아이템 라벨 VM 생성 + 요약 계산
   Future<void> initialize() async {
-    if (_isInitialized) return;
-
-    await _dataManager.load();
-    await _labelManager.loadLabelFor(_dataManager.currentData);
-
-    notifyListeners();
-
-    await _validateLabelModelType();
-    await refreshAllStatuses();
-    await postInitialize();
-
-    _isInitialized = true;
-    notifyListeners(); // ✅ 전체 초기화 완료 알림
-  }
-
-  Future<void> postInitialize() async {}
-  Future<void> postMove() async {}
-
-  Future<void> moveNext() async {
-    _dataManager.moveNext();
-    await _labelManager.loadLabelFor(_dataManager.currentData);
-    await refreshStatus();
-    await postMove();
-    notifyListeners();
-  }
-
-  Future<void> movePrevious() async {
-    _dataManager.movePrevious();
-    await _labelManager.loadLabelFor(_dataManager.currentData);
-    await refreshStatus();
-    await postMove();
-    notifyListeners();
-  }
-
-  /// LabelViewModel 타입 일치 검증
-  Future<void> _validateLabelModelType() async {
-    final vm = _labelManager.currentLabelVM;
-    if (vm == null) return;
-
-    final expectedType = LabelModelFactory.expectedType(project.mode);
-    if (vm.labelModel.runtimeType != expectedType) {
-      final data = _dataManager.currentData;
-      final refreshed = LabelViewModelFactory.create(project: project, data: data, labelUseCases: appUseCases.label);
-      await refreshed.loadLabel();
-
-      _labelManager.disposeAll();
-      _labelManager.loadLabelFor(data); // reattach new VM
+    await dataManager.load();
+    if (dataManager.totalCount > 0) {
+      await labelManager.loadLabelFor(dataManager.currentData);
     }
-  }
-
-  /// 라벨 상태 갱신
-  Future<void> refreshStatus() async {
-    final data = _dataManager.currentData;
-    await _labelManager.refreshStatusFor(data, (status) {
-      _dataManager.updateStatusById(data.dataId, status);
-    });
-  }
-
-  /// 전체 라벨 상태 갱신
-  Future refreshAllStatuses() async {
-    final statusMgr = StatusManager(project: project, useCases: appUseCases.label);
-    final statuses = await statusMgr.refreshAll(dataManager.allData);
-    statuses.forEach((id, status) {
-      dataManager.updateStatusById(id, status);
-    });
+    await recomputeSummary();
+    await postInitialize();
     notifyListeners();
   }
-  // =============================
-  // 📌 Interface
-  // =============================
 
-  @protected
-  LabelingDataManager get dataManager => _dataManager;
+  /// 세부 VM에서 초기화 이후 추가 작업이 필요할 때 오버라이드
+  Future<void> postInitialize() async {}
 
-  @protected
-  LabelingLabelManager get labelManager => _labelManager;
-
-  UnifiedData get currentUnifiedData => _dataManager.currentData;
-  int get currentIndex => _dataManager.currentIndex;
-  List<UnifiedData> get unifiedDataList => _dataManager.allData;
-
-  LabelViewModel get currentLabelVM => _labelManager.currentLabelVM!;
-  int get totalCount => _dataManager.totalCount;
-  int get completeCount => _dataManager.completeCount;
-  int get warningCount => _dataManager.warningCount;
-  int get incompleteCount => _dataManager.incompleteCount;
-  double get progressRatio => _dataManager.progressRatio;
-
-  String get currentDataFileName => currentUnifiedData.fileName;
-  List<double>? get currentSeriesData => currentUnifiedData.seriesData;
-  Map<String, dynamic>? get currentObjectData => currentUnifiedData.objectData;
-
-  // abstract labeling control
-  Future<void> updateLabel(dynamic labelData);
-  void toggleLabel(String labelItem) => throw UnimplementedError();
-  bool isLabelSelected(String labelItem) => throw UnimplementedError();
-
-  Future<String> exportAllLabels() => appUseCases.label.exportProjectLabels(project.id, withData: true);
+  /// 현재 index 변경 후(다음/이전/점프) 공통 처리
+  Future<void> postMove() async {
+    if (dataManager.totalCount > 0) {
+      await labelManager.loadLabelFor(dataManager.currentData);
+    }
+    // 필요시 전체 요약 재계산(보수적)
+    await recomputeSummary();
+    notifyListeners();
+  }
 
   @override
   void dispose() {
-    _labelManager.disposeAll();
+    labelManager.disposeAll();
     super.dispose();
   }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Navigation
+  // ──────────────────────────────────────────────────────────────────────────
+  Future<void> moveNext() async {
+    if (!hasNext) return;
+    dataManager.moveNext();
+    await postMove();
+  }
+
+  Future<void> movePrevious() async {
+    if (!hasPrevious) return;
+    dataManager.movePrevious();
+    await postMove();
+  }
+
+  Future<void> jumpTo(int index) async {
+    dataManager.jumpTo(index);
+    await postMove();
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Label updates
+  // ──────────────────────────────────────────────────────────────────────────
+  /// 단건 라벨 입력 갱신(분류/세그멘테이션 공통 루트)
+  Future<void> updateLabel(dynamic labelData) async {
+    final vm = labelManager.currentLabelVM;
+    if (vm == null) return;
+
+    await vm.updateLabelFromInput(labelData);
+    await vm.saveLabel();
+
+    await recomputeSummary();
+    notifyListeners();
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Summary
+  // ──────────────────────────────────────────────────────────────────────────
+  @protected
+  Future<void> recomputeSummary() async {
+    _summary = await appUseCases.label.computeSummaryByProject(project);
+  }
+
+  double get progressRatio => _summary.progress;
+  int get completeCount => _summary.complete;
+  int get warningCount => _summary.warning;
+  int get incompleteCount => _summary.incomplete;
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Export
+  // ──────────────────────────────────────────────────────────────────────────
+  /// 현재 프로젝트 라벨 전체 내보내기(원본 데이터 동반)
+  Future<String> exportAllLabels() async {
+    return await appUseCases.label.exportProjectLabels(project.id, withData: true);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Getters
+  // ──────────────────────────────────────────────────────────────────────────
+  List<UnifiedData> get unifiedDataList => dataManager.allData;
+  UnifiedData get currentData => dataManager.currentData;
+
+  LabelViewModel? get currentLabelVM => labelManager.currentLabelVM;
+
+  int get totalCount => dataManager.totalCount;
+  int get currentIndex => dataManager.currentIndex;
+  bool get hasNext => dataManager.hasNext;
+  bool get hasPrevious => dataManager.hasPrevious;
 }
