@@ -265,7 +265,7 @@ class StorageHelperImpl implements StorageHelperInterface {
 
     // 3) zip 파일로 쓰기(임시 디렉터리)
     final outPath = p.join(Directory.systemTemp.path, '${project.name}_labels.zip');
-    final zipData = ZipEncoder().encode(archive)!;
+    final zipData = ZipEncoder().encode(archive);
     await File(outPath).writeAsBytes(zipData, flush: true);
     return outPath;
   }

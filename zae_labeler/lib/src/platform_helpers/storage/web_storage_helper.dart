@@ -243,7 +243,7 @@ class StorageHelperImpl implements StorageHelperInterface {
     archive.addFile(ArchiveFile('labels.json', text.length, utf8.encode(text)));
 
     // 3) ZIP → 브라우저 다운로드 트리거
-    final zip = ZipEncoder().encode(archive)!;
+    final zip = ZipEncoder().encode(archive);
     final blob = html.Blob([zip]);
     final url = html.Url.createObjectUrlFromBlob(blob);
     html.AnchorElement(href: url)
