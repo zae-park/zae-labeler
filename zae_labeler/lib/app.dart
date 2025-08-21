@@ -52,9 +52,7 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
       future: _boot,
       builder: (context, snap) {
         if (snap.connectionState != ConnectionState.done) {
-          return const MaterialApp(
-            home: Scaffold(body: Center(child: CircularProgressIndicator())),
-          );
+          return const MaterialApp(home: Scaffold(body: Center(child: CircularProgressIndicator())));
         }
         final deps = snap.data!;
 
@@ -66,12 +64,8 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
             Provider<UserPreferenceService>.value(value: deps.userPrefs),
 
             ChangeNotifierProvider<LocaleViewModel>.value(value: deps.localeViewModel),
-            ChangeNotifierProvider<ProjectListViewModel>(
-              create: (_) => ProjectListViewModel(appUseCases: deps.appUseCases),
-            ),
-            ChangeNotifierProvider<AuthViewModel>(
-              create: (_) => AuthViewModel.withDefaultUseCases(deps.firebaseAuth),
-            ),
+            ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(appUseCases: deps.appUseCases, shareHelper: deps.shareHelper)),
+            ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel.withDefaultUseCases(deps.firebaseAuth)),
             ChangeNotifierProvider(create: (_) => ProgressNotifier()),
           ],
           child: Consumer<LocaleViewModel>(
