@@ -1,16 +1,22 @@
-// core/models/label/classification_label_model.dart
+// lib/src/core/models/label/classification_label_model.dart
 
 import 'base_label_model.dart';
 import 'label_types.dart';
 
+/// ✅ ClassificationLabelModel (추상)
+/// - 분류(단일/다중/크로스) 라벨 모델의 공통 기반.
+/// - **toJson()은 반드시 라벨 페이로드만 반환**합니다. (래퍼 키는 금지)
+///   - Single: {"label": "..."}
+///   - Multi : {"labels": ["...", "..."]}
+///   - Cross : {"sourceId": "...", "targetId": "...", "relation": "..." }
 abstract class ClassificationLabelModel<T> extends LabelModel<T> {
   ClassificationLabelModel({required super.dataId, super.dataPath, required super.label, required super.labeledAt});
 
   @override
-  LabelingMode get mode; // 서브클래스가 명시
+  LabelingMode get mode; // 서브클래스에서 명시
 }
 
-/// Single Classification
+/// ✅ Single Classification
 class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
   SingleClassificationLabelModel({required super.dataId, super.dataPath, required super.label, required super.labeledAt});
 
@@ -20,27 +26,41 @@ class SingleClassificationLabelModel extends ClassificationLabelModel<String> {
   @override
   bool get isLabeled => (label?.trim().isNotEmpty ?? false);
 
+  /// ⚠️ 페이로드만 반환합니다. (래퍼 키 포함 금지)
+  /// 예: { "label": "cat" }
   @override
-  Map<String, dynamic> toJson() => {'data_id': dataId, 'data_path': dataPath, 'label': label, 'labeled_at': labeledAt.toIso8601String()};
+  Map<String, dynamic> toJson() => {'label': label};
 
-  factory SingleClassificationLabelModel.fromJson(Map<String, dynamic> json) {
+  /// ⚠️ payload는 **label_data**에 해당하는 JSON이어야 합니다.
+  /// 예: {"label": "cat"}
+  factory SingleClassificationLabelModel.fromJsonPayload({
+    required String dataId,
+    String? dataPath,
+    required DateTime labeledAt,
+    required Map<String, dynamic> payload,
+  }) {
     return SingleClassificationLabelModel(
-      dataId: json['data_id'] as String,
-      dataPath: json['data_path'] as String?,
-      label: json['label'] as String?,
-      labeledAt: DateTime.parse(json['labeled_at'] as String),
+      dataId: dataId,
+      dataPath: dataPath,
+      label: payload['label'] as String?,
+      labeledAt: labeledAt,
     );
   }
 
   factory SingleClassificationLabelModel.empty() {
-    return SingleClassificationLabelModel(dataId: '', dataPath: null, label: null, labeledAt: DateTime.fromMillisecondsSinceEpoch(0));
+    return SingleClassificationLabelModel(
+      dataId: '',
+      dataPath: null,
+      label: null,
+      labeledAt: DateTime.fromMillisecondsSinceEpoch(0),
+    );
   }
 
   @override
   LabelingMode get mode => LabelingMode.singleClassification;
 }
 
-/// Multi Classification
+/// ✅ Multi Classification
 class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>> {
   MultiClassificationLabelModel({required super.dataId, super.dataPath, required super.label, required super.labeledAt});
 
@@ -50,33 +70,42 @@ class MultiClassificationLabelModel extends ClassificationLabelModel<Set<String>
   @override
   bool get isLabeled => (label != null && label!.isNotEmpty);
 
+  /// ⚠️ 페이로드만 반환합니다. (래퍼 키 포함 금지)
+  /// 예: { "labels": ["cat", "dog"] }
   @override
-  Map<String, dynamic> toJson() => {
-        'data_id': dataId,
-        'data_path': dataPath,
-        'label': label?.toList(),
-        'labeled_at': labeledAt.toIso8601String(),
-      };
+  Map<String, dynamic> toJson() => {'labels': label?.toList()};
 
-  factory MultiClassificationLabelModel.fromJson(Map<String, dynamic> json) {
-    final raw = json['label'];
+  /// ⚠️ payload는 **label_data**에 해당하는 JSON이어야 합니다.
+  /// 예: {"labels": ["cat","dog"]}
+  factory MultiClassificationLabelModel.fromJsonPayload({
+    required String dataId,
+    String? dataPath,
+    required DateTime labeledAt,
+    required Map<String, dynamic> payload,
+  }) {
+    final raw = payload['labels'];
     return MultiClassificationLabelModel(
-      dataId: json['data_id'] as String,
-      dataPath: json['data_path'] as String?,
+      dataId: dataId,
+      dataPath: dataPath,
       label: raw == null ? null : Set<String>.from(raw as List),
-      labeledAt: DateTime.parse(json['labeled_at'] as String),
+      labeledAt: labeledAt,
     );
   }
 
   factory MultiClassificationLabelModel.empty() {
-    return MultiClassificationLabelModel(dataId: '', dataPath: null, label: null, labeledAt: DateTime.fromMillisecondsSinceEpoch(0));
+    return MultiClassificationLabelModel(
+      dataId: '',
+      dataPath: null,
+      label: null,
+      labeledAt: DateTime.fromMillisecondsSinceEpoch(0),
+    );
   }
 
   @override
   LabelingMode get mode => LabelingMode.multiClassification;
 }
 
-/// Cross Classification
+/// ✅ Cross Classification
 class CrossClassificationLabelModel extends ClassificationLabelModel<CrossDataPair> {
   CrossClassificationLabelModel({required super.dataId, super.dataPath, required super.label, required super.labeledAt});
 
@@ -86,39 +115,36 @@ class CrossClassificationLabelModel extends ClassificationLabelModel<CrossDataPa
   @override
   bool get isLabeled => label != null && (label!.relation.isNotEmpty);
 
+  /// ⚠️ 페이로드만 반환합니다. (래퍼 키 포함 금지)
+  /// 예: { "sourceId": "...", "targetId": "...", "relation": "..." }
   @override
-  Map<String, dynamic> toJson() => {
-        'data_id': dataId,
-        'data_path': dataPath,
-        'sourceId': label?.sourceId,
-        'targetId': label?.targetId,
-        'relation': label?.relation,
-        'labeled_at': labeledAt.toIso8601String(),
-      };
+  Map<String, dynamic> toJson() => label?.toJson() ?? <String, dynamic>{};
 
-  factory CrossClassificationLabelModel.fromJson(Map<String, dynamic> json) {
-    return CrossClassificationLabelModel(
-      dataId: json['data_id'] as String,
-      dataPath: json['data_path'] as String?,
-      label: (json['sourceId'] != null || json['targetId'] != null || json['relation'] != null)
-          ? CrossDataPair(
-              sourceId: (json['sourceId'] ?? '') as String,
-              targetId: (json['targetId'] ?? '') as String,
-              relation: (json['relation'] ?? '') as String,
-            )
-          : null,
-      labeledAt: DateTime.parse(json['labeled_at'] as String),
-    );
+  /// ⚠️ payload는 **label_data**에 해당하는 JSON이어야 합니다.
+  /// 예: {"sourceId":"...", "targetId":"...", "relation":"..."}
+  factory CrossClassificationLabelModel.fromJsonPayload({
+    required String dataId,
+    String? dataPath,
+    required DateTime labeledAt,
+    required Map<String, dynamic> payload,
+  }) {
+    return CrossClassificationLabelModel(dataId: dataId, dataPath: dataPath, label: CrossDataPair.fromJson(payload), labeledAt: labeledAt);
   }
 
   factory CrossClassificationLabelModel.empty() {
-    return CrossClassificationLabelModel(dataId: '', dataPath: null, label: null, labeledAt: DateTime.fromMillisecondsSinceEpoch(0));
+    return CrossClassificationLabelModel(
+      dataId: '',
+      dataPath: null,
+      label: null,
+      labeledAt: DateTime.fromMillisecondsSinceEpoch(0),
+    );
   }
 
   @override
   LabelingMode get mode => LabelingMode.crossClassification;
 }
 
+/// ✅ Cross 데이터 쌍(관계 기반 분류) DTO
 class CrossDataPair {
   final String sourceId;
   final String targetId;
