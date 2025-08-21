@@ -7,7 +7,7 @@ import 'segmentation_data.dart';
 /// ✅ Segmentation Label의 최상위 클래스
 /// - 세그멘테이션 계열 라벨 모델의 공통 기반.
 /// - 제네릭 T는 SegmentationData 파생 타입으로 제한.
-/// - `toJson()`은 라벨 **페이로드만** 반환합니다(래퍼 X).
+/// - `toPayloadJson()`은 라벨 **페이로드만** 반환합니다(래퍼 X).
 abstract class SegmentationLabelModel<T extends SegmentationData> extends LabelModel<T> {
   SegmentationLabelModel({required super.dataId, super.dataPath, required super.label, required super.labeledAt});
 
@@ -40,17 +40,15 @@ class SingleClassSegmentationLabelModel extends SegmentationLabelModel<Segmentat
   /// ⚠️ 페이로드만 반환합니다. (래퍼 키 포함 금지)
   /// 예: { "segments": { ... } }
   @override
-  Map<String, dynamic> toPayloadJson() => label?.toJson() ?? <String, dynamic>{};
+  Map<String, dynamic> toPayloadJson() => label?.toJson() ?? const <String, dynamic>{};
 
   /// ⚠️ `payload`는 **label_data**에 해당하는 JSON이어야 합니다.
   /// 즉, `{"segments": {...}}` 같은 형태만 받습니다.
-  factory SingleClassSegmentationLabelModel.fromPayloadJson({
-    required String dataId,
-    String? dataPath,
-    required DateTime labeledAt,
-    required Map<String, dynamic> payload,
-  }) {
-    return SingleClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: SegmentationData.fromJson(payload), labeledAt: labeledAt);
+  /// (누락/빈 객체일 경우 안전하게 빈 마스크로 복원)
+  factory SingleClassSegmentationLabelModel.fromPayloadJson(
+      {required String dataId, String? dataPath, required DateTime labeledAt, required Map<String, dynamic> payload}) {
+    final seg = (payload['segments'] is Map) ? SegmentationData.fromJson(payload) : const SegmentationData(segments: {});
+    return SingleClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: seg, labeledAt: labeledAt);
   }
 
   @override
@@ -79,25 +77,18 @@ class MultiClassSegmentationLabelModel extends SegmentationLabelModel<Segmentati
 
   /// ⚠️ 페이로드만 반환합니다. (래퍼 키 포함 금지)
   @override
-  Map<String, dynamic> toPayloadJson() => label?.toJson() ?? <String, dynamic>{};
+  Map<String, dynamic> toPayloadJson() => label?.toJson() ?? const <String, dynamic>{};
 
   /// ⚠️ `payload`는 **label_data**에 해당하는 JSON이어야 합니다.
-  factory MultiClassSegmentationLabelModel.fromPayloadJson({
-    required String dataId,
-    String? dataPath,
-    required DateTime labeledAt,
-    required Map<String, dynamic> payload,
-  }) {
-    return MultiClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: SegmentationData.fromJson(payload), labeledAt: labeledAt);
+  /// (누락/빈 객체일 경우 안전하게 빈 마스크로 복원)
+  factory MultiClassSegmentationLabelModel.fromPayloadJson(
+      {required String dataId, String? dataPath, required DateTime labeledAt, required Map<String, dynamic> payload}) {
+    final seg = (payload['segments'] is Map) ? SegmentationData.fromJson(payload) : const SegmentationData(segments: {});
+    return MultiClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, label: seg, labeledAt: labeledAt);
   }
 
   @override
   MultiClassSegmentationLabelModel copyWith({DateTime? labeledAt, SegmentationData? label}) {
-    return MultiClassSegmentationLabelModel(
-      dataId: dataId,
-      dataPath: dataPath,
-      labeledAt: labeledAt ?? this.labeledAt,
-      label: label ?? this.label,
-    );
+    return MultiClassSegmentationLabelModel(dataId: dataId, dataPath: dataPath, labeledAt: labeledAt ?? this.labeledAt, label: label ?? this.label);
   }
 }
