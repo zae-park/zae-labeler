@@ -96,3 +96,76 @@ Firebase Authentication을 통해 로그인 기능을 제공합니다. 현재 �
 - View에서의 UI 다양성/재사용성을 고려한 reusable widget을 구현해야합니다.
 - 각 page에서는 공통 AppHeader를 사용하여 일관성을 유지합니다.
 
+
+### FSD
+
+```
+lib/src/core/models/data/           # ✅ 코어: 값(모델)만, IO/라벨/플랫폼 모름
+├─ file_type.dart                   # 파일 확장자→유형 판정 유틸
+├─ data_info.dart                   # 원본 데이터 메타(파일명, base64, 경로)
+└─ unified_data.dart                # 파싱 결과 컨테이너(값만 보관)
+
+lib/src/features/data/              # ✅ 피처: IO, 파싱, 조합(상태 합성)
+├─ services/
+│  ├─ data_loader_interface.dart    # DataInfo → raw 로딩 인터페이스
+│  ├─ data_loader.dart              # createDataLoader() 팩토리(조건부 import)
+│  ├─ data_loader_io_impl.dart      # (io) 파일/바이트 읽기→텍스트/베이스64
+│  ├─ data_loader_web_impl.dart     # (web) base64 그대로 사용
+│  ├─ data_parser.dart              # raw → UnifiedData 변환(csv/json/image)
+│  ├─ unified_data_service.dart     # fromDataInfo / fromDataId / toDataInfo(집약)
+│  └─ adaptive_unified_data_loader.dart # 프로젝트 단위 일괄 로딩 + 라벨 상태 합성
+└─ models/
+   └─ data_with_status.dart         # (선택) UI용 DTO: UnifiedData + LabelStatus
+
+```
+
+```
+ViewModel/UseCase
+  └─ AdaptiveUnifiedDataLoader.load(Project)
+       ├─ StorageHelper.loadAllLabelModels(project.id)  // 상태 합성용
+       └─ UnifiedDataService.fromDataInfo(DataInfo)
+            ├─ DataLoader.loadRaw(info)                 // 웹/네이티브 분기
+            └─ DataParser.parse(info, type, raw)        // csv/json/image 파싱
+
+```
+
+```
+src/
+├─ core/
+│  └─ models/
+│     └─ auth/
+│        ├─ auth_user.dart              // 앱에서 쓰는 User(표준화된 도메인 모델)
+│        ├─ auth_credentials.dart       // 이메일/패스워드, OAuth code 등 로그인 입력 DTO
+│        ├─ auth_token.dart             // access/refresh 토큰, 만료 시각
+│        └─ auth_failure.dart           // 로그인 실패/네트워크 오류 등 에러 타입
+│
+└─ features/
+   └─ auth/
+      ├─ repository/
+      │  ├─ auth_repository.dart        // 추상화(인터페이스)
+      │  ├─ rest_auth_repository.dart   // REST 백엔드 구현(선택)
+      │  └─ firebase_auth_repository.dart // FirebaseAuth 구현(선택)
+      │
+      ├─ services/
+      │  ├─ auth_service.dart           // 저수준 API 호출/SDK 래퍼(플랫폼별)
+      │  ├─ token_storage.dart          // 토큰 영속화(secure storage/web localStorage)
+      │  └─ session_manager.dart        // 메모리 세션/자동 갱신/로그아웃 브로커
+      │
+      ├─ use_cases/
+      │  └─ auth_use_cases.dart         // signIn/signOut/refresh/currentUser 등 파사드
+      │
+      ├─ view_models/
+      │  ├─ auth_view_model.dart        // 로그인/회원가입 화면 VM
+      │  └─ session_notifier.dart       // 전역 인증 상태(로그인/로그아웃) Notifier
+      │
+      └─ ui/
+         ├─ pages/
+         │  ├─ sign_in_page.dart
+         │  ├─ sign_up_page.dart
+         │  ├─ forgot_password_page.dart
+         │  └─ auth_gate.dart           // AuthGuard 위젯: 로그인 여부에 따라 라우팅
+         └─ widgets/
+            ├─ email_field.dart
+            ├─ password_field.dart
+            └─ social_buttons.dart
+```

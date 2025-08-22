@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:zae_labeler/l10n/app_localizations.dart';
+import 'package:zae_labeler/src/features/label/view_models/sub_view_models/base_labeling_view_model.dart';
 import 'package:zae_labeler/src/features/project/view_models/managers/progress_notifier.dart';
 
-import '../../../../project/models/project_model.dart';
-import '../../../view_models/labeling_view_model.dart';
+import '../../../../../core/models/project/project_model.dart';
 import '../../../../../views/widgets/navigator.dart';
 import '../../../../../views/widgets/shared/labeling_progress.dart';
 import '../../../../../views/widgets/shared/viewer_builder.dart';
@@ -69,7 +69,7 @@ abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatelessWi
   }
 
   /// 라벨링 뷰어 (이미지, 시계열 등)
-  Widget buildViewer(T vm) => ViewerBuilder(data: vm.currentUnifiedData);
+  Widget buildViewer(T vm) => ViewerBuilder(data: vm.currentData);
 
   /// 하단 네비게이터
   Widget buildNavigator(T vm) => Column(children: [LabelingProgress(labelingVM: vm), NavigationButtons(onPrevious: vm.movePrevious, onNext: vm.moveNext)]);

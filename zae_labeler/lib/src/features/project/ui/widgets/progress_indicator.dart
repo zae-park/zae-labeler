@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:zae_labeler/src/features/label/use_cases/labeling_summary_use_case.dart';
+import 'package:zae_labeler/src/features/label/use_cases/label_use_cases.dart';
 
 class LabelingCircularProgressButton extends StatelessWidget {
   final LabelingSummary summary;

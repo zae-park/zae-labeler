@@ -1,0 +1,9 @@
+{
+    "data_id": "abc-123",
+    "data_path": "images/a.png",
+    "labeled_at": "2025-08-17T12:34:56.000Z",
+    "mode": "singleClassification",
+    "label_data": {
+        "class": "class string"
+    }
+}

@@ -1,15 +1,23 @@
+// lib/src/features/label/view_models/managers/labeling_label_manager.dart
 import 'package:flutter/foundation.dart';
-import 'package:zae_labeler/src/core/models/data_model.dart';
-import 'package:zae_labeler/src/core/use_cases/app_use_cases.dart';
-import 'package:zae_labeler/src/features/label/models/label_model.dart';
+import 'package:zae_labeler/src/core/models/data/data_info.dart';
+import 'package:zae_labeler/src/core/models/data/file_type.dart';
 
+import 'package:zae_labeler/src/core/models/project/project_model.dart';
+import 'package:zae_labeler/src/core/models/data/unified_data.dart';
+import 'package:zae_labeler/src/core/use_cases/app_use_cases.dart';
+
+import '../../../../core/models/label/label_model.dart' show LabelModel, LabelStatus;
 import '../label_view_model.dart';
-import '../../../project/models/project_model.dart';
 
 /// 🏷️ LabelingLabelManager
-/// - LabelViewModel 생성 및 캐싱
-/// - 라벨 불러오기 및 상태 평가
-/// - 리소스 해제 및 상태 유지
+/// - 데이터(파일)에 대응되는 LabelViewModel을 생성/캐싱
+/// - 단일 라벨 로드/저장
+/// - 상태(LabelStatus) 평가는 UseCase(LabelUseCases)에 위임
+///
+/// 주의:
+/// - CrossClassification의 경우 `UnifiedData`가 "쌍(pair)" 정보를 포함해야 하며,
+///   해당 모드의 ViewModel은 그 컨벤션에 따라 동작합니다.
 class LabelingLabelManager {
   final Project project;
   final AppUseCases appUseCases;
@@ -17,27 +25,18 @@ class LabelingLabelManager {
   final Map<String, LabelViewModel> _labelCache = {};
   LabelViewModel? _current;
 
-  /// 외부 위젯에서 상태 변화 감지를 위해 등록
+  /// 외부 위젯에서 상태 변화 감지를 위해 등록(옵션)
   final VoidCallback? onNotify;
 
   LabelingLabelManager({required this.project, required this.appUseCases, this.onNotify});
 
-  /// 현재 선택된 데이터에 대응하는 LabelViewModel
+  /// 현재 선택된 데이터의 LabelViewModel
   LabelViewModel? get currentLabelVM => _current;
 
-  /// 데이터에 대응하는 라벨을 로드하거나 생성 (cache 유지)
+  /// 데이터에 대응하는 라벨을 로드(없으면 생성 후 로드)
   Future<void> loadLabelFor(UnifiedData data) async {
-    final id = data.dataId;
-
-    _current = _labelCache.putIfAbsent(id, () {
-      final vm = LabelViewModelFactory.create(
-        projectId: project.id,
-        dataId: data.dataId,
-        dataFilename: data.fileName,
-        dataPath: data.dataPath ?? '',
-        mode: project.mode,
-        labelUseCases: appUseCases.label,
-      );
+    _current = _labelCache.putIfAbsent(data.dataId, () {
+      final vm = LabelViewModelFactory.create(project: project, data: data, labelUseCases: appUseCases.label);
       if (onNotify != null) vm.addListener(onNotify!);
       return vm;
     });
@@ -45,56 +44,66 @@ class LabelingLabelManager {
     await _current!.loadLabel();
   }
 
-  /// 해당 데이터에 대한 라벨 상태를 갱신하고, 콜백으로 전달
-  Future refreshStatusFor(UnifiedData data, void Function(LabelStatus) onStatusEvaluated) async {
-    // 현재 current VM을 보존
-    final previousCurrent = _current;
+  /// 해당 데이터 라벨의 상태를 일시 평가(캐시는 유지)
+  Future<void> refreshStatusFor(
+    UnifiedData data,
+    void Function(LabelStatus) onStatusEvaluated,
+  ) async {
+    // 현재 selection 보존
+    final prev = _current;
 
-    // 대상 데이터의 VM을 캐시에서 가져오거나 새로 생성
-    final vm = getOrCreateLabelVM(dataId: data.dataId, filename: data.fileName, path: data.dataPath ?? '', mode: project.mode);
-
-    // 해당 데이터의 라벨 로드
+    final vm = getOrCreateLabelVM(data);
     await vm.loadLabel();
 
-    // 상태 계산
-    final status = appUseCases.label.validation.getStatus(project, vm.labelModel);
+    final status = appUseCases.label.statusOf(project, vm.labelModel);
     onStatusEvaluated(status);
 
-    // current VM을 원래대로 복원
-    _current = previousCurrent;
+    // selection 복원
+    _current = prev;
   }
 
   /// 현재 라벨 저장
   Future<void> saveCurrentLabel() async {
-    if (_current != null) {
-      await _current!.saveLabel();
+    final vm = _current;
+    if (vm != null) {
+      await vm.saveLabel();
     }
   }
 
-  /// 현재 라벨 상태를 평가
+  /// 현재 라벨 상태 평가(없으면 null)
   LabelStatus? get currentStatus {
-    if (_current == null) return null;
-    return appUseCases.label.validation.getStatus(project, _current!.labelModel);
+    final vm = _current;
+    if (vm == null) return null;
+    return appUseCases.label.statusOf(project, vm.labelModel);
   }
 
-  /// 캐시된 모든 라벨 모델 반환 (내보내기 등에 사용)
-  List<LabelModel> get allLabelModels => _labelCache.values.map((vm) => vm.labelModel).toList();
+  /// 캐시된 모든 라벨 모델(내보내기 등에 사용)
+  List<LabelModel> get allLabelModels => _labelCache.values.map((vm) => vm.labelModel).toList(growable: false);
 
-  /// 모든 VM 제거 및 리스너 정리
+  /// VM 캐시 정리
   Future<void> disposeAll() async {
     for (final vm in _labelCache.values) {
       if (onNotify != null) vm.removeListener(onNotify!);
       vm.dispose();
     }
     _labelCache.clear();
+    _current = null;
   }
 
-  LabelViewModel getOrCreateLabelVM({required String dataId, required String filename, required String path, required LabelingMode mode}) {
-    return _labelCache.putIfAbsent(dataId, () {
-      final vm = LabelViewModelFactory.create(
-          projectId: project.id, dataId: dataId, dataFilename: filename, dataPath: path, mode: mode, labelUseCases: appUseCases.label);
-      vm.addListener(() {});
+  /// 캐시에서 가져오거나 새로 생성
+  LabelViewModel getOrCreateLabelVM(UnifiedData data) {
+    return _labelCache.putIfAbsent(data.dataId, () {
+      final vm = LabelViewModelFactory.create(project: project, data: data, labelUseCases: appUseCases.label);
+      if (onNotify != null) vm.addListener(onNotify!);
       return vm;
     });
+  }
+
+  /// (편의) dataId만으로 가상 UnifiedData를 만들어 VM을 가져온다.
+  /// - 크로스 분류처럼 "실제 파일 1개"가 아닌 경우에 사용.
+  LabelViewModel getOrCreateLabelVMById({required String dataId, String? fileName, String? filePath}) {
+    final info = DataInfo(id: dataId, fileName: fileName ?? dataId, filePath: filePath);
+    final virtual = UnifiedData(dataInfo: info, fileType: FileType.unsupported);
+    return getOrCreateLabelVM(virtual);
   }
 }

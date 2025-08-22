@@ -1,8 +1,8 @@
 // lib/src/utils/label_validator.dart
-import '../features/project/models/project_model.dart';
-import '../features/label/models/label_model.dart';
-import '../features/label/models/sub_models/classification_label_model.dart';
-import '../features/label/models/sub_models/segmentation_label_model.dart';
+import '../core/models/project/project_model.dart';
+import '../core/models/label/label_model.dart';
+import '../core/models/label/classification_label_model.dart';
+import '../core/models/label/segmentation_label_model.dart';
 
 /// ✅ 라벨 유효성 검사기
 class LabelValidator {
