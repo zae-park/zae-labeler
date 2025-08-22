@@ -324,6 +324,52 @@ class CloudStorageHelper implements StorageHelperInterface {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
+  // 📖 Data Read helpers (인터페이스에는 노출하지 않는 편의 메서드) (임시)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Firebase Storage에서 텍스트(UTF-8) 읽기
+  Future<String?> readTextAt(String path, {int maxSizeBytes = 10 * 1024 * 1024}) async {
+    try {
+      final data = await storage.ref().child(path).getData(maxSizeBytes);
+      if (data == null) return null;
+      return utf8.decode(data);
+    } catch (e) {
+      debugPrint("[CloudStorageHelper.readTextAt] $path 읽기 실패: $e");
+      return null;
+    }
+  }
+
+  /// Firebase Storage에서 JSON 읽기 → Map
+  Future<Map<String, dynamic>?> readJsonAt(String path, {int maxSizeBytes = 10 * 1024 * 1024}) async {
+    final text = await readTextAt(path, maxSizeBytes: maxSizeBytes);
+    if (text == null || text.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(text);
+      return decoded is Map<String, dynamic> ? decoded : null;
+    } catch (e) {
+      debugPrint("[CloudStorageHelper.readJsonAt] $path JSON 파싱 실패: $e");
+      return null;
+    }
+  }
+
+  /// Firebase Storage에서 바이너리 읽기
+  Future<Uint8List?> readBytesAt(String path, {int maxSizeBytes = 20 * 1024 * 1024}) async {
+    try {
+      return await storage.ref().child(path).getData(maxSizeBytes);
+    } catch (e) {
+      debugPrint("[CloudStorageHelper.readBytesAt] $path 읽기 실패: $e");
+      return null;
+    }
+  }
+
+  /// (선택) 이미지 Base64로 읽기
+  Future<String?> readImageBase64At(String path, {int maxSizeBytes = 20 * 1024 * 1024}) async {
+    final bytes = await readBytesAt(path, maxSizeBytes: maxSizeBytes);
+    if (bytes == null) return null;
+    return base64Encode(bytes); // data:image/*;base64, ... 는 뷰어에서 붙여도 됨
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
   // 📌 Cache (Cloud는 로컬 캐시 의미 없음)
   // ─────────────────────────────────────────────────────────────────────────
 
