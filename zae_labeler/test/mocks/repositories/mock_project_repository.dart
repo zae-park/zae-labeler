@@ -1,8 +1,8 @@
 // test/mocks/repositories/mock_project_repository.dart
-import 'package:zae_labeler/src/features/label/models/label_model.dart';
+import 'package:zae_labeler/src/core/models/label/label_model.dart';
 import 'package:zae_labeler/src/features/project/repository/project_repository.dart';
-import 'package:zae_labeler/src/features/project/models/project_model.dart';
-import 'package:zae_labeler/src/core/models/data_model.dart';
+import 'package:zae_labeler/src/core/models/project/project_model.dart';
+import 'package:zae_labeler/src/core/models/data/data_model.dart';
 import 'package:zae_labeler/src/platform_helpers/storage/get_storage_helper.dart';
 
 import '../helpers/mock_storage_helper.dart';

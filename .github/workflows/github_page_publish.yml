@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages (Dev)
 
 on:
   push:
-    branches: [dev]
+    branches: nightly
 
 jobs:
   deploy_dev:

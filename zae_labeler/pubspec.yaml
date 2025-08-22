@@ -14,31 +14,32 @@ dependencies:
   provider: ^6.0.0
   shared_preferences: ^2.0.15
   uuid: ^4.3.3
-  file_picker: ^6.1.1
+  file_picker: ^10.3.2
   path_provider: ^2.0.15
-  fl_chart: ^0.64.0
-  archive: ^3.3.2
-  permission_handler: ^10.2.0
-  share_plus: ^7.2.2
+  fl_chart: ^1.0.0
+  archive: ^4.0.7
+  permission_handler: ^12.0.1
+  share_plus: ^11.1.0
   path: ^1.8.3
   cupertino_icons: ^1.0.2
   mockito: ^5.4.4
   shimmer: ^3.0.0
-  firebase_core: ^2.27.0
-  firebase_auth: ^4.17.8
-  google_sign_in: ^6.2.1
-  cloud_firestore: ^4.15.8
+  firebase_core: ^4.0.0
+  firebase_auth: ^6.0.1
+  google_sign_in: ^7.1.1
+  cloud_firestore: ^6.0.0
   kakao_flutter_sdk_user: ^1.9.2
   url_launcher: ^6.3.0
-  lottie: ^2.6.0
+  lottie: ^3.3.1
   universal_html: ^2.2.4
   # web: ^0.5.0 # Uncomment if you need web support
   win32: ^5.0.0
+  firebase_storage: ^13.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true

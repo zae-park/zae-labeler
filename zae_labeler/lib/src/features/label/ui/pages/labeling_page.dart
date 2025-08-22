@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:zae_labeler/src/features/label/view_models/sub_view_models/base_labeling_view_model.dart';
+import 'package:zae_labeler/src/features/label/view_models/sub_view_models/classification_labeling_view_model.dart';
+import 'package:zae_labeler/src/features/label/view_models/sub_view_models/segmentation_labeling_view_model.dart';
+import 'package:zae_labeler/src/platform_helpers/storage/interface_storage_helper.dart';
 
 import '../../use_cases/label_use_cases.dart';
 import '../../../project/use_cases/project_use_cases.dart';
-import '../../models/label_model.dart';
-import '../../../project/models/project_model.dart';
-import '../../../../platform_helpers/storage/get_storage_helper.dart';
+import '../../../../core/models/label/label_model.dart';
+import '../../../../core/models/project/project_model.dart';
 import '../../view_models/labeling_view_model.dart';
 
 import '../../../../core/use_cases/app_use_cases.dart';
@@ -30,7 +33,7 @@ class LabelingPage extends StatelessWidget {
     final projectRepo = ProjectRepository(storageHelper: helper);
 
     // ✅ AppUseCases 구성
-    final appUseCases = AppUseCases.from(project: ProjectUseCases.from(projectRepo), label: LabelUseCases.from(labelRepo));
+    final appUseCases = AppUseCases.from(project: ProjectUseCases.from(projectRepo), label: LabelUseCases.from(labelRepo, projectRepo));
 
     return FutureBuilder<LabelingViewModel>(
       future: LabelingViewModelFactory.createAsync(project, helper, appUseCases),

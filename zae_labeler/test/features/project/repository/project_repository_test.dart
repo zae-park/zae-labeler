@@ -1,9 +1,9 @@
 // test/unit/repositories/project_repository_test.dart
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zae_labeler/src/features/label/models/label_model.dart';
-import 'package:zae_labeler/src/features/project/models/project_model.dart';
-import 'package:zae_labeler/src/core/models/data_model.dart';
+import 'package:zae_labeler/src/core/models/data/data_info.dart';
+import 'package:zae_labeler/src/core/models/label/label_model.dart';
+import 'package:zae_labeler/src/core/models/project/project_model.dart';
 import '../../../mocks/repositories/mock_project_repository.dart';
 
 void main() {
@@ -63,7 +63,7 @@ void main() {
 
     test('updateDataInfos replaces data list', () async {
       await repository.saveProject(testProject);
-      final dataInfos = [DataInfo(id: 'd1', fileName: 'img.png', filePath: '/path/img.png')];
+      final dataInfos = [const DataInfo(id: 'd1', fileName: 'img.png', filePath: '/path/img.png')];
       await repository.updateDataInfos('p1', dataInfos);
       final result = await repository.findById('p1');
       expect(result?.dataInfos.length, 1);
@@ -71,7 +71,7 @@ void main() {
 
     test('addDataInfo adds one data item', () async {
       await repository.saveProject(testProject);
-      final newData = DataInfo(id: 'd2', fileName: 'img2.png', filePath: '/path/img2.png');
+      const newData = DataInfo(id: 'd2', fileName: 'img2.png', filePath: '/path/img2.png');
       await repository.addDataInfo('p1', newData);
       final result = await repository.findById('p1');
       expect(result?.dataInfos.map((d) => d.id), contains('d2'));
@@ -79,8 +79,8 @@ void main() {
 
     test('removeDataInfoById deletes correct data', () async {
       final dataInfos = [
-        DataInfo(id: 'd1', fileName: 'img1.png', filePath: '/path/1'),
-        DataInfo(id: 'd2', fileName: 'img2.png', filePath: '/path/2'),
+        const DataInfo(id: 'd1', fileName: 'img1.png', filePath: '/path/1'),
+        const DataInfo(id: 'd2', fileName: 'img2.png', filePath: '/path/2'),
       ];
       await repository.saveProject(testProject.copyWith(dataInfos: dataInfos));
       await repository.removeDataInfoById('p1', 'd1');

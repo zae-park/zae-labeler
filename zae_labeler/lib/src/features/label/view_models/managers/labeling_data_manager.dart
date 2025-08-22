@@ -1,75 +1,185 @@
-import 'package:zae_labeler/src/core/services/adaptive_data_loader.dart';
-import 'package:zae_labeler/src/features/label/models/label_model.dart';
+// lib/src/features/label/view_models/managers/labeling_data_manager.dart
+import 'dart:collection';
 
-import '../../../project/models/project_model.dart';
-import '../../../../core/models/data_model.dart';
-import '../../../../platform_helpers/storage/interface_storage_helper.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
+
+import 'package:zae_labeler/src/core/models/project/project_model.dart';
+import 'package:zae_labeler/src/core/models/data/unified_data.dart';
+
+import 'package:zae_labeler/src/features/data/services/adaptive_unified_data_loader.dart';
+import 'package:zae_labeler/src/features/data/services/unified_data_service.dart';
+
+import 'package:zae_labeler/src/core/models/label/label_model.dart';
+import 'package:zae_labeler/src/platform_helpers/storage/interface_storage_helper.dart';
+import 'package:zae_labeler/src/utils/label_validator.dart';
 
 /// 📦 LabelingDataManager
-/// - 프로젝트 데이터를 로드하고, 현재 위치 관리, 이동 기능을 담당.
-/// - LabelingViewModel 내부의 데이터 관련 책임을 분리.
+/// - 프로젝트의 데이터(파일)를 로드하고, 현재 포커스/이동/상태(진행률)만 관리.
+/// - **데이터(UnifiedData)**와 **상태(LabelStatus)**를 분리해 관리한다.
+///   - 데이터: `_dataList`
+///   - 상태:  `_statusMap` (key = dataId)
 ///
-/// 주요 책임:
-/// - 초기 데이터 로드
-/// - currentIndex 이동
-/// - 현재 데이터 접근
+/// 로드 흐름:
+///   1) `AdaptiveUnifiedDataLoader`로 `UnifiedData` 리스트를 가져옴(상태 없음)
+///   2) 저장소에서 해당 프로젝트의 라벨 전부 로드 → `LabelValidator`로 상태 계산 → `_statusMap` 구성
+///
+/// 뷰모델/화면 쪽에서 라벨이 저장될 때는 `updateStatusForCurrent` 또는
+/// `updateStatusById`로 상태만 갱신해주면 통계/프로그레스가 즉시 반영된다.
 class LabelingDataManager {
   final Project project;
   final StorageHelperInterface storageHelper;
+
+  /// 외부에서 이미 로드한 데이터가 있으면 그대로 사용 (테스트/프리패치용)
   final List<UnifiedData>? initialDataList;
-  late List<UnifiedData> _dataList;
+
+  /// 데이터 로더 (플랫폼/포맷 적응)
+  final AdaptiveUnifiedDataLoader loader;
+
+  List<UnifiedData> _dataList = const [];
   final Map<String, LabelStatus> _statusMap = {};
-  // final bool memoryOptimized;
 
   int _currentIndex = 0;
-  int _completeCount = 0;
-  int _warningCount = 0;
   bool _isLoaded = false;
 
-  LabelingDataManager({required this.project, required this.storageHelper, this.initialDataList});
-  // LabelingDataManager({required this.project, required this.storageHelper, this.initialDataList, this.memoryOptimized = false});
+  int _completeCount = 0;
+  int _warningCount = 0;
 
-  /// ✅ 데이터 로드
+  LabelingDataManager({
+    required this.project,
+    required this.storageHelper,
+    this.initialDataList,
+    AdaptiveUnifiedDataLoader? loader,
+  }) : loader = loader ?? AdaptiveUnifiedDataLoader(uds: UnifiedDataService(), storage: storageHelper);
+
+  /// ✅ 데이터 + 상태 로드
+  /// - 데이터: loader로 파싱
+  /// - 상태: 저장소 라벨 → LabelValidator로 계산
   Future<void> load() async {
-    _dataList = initialDataList ?? await loadDataAdaptively(project, storageHelper);
+    // 1) 데이터 로드 (status 없음)
+    _dataList = initialDataList ?? await loader.load(project);
     _currentIndex = 0;
+
+    // 2) 라벨 로드 → 상태 계산
+    await _rebuildStatusMapFromStorage();
+
     _isLoaded = true;
   }
 
-  /// ✅ 인덱스 이동
-  void moveNext() => {if (hasNext) _currentIndex++};
-  void movePrevious() => {if (hasPrevious) _currentIndex--};
-  void jumpTo(int index) => {if (index >= 0 && index < _dataList.length) _currentIndex = index};
+  /// 저장소에서 라벨 전부 로드 → 상태맵 재구성
+  Future<void> _rebuildStatusMapFromStorage() async {
+    _statusMap.clear();
+    List<LabelModel> labels = const [];
+    try {
+      labels = await storageHelper.loadAllLabelModels(project.id);
+    } catch (e) {
+      debugPrint("❌ [LabelingDataManager] Failed to load labels: $e");
+    }
+    final byId = {for (final m in labels) m.dataId: m};
 
-  void updateStatusForCurrent(LabelStatus status) => {_dataList[_currentIndex] = _dataList[_currentIndex].copyWith(status: status)};
-  void updateStatus(String dataId, LabelStatus newStatus) {
-    final oldStatus = _statusMap[dataId];
-    if (oldStatus == LabelStatus.complete) _completeCount--;
-    if (oldStatus == LabelStatus.warning) _warningCount--;
-    if (newStatus == LabelStatus.complete) _completeCount++;
-    if (newStatus == LabelStatus.warning) _warningCount++;
-    _statusMap[dataId] = newStatus;
+    for (final info in project.dataInfos) {
+      final lbl = byId[info.id];
+      _statusMap[info.id] = LabelValidator.getStatus(project, lbl);
+    }
+    _recount();
   }
 
+  void _recount() {
+    _completeCount = 0;
+    _warningCount = 0;
+    for (final s in _statusMap.values) {
+      if (s == LabelStatus.complete) _completeCount++;
+      if (s == LabelStatus.warning) _warningCount++;
+    }
+  }
+
+  // ───────────────────────────────────────────
+  // 🔀 인덱스 이동
+  // ───────────────────────────────────────────
+  void moveNext() {
+    if (hasNext) _currentIndex++;
+  }
+
+  void movePrevious() {
+    if (hasPrevious) _currentIndex--;
+  }
+
+  void jumpTo(int index) {
+    if (index >= 0 && index < _dataList.length) _currentIndex = index;
+  }
+
+  // ───────────────────────────────────────────
+  // 🔁 상태 갱신(라벨 저장 이후 호출)
+  // ───────────────────────────────────────────
+  void updateStatusForCurrent(LabelStatus status) {
+    final id = currentData.dataId;
+    _updateStatusInternal(id, status);
+  }
+
+  void updateStatusById(String dataId, LabelStatus status) {
+    _updateStatusInternal(dataId, status);
+  }
+
+  void _updateStatusInternal(String dataId, LabelStatus next) {
+    final old = _statusMap[dataId] ?? LabelStatus.incomplete;
+    if (old == next) return;
+
+    // 카운트 조정
+    if (old == LabelStatus.complete) _completeCount--;
+    if (old == LabelStatus.warning) _warningCount--;
+    if (next == LabelStatus.complete) _completeCount++;
+    if (next == LabelStatus.warning) _warningCount++;
+
+    _statusMap[dataId] = next;
+  }
+
+  /// 필요 시: 저장소 상태(라벨) 기준으로 다시 전량 재계산
+  Future<void> refreshAllStatusesFromStorage() async {
+    await _rebuildStatusMapFromStorage();
+  }
+
+  /// 필요 시: 현 상태맵을 전부 미완료로 리셋(라벨 초기화 직후 등)
+  void resetAllStatusesToIncomplete() {
+    for (final id in _statusMap.keys) {
+      _statusMap[id] = LabelStatus.incomplete;
+    }
+    _recount();
+  }
+
+  // ───────────────────────────────────────────
+  // ♻️ 초기화
+  // ───────────────────────────────────────────
   void reset() {
     _currentIndex = 0;
     _isLoaded = false;
-    _dataList = [];
+    _dataList = const [];
+    _statusMap.clear();
+    _completeCount = 0;
+    _warningCount = 0;
   }
 
-  /// ✅ Getter & Setter
-
+  // ───────────────────────────────────────────
+  // 🔎 Getters
+  // ───────────────────────────────────────────
   bool get isLoaded => _isLoaded;
+
+  /// 화면에서 데이터만 필요할 때 사용
   List<UnifiedData> get allData => _dataList;
+
+  /// 상태 맵 읽기 전용 뷰
+  UnmodifiableMapView<String, LabelStatus> get statusMap => UnmodifiableMapView(_statusMap);
+
   UnifiedData get currentData => _dataList[_currentIndex];
 
-  LabelStatus get currentStatus => _dataList[_currentIndex].status;
+  LabelStatus get currentStatus => _statusMap[currentData.dataId] ?? LabelStatus.incomplete;
+
+  LabelStatus statusOf(String dataId) => _statusMap[dataId] ?? LabelStatus.incomplete;
+
   int get totalCount => _dataList.length;
   int get currentIndex => _currentIndex;
-  bool get hasNext => _currentIndex < _dataList.length - 1;
+  bool get hasNext => _currentIndex < totalCount - 1;
   bool get hasPrevious => _currentIndex > 0;
 
-  /// ✅ 통계 정보
+  // 통계
   int get completeCount => _completeCount;
   int get warningCount => _warningCount;
   int get incompleteCount => totalCount - _completeCount;
