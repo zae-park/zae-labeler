@@ -1,15 +1,14 @@
-/// bootstrap.dart
-///
-/// 앱 실행 전에 필요한 **런타임 의존성**들을 준비해 반환합니다.
-/// - StorageHelper 선택(Prod+Web+로그인 → CloudStorage, 그 외 → 로컬 Storage)
-/// - Repository & UseCases 생성
-/// - SharedPreferences 기반 UserPreferenceService
-/// - LocaleViewModel 비동기 초기화
-/// - FirebaseAuth 핸들
-///
-/// ⚠️ Firebase.initializeApp()은 현재 main.dart에서 이미 호출하므로
-/// 여기서는 호출하지 않습니다. (main에서 분리하고 싶다면 main에서 제거하고
-/// 이 파일에서 호출하도록 변경해도 됩니다.)
+// lib/bootstrap.dart
+
+//
+// 앱 실행 전에 필요한 **런타임 의존성**들을 준비해 반환합니다.
+// - StorageHelper 선택(Prod+Web+로그인 → CloudStorage, 그 외 → 로컬 Storage)
+// - Repository & UseCases 생성
+// - SharedPreferences 기반 UserPreferenceService
+// - LocaleViewModel 비동기 초기화
+// - FirebaseAuth 핸들
+//
+// ⚠️ Firebase.initializeApp()은 현재 main.dart에서 이미 호출하므로
 
 import 'dart:ui';
 
@@ -46,28 +45,38 @@ class BootstrapResult {
   final StorageHelperInterface storageHelper; // 영속화 추상화 (로컬/클라우드 선택)
   final ShareHelperInterface shareHelper;
 
-  const BootstrapResult({
-    required this.appUseCases,
-    required this.userPrefs,
-    required this.localeViewModel,
-    required this.firebaseAuth,
-    required this.storageHelper,
-    required this.shareHelper,
-  });
+  const BootstrapResult(
+      {required this.appUseCases,
+      required this.userPrefs,
+      required this.localeViewModel,
+      required this.firebaseAuth,
+      required this.storageHelper,
+      required this.shareHelper});
+}
+
+Future<User?> _awaitInitialAuth({Duration timeout = const Duration(milliseconds: 400)}) async {
+  final auth = FirebaseAuth.instance;
+  // 이미 로그인 돼 있으면 그대로 반환
+  if (auth.currentUser != null) return auth.currentUser;
+  try {
+    // 첫 auth 이벤트를 잠깐만 기다린다(웹에서 초반 지연 보완)
+    return await auth.authStateChanges().first.timeout(timeout);
+  } catch (_) {
+    return auth.currentUser; // 여전히 null이면 null
+  }
 }
 
 /// 실행 환경에 맞춰 StorageHelper 구현을 선택합니다.
 /// - Prod + Web + (로그인됨) → CloudStorageHelper
 /// - 그 외 → 로컬(createLocalStorageHelper)
 Future<StorageHelperInterface> _chooseStorage() async {
-  final bool cloudCandidate = isProd && kIsWeb;
-  if (cloudCandidate) {
-    final user = FirebaseAuth.instance.currentUser;
+  if (isProd && kIsWeb) {
+    final user = await _awaitInitialAuth(); // ← 실제로 사용
     if (user != null) {
-      // 웹 프로덕션 + 로그인 상태 → 클라우드 사용
+      // 필요하면 UID 주입:
+      // return CloudStorageHelper(userId: user.uid);
       return CloudStorageHelper();
     } else {
-      // 웹 프로덕션이지만 아직 로그인 전 → 로컬로 폴백
       debugPrint("[bootstrap] Prod+Web 이지만 로그인 정보가 없어 Local Storage로 폴백합니다.");
       return createLocalStorageHelper();
     }
@@ -85,24 +94,23 @@ Future<ShareHelperInterface> _chooseShareHelper() async {
 /// [systemLocale]은 필요 시 LocaleViewModel 초기 기본값 결정 등에 활용할 수 있으나,
 /// 현재 구현은 LocaleViewModel 내부의 저장소 기반 복원 로직에 위임합니다.
 Future<BootstrapResult> bootstrap({required Locale systemLocale}) async {
-  // 1) 실행 환경에 맞춘 Storage 선택 (안전 폴백 포함)
+  // 1) 실행 환경에 맞춘 Storage/Share 선택
   final storage = await _chooseStorage();
   final share = await _chooseShareHelper();
 
-  // 2) Repository & UseCases 구성
+  // 2) 선행 비동기들을 병렬로 수행 (조금 더 빠르게 시작)
+  final prefsFuture = SharedPreferences.getInstance();
+  final localeFuture = LocaleViewModel.create();
+
+  final prefs = await prefsFuture;
+  final userPrefs = UserPreferenceService(prefs);
+  final localeVM = await localeFuture;
+
+  // 3) Repository & UseCases 구성
   final projectRepo = ProjectRepository(storageHelper: storage);
   final labelRepo = LabelRepository(storageHelper: storage);
 
-  // AppUseCases는 프로젝트/라벨용 유스케이스 파사드를 한데 모은 파사드
-  final appUC = AppUseCases.from(
-    project: ProjectUseCases.from(projectRepo, labelRepo: labelRepo),
-    label: LabelUseCases.from(labelRepo, projectRepo),
-  );
-
-  // 3) User preferences & Locale VM
-  final prefs = await SharedPreferences.getInstance();
-  final userPrefs = UserPreferenceService(prefs);
-  final localeVM = await LocaleViewModel.create();
+  final appUC = AppUseCases.from(project: ProjectUseCases.from(projectRepo, labelRepo: labelRepo), label: LabelUseCases.from(labelRepo, projectRepo));
 
   // 4) Firebase Auth 핸들
   final firebaseAuth = FirebaseAuth.instance;
