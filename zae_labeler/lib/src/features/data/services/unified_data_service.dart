@@ -1,45 +1,23 @@
-import '../../../core/models/data/file_type.dart';
-import '../../../core/models/data/data_info.dart';
-import '../../../core/models/data/unified_data.dart';
+// lib/src/features/data/services/unified_data_service.dart
+import 'package:zae_labeler/src/core/models/data/file_type.dart';
+import 'package:zae_labeler/src/core/models/data/unified_data.dart';
+import 'package:zae_labeler/src/core/models/data/data_info.dart';
 
 import 'data_loader.dart';
-import 'data_parser.dart';
+import 'data_loader_interface.dart';
 
-/// UnifiedData 관련 유틸을 한 곳으로 모은 파사드.
-/// (기존 UnifiedData.fromDataInfo / fromDataId / toDataInfo 대체)
+/// IO/파싱을 캡슐화한 상위 서비스
 class UnifiedDataService {
-  final DataParser parser;
-  final loader = createDataLoader();
+  final DataLoader _loader = createDataLoader();
 
-  UnifiedDataService({DataParser? parser}) : parser = parser ?? DefaultDataParser();
-
-  /// ✅ 기존: UnifiedData.fromDataInfo(dataInfo)
-  Future<UnifiedData> fromDataInfo(DataInfo info) async {
-    final type = FileTypeX.fromFilename(info.fileName);
-    final raw = await loader.loadRaw(info);
-    return parser.parse(info: info, type: type, raw: raw);
+  Future<UnifiedData> fromDataInfo(DataInfo info) {
+    // 필요시 여기서 추가 전처리/후처리(파싱 규칙 등)를 넣을 수 있습니다.
+    return _loader.fromDataInfo(info);
   }
 
-  /// ✅ 기존: UnifiedData.fromDataId(dataInfos: list, dataId: id)
-  Future<UnifiedData> fromDataId(List<DataInfo> dataInfos, String dataId) async {
-    final info = dataInfos.firstWhere((e) => e.id == dataId, orElse: () => throw StateError('dataId not found: $dataId'));
-    return fromDataInfo(info);
+  /// 빈 데이터(플레이스홀더) 필요 시
+  UnifiedData empty() {
+    // 프로젝트에 맞게 조정
+    return UnifiedData(dataInfo: DataInfo.create(fileName: 'untitled'), fileType: FileType.unsupported);
   }
-
-  /// ✅ 기존: unified.toDataInfo()
-  ///
-  /// 기본적으로는 원본 DataInfo를 그대로 돌려보내는 게 안전합니다.
-  /// (필요 시 imageBase64 등을 반영하여 덮어쓸 수 있도록 옵션 제공)
-  DataInfo toDataInfo(UnifiedData u, {String? overrideFilePath, String? overrideBase64}) {
-    return u.dataInfo.copyWith(
-      filePath: overrideFilePath ?? u.dataInfo.filePath,
-      base64Content: overrideBase64 ?? u.imageBase64 ?? u.dataInfo.base64Content,
-    );
-  }
-
-  /// (선택) 빈 데이터 팩토리
-  UnifiedData empty() => UnifiedData(
-        dataInfo: DataInfo.create(fileName: 'empty'),
-        fileType: FileType.unsupported,
-      );
 }

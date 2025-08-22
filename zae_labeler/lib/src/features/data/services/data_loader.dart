@@ -1,15 +1,8 @@
-// 플랫폼에 맞는 구현을 선택해서 export
-import 'data_loader_interface.dart' if (dart.library.io) 'data_loader_io.dart' if (dart.library.html) 'data_loader_web.dart';
+// lib/src/features/data/services/data_loader.dart
+import 'data_loader_interface.dart';
 
-// import 'data_loader_interface.dart';
+// 웹이면 web 구현, 아니면 io 구현을 끼웁니다.
+import 'data_loader_io.dart' if (dart.library.html) 'data_loader_web.dart' as platform;
 
-/// 플랫폼에 맞는 로더를 생성
-DataLoader createDataLoader() {
-  // dart.library.io 이면 IoDataLoader,
-  // dart.library.html 이면 WebDataLoader가 컴파일 타임에 선택됨.
-  return (DataLoader as dynamic)();
-  // ↑ 위 한 줄은 조건부 import의 "default constructor" trick을 씀.
-  // 만약 IDE가 싫어한다면 다음처럼 플랫폼별 이름을 내보내세요:
-  // - io/web 파일에서 `class DataLoader implements DataLoader { ... }` 로 선언
-  // - 여기서는 그냥 `return DataLoader();`
-}
+/// 플랫폼에 맞는 DataLoader 인스턴스를 돌려주는 팩토리
+DataLoader createDataLoader() => platform.createDataLoader();
