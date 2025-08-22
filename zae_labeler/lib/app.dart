@@ -1,12 +1,13 @@
-/// app.dart
-///
-/// 앱의 **스켈레톤**을 정의합니다.
-/// - MultiProvider로 전역 의존성 주입
-/// - MaterialApp (테마, 로케일, 로컬라이제이션, 라우팅)
-/// - 라우팅은 AppRouter로 위임
-///
-/// 기존 main.dart의 ZaeLabeler StatefullWidget 초기화 로직을 여기로 옮겨
-/// main.dart는 runApp 만 담당하도록 단순화할 수 있습니다.
+// app.dart
+//
+// 앱의 **스켈레톤**을 정의합니다.
+// - MultiProvider로 전역 의존성 주입
+// - MaterialApp (테마, 로케일, 로컬라이제이션, 라우팅)
+// - 라우팅은 AppRouter로 위임
+//
+// 기존 main.dart의 ZaeLabeler StatefullWidget 초기화 로직을 여기로 옮겨
+// main.dart는 runApp 만 담당하도록 단순화할 수 있습니다.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
