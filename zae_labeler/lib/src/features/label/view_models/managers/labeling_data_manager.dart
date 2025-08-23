@@ -1,5 +1,6 @@
 // lib/src/features/label/view_models/managers/labeling_data_manager.dart
 import 'dart:collection';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show debugPrint;
 
@@ -37,6 +38,8 @@ class LabelingDataManager {
 
   List<UnifiedData> _dataList = const [];
   final Map<String, LabelStatus> _statusMap = {};
+  final Map<String, String> _urlCache = {};
+  final Map<String, Uint8List> _bytesCache = {};
 
   int _currentIndex = 0;
   bool _isLoaded = false;
@@ -44,12 +47,8 @@ class LabelingDataManager {
   int _completeCount = 0;
   int _warningCount = 0;
 
-  LabelingDataManager({
-    required this.project,
-    required this.storageHelper,
-    this.initialDataList,
-    AdaptiveUnifiedDataLoader? loader,
-  }) : loader = loader ?? AdaptiveUnifiedDataLoader(uds: UnifiedDataService(), storage: storageHelper);
+  LabelingDataManager({required this.project, required this.storageHelper, this.initialDataList, AdaptiveUnifiedDataLoader? loader})
+      : loader = loader ?? AdaptiveUnifiedDataLoader(uds: UnifiedDataService(), storage: storageHelper);
 
   /// ✅ 데이터 + 상태 로드
   /// - 데이터: loader로 파싱
@@ -81,6 +80,46 @@ class LabelingDataManager {
       _statusMap[info.id] = LabelValidator.getStatus(project, lbl);
     }
     _recount();
+  }
+
+  // ✅ 현재 아이템을 뷰어가 바로 쓸 수 있게 준비
+  Future<void> ensureRenderableReadyForCurrent() async {
+    final info = currentData.dataInfo;
+    // 1) URL 선호(웹 성능 ↑)
+    final url = await storageHelper.ensureLocalObjectUrl(info);
+    if (url != null) {
+      _urlCache[info.id] = url;
+      return;
+    }
+    // 2) URL 생성 불가 → bytes 로드
+    final bytes = await storageHelper.readDataBytes(info);
+    _bytesCache[info.id] = bytes;
+  }
+
+  // ✅ 주변 프리로드(±1)
+  Future<void> preloadAround() async {
+    for (final i in [currentIndex - 1, currentIndex + 1]) {
+      if (i < 0 || i >= allData.length) continue;
+      final info = allData[i].dataInfo;
+      if (!_urlCache.containsKey(info.id) && !_bytesCache.containsKey(info.id)) {
+        final url = await storageHelper.ensureLocalObjectUrl(info);
+        if (url != null) {
+          _urlCache[info.id] = url;
+        } else {
+          final bytes = await storageHelper.readDataBytes(info);
+          _bytesCache[info.id] = bytes;
+        }
+      }
+    }
+  }
+
+  /// 위젯에서 사용할 렌더 소스(String: URL/Blob URL 또는 Uint8List)
+  Object? currentRenderable() {
+    final info = currentData.dataInfo;
+    final url = _urlCache[info.id];
+    if (url != null && url.isNotEmpty) return url;
+    final bytes = _bytesCache[info.id];
+    return bytes; // 없으면 null
   }
 
   void _recount() {
@@ -155,6 +194,16 @@ class LabelingDataManager {
     _statusMap.clear();
     _completeCount = 0;
     _warningCount = 0;
+  }
+
+  void dispose() {
+    // 웹 Blob URL 해제
+    for (final u in _urlCache.values) {
+      // ignore: discarded_futures
+      storageHelper.revokeLocalObjectUrl(u);
+    }
+    _urlCache.clear();
+    _bytesCache.clear();
   }
 
   // ───────────────────────────────────────────

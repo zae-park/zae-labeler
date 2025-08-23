@@ -1,10 +1,9 @@
 // lib/src/features/project/repository/project_repository.dart
 import 'package:collection/collection.dart' show IterableExtension; // firstWhereOrNull
+import 'package:zae_labeler/src/core/models/label/label_types.dart';
 import '../../../core/models/data/data_info.dart';
 import '../../../core/models/project/project_model.dart';
 import '../../../platform_helpers/storage/interface_storage_helper.dart';
-// TODO: LabelingMode가 분리되면 이 임시 의존성 제거
-import '../../../core/models/label/label_model.dart' show LabelingMode;
 
 /// ✅ Repository: 프로젝트 데이터의 영속화(CRUD)와 단일 속성 변경만 담당
 /// - StorageHelper ←→ Domain 사이의 얇은 어댑터

@@ -15,6 +15,8 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:zae_labeler/src/features/project/logic/project_validator.dart';
+import 'package:zae_labeler/src/features/project/use_cases/edit_project_use_case.dart';
 
 import 'env.dart';
 import 'src/core/services/user_preference_service.dart';
@@ -109,8 +111,10 @@ Future<BootstrapResult> bootstrap({required Locale systemLocale}) async {
   // 3) Repository & UseCases 구성
   final projectRepo = ProjectRepository(storageHelper: storage);
   final labelRepo = LabelRepository(storageHelper: storage);
+  final projectEditUC = EditProjectUseCase(projectRepository: projectRepo, labelRepository: labelRepo, validator: ProjectValidator());
 
-  final appUC = AppUseCases.from(project: ProjectUseCases.from(projectRepo, labelRepo: labelRepo), label: LabelUseCases.from(labelRepo, projectRepo));
+  final appUC = AppUseCases.from(
+      project: ProjectUseCases.from(projectRepo, labelRepo: labelRepo, editor: projectEditUC), label: LabelUseCases.from(labelRepo, projectRepo));
 
   // 4) Firebase Auth 핸들
   final firebaseAuth = FirebaseAuth.instance;

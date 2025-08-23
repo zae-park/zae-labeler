@@ -1,6 +1,7 @@
 // lib/src/platform_helpers/storage/native_storage_helper.dart
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:path/path.dart' as p;
@@ -289,6 +290,32 @@ class StorageHelperImpl implements StorageHelperInterface {
       models.add(LabelModelConverter.fromJson(mode, e)); // ← 래퍼 전체 전달
     }
     return models;
+  }
+
+  // ==============================
+  // 📌 Data Read
+  // ==============================
+
+  /// Native: filePath 필수. 해당 경로에서 바이트를 읽는다.
+  @override
+  Future<Uint8List> readDataBytes(DataInfo info) async {
+    final path = info.filePath?.trim();
+    if (path == null || path.isEmpty) {
+      throw ArgumentError('Native read requires a valid filePath for "${info.fileName}".');
+    }
+    return await File(path).readAsBytes();
+  }
+
+  /// Native: 경로 기반 접근이 가능하므로 filePath를 그대로 반환(또는 file://).
+  @override
+  Future<String?> ensureLocalObjectUrl(DataInfo info) async {
+    return info.filePath; // Image.file 등에서 바로 사용 가능
+  }
+
+  /// Native: 해제할 ObjectURL이 없음 (no-op).
+  @override
+  Future<void> revokeLocalObjectUrl(String url) async {
+    // no-op
   }
 
   // ─────────────────────────────────────────────────────────────────────────

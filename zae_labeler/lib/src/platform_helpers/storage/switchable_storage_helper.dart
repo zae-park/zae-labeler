@@ -67,4 +67,22 @@ class SwitchableStorageHelper with ChangeNotifier implements StorageHelperInterf
 
   @override
   Future<void> clearAllCache() => _delegate.clearAllCache();
+
+  @override
+  Future<String?> ensureLocalObjectUrl(DataInfo info) {
+    // TODO: implement ensureLocalObjectUrl
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Uint8List> readDataBytes(DataInfo info) {
+    // TODO: implement readDataBytes
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> revokeLocalObjectUrl(String url) {
+    // TODO: implement revokeLocalObjectUrl
+    throw UnimplementedError();
+  }
 }
