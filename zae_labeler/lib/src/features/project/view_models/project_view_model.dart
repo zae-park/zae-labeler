@@ -61,7 +61,7 @@ class ProjectViewModel extends ChangeNotifier {
 
   ProjectViewModel({required this.appUseCases, required this.picker, this.shareHelper, this.onChanged, Project? initial, bool? isEditing})
       : isEditing = isEditing ?? (initial != null),
-        project = initial ?? Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: const []) {
+        project = initial ?? Project(id: const Uuid().v4(), name: 'New Project', mode: LabelingMode.singleClassification, classes: const ["True", "False"]) {
     _initialMode = project.mode; // ✅ 내부에서 설정
   }
 
