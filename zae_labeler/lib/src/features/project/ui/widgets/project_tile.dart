@@ -7,7 +7,6 @@ import 'package:zae_labeler/src/features/project/ui/widgets/progress_indicator.d
 import '../../../../core/use_cases/app_use_cases.dart';
 import '../../../../core/models/project/project_model.dart';
 import '../../view_models/project_view_model.dart';
-import '../../view_models/configuration_view_model.dart';
 import '../../../label/ui/pages/labeling_page.dart';
 import '../pages/configuration_page.dart';
 import '../../view_models/project_list_view_model.dart';
@@ -15,7 +14,7 @@ import '../../view_models/project_list_view_model.dart';
 class ProjectTile extends StatelessWidget {
   final ProjectViewModel vm;
 
-  const ProjectTile({Key? key, required this.vm}) : super(key: key);
+  const ProjectTile({super.key, required this.vm});
 
   void _openLabelingPage(BuildContext context) async {
     final result = await Navigator.push<bool>(
@@ -37,7 +36,7 @@ class ProjectTile extends StatelessWidget {
       MaterialPageRoute(
         settings: const RouteSettings(name: '/configuration'),
         builder: (_) => ChangeNotifierProvider(
-          create: (_) => ConfigurationViewModel.fromProject(vm.project, appUseCases: appUseCases),
+          create: (_) => ProjectViewModel(appUseCases: appUseCases, shareHelper: context.read(), project: vm.project),
           child: const ConfigureProjectPage(),
         ),
       ),

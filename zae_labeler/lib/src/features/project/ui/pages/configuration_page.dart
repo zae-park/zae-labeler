@@ -2,17 +2,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:zae_labeler/common/i18n.dart';
+import 'package:zae_labeler/src/features/project/view_models/project_view_model.dart';
 import '../../../../../common/common_widgets.dart';
-import '../../view_models/configuration_view_model.dart';
 import '../../view_models/project_list_view_model.dart';
 import '../../../../views/widgets/labeling_mode_selector.dart';
 
 class ConfigureProjectPage extends StatelessWidget {
-  const ConfigureProjectPage({Key? key}) : super(key: key);
+  const ConfigureProjectPage({super.key});
 
   void _addClass(BuildContext context) {
     final classController = TextEditingController();
-    final configVM = Provider.of<ConfigurationViewModel>(context, listen: false);
+    final projectVM = Provider.of<ProjectViewModel>(context, listen: false);
 
     showDialog(
       context: context,
@@ -26,7 +26,7 @@ class ConfigureProjectPage extends StatelessWidget {
               onPressed: () {
                 final className = classController.text.trim();
                 if (className.isNotEmpty) {
-                  configVM.addClass(className);
+                  projectVM.addClass(className);
                   Navigator.pop(dialogContext);
                 }
               },
@@ -39,13 +39,13 @@ class ConfigureProjectPage extends StatelessWidget {
   }
 
   void _confirmProject(BuildContext context) {
-    final configVM = Provider.of<ConfigurationViewModel>(context, listen: false);
+    final projectVM = Provider.of<ProjectViewModel>(context, listen: false);
     final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
 
-    final updatedProject = configVM.project;
-    final isNewProject = !configVM.isEditing;
+    final updatedProject = projectVM.project;
+    final isNewProject = !projectVM.isEditing;
 
-    debugPrint("[confirmProject] mode: ${configVM.project.mode} is new? : $isNewProject");
+    debugPrint("[confirmProject] mode: ${projectVM.project.mode} is new? : $isNewProject");
     debugPrint("[confirmProject] dataInfos 수: ${updatedProject.dataInfos.length}");
     for (final dp in updatedProject.dataInfos) {
       debugPrint("📂 dataInfo: dataId=${dp.id}, path=${dp.filePath}, name=${dp.fileName}");
@@ -53,16 +53,16 @@ class ConfigureProjectPage extends StatelessWidget {
     projectListVM.upsertProject(updatedProject);
     GlobalAlertManager.show(context, '${updatedProject.name} project has been ${isNewProject ? "created" : "updated"}.', type: AlertType.success);
 
-    configVM.reset();
+    projectVM.reset();
     Navigator.pop(context, updatedProject);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ConfigurationViewModel>(
-      builder: (context, configVM, child) {
+    return Consumer<ProjectViewModel>(
+      builder: (context, projectVM, child) {
         return Scaffold(
-          appBar: AppBar(title: Text(configVM.isEditing ? context.l10n.configPage_title_edit : context.l10n.configPage_title_create)),
+          appBar: AppBar(title: Text(projectVM.isEditing ? context.l10n.configPage_title_edit : context.l10n.configPage_title_create)),
           body: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Form(
@@ -72,17 +72,17 @@ class ConfigureProjectPage extends StatelessWidget {
                     children: [
                       Expanded(
                         child: TextFormField(
-                          initialValue: configVM.project.name,
+                          initialValue: projectVM.project.name,
                           decoration: InputDecoration(labelText: context.l10n.project_name),
-                          onChanged: (value) => configVM.setProjectName(value),
+                          onChanged: (value) => projectVM.setName(value),
                           validator: (value) => (value == null || value.isEmpty) ? "Please enter a project name" : null,
                         ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: LabelingModeSelector.dropdown(
-                          selectedMode: configVM.project.mode,
-                          onModeChanged: (newMode) => configVM.setLabelingMode(newMode),
+                          selectedMode: projectVM.project.mode,
+                          onModeChanged: (newMode) => projectVM.setLabelingMode(newMode),
                         ),
                       ),
                     ],
@@ -110,11 +110,11 @@ class ConfigureProjectPage extends StatelessWidget {
                               decoration: BoxDecoration(border: Border.all(color: Colors.grey), borderRadius: BorderRadius.circular(8)),
                               child: Scrollbar(
                                 child: ListView.builder(
-                                  itemCount: configVM.project.classes.length,
+                                  itemCount: projectVM.project.classes.length,
                                   itemBuilder: (context, index) {
                                     return ListTile(
-                                      title: Text(configVM.project.classes[index]),
-                                      trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => configVM.removeClass(index)),
+                                      title: Text(projectVM.project.classes[index]),
+                                      trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => projectVM.removeClass(index)),
                                     );
                                   },
                                 ),
@@ -138,24 +138,24 @@ class ConfigureProjectPage extends StatelessWidget {
                                 ElevatedButton.icon(
                                   icon: const Icon(Icons.folder_open),
                                   label: const Text(kIsWeb ? 'Select Files' : 'Select Data Directory'),
-                                  onPressed: () => configVM.addDataInfo(),
+                                  onPressed: () => projectVM.addDataInfo(),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 8),
-                            if (configVM.project.dataInfos.isNotEmpty) ...[
+                            if (projectVM.project.dataInfos.isNotEmpty) ...[
                               const SizedBox(height: 8),
                               Container(
                                 height: 150,
                                 decoration: BoxDecoration(border: Border.all(color: Colors.grey), borderRadius: BorderRadius.circular(8)),
                                 child: Scrollbar(
                                   child: ListView.builder(
-                                    itemCount: configVM.project.dataInfos.length,
+                                    itemCount: projectVM.project.dataInfos.length,
                                     itemBuilder: (context, index) {
                                       return ListTile(
-                                        title: Text(configVM.project.dataInfos[index].fileName),
+                                        title: Text(projectVM.project.dataInfos[index].fileName),
                                         trailing:
-                                            IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => configVM.removeDataInfo(index)),
+                                            IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => projectVM.removeDataInfoAt(index)),
                                       );
                                     },
                                   ),
