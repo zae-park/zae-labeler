@@ -1,4 +1,6 @@
 // 📁 lib/src/features/label/view_models/sub_view_models/base_labeling_view_model.dart
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import 'package:zae_labeler/src/core/models/project/project_model.dart';
@@ -49,6 +51,12 @@ abstract class LabelingViewModel extends ChangeNotifier {
     if (dataManager.totalCount > 0) {
       await labelManager.loadLabelFor(dataManager.currentData);
     }
+
+    // ✅ 현재 아이템 렌더 소스 준비(Blob URL 생성 또는 bytes 디코드)
+    await dataManager.ensureRenderableReadyForCurrent();
+    // ✅ 다음/이전 한 칸 프리로드(있다면)
+    unawaited(dataManager.preloadAround());
+
     await recomputeSummary();
     await postInitialize();
     notifyListeners();
@@ -62,13 +70,19 @@ abstract class LabelingViewModel extends ChangeNotifier {
     if (dataManager.totalCount > 0) {
       await labelManager.loadLabelFor(dataManager.currentData);
     }
-    // 필요시 전체 요약 재계산(보수적)
+
+    // ✅ 현재 아이템 렌더 소스 준비 + 프리로드
+    await dataManager.ensureRenderableReadyForCurrent();
+    unawaited(dataManager.preloadAround());
+
     await recomputeSummary();
     notifyListeners();
   }
 
   @override
   void dispose() {
+    // ✅ Blob URL/임시 캐시 해제까지 함께 수행
+    dataManager.dispose();
     labelManager.disposeAll();
     super.dispose();
   }
@@ -141,4 +155,25 @@ abstract class LabelingViewModel extends ChangeNotifier {
   int get currentIndex => dataManager.currentIndex;
   bool get hasNext => dataManager.hasNext;
   bool get hasPrevious => dataManager.hasPrevious;
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Render source (Blob URL or Bytes) - DataManager 위임
+  // ──────────────────────────────────────────────────────────────────────────
+  /// 현재 인덱스 아이템을 뷰어가 바로 쓸 수 있게 준비(Blob URL 생성 or Bytes 디코드)
+  Future<void> ensureRenderableReadyForCurrent() {
+    return dataManager.ensureRenderableReadyForCurrent();
+  }
+
+  /// 현재 아이템의 렌더 소스 반환
+  /// - String: Blob/HTTP URL
+  /// - Uint8List: 메모리 바이트
+  /// - null: 아직 준비되지 않음(초기 로딩)
+  Object? currentRenderable() {
+    return dataManager.currentRenderable();
+  }
+
+  /// (옵션) ±1 프리로드를 외부에서 트리거하고 싶을 때 사용
+  Future<void> preloadAround() {
+    return dataManager.preloadAround();
+  }
 }

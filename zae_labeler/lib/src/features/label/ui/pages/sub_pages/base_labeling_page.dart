@@ -33,8 +33,10 @@ abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatelessWi
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) _finishLabelingAndPop(context, viewModel);
       },
-      child: ChangeNotifierProvider<T>.value(
-        value: viewModel,
+      child: ChangeNotifierProvider<T>(
+        create: (_) => viewModel,
+        // 필요하면 바로 초기 로드/프리로드 하게 lazy: false도 가능
+        // lazy: false,
         child: Consumer<T>(
           builder: (context, vm, _) {
             return Scaffold(
@@ -69,7 +71,17 @@ abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatelessWi
   }
 
   /// 라벨링 뷰어 (이미지, 시계열 등)
-  Widget buildViewer(T vm) => ViewerBuilder(data: vm.currentData);
+  Widget buildViewer(T vm) {
+    // ✅ 현재 아이템의 렌더 소스 준비(Blob URL or Bytes) → 준비된 소스로 ViewerBuilder 렌더
+    return FutureBuilder<void>(
+      future: vm.ensureRenderableReadyForCurrent(), // VM에 추가(또는 DataManager에 위임)
+      builder: (context, snap) {
+        final src = vm.currentRenderable(); // Object? (String URL | Uint8List | null)
+        if (src == null) return const Center(child: CircularProgressIndicator());
+        return ViewerBuilder.fromSource(source: src, data: vm.currentData);
+      },
+    );
+  }
 
   /// 하단 네비게이터
   Widget buildNavigator(T vm) => Column(children: [LabelingProgress(labelingVM: vm), NavigationButtons(onPrevious: vm.movePrevious, onNext: vm.moveNext)]);

@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:zae_labeler/src/core/services/user_preference_service.dart';
+import 'package:zae_labeler/src/features/project/logic/project_validator.dart';
+import 'package:zae_labeler/src/features/project/use_cases/edit_project_use_case.dart';
 
 import '../../features/project/repository/project_repository.dart';
 import '../../features/label/repository/label_repository.dart';
@@ -59,7 +61,8 @@ class AppContainer extends ChangeNotifier {
     _labelRepo = LabelRepository(storageHelper: _storage);
 
     _appUseCases = AppUseCases.from(
-      project: ProjectUseCases.from(_projectRepo, labelRepo: _labelRepo),
+      project: ProjectUseCases.from(_projectRepo,
+          labelRepo: _labelRepo, editor: EditProjectUseCase(projectRepository: _projectRepo, labelRepository: _labelRepo, validator: ProjectValidator())),
       label: LabelUseCases.from(_labelRepo, _projectRepo),
     );
 

@@ -3,7 +3,9 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'dart:html' as html;
+import 'package:http/http.dart' as http;
 
 import 'package:archive/archive.dart';
 
@@ -25,6 +27,9 @@ import '../../core/models/label/label_model.dart';
 ///     "label_data": { ... } // LabelModel.toJson()
 ///   }
 class StorageHelperImpl implements StorageHelperInterface {
+  // Blob URL 해제 관리를 위한 내부 캐시
+  final Set<String> _blobUrls = <String>{};
+
   // ==============================
   // 📌 Keys & Utils
   // ==============================
@@ -280,19 +285,61 @@ class StorageHelperImpl implements StorageHelperInterface {
   }
 
   // ==============================
+  // 📌 Data Read
+  // ==============================
+
+  /// Web: base64Content 우선 → http(s) URL(옵션) → 그 외는 미지원
+  @override
+  Future<Uint8List> readDataBytes(DataInfo info) async {
+    final b64 = info.base64Content?.trim();
+    if (b64 != null && b64.isNotEmpty) {
+      // data:<mime>;base64,XXXXX 형태와 순수 base64 모두 허용
+      final raw = b64.contains(',') ? b64.split(',').last : b64;
+      return Uint8List.fromList(base64Decode(raw));
+    }
+
+    final path = info.filePath?.trim();
+    if (path != null && path.startsWith('http')) {
+      final resp = await http.get(Uri.parse(path));
+      if (resp.statusCode == 200) return resp.bodyBytes;
+      throw StateError('HTTP ${resp.statusCode} while fetching $path');
+    }
+
+    throw UnsupportedError(
+      'Web cannot read local OS paths. Provide base64Content or an http(s) URL in DataInfo.',
+    );
+  }
+
+  /// Web: 바이트 → Blob → Object URL. 이미 objectUrl이 있으면 그대로 사용.
+  @override
+  Future<String?> ensureLocalObjectUrl(DataInfo info) async {
+    if (info.objectUrl != null && info.objectUrl!.isNotEmpty) {
+      return info.objectUrl;
+    }
+    final bytes = await readDataBytes(info);
+    final blob = html.Blob(<dynamic>[bytes], info.mimeType);
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    _blobUrls.add(url);
+    return url;
+  }
+
+  /// Web: Blob URL 해제
+  @override
+  Future<void> revokeLocalObjectUrl(String url) async {
+    if (_blobUrls.remove(url)) {
+      html.Url.revokeObjectUrl(url);
+    }
+  }
+
+  // ==============================
   // 📌 Cache Management
   // ==============================
 
   @override
   Future<void> clearAllCache() async {
-    // 앱 prefix만 정리 (브라우저 전체 localStorage를 지우지 않음)
-    final keysToRemove = <String>[];
-    for (var i = 0; i < html.window.localStorage.length; i++) {
-      final k = html.window.localStorage.keys.elementAt(i);
-      if (k.startsWith(_kPrefix)) keysToRemove.add(k);
+    for (final url in _blobUrls) {
+      html.Url.revokeObjectUrl(url);
     }
-    for (final k in keysToRemove) {
-      html.window.localStorage.remove(k);
-    }
+    _blobUrls.clear();
   }
 }

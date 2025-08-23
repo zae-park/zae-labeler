@@ -1,6 +1,6 @@
 // lib/src/utils/cloud_storage_helper.dart
 import 'dart:convert';
-import 'dart:typed_data';
+import 'package:http/http.dart' as http;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -367,6 +367,38 @@ class CloudStorageHelper implements StorageHelperInterface {
     final bytes = await readBytesAt(path, maxSizeBytes: maxSizeBytes);
     if (bytes == null) return null;
     return base64Encode(bytes); // data:image/*;base64, ... 는 뷰어에서 붙여도 됨
+  }
+
+  // ==============================
+  // 📌 Data Read
+  // ==============================
+
+  /// Cloud: http(s) URL(서명 URL 등)에서 bytes를 받아온다.
+  /// - 필요한 경우, 여기에서 인증 헤더/토큰을 추가하거나 SDK 호출로 바꿔야 한다.
+  @override
+  Future<Uint8List> readDataBytes(DataInfo info) async {
+    final path = info.filePath?.trim();
+    if (path == null || path.isEmpty) {
+      throw ArgumentError('Cloud read requires http(s) filePath or platform SDK integration.');
+    }
+    if (!path.startsWith('http')) {
+      throw UnsupportedError('Cloud helper expects http(s) URL paths. Given: $path');
+    }
+    final resp = await http.get(Uri.parse(path));
+    if (resp.statusCode == 200) return resp.bodyBytes;
+    throw StateError('HTTP ${resp.statusCode} while fetching $path');
+  }
+
+  /// Cloud: 웹이 아닌 경우 보통 Blob URL이 필요 없다. 필요 시 그대로 URL 반환.
+  @override
+  Future<String?> ensureLocalObjectUrl(DataInfo info) async {
+    return info.filePath; // UI가 네트워크 URL을 직접 렌더할 수 있으면 그대로 사용
+  }
+
+  /// Cloud: 해제할 ObjectURL 없음 (no-op).
+  @override
+  Future<void> revokeLocalObjectUrl(String url) async {
+    // no-op
   }
 
   // ─────────────────────────────────────────────────────────────────────────

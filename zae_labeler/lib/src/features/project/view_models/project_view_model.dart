@@ -13,9 +13,32 @@ import '../../../core/models/project/project_model.dart';
 import '../../../platform_helpers/share/interface_share_helper.dart';
 import '../../../platform_helpers/storage/interface_storage_helper.dart';
 
-/// 🔧 ViewModel: 단일 프로젝트 화면 상태 & 액션
-/// - 이름/모드/클래스/데이터 편집을 ProjectUseCases(파사드)로 위임
-/// - 라벨 초기화/진행률/공유/다운로드 유틸 제공
+/// {@template project_view_model}
+/// 🔧 ProjectViewModel
+///
+/// 단일 프로젝트 화면의 **상태와 액션**을 보유하는 MVVM ViewModel.
+///
+/// ### 책임 분리
+/// - **쓰기(편집)**: `EditProjectUseCase`에 위임합니다.
+///   - 이름/모드/클래스/데이터 편집 등은 `appUseCases.project.edit`를 호출하여
+///     **새 Project 스냅샷**을 돌려받아 `project` 필드를 교체합니다.
+/// - **읽기/진행률**: LabelingViewModelFactory로 진행률만 계산해 UI에 노출합니다.
+/// - **저장/내보내기/공유**: 파사드(`ProjectUseCases`)의 IO/Export 계열을 사용합니다.
+///
+/// ### 기존 대비 변화
+/// - 과거 VM 내부에서 직접 Repo를 호출하거나 attach-스타일로 부분 편집을 했던 흐름을,
+///   이제는 **UseCase 단일 관문(EditProjectUseCase)**를 통해 일관되게 처리합니다.
+/// - 메서드들은 대부분 “편집 → 유효성 검증 → 저장 → 새 스냅샷 반환” 순서를 UC에 맡기고,
+///   VM은 **스냅샷 교체 + notify + onChanged 콜백**만 수행합니다.
+///
+/// ### 사용 예시
+/// ```dart
+/// final vm = ProjectViewModel(shareHelper: share, appUseCases: appUC, project: initial);
+/// await vm.setName('새 이름');  // 내부적으로 editUseCase.rename 호출
+/// await vm.addClass('cat');     // 내부적으로 editUseCase.addClass 호출
+/// await vm.setLabelingMode(LabelingMode.multiClassification); // 모드 변경(+기존 라벨 초기화 전략은 UC/파사드에서 선택)
+/// ```
+/// {@endtemplate}
 class ProjectViewModel extends ChangeNotifier {
   Project project;
   final ShareHelperInterface shareHelper;
@@ -45,7 +68,7 @@ class ProjectViewModel extends ChangeNotifier {
   }
 
   // ────────────────────────────────────────────
-  // 📊 진행률 로딩
+  // 📊 진행률 로딩 (읽기 전용)
   // ────────────────────────────────────────────
   /// LabelingViewModel 팩토리를 사용해 현재 프로젝트의 진행률을 계산합니다.
   Future<void> loadProgress(StorageHelperInterface helper) async {
@@ -60,105 +83,90 @@ class ProjectViewModel extends ChangeNotifier {
   }
 
   // ==============================
-  // 📌 프로젝트 정보 수정
+  // ✏️ 프로젝트 편집 (EditProjectUseCase 위임)
   // ==============================
 
+  /// 프로젝트 이름 변경
   Future<void> setName(String name) async {
-    final updated = await appUseCases.project.rename(project.id, name);
-    if (updated != null) {
-      project = updated;
-      notifyListeners();
-      onChanged?.call(project);
-    }
+    final updated = await appUseCases.project.editor.rename(project, name);
+    project = updated;
+    notifyListeners();
+    onChanged?.call(project);
   }
 
-  /// 권장: 내부에서 라벨 초기화까지 수행하는 별칭 사용 (changeModeAndReset)
+  /// 라벨링 모드 변경
+  ///
+  /// - 기본 정책은 **모든 라벨 삭제 후 모드 교체**(EditProjectUC의 기본값)로 동작합니다.
+  /// - 마이그레이션 전략이 필요하면, App/Processes 레이어에서
+  ///   `changeMode(..., policy: migrateWithStrategy, migrate: ...)`를 감싼
+  ///   헬퍼를 제공해 VM에서 그 메서드를 호출하는 식으로 확장하세요.
   Future<void> setLabelingMode(LabelingMode mode) async {
     if (project.mode == mode) return;
-    final updated = await appUseCases.project.changeModeAndReset(project.id, mode);
-    if (updated != null) {
-      project = updated;
-      notifyListeners();
-      onChanged?.call(project);
-    }
+    // 여기서는 안전 기본값(라벨 삭제)으로 위임
+    final updated = await appUseCases.project.editor.changeMode(project, mode);
+    project = updated;
+    notifyListeners();
+    onChanged?.call(project);
   }
 
-  // ==============================
-  // 🧩 클래스 편집 (전체 교체 방식)
-  // ==============================
-
+  /// 클래스 추가
   Future<void> addClass(String className) async {
     final name = className.trim();
     if (name.isEmpty) return;
-    if (project.classes.contains(name)) return;
-
-    final next = List<String>.from(project.classes)..add(name);
-    final updated = await appUseCases.project.updateClasses(project.id, next);
-    if (updated != null) {
-      project = updated;
-      notifyListeners();
-      onChanged?.call(project);
-    }
+    final updated = await appUseCases.project.editor.addClass(project, name);
+    project = updated;
+    notifyListeners();
+    onChanged?.call(project);
   }
 
+  /// 클래스 이름 수정
   Future<void> editClass(int index, String newName) async {
-    if (index < 0 || index >= project.classes.length) return;
-    final name = newName.trim();
-    if (name.isEmpty) return;
-
-    final next = List<String>.from(project.classes)..[index] = name;
-    final updated = await appUseCases.project.updateClasses(project.id, next);
-    if (updated != null) {
-      project = updated;
-      notifyListeners();
-      onChanged?.call(project);
-    }
+    final updated = await appUseCases.project.editor.editClass(project, index, newName);
+    project = updated;
+    notifyListeners();
+    onChanged?.call(project);
   }
 
+  /// 클래스 삭제
   Future<void> removeClass(int index) async {
-    if (index < 0 || index >= project.classes.length) return;
-
-    final next = List<String>.from(project.classes)..removeAt(index);
-    final updated = await appUseCases.project.updateClasses(project.id, next);
-    if (updated != null) {
-      project = updated;
-      notifyListeners();
-      onChanged?.call(project);
-    }
+    final updated = await appUseCases.project.editor.removeClass(project, index);
+    project = updated;
+    notifyListeners();
+    onChanged?.call(project);
   }
 
-  // ==============================
-  // 📂 데이터 추가/제거
-  // ==============================
-
-  /// 단일 데이터 추가 (파일 선택 로직은 외부/VM 상단에서 수행했다고 가정)
-  Future<void> addDataInfo(DataInfo dataInfo) async {
-    final updated = await appUseCases.project.addDataInfo(project.id, dataInfo);
-    if (updated != null) {
-      project = updated;
-      notifyListeners();
-      onChanged?.call(project);
-    }
+  /// 데이터 여러 건 추가
+  Future<void> addDataInfos(List<DataInfo> infos) async {
+    if (infos.isEmpty) return;
+    final updated = await appUseCases.project.editor.addDataInfos(project, infos);
+    project = updated;
+    notifyListeners();
+    onChanged?.call(project);
   }
 
-  /// dataId 기준으로 제거
-  Future<void> removeDataInfo(String dataId) async {
-    final updated = await appUseCases.project.removeDataInfo(project.id, dataId);
-    if (updated != null) {
-      project = updated;
-      notifyListeners();
-      onChanged?.call(project);
-    }
+  /// 데이터 한 건 삭제(인덱스 기반)
+  Future<void> removeDataInfoAt(int index) async {
+    final updated = await appUseCases.project.editor.removeDataInfo(project, index);
+    project = updated;
+    notifyListeners();
+    onChanged?.call(project);
+  }
+
+  /// 데이터 세트 통째로 교체
+  Future<void> setAllDataInfos(List<DataInfo> infos) async {
+    final updated = await appUseCases.project.editor.setDataInfos(project, infos);
+    project = updated;
+    notifyListeners();
+    onChanged?.call(project);
   }
 
   // ==============================
   // 📌 변경 감지
   // ==============================
-
   bool isLabelingModeChanged() => project.mode != _initialMode;
 
   // ==============================
-  // 💾 저장 / 삭제 / 초기화
+  // 💾 저장 / 삭제 / 초기화 (기존 파사드 기능)
   // ==============================
 
   /// 현재 스냅샷 저장(업서트)
@@ -175,6 +183,7 @@ class ProjectViewModel extends ChangeNotifier {
     onChanged?.call(project);
   }
 
+  /// 외부에서 주입된 최신 스냅샷으로 교체(네비게이션 결과 반영 등)
   void updateFrom(Project updated) {
     project = updated;
     notifyListeners();
@@ -192,12 +201,10 @@ class ProjectViewModel extends ChangeNotifier {
     }
   }
 
-  /// 구성 JSON(혹은 링크)을 공유
+  /// 구성 JSON(혹은 링크) 공유
   Future<void> shareProject(BuildContext context) async {
     try {
       final pathOrUrl = await appUseCases.project.exportConfig(project);
-      // ShareHelper가 파일/텍스트 중 무엇을 지원하는지에 따라 분기
-      // 아래는 간단히 텍스트 공유로 처리(필요시 shareFile로 교체)
       await shareHelper.shareText(pathOrUrl);
       if (context.mounted) {
         GlobalAlertManager.show(context, '✅ 프로젝트 공유 준비가 완료되었습니다.', type: AlertType.success);

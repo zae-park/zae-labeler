@@ -30,8 +30,8 @@ class LabelRepository {
 
   /// 단일 라벨 로드.
   /// - 존재하지 않으면 StorageHelper 구현체가 초기 라벨을 반환하도록 설계되어 있습니다.
-  Future<LabelModel> loadLabel({required String projectId, required String dataId, required String dataPath, required LabelingMode mode}) async {
-    return await storageHelper.loadLabelData(projectId, dataId, dataPath, mode);
+  Future<LabelModel> loadLabel({required String projectId, required String dataId, required String dataPath, required LabelingMode mode}) {
+    return storageHelper.loadLabelData(projectId, dataId, dataPath, mode);
   }
 
   /// 단일 라벨 로드(미존재 시 생성 보장).
@@ -46,7 +46,8 @@ class LabelRepository {
 
   /// (임시) 특정 dataId의 라벨만 제거.
   /// - 단건 삭제 API가 StorageHelper에 없다면, 전체 로드→필터→일괄 저장으로 우회합니다.
-  /// - TODO: 필요 시 `StorageHelperInterface.deleteLabel(projectId, dataId)` 추가 검토.
+  /// - TODO: 필요 시 `StorageHelperInterface.deleteLabel(projectId, dataId)`를 추가해
+  ///         본 메서드를 네이티브 삭제 호출로 교체(대용량 최적화).
   Future<void> deleteLabelByDataId({required String projectId, required String dataId}) async {
     final all = await loadAllLabels(projectId);
     final filtered = all.where((e) => e.dataId != dataId).toList();
@@ -58,11 +59,10 @@ class LabelRepository {
   // ─────────────────────────────────────────────────────────────────────────────
 
   /// 프로젝트의 모든 라벨을 로드합니다.
-  Future<List<LabelModel>> loadAllLabels(String projectId) async {
-    return await storageHelper.loadAllLabelModels(projectId);
-  }
+  Future<List<LabelModel>> loadAllLabels(String projectId) => storageHelper.loadAllLabelModels(projectId);
 
   /// dataId → LabelModel 매핑으로 변환해 반환합니다.
+  /// - 동일 dataId가 중복되지 않는다는 전제(저장 규약) 하에 맵을 구성합니다.
   Future<Map<String, LabelModel>> loadLabelMap(String projectId) async {
     final labels = await loadAllLabels(projectId);
     return {for (final m in labels) m.dataId: m};
@@ -70,14 +70,10 @@ class LabelRepository {
 
   /// 라벨들을 일괄 저장합니다.
   /// - Firestore 등은 내부에서 배치/청크 처리(구현체 책임).
-  Future<void> saveAllLabels(String projectId, List<LabelModel> labels) async {
-    await storageHelper.saveAllLabels(projectId, labels);
-  }
+  Future<void> saveAllLabels(String projectId, List<LabelModel> labels) => storageHelper.saveAllLabels(projectId, labels);
 
   /// 프로젝트의 모든 라벨을 삭제합니다.
-  Future<void> deleteAllLabels(String projectId) async {
-    await storageHelper.deleteProjectLabels(projectId);
-  }
+  Future<void> deleteAllLabels(String projectId) => storageHelper.deleteProjectLabels(projectId);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // 📌 Import / Export
@@ -85,21 +81,16 @@ class LabelRepository {
 
   /// 라벨만 내보내기(원본 데이터 제외).
   /// - Web: 다운로드 트리거 / Cloud: Storage 업로드 등은 구현체가 처리.
-  Future<String> exportLabels(Project project, List<LabelModel> labels) async {
-    return await storageHelper.exportAllLabels(project, labels, const []);
-  }
+  Future<String> exportLabels(Project project, List<LabelModel> labels) => storageHelper.exportAllLabels(project, labels, const []);
 
   /// 라벨 + 원본 데이터(가능한 범위) 내보내기.
   /// - Web(Native base64/path)에서만 일부 동작, Cloud는 보통 라벨만 스냅샷.
-  Future<String> exportLabelsWithData(Project project, List<LabelModel> labels, List<DataInfo> dataInfos) async {
-    return await storageHelper.exportAllLabels(project, labels, dataInfos);
-  }
+  Future<String> exportLabelsWithData(Project project, List<LabelModel> labels, List<DataInfo> dataInfos) =>
+      storageHelper.exportAllLabels(project, labels, dataInfos);
 
   /// 라벨 임포트.
   /// - Web: 파일 선택 / Cloud: latest.json 로드 등은 구현체가 처리.
-  Future<List<LabelModel>> importLabels() async {
-    return await storageHelper.importAllLabels();
-  }
+  Future<List<LabelModel>> importLabels() => storageHelper.importAllLabels();
 
   // ─────────────────────────────────────────────────────────────────────────────
   // 📌 유효성 검사 / 상태 (→ UseCase/Service로 이전 예정)
@@ -107,19 +98,31 @@ class LabelRepository {
 
   /// 🔕 Repo 책임이 아님: UseCase/Service로 이전 권장.
   @Deprecated('Use LabelValidationUseCase/Service 레이어에서 처리하세요.')
-  bool isValid(Project project, LabelModel labelModel) {
-    return LabelValidator.isValid(labelModel, project);
-  }
+  bool isValid(Project project, LabelModel labelModel) => LabelValidator.isValid(labelModel, project);
 
   /// 🔕 Repo 책임이 아님: UseCase/Service로 이전 권장.
   @Deprecated('Use LabelValidationUseCase/Service 레이어에서 처리하세요.')
-  LabelStatus getStatus(Project project, LabelModel? labelModel) {
-    return LabelValidator.getStatus(project, labelModel);
-  }
+  LabelStatus getStatus(Project project, LabelModel? labelModel) => LabelValidator.getStatus(project, labelModel);
 
   /// 🔕 Repo 책임이 아님: UseCase/Service로 이전 권장.
   @Deprecated('Use LabelValidationUseCase/Service 레이어에서 처리하세요.')
-  bool isLabeled(LabelModel labelModel) {
-    return labelModel.isLabeled;
+  bool isLabeled(LabelModel labelModel) => labelModel.isLabeled;
+
+  /// 프로젝트에 라벨이 하나라도 있는지 **경량하게 확인**합니다.
+  /// - 현재 구현은 `loadAllLabels()` 기반으로 간이 체크합니다.
+  /// - TODO: 대용량 최적화를 위해 `StorageHelperInterface.hasAnyProjectLabels(projectId)`를
+  ///         도입하고, 내부 구현을 해당 호출로 교체하세요.
+  Future<bool> hasAny(String projectId) async {
+    final labels = await loadAllLabels(projectId);
+    return labels.isNotEmpty;
+  }
+
+  /// 프로젝트의 라벨 개수를 반환합니다.
+  /// - 현재 구현은 `loadAllLabels()` 기반으로 간이 카운트합니다.
+  /// - TODO: 대용량에서 효율적인 `StorageHelperInterface.countProjectLabels(projectId)`가
+  ///         추가되면 내부 구현을 교체하세요.
+  Future<int> count(String projectId) async {
+    final labels = await loadAllLabels(projectId);
+    return labels.length;
   }
 }
