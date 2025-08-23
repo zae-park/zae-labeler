@@ -4,7 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:zae_labeler/src/core/models/data/data_info.dart';
 import 'data_info_picker_interface.dart';
 
-class IoDataInfoPicker implements DataInfoPicker {
+class PlatformDataInfoPicker implements DataInfoPicker {
   @override
   Future<List<DataInfo>> pick() async {
     final dirPath = await FilePicker.platform.getDirectoryPath();
