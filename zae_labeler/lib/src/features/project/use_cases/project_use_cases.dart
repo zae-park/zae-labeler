@@ -121,7 +121,7 @@ class ProjectUseCases {
       // 없으면 그대로 반환(혹은 예외로 바꾸고 싶으면 throw StateError)
       return p;
     }
-    return editor.removeDataInfo(p, index);
+    return editor.removeDataInfoByIndex(p, index);
   }
 
   // ────────────────────────────────────────────────────────────────────────────

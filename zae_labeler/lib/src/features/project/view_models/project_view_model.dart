@@ -10,6 +10,7 @@ import '../../../core/models/data/data_info.dart';
 import '../../../core/models/label/label_model.dart' show LabelingMode; // 임시: 모드 여기 위치
 import '../../../core/models/project/project_model.dart';
 
+import '../../../platform_helpers/pickers/data_info_picker_interface.dart';
 import '../../../platform_helpers/share/interface_share_helper.dart';
 import '../../../platform_helpers/storage/interface_storage_helper.dart';
 
@@ -41,10 +42,12 @@ import '../../../platform_helpers/storage/interface_storage_helper.dart';
 /// {@endtemplate}
 class ProjectViewModel extends ChangeNotifier {
   Project project;
-  final ShareHelperInterface shareHelper;
+  final DataInfoPicker picker;
+  final ShareHelperInterface? shareHelper;
   final AppUseCases appUseCases;
 
   final void Function(Project updated)? onChanged;
+  final bool isEditing;
   late final LabelingMode _initialMode;
 
   // ────────────────────────────────────────────
@@ -56,21 +59,15 @@ class ProjectViewModel extends ChangeNotifier {
   int incompleteCount = 0;
   bool progressLoaded = false;
 
-  ProjectViewModel({required this.shareHelper, required this.appUseCases, this.onChanged, Project? project})
-      : project = project ??
-            Project(
-              id: project?.id ?? const Uuid().v4(),
-              name: project?.name ?? '',
-              mode: project?.mode ?? LabelingMode.singleClassification,
-              classes: project?.classes ?? const [],
-            ) {
-    _initialMode = this.project.mode;
+  ProjectViewModel({required this.appUseCases, required this.picker, this.shareHelper, this.onChanged, Project? initial, bool? isEditing})
+      : isEditing = isEditing ?? (initial != null),
+        project = initial ?? Project(id: const Uuid().v4(), name: 'New Project', mode: LabelingMode.singleClassification, classes: const ["True", "False"]) {
+    _initialMode = project.mode; // ✅ 내부에서 설정
   }
 
   // ────────────────────────────────────────────
   // 📊 진행률 로딩 (읽기 전용)
   // ────────────────────────────────────────────
-  /// LabelingViewModel 팩토리를 사용해 현재 프로젝트의 진행률을 계산합니다.
   Future<void> loadProgress(StorageHelperInterface helper) async {
     final labelingVM = await LabelingViewModelFactory.createAsync(project, helper, appUseCases);
     progressRatio = labelingVM.progressRatio;
@@ -85,107 +82,119 @@ class ProjectViewModel extends ChangeNotifier {
   // ==============================
   // ✏️ 프로젝트 편집 (EditProjectUseCase 위임)
   // ==============================
-
-  /// 프로젝트 이름 변경
   Future<void> setName(String name) async {
     final updated = await appUseCases.project.editor.rename(project, name);
     project = updated;
-    notifyListeners();
     onChanged?.call(project);
+    notifyListeners();
   }
 
-  /// 라벨링 모드 변경
-  ///
-  /// - 기본 정책은 **모든 라벨 삭제 후 모드 교체**(EditProjectUC의 기본값)로 동작합니다.
-  /// - 마이그레이션 전략이 필요하면, App/Processes 레이어에서
-  ///   `changeMode(..., policy: migrateWithStrategy, migrate: ...)`를 감싼
-  ///   헬퍼를 제공해 VM에서 그 메서드를 호출하는 식으로 확장하세요.
   Future<void> setLabelingMode(LabelingMode mode) async {
     if (project.mode == mode) return;
-    // 여기서는 안전 기본값(라벨 삭제)으로 위임
     final updated = await appUseCases.project.editor.changeMode(project, mode);
     project = updated;
-    notifyListeners();
     onChanged?.call(project);
+    notifyListeners();
   }
 
-  /// 클래스 추가
   Future<void> addClass(String className) async {
     final name = className.trim();
     if (name.isEmpty) return;
     final updated = await appUseCases.project.editor.addClass(project, name);
     project = updated;
-    notifyListeners();
     onChanged?.call(project);
+    notifyListeners();
   }
 
-  /// 클래스 이름 수정
   Future<void> editClass(int index, String newName) async {
     final updated = await appUseCases.project.editor.editClass(project, index, newName);
     project = updated;
-    notifyListeners();
     onChanged?.call(project);
+    notifyListeners();
   }
 
-  /// 클래스 삭제
   Future<void> removeClass(int index) async {
     final updated = await appUseCases.project.editor.removeClass(project, index);
     project = updated;
-    notifyListeners();
     onChanged?.call(project);
+    notifyListeners();
   }
 
-  /// 데이터 여러 건 추가
+  Future<void> pickAndAddDataInfos() async {
+    try {
+      final infos = await picker.pick();
+      if (infos.isEmpty) return;
+      final updated = await appUseCases.project.editor.addDataInfos(project, infos);
+      project = updated;
+      onChanged?.call(project);
+      notifyListeners();
+    } catch (e) {
+      // 필요 시 로깅/알럿
+    }
+  }
+
   Future<void> addDataInfos(List<DataInfo> infos) async {
     if (infos.isEmpty) return;
     final updated = await appUseCases.project.editor.addDataInfos(project, infos);
     project = updated;
-    notifyListeners();
     onChanged?.call(project);
+    notifyListeners();
   }
 
-  /// 데이터 한 건 삭제(인덱스 기반)
-  Future<void> removeDataInfoAt(int index) async {
-    final updated = await appUseCases.project.editor.removeDataInfo(project, index);
+  Future<void> addDataInfo(DataInfo info) async {
+    final updated = await appUseCases.project.editor.addDataInfo(project, info);
     project = updated;
-    notifyListeners();
     onChanged?.call(project);
+    notifyListeners();
   }
 
-  /// 데이터 세트 통째로 교체
+  /// 권장: id 기반 제거
+  Future<void> removeDataInfoAt(int index) async {
+    if (index < 0 || index >= project.dataInfos.length) return;
+    final dataId = project.dataInfos[index].id;
+    final updated = await appUseCases.project.editor.removeDataInfoById(project, dataId);
+    project = updated;
+    onChanged?.call(project);
+    notifyListeners();
+  }
+
   Future<void> setAllDataInfos(List<DataInfo> infos) async {
     final updated = await appUseCases.project.editor.setDataInfos(project, infos);
     project = updated;
-    notifyListeners();
     onChanged?.call(project);
+    notifyListeners();
   }
 
-  // ==============================
-  // 📌 변경 감지
-  // ==============================
   bool isLabelingModeChanged() => project.mode != _initialMode;
 
   // ==============================
   // 💾 저장 / 삭제 / 초기화 (기존 파사드 기능)
   // ==============================
-
-  /// 현재 스냅샷 저장(업서트)
   Future<void> saveProject() async {
     await appUseCases.project.save(project);
-    notifyListeners();
     onChanged?.call(project);
+    notifyListeners();
   }
 
-  /// 프로젝트의 모든 라벨 삭제
   Future<void> clearProjectLabels() async {
     await appUseCases.label.clearAll(project.id);
-    notifyListeners();
     onChanged?.call(project);
+    notifyListeners();
   }
 
-  /// 외부에서 주입된 최신 스냅샷으로 교체(네비게이션 결과 반영 등)
   void updateFrom(Project updated) {
     project = updated;
+    notifyListeners();
+  }
+
+  /// ✅ reset 동작: 편집이면 복제(변경 취소), 신규면 새 스냅샷로 초기화
+  void reset() {
+    if (isEditing) {
+      project = project.copyWith(); // 원본 유지 + 임시 변경만 초기화 효과(필요시 별도 원본 보관)
+    } else {
+      project = Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: const []);
+    }
+    _initialMode = project.mode;
     notifyListeners();
   }
 
@@ -201,18 +210,18 @@ class ProjectViewModel extends ChangeNotifier {
     }
   }
 
-  /// 구성 JSON(혹은 링크) 공유
   Future<void> shareProject(BuildContext context) async {
+    if (shareHelper == null) {
+      if (context.mounted) GlobalAlertManager.show(context, '⚠️ 공유 도구가 설정되어 있지 않습니다.', type: AlertType.error);
+      return;
+    }
+
     try {
       final pathOrUrl = await appUseCases.project.exportConfig(project);
-      await shareHelper.shareText(pathOrUrl);
-      if (context.mounted) {
-        GlobalAlertManager.show(context, '✅ 프로젝트 공유 준비가 완료되었습니다.', type: AlertType.success);
-      }
+      await shareHelper!.shareText(pathOrUrl);
+      if (context.mounted) GlobalAlertManager.show(context, '✅ 프로젝트 공유 준비가 완료되었습니다.', type: AlertType.success);
     } catch (e) {
-      if (context.mounted) {
-        GlobalAlertManager.show(context, '⚠️ 프로젝트 공유에 실패했습니다: $e', type: AlertType.error);
-      }
+      if (context.mounted) GlobalAlertManager.show(context, '⚠️ 프로젝트 공유에 실패했습니다: $e', type: AlertType.error);
     }
   }
 }

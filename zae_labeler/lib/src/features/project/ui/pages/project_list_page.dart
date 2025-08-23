@@ -8,18 +8,17 @@ import 'package:zae_labeler/l10n/app_localizations.dart';
 import 'package:zae_labeler/common/i18n.dart';
 import 'package:zae_labeler/common/common_widgets.dart';
 import 'package:zae_labeler/src/features/locale/view_models/locale_view_model.dart';
+import 'package:zae_labeler/src/features/project/view_models/project_view_model.dart';
 import '../../../../core/services/user_preference_service.dart';
-import '../../../../core/use_cases/app_use_cases.dart';
 import '../../view_models/project_list_view_model.dart';
 // import '../../../../view_models/locale_view_model.dart';
-import '../../view_models/configuration_view_model.dart';
 import '../../../../core/models/project/project_model.dart';
 import 'configuration_page.dart';
 import '../../../../views/dialogs/onboarding_dialog.dart';
 import '../widgets/project_tile.dart';
 
 class ProjectListPage extends StatefulWidget {
-  const ProjectListPage({Key? key}) : super(key: key);
+  const ProjectListPage({super.key});
 
   @override
   State<ProjectListPage> createState() => _ProjectListPageState();
@@ -48,11 +47,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
 
   Future<void> _importProject(BuildContext context) async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['json'],
-      );
-
+      final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
       if (result != null) {
         final file = result.files.single;
         final content = file.bytes != null ? utf8.decode(file.bytes!) : await io.File(file.path!).readAsString();
@@ -60,23 +55,18 @@ class _ProjectListPageState extends State<ProjectListPage> {
         final project = Project.fromJson(jsonData);
 
         if (!mounted) return;
-        final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
+        final projectListVM = context.read<ProjectListViewModel>();
         await projectListVM.upsertProject(project);
 
-        if (mounted) {
-          GlobalAlertManager.show(context, '${context.l10n.message_import_project_success}: ${project.name}', type: AlertType.success);
-        }
+        if (mounted) GlobalAlertManager.show(context, '${context.l10n.message_import_project_success}: ${project.name}', type: AlertType.success);
       }
     } catch (e) {
-      if (mounted) {
-        GlobalAlertManager.show(context, '${context.l10n.message_import_project_failed}: $e', type: AlertType.error);
-      }
+      if (mounted) GlobalAlertManager.show(context, '${context.l10n.message_import_project_failed}: $e', type: AlertType.error);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final appUseCases = context.read<AppUseCases>();
     final loc = AppLocalizations.of(context)!;
 
     return Consumer2<ProjectListViewModel, LocaleViewModel>(
@@ -104,12 +94,13 @@ class _ProjectListPageState extends State<ProjectListPage> {
               IconButton(
                 icon: const Icon(Icons.add),
                 tooltip: loc.appbar_project_create,
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) =>
-                          ChangeNotifierProvider(create: (_) => ConfigurationViewModel(appUseCases: appUseCases), child: const ConfigureProjectPage())),
-                ),
+                onPressed: () {
+                  final vm = projectListVM.createNewProjectVM();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => ChangeNotifierProvider<ProjectViewModel>.value(value: vm, child: const ConfigureProjectPage())),
+                  );
+                },
               ),
               IconButton(icon: const Icon(Icons.file_upload), tooltip: context.l10n.appbar_project_import, onPressed: () => _importProject(context)),
             ],

@@ -11,6 +11,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:zae_labeler/src/platform_helpers/pickers/data_info_picker.dart';
+import 'package:zae_labeler/src/platform_helpers/share/interface_share_helper.dart';
 import 'package:zae_labeler/src/platform_helpers/storage/interface_storage_helper.dart';
 
 import 'bootstrap.dart';
@@ -56,6 +58,7 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
           return const MaterialApp(home: Scaffold(body: Center(child: CircularProgressIndicator())));
         }
         final deps = snap.data!;
+        final DataInfoPicker picker = createDataInfoPicker();
 
         return MultiProvider(
           providers: [
@@ -63,9 +66,12 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
             Provider<StorageHelperInterface>.value(value: deps.storageHelper),
             Provider<AppUseCases>.value(value: deps.appUseCases),
             Provider<UserPreferenceService>.value(value: deps.userPrefs),
+            Provider<ShareHelperInterface>.value(value: deps.shareHelper),
+            Provider<DataInfoPicker>.value(value: picker),
 
             ChangeNotifierProvider<LocaleViewModel>.value(value: deps.localeViewModel),
-            ChangeNotifierProvider<ProjectListViewModel>(create: (_) => ProjectListViewModel(appUseCases: deps.appUseCases, shareHelper: deps.shareHelper)),
+            ChangeNotifierProvider<ProjectListViewModel>(
+                create: (_) => ProjectListViewModel(appUseCases: deps.appUseCases, shareHelper: deps.shareHelper, picker: picker)),
             ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel.withDefaultUseCases(deps.firebaseAuth)),
             ChangeNotifierProvider(create: (_) => ProgressNotifier()),
           ],
@@ -76,7 +82,7 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
                 // ✅ 테마는 필요 시 M3로 확장 가능
                 theme: ThemeData(primarySwatch: Colors.blue),
 
-                // ✅ 로케일
+                // 🌐 로케일
                 locale: localeVM.currentLocale,
                 supportedLocales: const [Locale('en'), Locale('ko')],
                 localizationsDelegates: const [
@@ -86,9 +92,8 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
                   GlobalCupertinoLocalizations.delegate,
                 ],
 
-                // ✅ 라우팅 (가드/테이블은 AppRouter 위임)
+                // 🧭 라우팅
                 onGenerateRoute: (settings) => AppRouter.onGenerateRoute(context, settings),
-                // unknown route는 라우터에서 처리하지만, 혹시 null 반환 시 대비
                 onUnknownRoute: (settings) => AppRouter.onGenerateRoute(context, settings)!,
               );
             },
