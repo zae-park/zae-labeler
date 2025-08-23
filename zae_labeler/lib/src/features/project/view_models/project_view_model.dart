@@ -45,6 +45,7 @@ class ProjectViewModel extends ChangeNotifier {
   final AppUseCases appUseCases;
 
   final void Function(Project updated)? onChanged;
+  final bool isEditing;
   late final LabelingMode _initialMode;
 
   // ────────────────────────────────────────────
@@ -56,8 +57,9 @@ class ProjectViewModel extends ChangeNotifier {
   int incompleteCount = 0;
   bool progressLoaded = false;
 
-  ProjectViewModel({required this.appUseCases, this.onChanged, this.shareHelper, Project? initial})
-      : project = initial ?? Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: const []) {
+  ProjectViewModel({required this.appUseCases, this.shareHelper, this.onChanged, Project? initial, bool? isEditing})
+      : isEditing = isEditing ?? (initial != null), // ✅ initial 주입 여부로 기본 추론
+        project = initial ?? Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: const []) {
     _initialMode = project.mode;
   }
 
@@ -170,6 +172,17 @@ class ProjectViewModel extends ChangeNotifier {
 
   void updateFrom(Project updated) {
     project = updated;
+    notifyListeners();
+  }
+
+  /// ✅ reset 동작: 편집이면 복제(변경 취소), 신규면 새 스냅샷로 초기화
+  void reset() {
+    if (isEditing) {
+      project = project.copyWith(); // 원본 유지 + 임시 변경만 초기화 효과(필요시 별도 원본 보관)
+    } else {
+      project = Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: const []);
+    }
+    _initialMode = project.mode;
     notifyListeners();
   }
 

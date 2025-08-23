@@ -49,10 +49,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
 
   Future<void> _importProject(BuildContext context) async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['json'],
-      );
+      FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
 
       if (result != null) {
         final file = result.files.single;
@@ -64,14 +61,10 @@ class _ProjectListPageState extends State<ProjectListPage> {
         final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
         await projectListVM.upsertProject(project);
 
-        if (mounted) {
-          GlobalAlertManager.show(context, '${context.l10n.message_import_project_success}: ${project.name}', type: AlertType.success);
-        }
+        if (mounted) GlobalAlertManager.show(context, '${context.l10n.message_import_project_success}: ${project.name}', type: AlertType.success);
       }
     } catch (e) {
-      if (mounted) {
-        GlobalAlertManager.show(context, '${context.l10n.message_import_project_failed}: $e', type: AlertType.error);
-      }
+      if (mounted) GlobalAlertManager.show(context, '${context.l10n.message_import_project_failed}: $e', type: AlertType.error);
     }
   }
 
