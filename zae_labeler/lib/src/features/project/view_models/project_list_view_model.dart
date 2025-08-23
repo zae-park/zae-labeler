@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'package:zae_labeler/src/core/use_cases/app_use_cases.dart';
 import 'package:zae_labeler/src/features/label/use_cases/label_use_cases.dart' show LabelingSummary;
+import 'package:zae_labeler/src/platform_helpers/pickers/data_info_picker_interface.dart';
 import 'package:zae_labeler/src/platform_helpers/share/interface_share_helper.dart';
 
 import '../../../core/models/project/project_model.dart';
@@ -14,6 +15,7 @@ import 'project_view_model.dart';
 class ProjectListViewModel extends ChangeNotifier {
   final AppUseCases appUseCases;
   final ShareHelperInterface shareHelper;
+  final DataInfoPicker picker;
 
   final Map<String, ProjectViewModel> _projectVMs = {};
   final Map<String, LabelingSummary?> _summaries = {};
@@ -25,8 +27,7 @@ class ProjectListViewModel extends ChangeNotifier {
   List<ProjectViewModel> get projectVMList => _projectVMs.values.toList(growable: false);
   Map<String, LabelingSummary?> get summaries => _summaries;
 
-  ProjectListViewModel({required this.appUseCases, required this.shareHelper}) {
-    // 자동 로딩이 싫다면, 생성자에서 호출하지 말고 외부에서 loadProjects() 호출하세요.
+  ProjectListViewModel({required this.appUseCases, required this.shareHelper, required this.picker}) {
     loadProjects();
   }
 
@@ -46,7 +47,14 @@ class ProjectListViewModel extends ChangeNotifier {
         loadedProjects.map(
           (p) => MapEntry(
             p.id,
-            ProjectViewModel(initial: p, appUseCases: appUseCases, shareHelper: shareHelper, onChanged: (updated) => upsertProject(updated)),
+            ProjectViewModel(
+              initial: p,
+              isEditing: true, // ✅ 기존 프로젝트이므로 편집 모드
+              appUseCases: appUseCases,
+              picker: picker, // ✅ 필수 주입
+              shareHelper: shareHelper,
+              onChanged: (updated) => upsertProject(updated),
+            ),
           ),
         ),
       );
@@ -61,8 +69,14 @@ class ProjectListViewModel extends ChangeNotifier {
     if (_projectVMs.containsKey(project.id)) {
       _projectVMs[project.id]!.updateFrom(project);
     } else {
-      _projectVMs[project.id] =
-          ProjectViewModel(initial: project, appUseCases: appUseCases, shareHelper: shareHelper, onChanged: (updated) => upsertProject(updated));
+      _projectVMs[project.id] = ProjectViewModel(
+        initial: project,
+        isEditing: true, // ✅ 리스트에 들어온 시점부터는 편집
+        appUseCases: appUseCases,
+        picker: picker, // ✅ 필수 주입
+        shareHelper: shareHelper,
+        onChanged: (updated) => upsertProject(updated),
+      );
     }
 
     // 리스트 스냅샷을 저장 (필요 시 성능 고려해 배치 타이머/디바운스 적용)
@@ -105,6 +119,16 @@ class ProjectListViewModel extends ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  ProjectViewModel createNewProjectVM() {
+    return ProjectViewModel(
+      appUseCases: appUseCases,
+      picker: picker,
+      shareHelper: shareHelper,
+      isEditing: false, // ✅ 신규
+      onChanged: (updated) => upsertProject(updated),
+    );
   }
 
   /// 요약 캐시 초기화
