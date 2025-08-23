@@ -183,10 +183,7 @@ class EditProjectUseCase {
   }
 
   Future<Project> addDataInfo(Project p, DataInfo info) async {
-    final list = [...p.dataInfos, info];
-    ProjectValidator.checkDataInfos(list);
-    final np = _touch(p.copyWith(dataInfos: list));
-    return _save(np);
+    return addDataInfos(p, [info]);
   }
 
   /// **데이터 한 건 삭제**.
