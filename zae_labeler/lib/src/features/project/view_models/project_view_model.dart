@@ -10,6 +10,7 @@ import '../../../core/models/data/data_info.dart';
 import '../../../core/models/label/label_model.dart' show LabelingMode; // 임시: 모드 여기 위치
 import '../../../core/models/project/project_model.dart';
 
+import '../../../platform_helpers/pickers/data_info_picker_interface.dart';
 import '../../../platform_helpers/share/interface_share_helper.dart';
 import '../../../platform_helpers/storage/interface_storage_helper.dart';
 
@@ -41,6 +42,7 @@ import '../../../platform_helpers/storage/interface_storage_helper.dart';
 /// {@endtemplate}
 class ProjectViewModel extends ChangeNotifier {
   Project project;
+  final DataInfoPicker picker;
   final ShareHelperInterface? shareHelper;
   final AppUseCases appUseCases;
 
@@ -57,10 +59,10 @@ class ProjectViewModel extends ChangeNotifier {
   int incompleteCount = 0;
   bool progressLoaded = false;
 
-  ProjectViewModel({required this.appUseCases, this.shareHelper, this.onChanged, Project? initial, bool? isEditing})
-      : isEditing = isEditing ?? (initial != null), // ✅ initial 주입 여부로 기본 추론
+  ProjectViewModel({required this.appUseCases, required this.picker, this.shareHelper, this.onChanged, Project? initial, bool? isEditing})
+      : isEditing = isEditing ?? (initial != null),
         project = initial ?? Project(id: const Uuid().v4(), name: '', mode: LabelingMode.singleClassification, classes: const []) {
-    _initialMode = project.mode;
+    _initialMode = project.mode; // ✅ 내부에서 설정
   }
 
   // ────────────────────────────────────────────
@@ -80,13 +82,11 @@ class ProjectViewModel extends ChangeNotifier {
   // ==============================
   // ✏️ 프로젝트 편집 (EditProjectUseCase 위임)
   // ==============================
-
-  /// 프로젝트 이름 변경
   Future<void> setName(String name) async {
     final updated = await appUseCases.project.editor.rename(project, name);
     project = updated;
-    notifyListeners();
     onChanged?.call(project);
+    notifyListeners();
   }
 
   Future<void> setLabelingMode(LabelingMode mode) async {
@@ -120,6 +120,19 @@ class ProjectViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> pickAndAddDataInfos() async {
+    try {
+      final infos = await picker.pick();
+      if (infos.isEmpty) return;
+      final updated = await appUseCases.project.editor.addDataInfos(project, infos);
+      project = updated;
+      onChanged?.call(project);
+      notifyListeners();
+    } catch (e) {
+      // 필요 시 로깅/알럿
+    }
+  }
+
   Future<void> addDataInfos(List<DataInfo> infos) async {
     if (infos.isEmpty) return;
     final updated = await appUseCases.project.editor.addDataInfos(project, infos);
@@ -140,7 +153,6 @@ class ProjectViewModel extends ChangeNotifier {
     if (index < 0 || index >= project.dataInfos.length) return;
     final dataId = project.dataInfos[index].id;
     final updated = await appUseCases.project.editor.removeDataInfoById(project, dataId);
-    // final updated = await appUseCases.project.editor.removeDataInfoByIndex(project, index);
     project = updated;
     onChanged?.call(project);
     notifyListeners();
