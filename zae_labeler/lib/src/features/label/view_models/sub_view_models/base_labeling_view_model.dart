@@ -155,4 +155,25 @@ abstract class LabelingViewModel extends ChangeNotifier {
   int get currentIndex => dataManager.currentIndex;
   bool get hasNext => dataManager.hasNext;
   bool get hasPrevious => dataManager.hasPrevious;
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Render source (Blob URL or Bytes) - DataManager 위임
+  // ──────────────────────────────────────────────────────────────────────────
+  /// 현재 인덱스 아이템을 뷰어가 바로 쓸 수 있게 준비(Blob URL 생성 or Bytes 디코드)
+  Future<void> ensureRenderableReadyForCurrent() {
+    return dataManager.ensureRenderableReadyForCurrent();
+  }
+
+  /// 현재 아이템의 렌더 소스 반환
+  /// - String: Blob/HTTP URL
+  /// - Uint8List: 메모리 바이트
+  /// - null: 아직 준비되지 않음(초기 로딩)
+  Object? currentRenderable() {
+    return dataManager.currentRenderable();
+  }
+
+  /// (옵션) ±1 프리로드를 외부에서 트리거하고 싶을 때 사용
+  Future<void> preloadAround() {
+    return dataManager.preloadAround();
+  }
 }
