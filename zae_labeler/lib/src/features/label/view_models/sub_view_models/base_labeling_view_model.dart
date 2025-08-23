@@ -1,4 +1,6 @@
 // 📁 lib/src/features/label/view_models/sub_view_models/base_labeling_view_model.dart
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import 'package:zae_labeler/src/core/models/project/project_model.dart';
@@ -49,6 +51,12 @@ abstract class LabelingViewModel extends ChangeNotifier {
     if (dataManager.totalCount > 0) {
       await labelManager.loadLabelFor(dataManager.currentData);
     }
+
+    // ✅ 현재 아이템 렌더 소스 준비(Blob URL 생성 또는 bytes 디코드)
+    await dataManager.ensureRenderableReadyForCurrent();
+    // ✅ 다음/이전 한 칸 프리로드(있다면)
+    unawaited(dataManager.preloadAround());
+
     await recomputeSummary();
     await postInitialize();
     notifyListeners();
@@ -62,13 +70,19 @@ abstract class LabelingViewModel extends ChangeNotifier {
     if (dataManager.totalCount > 0) {
       await labelManager.loadLabelFor(dataManager.currentData);
     }
-    // 필요시 전체 요약 재계산(보수적)
+
+    // ✅ 현재 아이템 렌더 소스 준비 + 프리로드
+    await dataManager.ensureRenderableReadyForCurrent();
+    unawaited(dataManager.preloadAround());
+
     await recomputeSummary();
     notifyListeners();
   }
 
   @override
   void dispose() {
+    // ✅ Blob URL/임시 캐시 해제까지 함께 수행
+    dataManager.dispose();
     labelManager.disposeAll();
     super.dispose();
   }
