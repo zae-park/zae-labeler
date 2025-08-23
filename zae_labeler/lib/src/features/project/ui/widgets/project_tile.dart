@@ -4,10 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:zae_labeler/common/i18n.dart';
 import 'package:zae_labeler/common/common_widgets.dart';
 import 'package:zae_labeler/src/features/project/ui/widgets/progress_indicator.dart';
-import '../../../../core/use_cases/app_use_cases.dart';
 import '../../../../core/models/project/project_model.dart';
 import '../../view_models/project_view_model.dart';
-import '../../view_models/configuration_view_model.dart';
 import '../../../label/ui/pages/labeling_page.dart';
 import '../pages/configuration_page.dart';
 import '../../view_models/project_list_view_model.dart';
@@ -15,7 +13,7 @@ import '../../view_models/project_list_view_model.dart';
 class ProjectTile extends StatelessWidget {
   final ProjectViewModel vm;
 
-  const ProjectTile({Key? key, required this.vm}) : super(key: key);
+  const ProjectTile({super.key, required this.vm});
 
   void _openLabelingPage(BuildContext context) async {
     final result = await Navigator.push<bool>(
@@ -23,7 +21,7 @@ class ProjectTile extends StatelessWidget {
       MaterialPageRoute(settings: const RouteSettings(name: '/labeling'), builder: (_) => LabelingPage(project: vm.project)),
     );
 
-    // ✅ 라벨링 후 summary 갱신 (ProjectListVM 리팩토링 시그니처 반영)
+    // ✅ 라벨링 후 summary 갱신
     if (result == true && context.mounted) {
       final listVM = context.read<ProjectListViewModel>();
       await listVM.fetchSummary(vm.project.id, force: true);
@@ -31,18 +29,16 @@ class ProjectTile extends StatelessWidget {
   }
 
   void _openEditPage(BuildContext context) async {
-    final appUseCases = context.read<AppUseCases>();
+    // ✅ 기존 vm 인스턴스를 그대로 전달 (picker/AppUC/shareHelper 포함)
     final updated = await Navigator.push<Project?>(
       context,
       MaterialPageRoute(
         settings: const RouteSettings(name: '/configuration'),
-        builder: (_) => ChangeNotifierProvider(
-          create: (_) => ConfigurationViewModel.fromProject(vm.project, appUseCases: appUseCases),
-          child: const ConfigureProjectPage(),
-        ),
+        builder: (_) => ChangeNotifierProvider<ProjectViewModel>.value(value: vm, child: const ConfigureProjectPage()),
       ),
     );
 
+    // 기존 흐름 유지: 반환 스냅샷 반영(편집 페이지에서 pop(updated) 하는 경우)
     if (updated != null) {
       vm.updateFrom(updated);
       vm.onChanged?.call(updated);
@@ -90,7 +86,6 @@ class ProjectTile extends StatelessWidget {
       });
     }
 
-    // 모드 텍스트(전역 익스텐션이 있으면 vm.project.mode.displayName 사용)
     final modeText = vm.project.mode.name;
 
     return Card(

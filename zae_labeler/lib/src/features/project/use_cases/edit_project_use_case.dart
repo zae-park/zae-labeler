@@ -182,15 +182,27 @@ class EditProjectUseCase {
     return _save(np);
   }
 
+  Future<Project> addDataInfo(Project p, DataInfo info) async {
+    return addDataInfos(p, [info]);
+  }
+
   /// **데이터 한 건 삭제**.
   ///
   /// - [index] 범위를 체크하고 해당 항목을 제거한다.
   /// - 결과 목록은 [ProjectValidator.checkDataInfos]로 검증한다.
   /// - 성공 시 저장 후 변경 스냅샷을 반환한다.
-  Future<Project> removeDataInfo(Project p, int index) async {
+  Future<Project> removeDataInfoByIndex(Project p, int index) async {
     if (index < 0 || index >= p.dataInfos.length) {
       throw RangeError.index(index, p.dataInfos, 'index');
     }
+    final list = [...p.dataInfos]..removeAt(index);
+    ProjectValidator.checkDataInfos(list);
+    final np = _touch(p.copyWith(dataInfos: list));
+    return _save(np);
+  }
+
+  Future<Project> removeDataInfoById(Project p, String id) async {
+    final index = p.dataInfos.indexWhere((e) => e.id == id);
     final list = [...p.dataInfos]..removeAt(index);
     ProjectValidator.checkDataInfos(list);
     final np = _touch(p.copyWith(dataInfos: list));
