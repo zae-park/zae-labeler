@@ -1,4 +1,6 @@
 // lib/src/utils/interface_storage_helper.dart
+import 'dart:typed_data';
+
 import '../../core/models/data/data_info.dart';
 import '../../core/models/label/label_model.dart';
 import '../../core/models/project/project_model.dart';
@@ -129,6 +131,22 @@ abstract class StorageHelperInterface {
   /// - Cloud: Storage/DB에서 최신 `labels.json`을 읽어 파싱(프로젝트 컨텍스트가 필요할 수 있음).
   /// - 반환: 복원된 라벨 리스트(없으면 빈 리스트).
   Future<List<LabelModel>> importAllLabels();
+
+  // ==============================
+  // 📌 Data Read
+  // ==============================
+
+  /// DataInfo를 화면에서 바로 쓸 수 있는 바이트로 로드.
+  /// - web: base64Content -> decode
+  /// - native/desktop: filePath -> File(...).readAsBytes()
+  Future<Uint8List> readDataBytes(DataInfo info);
+
+  /// (선택) 대용량 이미지/비디오용. 브라우저 Blob URL을 반환.
+  /// - web에서만 유효. 기타 플랫폼은 file:// 또는 null 반환.
+  Future<String?> ensureLocalObjectUrl(DataInfo info);
+
+  /// ensureLocalObjectUrl로 만든 URL 해제(메모리 릭 방지).
+  Future<void> revokeLocalObjectUrl(String url);
 
   // ==============================
   // 📌 Cache Management
