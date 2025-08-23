@@ -138,7 +138,7 @@ class ConfigureProjectPage extends StatelessWidget {
                                 ElevatedButton.icon(
                                   icon: const Icon(Icons.folder_open),
                                   label: const Text(kIsWeb ? 'Select Files' : 'Select Data Directory'),
-                                  onPressed: () => projectVM.addDataInfo(),
+                                  onPressed: () => projectVM.addDataInfos,
                                 ),
                               ],
                             ),

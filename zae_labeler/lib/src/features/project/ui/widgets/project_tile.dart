@@ -36,7 +36,7 @@ class ProjectTile extends StatelessWidget {
       MaterialPageRoute(
         settings: const RouteSettings(name: '/configuration'),
         builder: (_) => ChangeNotifierProvider(
-          create: (_) => ProjectViewModel(appUseCases: appUseCases, shareHelper: context.read(), project: vm.project),
+          create: (_) => ProjectViewModel(appUseCases: appUseCases, shareHelper: context.read(), initial: vm.project),
           child: const ConfigureProjectPage(),
         ),
       ),

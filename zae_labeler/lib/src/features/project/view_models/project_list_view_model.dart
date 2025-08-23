@@ -46,7 +46,7 @@ class ProjectListViewModel extends ChangeNotifier {
         loadedProjects.map(
           (p) => MapEntry(
             p.id,
-            ProjectViewModel(project: p, appUseCases: appUseCases, shareHelper: shareHelper, onChanged: (updated) => upsertProject(updated)),
+            ProjectViewModel(initial: p, appUseCases: appUseCases, shareHelper: shareHelper, onChanged: (updated) => upsertProject(updated)),
           ),
         ),
       );
@@ -62,7 +62,7 @@ class ProjectListViewModel extends ChangeNotifier {
       _projectVMs[project.id]!.updateFrom(project);
     } else {
       _projectVMs[project.id] =
-          ProjectViewModel(project: project, appUseCases: appUseCases, shareHelper: shareHelper, onChanged: (updated) => upsertProject(updated));
+          ProjectViewModel(initial: project, appUseCases: appUseCases, shareHelper: shareHelper, onChanged: (updated) => upsertProject(updated));
     }
 
     // 리스트 스냅샷을 저장 (필요 시 성능 고려해 배치 타이머/디바운스 적용)
