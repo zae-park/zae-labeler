@@ -1,6 +1,7 @@
 // lib/src/features/label/view_models/managers/labeling_data_manager.dart
 import 'dart:collection';
 import 'dart:typed_data';
+import 'dart:convert' show base64Decode;
 
 import 'package:flutter/foundation.dart' show debugPrint;
 
@@ -85,6 +86,13 @@ class LabelingDataManager {
   // ✅ 현재 아이템을 뷰어가 바로 쓸 수 있게 준비
   Future<void> ensureRenderableReadyForCurrent() async {
     final info = currentData.dataInfo;
+
+    // 0) base64가 이미 있으면 바로 bytes 준비 (웹/클라우드에 독립적)
+    if ((info.base64Content ?? '').isNotEmpty) {
+      _bytesCache[info.id] = base64Decode(info.base64Content!);
+      return;
+    }
+
     // 1) URL 선호(웹 성능 ↑)
     final url = await storageHelper.ensureLocalObjectUrl(info);
     if (url != null) {
