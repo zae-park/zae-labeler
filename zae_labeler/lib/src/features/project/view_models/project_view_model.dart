@@ -48,7 +48,7 @@ class ProjectViewModel extends ChangeNotifier {
 
   final void Function(Project updated)? onChanged;
   final bool isEditing;
-  late final LabelingMode _initialMode;
+  late LabelingMode _initialMode;
 
   // ────────────────────────────────────────────
   // 📦 진행률 정보 (LabelingViewModel에서 계산)

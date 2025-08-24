@@ -1,5 +1,6 @@
 // lib/src/features/data/services/data_loader_web.dart
 import 'package:flutter/material.dart';
+import 'dart:convert' show base64Decode, utf8, jsonDecode;
 import 'package:path/path.dart' as p;
 // 웹에선 File I/O가 없으므로 네트워크/메모리 소스만 다룬다고 가정
 
@@ -15,37 +16,84 @@ class WebDataLoader implements DataLoader {
 
   WebDataLoader({CloudStorageHelper? cloud}) : _cloud = cloud ?? CloudStorageHelper();
 
+  FileType _inferType(DataInfo info) {
+    final mime = (info.mimeType ?? '').toLowerCase();
+    final ext = p.extension(info.fileName).toLowerCase();
+    if (mime.startsWith('image/') || ['.png', '.jpg', '.jpeg', '.webp'].contains(ext)) {
+      return FileType.image;
+    }
+    if (mime == 'text/csv' || ext == '.csv') return FileType.series;
+    if (mime == 'application/json' || ext == '.json') return FileType.object;
+    return FileType.unsupported;
+  }
+
   @override
   Future<UnifiedData> fromDataInfo(DataInfo info) async {
-    final ext = p.extension(info.fileName).toLowerCase();
-    final path = info.filePath; // Firebase Storage 경로라고 가정 (예: users/{uid}/... 또는 커스텀)
+    final type = _inferType(info);
+    final path = info.filePath; // Firebase Storage 경로 또는 http(s) URL
 
-    // 경로가 없으면 기존처럼 타입만 식별하고 리턴(Null 가드: 뷰어에서 처리)
-    if (path == null || path.isEmpty) {
-      if (ext == '.csv') return UnifiedData(dataInfo: info, fileType: FileType.series);
-      if (ext == '.json') return UnifiedData(dataInfo: info, fileType: FileType.object);
-      return UnifiedData(dataInfo: info, fileType: FileType.image);
+    // 0) ✅ base64 최우선 (웹에서 로컬 파일을 바로 표시)
+    final b64 = info.base64Content;
+    if (b64 != null && b64.isNotEmpty) {
+      switch (type) {
+        case FileType.image:
+          // 이미지: base64 문자열 그대로 저장
+          return UnifiedData(dataInfo: info, fileType: FileType.image, imageBase64: b64);
+        case FileType.series:
+          final csvText = utf8.decode(base64Decode(b64));
+          return UnifiedData(dataInfo: info, fileType: FileType.series, seriesData: _parseCsvToSeries(csvText));
+        case FileType.object:
+          {
+            // JSON: base64 → utf8 텍스트 → jsonDecode
+            final jsonText = utf8.decode(base64Decode(b64));
+            Map<String, dynamic>? map;
+            try {
+              final parsed = jsonDecode(jsonText);
+              if (parsed is Map) {
+                // Map<dynamic,dynamic> → Map<String,dynamic> 안전 캐스팅
+                map = (parsed).cast<String, dynamic>();
+              } else if (parsed is List) {
+                // 루트 배열/혼합 타입을 안전하게 감싸서 Map<String,dynamic>로 전달
+                map = {'_root': parsed};
+              } else {
+                // 스칼라(String/num/bool/null)도 감싸서 전달
+                map = {'_value': parsed};
+              }
+            } catch (_) {
+              map = null;
+            }
+            return UnifiedData(dataInfo: info, fileType: FileType.object, objectData: map);
+          }
+
+        case FileType.unsupported:
+          return UnifiedData(dataInfo: info, fileType: FileType.unsupported);
+      }
     }
 
+    // 1) 경로가 없으면 타입만 세팅(뷰어에서 '내용 없음' 처리)
+    if (path == null || path.isEmpty) {
+      return UnifiedData(dataInfo: info, fileType: type);
+    }
+
+    // 2) 클라우드/네트워크 경로에서 로드
     try {
-      if (ext == '.json') {
+      if (type == FileType.object) {
         final map = await _cloud.readJsonAt(path);
         return UnifiedData(dataInfo: info, fileType: FileType.object, objectData: map);
-      } else if (ext == '.csv') {
+      } else if (type == FileType.series) {
         final text = await _cloud.readTextAt(path);
         final series = _parseCsvToSeries(text);
         return UnifiedData(dataInfo: info, fileType: FileType.series, seriesData: series);
+      } else if (type == FileType.image) {
+        final imgB64 = await _cloud.readImageBase64At(path);
+        return UnifiedData(dataInfo: info, fileType: FileType.image, imageBase64: imgB64);
       } else {
-        // 이미지 등 바이너리
-        final b64 = await _cloud.readImageBase64At(path);
-        return UnifiedData(dataInfo: info, fileType: FileType.image, imageBase64: b64);
+        return UnifiedData(dataInfo: info, fileType: FileType.unsupported);
       }
     } catch (e) {
       debugPrint("[WebDataLoader.fromDataInfo] $path 로딩 실패: $e");
       // 실패 시 타입만 세팅된 최소 객체 반환(뷰어에서 '비어있음' 처리)
-      if (ext == '.json') return UnifiedData(dataInfo: info, fileType: FileType.object);
-      if (ext == '.csv') return UnifiedData(dataInfo: info, fileType: FileType.series);
-      return UnifiedData(dataInfo: info, fileType: FileType.image);
+      return UnifiedData(dataInfo: info, fileType: type);
     }
   }
 
