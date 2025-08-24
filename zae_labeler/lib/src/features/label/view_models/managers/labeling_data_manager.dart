@@ -15,6 +15,8 @@ import 'package:zae_labeler/src/core/models/label/label_model.dart';
 import 'package:zae_labeler/src/platform_helpers/storage/interface_storage_helper.dart';
 import 'package:zae_labeler/src/utils/label_validator.dart';
 
+import '../../../../core/models/data/file_type.dart';
+
 /// 📦 LabelingDataManager
 /// - 프로젝트의 데이터(파일)를 로드하고, 현재 포커스/이동/상태(진행률)만 관리.
 /// - **데이터(UnifiedData)**와 **상태(LabelStatus)**를 분리해 관리한다.
@@ -85,21 +87,39 @@ class LabelingDataManager {
 
   // ✅ 현재 아이템을 뷰어가 바로 쓸 수 있게 준비
   Future<void> ensureRenderableReadyForCurrent() async {
-    final info = currentData.dataInfo;
+    final ud = currentData;
+    final info = ud.dataInfo;
 
-    // 0) base64가 이미 있으면 바로 bytes 준비 (웹/클라우드에 독립적)
+    // 🛡️ 이미지가 아니라면 렌더 준비 불필요 (Object/Series는 UnifiedData로 충분)
+    if (ud.fileType != FileType.image) return;
+
+    // 0) UnifiedData에 이미 base64가 들어왔으면 최우선 사용
+    if ((ud.imageBase64 ?? '').isNotEmpty) {
+      _bytesCache[info.id] = base64Decode(ud.imageBase64!);
+      return;
+    }
+
+    // 1) DataInfo의 base64Content도 시도
     if ((info.base64Content ?? '').isNotEmpty) {
       _bytesCache[info.id] = base64Decode(info.base64Content!);
       return;
     }
 
-    // 1) URL 선호(웹 성능 ↑)
+    // 2) URL 선호(Blob/HTTP): object URL 또는 http(s) 경로가 오면 그대로 사용
     final url = await storageHelper.ensureLocalObjectUrl(info);
-    if (url != null) {
+    if (url != null && url.isNotEmpty) {
       _urlCache[info.id] = url;
       return;
     }
-    // 2) URL 생성 불가 → bytes 로드
+
+    // 3) 마지막 수단: http(s) 경로일 때만 bytes 로드 (Web/Cloud 안전 가드)
+    final p = info.filePath ?? '';
+    final looksHttp = p.startsWith('http://') || p.startsWith('https://');
+    if (!looksHttp) {
+      debugPrint('[LabelingDataManager] skip readDataBytes: no http(s) path for ${info.fileName}');
+      return; // 웹에서 gs:// 또는 빈 경로면 readDataBytes 호출 금지
+    }
+
     final bytes = await storageHelper.readDataBytes(info);
     _bytesCache[info.id] = bytes;
   }
@@ -108,12 +128,33 @@ class LabelingDataManager {
   Future<void> preloadAround() async {
     for (final i in [currentIndex - 1, currentIndex + 1]) {
       if (i < 0 || i >= allData.length) continue;
-      final info = allData[i].dataInfo;
+      final ud = allData[i];
+      if (ud.fileType != FileType.image) continue; // 🛡️ 이미지만 프리로드
+      final info = ud.dataInfo;
+
+      // ud.imageBase64 / info.base64Content가 있으면 즉시 캐시
+      if (!_bytesCache.containsKey(info.id)) {
+        if ((ud.imageBase64 ?? '').isNotEmpty) {
+          _bytesCache[info.id] = base64Decode(ud.imageBase64!);
+          continue;
+        }
+        if ((info.base64Content ?? '').isNotEmpty) {
+          _bytesCache[info.id] = base64Decode(info.base64Content!);
+          continue;
+        }
+      }
+
       if (!_urlCache.containsKey(info.id) && !_bytesCache.containsKey(info.id)) {
         final url = await storageHelper.ensureLocalObjectUrl(info);
-        if (url != null) {
+        if (url != null && url.isNotEmpty) {
           _urlCache[info.id] = url;
         } else {
+          final p = info.filePath ?? '';
+          final looksHttp = p.startsWith('http://') || p.startsWith('https://');
+          if (!looksHttp) {
+            debugPrint('[LabelingDataManager] preload skip readDataBytes: no http(s) for ${info.fileName}');
+            continue;
+          }
           final bytes = await storageHelper.readDataBytes(info);
           _bytesCache[info.id] = bytes;
         }
