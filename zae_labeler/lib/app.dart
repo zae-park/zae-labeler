@@ -12,6 +12,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:zae_labeler/src/platform_helpers/storage/interface_storage_helper.dart';
+import 'package:zae_labeler/src/platform_helpers/storage/switchable_storage_facade.dart';
 
 import 'bootstrap.dart';
 import 'app_router.dart';
@@ -69,7 +71,7 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
             // ---- 전역 의존성 주입 ----
             // 같은 인스턴스를 두 타입으로 노출(편의 + 호환성)
             ChangeNotifierProvider<SwitchableStorageHelper>.value(value: switchable),
-
+            Provider<StorageHelperInterface>(create: (ctx) => SwitchableStorageFacade(ctx.read<SwitchableStorageHelper>())),
             Provider<AppUseCases>.value(value: deps.appUseCases),
             Provider<UserPreferenceService>.value(value: deps.userPrefs),
             Provider<ShareHelperInterface>.value(value: deps.shareHelper),
@@ -77,15 +79,8 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
 
             ChangeNotifierProvider<LocaleViewModel>.value(value: deps.localeViewModel),
             ChangeNotifierProvider<ProjectListViewModel>(
-              create: (_) => ProjectListViewModel(
-                appUseCases: deps.appUseCases,
-                shareHelper: deps.shareHelper,
-                picker: picker,
-              ),
-            ),
-            ChangeNotifierProvider<AuthViewModel>(
-              create: (_) => AuthViewModel.withDefaultUseCases(deps.firebaseAuth),
-            ),
+                create: (_) => ProjectListViewModel(appUseCases: deps.appUseCases, shareHelper: deps.shareHelper, picker: picker)),
+            ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel.withDefaultUseCases(deps.firebaseAuth)),
             ChangeNotifierProvider(create: (_) => ProgressNotifier()),
           ],
           // ✅ Auth ↔ Storage 핫스왑 와이어링 위젯

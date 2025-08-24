@@ -82,4 +82,10 @@ class SwitchableStorageHelper with ChangeNotifier implements StorageHelperInterf
   Future<void> revokeLocalObjectUrl(String url) {
     return _delegate.revokeLocalObjectUrl(url);
   }
+
+  @visibleForTesting
+  Future<void> switchToForTest(StorageHelperInterface next) async {
+    _delegate = next;
+    notifyListeners();
+  }
 }
