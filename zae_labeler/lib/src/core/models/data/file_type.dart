@@ -13,4 +13,14 @@ extension FileTypeX on FileType {
     }
     return FileType.unsupported;
   }
+
+  static FileType fromExtension(String extension) {
+    final lower = extension.toLowerCase();
+    if (lower == '.csv' || lower == 'csv') return FileType.series;
+    if (lower == '.json' || lower == 'json') return FileType.object;
+    if (lower == '.png' || lower == 'png' || lower == '.jpg' || lower == 'jpg' || lower == '.jpeg' || lower == 'jpeg') {
+      return FileType.image;
+    }
+    return FileType.unsupported;
+  }
 }
