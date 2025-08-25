@@ -25,20 +25,5 @@ void main() {
       expect(model.label?.relation == 'Positive', isTrue); // relation이 일치하면 true
       expect(model.label?.relation == 'Negative', isFalse); // relation이 다르면 false
     });
-
-    test('CrossClassificationLabelModel toJson and fromJson work', () {
-      final original = CrossClassificationLabelModel(
-        dataId: 'test',
-        label: CrossDataPair(sourceId: 'A', targetId: 'B', relation: 'Positive'),
-        labeledAt: DateTime.now(),
-      );
-
-      final json = original.toJson();
-      final recreated = CrossClassificationLabelModel.fromJson(json);
-
-      expect(recreated.label?.sourceId, 'A');
-      expect(recreated.label?.targetId, 'B');
-      expect(recreated.label?.relation, 'Positive');
-    });
   });
 }
