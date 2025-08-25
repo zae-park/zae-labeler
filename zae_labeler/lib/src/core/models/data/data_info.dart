@@ -74,8 +74,8 @@ class DataInfo {
   factory DataInfo.fromJson(Map<String, dynamic> json) {
     final id = json['id'];
     final fileName = json['fileName'];
-    if (id is! String || id.isEmpty) throw ArgumentError('DataInfo.fromJson: invalid or missing "id".');
 
+    if (id is! String || id.isEmpty) throw ArgumentError('DataInfo.fromJson: invalid or missing "id".');
     if (fileName is! String || fileName.isEmpty) throw ArgumentError('DataInfo.fromJson: invalid or missing "fileName".');
 
     return DataInfo(
