@@ -134,7 +134,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String labeling_status_summary(
-      Object complete, Object warning, Object incomplete) {
+    Object complete,
+    Object warning,
+    Object incomplete,
+  ) {
     return '완료: $complete  |  주의: $warning  |  미완료: $incomplete';
   }
 

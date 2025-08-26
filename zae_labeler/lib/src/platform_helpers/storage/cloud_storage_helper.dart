@@ -1,4 +1,4 @@
-// lib/src/utils/cloud_storage_helper.dart
+// lib/src/platform_helpers/storage/cloud_storage_helper.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -98,7 +98,17 @@ class CloudStorageHelper implements StorageHelperInterface {
     for (final project in projects) {
       final docRef = _projectsCol.doc(project.id);
       final j = project.toJson(includeLabels: false);
-      j['dataInfos'] = project.dataInfos.map((e) => {'id': e.id, 'fileName': e.fileName}).toList();
+      j['dataInfos'] = project.dataInfos
+          .map(
+            (e) => {
+              'id': e.id,
+              'fileName': e.fileName,
+              if (e.filePath != null) 'filePath': e.filePath, // http(s) or gs:// or storage path
+              if (e.mimeType != null) 'mimeType': e.mimeType, // (선택)
+              // base64Content/objectUrl는 클라우드 저장에 불필요하니 생략
+            },
+          )
+          .toList();
       batch.set(docRef, j, SetOptions(merge: true));
     }
     await batch.commit();
@@ -198,17 +208,13 @@ class CloudStorageHelper implements StorageHelperInterface {
       final batch = firestore.batch();
       for (final m in chunk) {
         final doc = col.doc(m.dataId);
-        batch.set(
-          doc,
-          {
-            'data_id': m.dataId,
-            'data_path': m.dataPath,
-            'labeled_at': m.labeledAt.toIso8601String(),
-            'mode': m.mode.name,
-            'label_data': LabelModelConverter.toJson(m),
-          },
-          SetOptions(merge: true),
-        );
+        batch.set(doc, {
+          'data_id': m.dataId,
+          'data_path': m.dataPath,
+          'labeled_at': m.labeledAt.toIso8601String(),
+          'mode': m.mode.name,
+          'label_data': LabelModelConverter.toJson(m),
+        }, SetOptions(merge: true));
       }
       await batch.commit();
     }
@@ -273,13 +279,15 @@ class CloudStorageHelper implements StorageHelperInterface {
     final models = labelModels.isEmpty ? await loadAllLabelModels(project.id) : labelModels;
 
     final entries = models
-        .map((m) => <String, dynamic>{
-              'data_id': m.dataId,
-              'data_path': m.dataPath,
-              'labeled_at': m.labeledAt.toIso8601String(),
-              'mode': m.mode.name,
-              'label_data': LabelModelConverter.toJson(m),
-            })
+        .map(
+          (m) => <String, dynamic>{
+            'data_id': m.dataId,
+            'data_path': m.dataPath,
+            'labeled_at': m.labeledAt.toIso8601String(),
+            'mode': m.mode.name,
+            'label_data': LabelModelConverter.toJson(m),
+          },
+        )
         .toList();
     final jsonBytes = Uint8List.fromList(utf8.encode(jsonEncode(entries)));
 
@@ -377,22 +385,37 @@ class CloudStorageHelper implements StorageHelperInterface {
   /// - 필요한 경우, 여기에서 인증 헤더/토큰을 추가하거나 SDK 호출로 바꿔야 한다.
   @override
   Future<Uint8List> readDataBytes(DataInfo info) async {
-    final path = info.filePath?.trim();
-    if (path == null || path.isEmpty) {
-      throw ArgumentError('Cloud read requires http(s) filePath or platform SDK integration.');
+    final raw = info.filePath?.trim();
+    if (raw == null || raw.isEmpty) {
+      throw ArgumentError('Cloud read requires filePath.');
     }
-    if (!path.startsWith('http')) {
-      throw UnsupportedError('Cloud helper expects http(s) URL paths. Given: $path');
-    }
-    final resp = await http.get(Uri.parse(path));
+    final url = await _resolveToDownloadUrl(raw); // ↓ 새 헬퍼
+    final resp = await http.get(Uri.parse(url));
     if (resp.statusCode == 200) return resp.bodyBytes;
-    throw StateError('HTTP ${resp.statusCode} while fetching $path');
+    throw StateError('HTTP ${resp.statusCode} while fetching $url');
+  }
+
+  Future<String> _resolveToDownloadUrl(String raw) async {
+    // http(s)면 그대로 사용
+    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+
+    // gs://bucket/path or /users/.../path 같은 경우
+    try {
+      final ref = raw.startsWith('gs://') ? storage.refFromURL(raw) : storage.ref(raw); // Firestore에 상대경로를 저장한 경우
+      return await ref.getDownloadURL();
+    } catch (_) {
+      // 마지막 시도: 사용자 uid 기반 프로젝트 경로 규약이 있다면 여기서 조립
+      // final ref = storage.ref(_labelsJsonPath(projectId)...);
+      rethrow;
+    }
   }
 
   /// Cloud: 웹이 아닌 경우 보통 Blob URL이 필요 없다. 필요 시 그대로 URL 반환.
   @override
   Future<String?> ensureLocalObjectUrl(DataInfo info) async {
-    return info.filePath; // UI가 네트워크 URL을 직접 렌더할 수 있으면 그대로 사용
+    final raw = info.filePath?.trim();
+    if (raw == null || raw.isEmpty) return null;
+    return await _resolveToDownloadUrl(raw);
   }
 
   /// Cloud: 해제할 ObjectURL 없음 (no-op).
@@ -418,7 +441,17 @@ class CloudStorageHelper implements StorageHelperInterface {
   Future<void> saveSingleProject(Project project) async {
     final doc = _projectsCol.doc(project.id);
     final j = project.toJson(includeLabels: false);
-    j['dataInfos'] = project.dataInfos.map((e) => {'id': e.id, 'fileName': e.fileName}).toList();
+    j['dataInfos'] = project.dataInfos
+        .map(
+          (e) => {
+            'id': e.id,
+            'fileName': e.fileName,
+            if (e.filePath != null) 'filePath': e.filePath, // http(s) or gs:// or storage path
+            if (e.mimeType != null) 'mimeType': e.mimeType, // (선택)
+            // base64Content/objectUrl는 클라우드 저장에 불필요하니 생략
+          },
+        )
+        .toList();
     await doc.set(j, SetOptions(merge: true));
   }
 
