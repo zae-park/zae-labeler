@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages (Dev)
 
 on:
   push:
-    branches: nightly
+    branches: dev
 
 jobs:
   deploy_dev:
@@ -12,7 +12,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.32.4'
+          flutter-version: '3.35.1'
 
       - name: Checkout repository
         uses: actions/checkout@v4

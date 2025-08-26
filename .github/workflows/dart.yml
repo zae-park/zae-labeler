@@ -20,7 +20,7 @@ jobs:
       # Use the latest Flutter version to ensure compatibility with Dart >=3.2.3
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.3'
+          flutter-version: '3.35.1'
 
       - name: Flutter version 확인
         run: flutter --version
@@ -45,7 +45,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.3'
+          flutter-version: '3.35.1'
       - name: Enable web
         run: flutter config --enable-web
       - name: Install dependencies
