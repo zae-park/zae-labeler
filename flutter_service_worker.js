@@ -3,7 +3,7 @@ const MANIFEST = 'flutter-app-manifest';
 const TEMP = 'flutter-temp-cache';
 const CACHE_NAME = 'flutter-app-cache';
 
-const RESOURCES = {"flutter_bootstrap.js": "d064098f19b122a53828a584b6bfe9f1",
+const RESOURCES = {"flutter_bootstrap.js": "9ca86a75643aea1b8695c80f334455c1",
 "zaevicon.ico": "d156ff90081386987c8a1ee489892f09",
 "flutter.js": "888483df48293866f9f41d3d9274a779",
 "icons/Icon-maskable-512.png": "301a7604d45b3e739efc881eb04896ea",
@@ -24,7 +24,7 @@ const RESOURCES = {"flutter_bootstrap.js": "d064098f19b122a53828a584b6bfe9f1",
 "canvaskit/skwasm_heavy.js.symbols": "3c01ec03b5de6d62c34e17014d1decd3",
 "canvaskit/canvaskit.wasm": "07b9f5853202304d3b0749d9306573cc",
 "canvaskit/canvaskit.js.symbols": "58832fbed59e00d2190aa295c4d70360",
-"main.dart.js": "2486f9659396ee8fd2de829f2a1773e5",
+"main.dart.js": "5b38e19f4fa5cc4ae25b80928c61e3f3",
 "index.template.html": "0c5831040cdc15585a6819201f1a2b44",
 "index.html": "5bf0c1e6e7ef837de23bfeb999bdbf47",
 "/": "5bf0c1e6e7ef837de23bfeb999bdbf47",
