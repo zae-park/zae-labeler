@@ -19,7 +19,10 @@ class ConfigureProjectPage extends StatelessWidget {
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Add Class'),
-          content: TextField(controller: classController, decoration: const InputDecoration(labelText: 'Class Name')),
+          content: TextField(
+            controller: classController,
+            decoration: const InputDecoration(labelText: 'Class Name'),
+          ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
             TextButton(
@@ -107,14 +110,20 @@ class ConfigureProjectPage extends StatelessWidget {
                             ),
                             Container(
                               height: 150,
-                              decoration: BoxDecoration(border: Border.all(color: Colors.grey), borderRadius: BorderRadius.circular(8)),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                               child: Scrollbar(
                                 child: ListView.builder(
                                   itemCount: projectVM.project.classes.length,
                                   itemBuilder: (context, index) {
                                     return ListTile(
                                       title: Text(projectVM.project.classes[index]),
-                                      trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => projectVM.removeClass(index)),
+                                      trailing: IconButton(
+                                        icon: const Icon(Icons.delete, color: Colors.red),
+                                        onPressed: () => projectVM.removeClass(index),
+                                      ),
                                     );
                                   },
                                 ),
@@ -138,7 +147,7 @@ class ConfigureProjectPage extends StatelessWidget {
                                 ElevatedButton.icon(
                                   icon: const Icon(Icons.folder_open),
                                   label: const Text(kIsWeb ? 'Select Files' : 'Select Data Directory'),
-                                  onPressed: () => projectVM.pickAndAddDataInfos(),
+                                  onPressed: () async => await projectVM.pickAndAddDataInfos(),
                                 ),
                               ],
                             ),
@@ -147,15 +156,20 @@ class ConfigureProjectPage extends StatelessWidget {
                               const SizedBox(height: 8),
                               Container(
                                 height: 150,
-                                decoration: BoxDecoration(border: Border.all(color: Colors.grey), borderRadius: BorderRadius.circular(8)),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                                 child: Scrollbar(
                                   child: ListView.builder(
                                     itemCount: projectVM.project.dataInfos.length,
                                     itemBuilder: (context, index) {
                                       return ListTile(
                                         title: Text(projectVM.project.dataInfos[index].fileName),
-                                        trailing:
-                                            IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => projectVM.removeDataInfoAt(index)),
+                                        trailing: IconButton(
+                                          icon: const Icon(Icons.delete, color: Colors.red),
+                                          onPressed: () => projectVM.removeDataInfoAt(index),
+                                        ),
                                       );
                                     },
                                   ),
@@ -169,7 +183,10 @@ class ConfigureProjectPage extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 32),
-                  ElevatedButton(onPressed: () => _confirmProject(context), child: Text(context.l10n.configPage_confirm)),
+                  ElevatedButton(
+                    onPressed: projectVM.isBusy ? null : () => _confirmProject(context),
+                    child: Text(projectVM.isBusy ? 'Data 업데이트 중...' : context.l10n.configPage_confirm),
+                  ),
                 ],
               ),
             ),
