@@ -1,5 +1,6 @@
 // lib/src/platform_helpers/storage/cloud_storage_helper.dart
 import 'dart:convert';
+import 'dart:typed_data'; // ✅ for Uint8List
 import 'package:http/http.dart' as http;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,11 +16,20 @@ import 'interface_storage_helper.dart';
 
 /// Cloud(Firebase Firestore + Firebase Storage) 기반 StorageHelper 구현체.
 ///
+/// - 옵션 A(현 적용): 프로젝트 저장/다운로드 시 DataInfo를
+///   `{id,fileName,filePath,mimeType}`로 **슬림화**하여 직렬화한다.
+///   (대용량/휘발 필드인 base64Content/objectUrl은 저장하지 않음)
+///
+/// - 옵션 B(문서화): 프로젝트 문서를 더 작게 유지하고 싶다면
+///   `users/{uid}/projects/{projectId}/metadata/dataIndex` 같은 별도 문서에
+///   `{ data_id: {filePath, mimeType} }` 맵을 저장해두고,
+///   로드 시 이 맵을 읽어 각 `DataInfo`에 `copyWith(filePath,mimeType)`로 **합성**한다.
+///   대규모 프로젝트에서 확장 메타 관리가 쉬워진다.
+///
 /// ### 책임
 /// - **Firestore**: 프로젝트/라벨 CRUD 영속화
 /// - **Firebase Storage**: `labels.json` 스냅샷 업/다운로드(옵션)
 /// - 모든 라벨 직렬화는 **표준 래퍼 스키마**를 사용:
-///   ```json
 ///   {
 ///     "data_id": "<데이터 ID>",
 ///     "data_path": "<원본 경로/파일명|null>",
@@ -27,13 +37,12 @@ import 'interface_storage_helper.dart';
 ///     "mode": "<LabelingMode.name>",
 ///     "label_data": { ... } // LabelModel.toJson()
 ///   }
-///   ```
 ///
 /// ### 설계 메모
-/// - Firestore 문서 크기 제한(1MB)과 배치 쓰기 제한(500건)을 고려하여
-///   - 프로젝트 저장 시 **DataInfo는 {id, fileName}로 슬림화**하여 저장
-///   - 라벨 일괄 저장/삭제는 **청크(Chunk)** 로 나누어 처리
-/// - `LabelModelConverter`에는 **래퍼(Map) 전체**를 전달하여 모드/메타와 동기화
+/// - Firestore 문서 크기 제한(1MB), 배치 쓰기 제한(500)을 고려:
+///   - 프로젝트 저장 시 **DataInfo는 toSlimJson()**으로 직렬화
+///   - 라벨 일괄 저장/삭제는 **청크(Chunk)** 로 나눠 처리
+/// - `LabelModelConverter`에는 **래퍼(Map 전체)** 를 전달
 ///
 /// ### 보안 규칙(권장 예시)
 /// - Firestore: `users/{uid}/projects/{projectId}` 및 `.../labels/{dataId}`
@@ -46,14 +55,12 @@ class CloudStorageHelper implements StorageHelperInterface {
   final fb_storage.FirebaseStorage storage = fb_storage.FirebaseStorage.instance;
 
   /// (선택) Import 시 프로젝트 컨텍스트를 지정하기 위한 편의 필드.
-  /// 인터페이스에는 없지만, Storage에서 `latest.json`을 읽을 때 필요.
   String? _activeProjectId;
 
   /// 현재 활성 프로젝트 ID를 지정합니다. (importAllLabels에 필요)
   void setActiveProject(String projectId) => _activeProjectId = projectId;
 
   /// 현재 로그인된 Firebase 사용자 UID를 반환합니다.
-  /// 로그인되지 않은 경우 예외를 발생시킵니다.
   String get _uid {
     final user = auth.currentUser;
     if (user == null) {
@@ -75,8 +82,6 @@ class CloudStorageHelper implements StorageHelperInterface {
   // 🔧 유틸: Firestore 배치 500건 제한 대응
   // ─────────────────────────────────────────────────────────────────────────
 
-  /// 리스트를 [size] 크기의 청크로 나눠 이터레이션합니다.
-  /// Firestore 배치 제한(500건)을 회피할 때 사용합니다.
   Iterable<List<T>> _chunks<T>(List<T> list, int size) sync* {
     for (var i = 0; i < list.length; i += size) {
       yield list.sublist(i, i + size > list.length ? list.length : i + size);
@@ -90,8 +95,8 @@ class CloudStorageHelper implements StorageHelperInterface {
   /// 사용자의 프로젝트 리스트를 Firestore에 저장합니다.
   ///
   /// - 저장 위치: `users/{uid}/projects/{projectId}`
-  /// - **DataInfo는 {id, fileName}로 슬림화**하여 저장(대용량/base64 금지)
-  /// - 라벨은 포함하지 않습니다(라벨은 별도 라벨 컬렉션에서 관리)
+  /// - **DataInfo는 toSlimJson()**으로 직렬화({id,fileName,filePath,mimeType})
+  /// - 라벨은 포함하지 않습니다(라벨은 labels 서브컬렉션에서 관리)
   @override
   Future<void> saveProjectList(List<Project> projects) async {
     final batch = firestore.batch();
@@ -99,15 +104,7 @@ class CloudStorageHelper implements StorageHelperInterface {
       final docRef = _projectsCol.doc(project.id);
       final j = project.toJson(includeLabels: false);
       j['dataInfos'] = project.dataInfos
-          .map(
-            (e) => {
-              'id': e.id,
-              'fileName': e.fileName,
-              if (e.filePath != null) 'filePath': e.filePath, // http(s) or gs:// or storage path
-              if (e.mimeType != null) 'mimeType': e.mimeType, // (선택)
-              // base64Content/objectUrl는 클라우드 저장에 불필요하니 생략
-            },
-          )
+          .map((e) => e.slimmedForPersist().toSlimJson()) // ✅ 옵션 A 일관 적용
           .toList();
       batch.set(docRef, j, SetOptions(merge: true));
     }
@@ -115,33 +112,25 @@ class CloudStorageHelper implements StorageHelperInterface {
   }
 
   /// Firestore에서 사용자의 프로젝트 리스트를 로드합니다.
-  ///
-  /// - 라벨은 포함되지 않으며, 필요한 경우 별도의 라벨 로딩 API를 사용합니다.
   @override
   Future<List<Project>> loadProjectList() async {
     final snap = await _projectsCol.get();
     return snap.docs.map((d) => Project.fromJson(d.data())).toList();
   }
 
-  /// Cloud 환경에서의 설계도 스냅샷 저장은 프로젝트 리스트 저장과 동일하게 처리합니다.
+  /// Cloud 환경에서의 설계도 스냅샷 저장은 프로젝트 리스트 저장과 동일하게 처리
   @override
   Future<void> saveProjectConfig(List<Project> projects) => saveProjectList(projects);
 
-  /// Cloud 환경에서는 외부 JSON 문자열로부터 복원하지 않습니다.
+  /// Cloud 환경에서는 외부 JSON 문자열로부터 복원하지 않음
   @override
   Future<List<Project>> loadProjectFromConfig(String projectConfig) async => throw UnimplementedError("Cloud: loadProjectFromConfig는 사용되지 않습니다.");
 
-  /// 단일 프로젝트의 설계도(JSON, 라벨 제외)를 브라우저 다운로드로 제공합니다.
-  ///
-  /// - Web 전용: `download` 속성으로 저장 트리거
-  /// - Native에서는 미지원
+  /// 단일 프로젝트의 설계도(JSON, 라벨 제외)를 브라우저 다운로드로 제공 (Web 전용)
   @override
   Future<String> downloadProjectConfig(Project project) async {
     final j = project.toJson(includeLabels: false);
-    j['dataInfos'] = (j['dataInfos'] as List).map((e) {
-      final m = (e as Map).cast<String, dynamic>();
-      return {'id': m['id'], 'fileName': m['fileName']};
-    }).toList();
+    j['dataInfos'] = (j['dataInfos'] as List).map((e) => DataInfo.fromJson((e as Map).cast<String, dynamic>()).toSlimJson()).toList();
 
     final jsonString = const JsonEncoder.withIndent('  ').convert(j);
     if (kIsWeb) {
@@ -160,10 +149,6 @@ class CloudStorageHelper implements StorageHelperInterface {
   // 📌 Single Label Data IO (CRUD in Firestore)
   // ─────────────────────────────────────────────────────────────────────────
 
-  /// 특정 데이터(=dataId)의 라벨을 Firestore에 저장/갱신합니다.
-  ///
-  /// - 경로: `users/{uid}/projects/{projectId}/labels/{dataId}`
-  /// - **mode는 `.name`으로 저장**하고, `label_data`는 모델의 toJson 결과를 그대로 담습니다.
   @override
   Future<void> saveLabelData(String projectId, String dataId, String dataPath, LabelModel labelModel) async {
     final doc = _labelsCol(projectId).doc(dataId);
@@ -177,10 +162,6 @@ class CloudStorageHelper implements StorageHelperInterface {
     await doc.set(map, SetOptions(merge: true));
   }
 
-  /// 특정 데이터(=dataId)의 라벨을 Firestore에서 로드합니다.
-  ///
-  /// - 없으면 `modeHint` 기반의 **초기 라벨**을 만들어 반환합니다.
-  /// - 복원 시 **래퍼(Map 전체)** 를 Converter에 전달합니다.
   @override
   Future<LabelModel> loadLabelData(String projectId, String dataId, String dataPath, LabelingMode modeHint) async {
     final doc = await _labelsCol(projectId).doc(dataId).get();
@@ -197,10 +178,6 @@ class CloudStorageHelper implements StorageHelperInterface {
   // 📌 Project-wide Label IO (Firestore)
   // ─────────────────────────────────────────────────────────────────────────
 
-  /// 프로젝트의 모든 라벨을 Firestore에 **일괄 저장**합니다.
-  ///
-  /// - Firestore 배치 제한(500)을 고려해 **청크(450)** 단위로 커밋합니다.
-  /// - 각 라벨은 표준 래퍼 스키마로 직렬화하여 저장합니다.
   @override
   Future<void> saveAllLabels(String projectId, List<LabelModel> labels) async {
     for (final chunk in _chunks(labels, 450)) {
@@ -220,10 +197,6 @@ class CloudStorageHelper implements StorageHelperInterface {
     }
   }
 
-  /// 프로젝트의 모든 라벨을 Firestore에서 로드하여 모델로 복원합니다.
-  ///
-  /// - 각 문서의 `mode`를 `.name` 기준으로 파싱합니다.
-  /// - Converter에는 **래퍼(Map 전체)** 를 전달합니다.
   @override
   Future<List<LabelModel>> loadAllLabelModels(String projectId) async {
     final snap = await _labelsCol(projectId).get();
@@ -239,9 +212,6 @@ class CloudStorageHelper implements StorageHelperInterface {
     return out;
   }
 
-  /// 프로젝트의 모든 라벨 문서를 **일괄 삭제**합니다.
-  ///
-  /// - Firestore 읽기/쓰기 비용을 줄이기 위해 500개 단위로 페이지네이션 삭제합니다.
   @override
   Future<void> deleteProjectLabels(String projectId) async {
     Query<Map<String, dynamic>> q = _labelsCol(projectId).limit(500);
@@ -257,9 +227,6 @@ class CloudStorageHelper implements StorageHelperInterface {
     }
   }
 
-  /// 프로젝트 문서 + 라벨 서브컬렉션을 모두 삭제합니다.
-  ///
-  /// - 라벨을 먼저 삭제한 뒤, 프로젝트 문서를 제거합니다.
   @override
   Future<void> deleteProject(String projectId) async {
     await deleteProjectLabels(projectId);
@@ -270,10 +237,6 @@ class CloudStorageHelper implements StorageHelperInterface {
   // 📌 Label Import/Export (Firebase Storage)
   // ─────────────────────────────────────────────────────────────────────────
 
-  /// 프로젝트의 라벨 전체를 `labels.json`으로 직렬화해 **Firebase Storage**에 업로드합니다.
-  ///
-  /// - 경로: `users/{uid}/projects/{projectId}/labels/latest.json`
-  /// - 반환: 다운로드 URL (필요 시 `gs://` 경로로 변경 가능)
   @override
   Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataInfo> fileDataList) async {
     final models = labelModels.isEmpty ? await loadAllLabelModels(project.id) : labelModels;
@@ -299,9 +262,6 @@ class CloudStorageHelper implements StorageHelperInterface {
     return url;
   }
 
-  /// Firebase Storage에 저장된 `labels.json`을 다운로드해 라벨 목록으로 복원합니다.
-  ///
-  /// - 사용 전 `setActiveProject(projectId)` 호출로 프로젝트 컨텍스트를 지정해야 합니다.
   @override
   Future<List<LabelModel>> importAllLabels() async {
     final projectId = _activeProjectId;
@@ -332,7 +292,7 @@ class CloudStorageHelper implements StorageHelperInterface {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 📖 Data Read helpers (인터페이스에는 노출하지 않는 편의 메서드) (임시)
+  // 📖 Data Read helpers
   // ─────────────────────────────────────────────────────────────────────────
 
   /// Firebase Storage에서 텍스트(UTF-8) 읽기
@@ -374,43 +334,40 @@ class CloudStorageHelper implements StorageHelperInterface {
   Future<String?> readImageBase64At(String path, {int maxSizeBytes = 20 * 1024 * 1024}) async {
     final bytes = await readBytesAt(path, maxSizeBytes: maxSizeBytes);
     if (bytes == null) return null;
-    return base64Encode(bytes); // data:image/*;base64, ... 는 뷰어에서 붙여도 됨
+    return base64Encode(bytes); // data:image/*;base64, ... 는 뷰어에서 접두사 붙여도 됨
   }
 
   // ==============================
   // 📌 Data Read
   // ==============================
 
-  /// Cloud: http(s) URL(서명 URL 등)에서 bytes를 받아온다.
-  /// - 필요한 경우, 여기에서 인증 헤더/토큰을 추가하거나 SDK 호출로 바꿔야 한다.
+  /// Cloud: http(s) URL/gs:///상대경로를 지원. 필요 시 SDK로 URL 해석.
   @override
   Future<Uint8List> readDataBytes(DataInfo info) async {
     final raw = info.filePath?.trim();
     if (raw == null || raw.isEmpty) {
       throw ArgumentError('Cloud read requires filePath.');
     }
-    final url = await _resolveToDownloadUrl(raw); // ↓ 새 헬퍼
+    final url = await _resolveToDownloadUrl(raw);
     final resp = await http.get(Uri.parse(url));
     if (resp.statusCode == 200) return resp.bodyBytes;
     throw StateError('HTTP ${resp.statusCode} while fetching $url');
   }
 
   Future<String> _resolveToDownloadUrl(String raw) async {
-    // http(s)면 그대로 사용
+    // http(s)면 그대로
     if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
 
-    // gs://bucket/path or /users/.../path 같은 경우
+    // gs://bucket/path or Firebase Storage 상대경로
     try {
-      final ref = raw.startsWith('gs://') ? storage.refFromURL(raw) : storage.ref(raw); // Firestore에 상대경로를 저장한 경우
+      final ref = raw.startsWith('gs://') ? storage.refFromURL(raw) : storage.ref(raw);
       return await ref.getDownloadURL();
     } catch (_) {
-      // 마지막 시도: 사용자 uid 기반 프로젝트 경로 규약이 있다면 여기서 조립
-      // final ref = storage.ref(_labelsJsonPath(projectId)...);
       rethrow;
     }
   }
 
-  /// Cloud: 웹이 아닌 경우 보통 Blob URL이 필요 없다. 필요 시 그대로 URL 반환.
+  /// Cloud: 웹이 아닌 경우 보통 Blob URL 불필요. 필요 시 다운로드 URL 반환.
   @override
   Future<String?> ensureLocalObjectUrl(DataInfo info) async {
     final raw = info.filePath?.trim();
@@ -424,11 +381,10 @@ class CloudStorageHelper implements StorageHelperInterface {
     // no-op
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ==============================
   // 📌 Cache (Cloud는 로컬 캐시 의미 없음)
-  // ─────────────────────────────────────────────────────────────────────────
+  // ==============================
 
-  /// Cloud 구현에서는 로컬 캐시를 사용하지 않으므로 no-op입니다.
   @override
   Future<void> clearAllCache() async {}
 
@@ -436,25 +392,15 @@ class CloudStorageHelper implements StorageHelperInterface {
   // 🔧 편의 메서드(인터페이스 외) — 선택 사용
   // ─────────────────────────────────────────────────────────────────────────
 
-  /// 단일 프로젝트를 병합 저장(라벨 제외)합니다.
-  /// - DataInfo는 슬림화하여 저장합니다.
+  /// 단일 프로젝트를 병합 저장(라벨 제외).
+  /// - DataInfo는 **toSlimJson()**으로 직렬화.
   Future<void> saveSingleProject(Project project) async {
     final doc = _projectsCol.doc(project.id);
     final j = project.toJson(includeLabels: false);
-    j['dataInfos'] = project.dataInfos
-        .map(
-          (e) => {
-            'id': e.id,
-            'fileName': e.fileName,
-            if (e.filePath != null) 'filePath': e.filePath, // http(s) or gs:// or storage path
-            if (e.mimeType != null) 'mimeType': e.mimeType, // (선택)
-            // base64Content/objectUrl는 클라우드 저장에 불필요하니 생략
-          },
-        )
-        .toList();
+    j['dataInfos'] = project.dataInfos.map((e) => e.slimmedForPersist().toSlimJson()).toList();
     await doc.set(j, SetOptions(merge: true));
   }
 
-  /// 단일 프로젝트 삭제(라벨 포함) 편의 메서드입니다.
+  /// 단일 프로젝트 삭제(라벨 포함) 편의 메서드.
   Future<void> deleteSingleProject(String projectId) async => await deleteProject(projectId);
 }
