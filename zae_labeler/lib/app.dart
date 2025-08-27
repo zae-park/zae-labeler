@@ -63,8 +63,9 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
 
         // ⚠️ A안: bootstrap()이 SwitchableStorageHelper 인스턴스를 반환한다고 가정.
         // 혹시 아닐 경우를 대비한 안전 캐스팅(필요 없으면 제거 가능)
-        final SwitchableStorageHelper switchable =
-            deps.storageHelper is SwitchableStorageHelper ? deps.storageHelper as SwitchableStorageHelper : SwitchableStorageHelper(deps.storageHelper);
+        final SwitchableStorageHelper switchable = deps.storageHelper is SwitchableStorageHelper
+            ? deps.storageHelper as SwitchableStorageHelper
+            : SwitchableStorageHelper(deps.storageHelper);
 
         return MultiProvider(
           providers: [
@@ -79,7 +80,8 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
 
             ChangeNotifierProvider<LocaleViewModel>.value(value: deps.localeViewModel),
             ChangeNotifierProvider<ProjectListViewModel>(
-                create: (_) => ProjectListViewModel(appUseCases: deps.appUseCases, shareHelper: deps.shareHelper, picker: picker)),
+              create: (_) => ProjectListViewModel(appUseCases: deps.appUseCases, shareHelper: deps.shareHelper, picker: picker),
+            ),
             ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel.withDefaultUseCases(deps.firebaseAuth)),
             ChangeNotifierProvider(create: (_) => ProgressNotifier()),
           ],
