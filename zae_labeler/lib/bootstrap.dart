@@ -16,6 +16,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zae_labeler/src/features/project/logic/project_validator.dart';
 import 'package:zae_labeler/src/features/project/use_cases/edit_project_use_case.dart';
+import 'package:firebase_storage/firebase_storage.dart' as fb;
 
 import 'src/core/services/user_preference_service.dart';
 import 'src/features/locale/view_models/locale_view_model.dart';
@@ -65,6 +66,11 @@ Future<ShareHelperInterface> _chooseShareHelper() async {
 /// [systemLocale]은 필요 시 LocaleViewModel 초기 기본값 결정 등에 활용할 수 있으나,
 /// 현재 구현은 LocaleViewModel 내부의 저장소 기반 복원 로직에 위임합니다.
 Future<BootstrapResult> bootstrap({required Locale systemLocale}) async {
+  final storage = fb.FirebaseStorage.instance;
+  storage.setMaxOperationRetryTime(const Duration(seconds: 12));
+  storage.setMaxUploadRetryTime(const Duration(seconds: 12));
+  storage.setMaxDownloadRetryTime(const Duration(seconds: 12));
+
   // 1) Storage/Share 준비: 항상 로컬로 시작하고, Switchable로 래핑
   final switchable = SwitchableStorageHelper(createLocalStorageHelper());
   final share = await _chooseShareHelper();
@@ -91,5 +97,11 @@ Future<BootstrapResult> bootstrap({required Locale systemLocale}) async {
   final firebaseAuth = FirebaseAuth.instance;
 
   return BootstrapResult(
-      appUseCases: appUC, userPrefs: userPrefs, localeViewModel: localeVM, firebaseAuth: firebaseAuth, storageHelper: switchable, shareHelper: share);
+    appUseCases: appUC,
+    userPrefs: userPrefs,
+    localeViewModel: localeVM,
+    firebaseAuth: firebaseAuth,
+    storageHelper: switchable,
+    shareHelper: share,
+  );
 }
