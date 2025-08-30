@@ -14,16 +14,20 @@ import '../../core/models/label/label_model.dart';
 // 필요 시 LabelModelFactory 경로가 다르면 import 추가
 
 /// Native(모바일/데스크톱) 환경용 StorageHelper 구현.
+///
+/// - 옵션 A(현 적용): 프로젝트 저장/다운로드/레지스트리 저장 시
+///   DataInfo를 `{id,fileName,filePath,mimeType}`로 **슬림화**하여 직렬화한다.
+///   (대용량/휘발 필드인 base64Content/objectUrl은 저장하지 않음)
+///
+/// - 옵션 B(문서화): 프로젝트 메타는 더 작게 유지하고,
+///   `users/{uid}/projects/{projectId}/metadata/dataIndex` 같은 별도 저장소(클라우드/로컬)에
+///   `{ data_id: {filePath, mimeType} }` 맵을 별도 기록한 뒤,
+///   로드 시 해당 맵을 읽어 각 `DataInfo`에 `copyWith(filePath,mimeType)`로 **합성**한다.
+///   대규모 프로젝트에서 확장 메타 관리가 쉬워진다.
+///
 /// - 원본 데이터는 로컬 파일시스템 경로(DataInfo.filePath)로 접근.
 /// - 스토리지 헬퍼는 원본 파일을 이동/복사하지 않으며, Export 시에만 읽어 ZIP에 포함.
-/// - 라벨 직렬화는 표준 래퍼 스키마를 사용:
-///   {
-///     "data_id": "<데이터 ID>",
-///     "data_path": "<파일경로/파일명|null>",
-///     "labeled_at": "YYYY-MM-DDTHH:mm:ss.sssZ",
-///     "mode": "<LabelingMode.name>",
-///     "label_data": { ... } // LabelModel.toJson()
-///   }
+/// - 라벨 직렬화는 표준 래퍼 스키마를 사용.
 class StorageHelperImpl implements StorageHelperInterface {
   // ─────────────────────────────────────────────────────────────────────────
   // Keys / Paths / Utils
@@ -67,11 +71,8 @@ class StorageHelperImpl implements StorageHelperInterface {
 
     final list = projects.map((p) {
       final j = p.toJson(includeLabels: false);
-      // DataInfo는 설계도에서 최소 필드만 유지 (id/fileName 정도)
-      j['dataInfos'] = (j['dataInfos'] as List).map((e) {
-        final m = (e as Map).cast<String, dynamic>();
-        return {'id': m['id'], 'fileName': m['fileName']};
-      }).toList();
+      // ✅ 옵션 A: 재로딩 가능성을 위해 DataInfo 슬림화({id,fileName,filePath,mimeType}) 적용
+      j['dataInfos'] = (j['dataInfos'] as List).map((e) => DataInfo.fromJson((e as Map).cast<String, dynamic>()).toSlimJson()).toList();
       return j;
     }).toList();
 
@@ -94,10 +95,7 @@ class StorageHelperImpl implements StorageHelperInterface {
   Future<String> downloadProjectConfig(Project project) async {
     // 라벨 제외 + DataInfo 슬림화
     final j = project.toJson(includeLabels: false);
-    j['dataInfos'] = (j['dataInfos'] as List).map((e) {
-      final m = (e as Map).cast<String, dynamic>();
-      return {'id': m['id'], 'fileName': m['fileName']};
-    }).toList();
+    j['dataInfos'] = (j['dataInfos'] as List).map((e) => DataInfo.fromJson((e as Map).cast<String, dynamic>()).toSlimJson()).toList();
 
     final file = await _docFile('${project.name}_config.json');
     await file.writeAsString(jsonEncode(j), flush: true);
@@ -111,7 +109,14 @@ class StorageHelperImpl implements StorageHelperInterface {
   @override
   Future<void> saveProjectList(List<Project> projects) async {
     final file = await _docFile(_kRegistryFileName);
-    final list = projects.map((e) => e.toJson(includeLabels: false)).toList();
+
+    // ✅ 옵션 A: 레지스트리에도 슬림화된 DataInfo만 저장
+    final list = projects.map((p) {
+      final j = p.toJson(includeLabels: false);
+      j['dataInfos'] = (j['dataInfos'] as List).map((e) => DataInfo.fromJson((e as Map).cast<String, dynamic>()).toSlimJson()).toList();
+      return j;
+    }).toList();
+
     await file.writeAsString(jsonEncode(list), flush: true);
   }
 
@@ -183,13 +188,15 @@ class StorageHelperImpl implements StorageHelperInterface {
     final file = await _docFile(_labelsFileName(projectId));
 
     final entries = labels
-        .map((m) => <String, dynamic>{
-              'data_id': m.dataId,
-              'data_path': m.dataPath,
-              'labeled_at': m.labeledAt.toIso8601String(),
-              'mode': m.mode.name, // enum.name
-              'label_data': LabelModelConverter.toJson(m),
-            })
+        .map(
+          (m) => <String, dynamic>{
+            'data_id': m.dataId,
+            'data_path': m.dataPath,
+            'labeled_at': m.labeledAt.toIso8601String(),
+            'mode': m.mode.name, // enum.name
+            'label_data': LabelModelConverter.toJson(m),
+          },
+        )
         .toList();
 
     await _writeJsonList(file, entries);
@@ -208,7 +215,7 @@ class StorageHelperImpl implements StorageHelperInterface {
               ? LabelingMode.values.firstWhere((m) => m.name == e['mode'], orElse: () => LabelingMode.singleClassification)
               : LabelingMode.singleClassification,
           e, // ✅ 래퍼 전체 전달
-        )
+        ),
     ];
   }
 
@@ -246,19 +253,21 @@ class StorageHelperImpl implements StorageHelperInterface {
         bytes = base64Decode(_stripDataUrl(info.base64Content!));
       }
       if (bytes != null) {
-        archive.addFile(ArchiveFile(info.fileName, bytes.length, bytes));
+        archive.addFile(ArchiveFile(info.normalizedFileName, bytes.length, bytes));
       }
     }
 
-    // 2) labels.json (표준 래퍼) — 혼합 모드 가능성 방어를 위해 각 라벨의 mode 사용
+    // 2) labels.json (표준 래퍼)
     final entries = labels
-        .map((m) => <String, dynamic>{
-              'data_id': m.dataId,
-              'data_path': m.dataPath,
-              'labeled_at': m.labeledAt.toIso8601String(),
-              'mode': m.mode.name,
-              'label_data': LabelModelConverter.toJson(m),
-            })
+        .map(
+          (m) => <String, dynamic>{
+            'data_id': m.dataId,
+            'data_path': m.dataPath,
+            'labeled_at': m.labeledAt.toIso8601String(),
+            'mode': m.mode.name,
+            'label_data': LabelModelConverter.toJson(m),
+          },
+        )
         .toList();
 
     final jsonText = jsonEncode(entries);

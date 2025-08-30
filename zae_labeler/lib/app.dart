@@ -58,13 +58,17 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
             home: Scaffold(body: Center(child: CircularProgressIndicator())),
           );
         }
+
         final deps = snap.data!;
-        final DataInfoPicker picker = createDataInfoPicker();
+        final FirebaseAuth auth = deps.firebaseAuth;
+        // ✅ 플랫폼 인지형 Picker 생성 (Web은 업로드 → URL 채워서 반환, Native는 절대경로)
+        final DataInfoPicker picker = createDataInfoPicker(auth: auth);
 
         // ⚠️ A안: bootstrap()이 SwitchableStorageHelper 인스턴스를 반환한다고 가정.
         // 혹시 아닐 경우를 대비한 안전 캐스팅(필요 없으면 제거 가능)
-        final SwitchableStorageHelper switchable =
-            deps.storageHelper is SwitchableStorageHelper ? deps.storageHelper as SwitchableStorageHelper : SwitchableStorageHelper(deps.storageHelper);
+        final SwitchableStorageHelper switchable = deps.storageHelper is SwitchableStorageHelper
+            ? deps.storageHelper as SwitchableStorageHelper
+            : SwitchableStorageHelper(deps.storageHelper);
 
         return MultiProvider(
           providers: [
@@ -76,10 +80,11 @@ class _ZaeLabelerState extends State<ZaeLabeler> {
             Provider<UserPreferenceService>.value(value: deps.userPrefs),
             Provider<ShareHelperInterface>.value(value: deps.shareHelper),
             Provider<DataInfoPicker>.value(value: picker),
-
+            Provider<FirebaseAuth>.value(value: auth),
             ChangeNotifierProvider<LocaleViewModel>.value(value: deps.localeViewModel),
             ChangeNotifierProvider<ProjectListViewModel>(
-                create: (_) => ProjectListViewModel(appUseCases: deps.appUseCases, shareHelper: deps.shareHelper, picker: picker)),
+              create: (_) => ProjectListViewModel(appUseCases: deps.appUseCases, shareHelper: deps.shareHelper, picker: picker),
+            ),
             ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel.withDefaultUseCases(deps.firebaseAuth)),
             ChangeNotifierProvider(create: (_) => ProgressNotifier()),
           ],
@@ -142,9 +147,11 @@ class _AuthStorageSyncState extends State<_AuthStorageSync> {
       if (user != null) {
         // unawaited(switchable.switchToCloud());
         switchable.switchToCloud();
+        debugPrint('[AuthStorageSync] initial -> CLOUD (uid=${user.uid})');
       } else {
         // unawaited(switchable.switchToLocal());
         switchable.switchToLocal();
+        debugPrint('[AuthStorageSync] initial -> LOCAL (signed out)');
       }
 
       // 2) 이후 인증 상태 변화 반영
@@ -152,8 +159,10 @@ class _AuthStorageSyncState extends State<_AuthStorageSync> {
         final s = context.read<SwitchableStorageHelper>();
         if (u != null) {
           s.switchToCloud();
+          debugPrint('[AuthStorageSync] change -> CLOUD (uid=${u.uid})');
         } else {
           s.switchToLocal();
+          debugPrint('[AuthStorageSync] change -> LOCAL');
         }
       });
     });

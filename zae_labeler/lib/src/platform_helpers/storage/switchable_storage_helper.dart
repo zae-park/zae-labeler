@@ -13,11 +13,13 @@ class SwitchableStorageHelper with ChangeNotifier implements StorageHelperInterf
   SwitchableStorageHelper(StorageHelperInterface initial) : _delegate = initial;
 
   Future<void> switchToLocal() async {
+    debugPrint('[Switchable] switchToLocal');
     _delegate = createLocalStorageHelper();
     notifyListeners();
   }
 
   Future<void> switchToCloud() async {
+    debugPrint('[Switchable] switchToCloud');
     _delegate = CloudStorageHelper();
     notifyListeners();
   }
@@ -70,11 +72,13 @@ class SwitchableStorageHelper with ChangeNotifier implements StorageHelperInterf
 
   @override
   Future<Uint8List> readDataBytes(DataInfo info) {
+    debugPrint('[Switchable] readDataBytes -> ${_delegate.runtimeType} path=${info.filePath}');
     return _delegate.readDataBytes(info);
   }
 
   @override
   Future<String?> ensureLocalObjectUrl(DataInfo info) {
+    debugPrint('[Switchable] ensureLocalObjectUrl -> ${_delegate.runtimeType} path=${info.filePath}');
     return _delegate.ensureLocalObjectUrl(info);
   }
 

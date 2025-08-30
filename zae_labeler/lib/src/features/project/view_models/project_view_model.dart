@@ -49,6 +49,13 @@ class ProjectViewModel extends ChangeNotifier {
   final void Function(Project updated)? onChanged;
   final bool isEditing;
   late LabelingMode _initialMode;
+  bool _busy = false;
+  bool get isBusy => _busy;
+
+  void _setBusy(bool v) {
+    _busy = v;
+    notifyListeners();
+  }
 
   // ────────────────────────────────────────────
   // 📦 진행률 정보 (LabelingViewModel에서 계산)
@@ -60,8 +67,8 @@ class ProjectViewModel extends ChangeNotifier {
   bool progressLoaded = false;
 
   ProjectViewModel({required this.appUseCases, required this.picker, this.shareHelper, this.onChanged, Project? initial, bool? isEditing})
-      : isEditing = isEditing ?? (initial != null),
-        project = initial ?? Project(id: const Uuid().v4(), name: 'New Project', mode: LabelingMode.singleClassification, classes: const ["True", "False"]) {
+    : isEditing = isEditing ?? (initial != null),
+      project = initial ?? Project(id: const Uuid().v4(), name: 'New Project', mode: LabelingMode.singleClassification, classes: const ["True", "False"]) {
     _initialMode = project.mode; // ✅ 내부에서 설정
   }
 
@@ -121,15 +128,26 @@ class ProjectViewModel extends ChangeNotifier {
   }
 
   Future<void> pickAndAddDataInfos() async {
+    _setBusy(true);
     try {
+      debugPrint('[VM.pick] start');
       final infos = await picker.pick();
-      if (infos.isEmpty) return;
+      debugPrint('[VM.pick] picked=${infos.length}');
+      if (infos.isEmpty) {
+        debugPrint('⚠️ picker returned empty. check factory wiring / upload / permissions');
+        return;
+      }
+      final before = project.dataInfos.length;
       final updated = await appUseCases.project.editor.addDataInfos(project, infos);
       project = updated;
+      debugPrint('[VM.pick] applied: before=$before, after=${project.dataInfos.length}');
       onChanged?.call(project);
       notifyListeners();
-    } catch (e) {
-      // 필요 시 로깅/알럿
+    } catch (e, st) {
+      debugPrint('❌ pickAndAddDataInfos error: $e\n$st');
+      // 필요하면 토스트/다이얼로그
+    } finally {
+      _setBusy(false);
     }
   }
 

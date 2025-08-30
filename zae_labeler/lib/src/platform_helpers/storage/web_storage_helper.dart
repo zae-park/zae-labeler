@@ -13,19 +13,19 @@ import 'interface_storage_helper.dart'; // ← 현재는 여기에 LabelModelCon
 import '../../core/models/project/project_model.dart';
 import '../../core/models/data/data_info.dart';
 import '../../core/models/label/label_model.dart';
-// 필요 시 LabelModelFactory가 다른 파일이면 import 경로를 맞춰주세요.
 
 /// Web(브라우저) 환경용 StorageHelper 구현.
-/// - 원본 데이터는 브라우저 private storage(예: IndexedDB/메모리)에 상주한다고 가정.
-/// - 스토리지 헬퍼는 원본 파일을 별도 저장하지 않고, Export 시에만 base64 → bytes로 ZIP에 포함.
-/// - 라벨 직렬화는 표준 래퍼 스키마를 사용:
-///   {
-///     "data_id": "<데이터 ID>",
-///     "data_path": "<파일명/경로|null>",
-///     "labeled_at": "YYYY-MM-DDTHH:mm:ss.sssZ",
-///     "mode": "<LabelingMode.name>",
-///     "label_data": { ... } // LabelModel.toJson()
-///   }
+///
+/// - 옵션 A(현 적용): 프로젝트 저장/다운로드/레지스트리 저장 시
+///   DataInfo를 `{id,fileName,filePath,mimeType}`만 남기는 슬림화로 직렬화한다.
+///   즉, base64/objectUrl 같은 휘발 값은 저장 시 제거되며, 재로딩 가능성을 위해
+///   http(s) `filePath`와 `mimeType`은 반드시 보존한다.
+///
+/// - 옵션 B(문서화): 프로젝트 도큐먼트를 최소화하고,
+///   `users/{uid}/projects/{projectId}/metadata/dataIndex` 같은 별도 문서에
+///   `{ data_id: {filePath, mimeType} }` 형태로 저장한 뒤,
+///   로드 시 해당 맵을 읽어 `DataInfo.copyWith(filePath, mimeType)`로 합성하는 전략도 가능.
+///   대규모 프로젝트에서 문서 크기를 더 줄이고 확장 메타를 점진적으로 늘리기 좋다.
 class StorageHelperImpl implements StorageHelperInterface {
   // Blob URL 해제 관리를 위한 내부 캐시
   final Set<String> _blobUrls = <String>{};
@@ -40,11 +40,6 @@ class StorageHelperImpl implements StorageHelperInterface {
 
   String _labelsKey(String projectId) => '${_kPrefix}labels:$projectId';
 
-  String _stripDataUrl(String s) {
-    final i = s.indexOf(',');
-    return s.startsWith('data:') && i != -1 ? s.substring(i + 1) : s;
-  }
-
   // ==============================
   // 📌 Project Configuration IO
   // ==============================
@@ -54,11 +49,8 @@ class StorageHelperImpl implements StorageHelperInterface {
     // 설계도 스냅샷: 라벨/대용량 제외 권장
     final list = projects.map((p) {
       final j = p.toJson(includeLabels: false);
-      // DataInfo는 최소 필드만 유지(웹에선 path/base64 저장 불필요)
-      j['dataInfos'] = (j['dataInfos'] as List).map((e) {
-        final m = (e as Map).cast<String, dynamic>();
-        return {'id': m['id'], 'fileName': m['fileName']};
-      }).toList();
+      // ✅ 옵션 A: 재로딩 가능성을 위해 DataInfo 슬림화({id,fileName,filePath,mimeType}) 적용
+      j['dataInfos'] = (j['dataInfos'] as List).map((e) => DataInfo.fromJson((e as Map).cast<String, dynamic>()).toSlimJson()).toList();
       return j;
     }).toList();
     html.window.localStorage[_kProjectConfigKey] = jsonEncode(list);
@@ -80,13 +72,10 @@ class StorageHelperImpl implements StorageHelperInterface {
   Future<String> downloadProjectConfig(Project project) async {
     // 라벨 제외 + DataInfo 슬림화
     final j = project.toJson(includeLabels: false);
-    j['dataInfos'] = (j['dataInfos'] as List).map((e) {
-      final m = (e as Map).cast<String, dynamic>();
-      return {'id': m['id'], 'fileName': m['fileName']};
-    }).toList();
+    j['dataInfos'] = (j['dataInfos'] as List).map((e) => DataInfo.fromJson((e as Map).cast<String, dynamic>()).toSlimJson()).toList();
 
     final jsonString = jsonEncode(j);
-    final blob = html.Blob([jsonString]);
+    final blob = html.Blob([jsonString], 'application/json');
     final url = html.Url.createObjectUrlFromBlob(blob);
     html.AnchorElement(href: url)
       ..setAttribute("download", "${project.name}_config.json")
@@ -101,7 +90,13 @@ class StorageHelperImpl implements StorageHelperInterface {
 
   @override
   Future<void> saveProjectList(List<Project> projects) async {
-    final projectsJson = jsonEncode(projects.map((e) => e.toJson(includeLabels: false)).toList());
+    // ✅ 옵션 A: 레지스트리에도 슬림화된 DataInfo만 저장
+    final list = projects.map((p) {
+      final j = p.toJson(includeLabels: false);
+      j['dataInfos'] = (j['dataInfos'] as List).map((e) => DataInfo.fromJson((e as Map).cast<String, dynamic>()).toSlimJson()).toList();
+      return j;
+    }).toList();
+    final projectsJson = jsonEncode(list);
     html.window.localStorage[_kProjectListKey] = projectsJson;
   }
 
@@ -177,13 +172,15 @@ class StorageHelperImpl implements StorageHelperInterface {
     final storageKey = _labelsKey(projectId);
 
     final entries = labels
-        .map((m) => <String, dynamic>{
-              'data_id': m.dataId,
-              'data_path': m.dataPath,
-              'labeled_at': m.labeledAt.toIso8601String(),
-              'mode': m.mode.name, // enum.name
-              'label_data': LabelModelConverter.toJson(m),
-            })
+        .map(
+          (m) => <String, dynamic>{
+            'data_id': m.dataId,
+            'data_path': m.dataPath,
+            'labeled_at': m.labeledAt.toIso8601String(),
+            'mode': m.mode.name, // enum.name
+            'label_data': LabelModelConverter.toJson(m),
+          },
+        )
         .toList();
 
     html.window.localStorage[storageKey] = jsonEncode(entries);
@@ -203,7 +200,7 @@ class StorageHelperImpl implements StorageHelperInterface {
               ? LabelingMode.values.firstWhere((m) => m.name == e['mode'], orElse: () => LabelingMode.singleClassification)
               : LabelingMode.singleClassification,
           e, // ✅ 래퍼 전체 전달
-        )
+        ),
     ];
   }
 
@@ -227,29 +224,42 @@ class StorageHelperImpl implements StorageHelperInterface {
   Future<String> exportAllLabels(Project project, List<LabelModel> labels, List<DataInfo> fileDataList) async {
     final archive = Archive();
 
-    // 1) 원본 파일(base64 → bytes)
+    // 1) 원본 파일: base64 우선, 없으면 http(s)로 fetch하여 포함 (CORS/인증 실패 시 생략)
     for (final info in fileDataList) {
-      if (info.base64Content == null || info.base64Content!.isEmpty) continue;
-      final bytes = base64Decode(_stripDataUrl(info.base64Content!));
-      archive.addFile(ArchiveFile(info.fileName, bytes.length, bytes));
+      Uint8List? bytes;
+      final b64 = info.base64Content?.trim();
+      if (b64 != null && b64.isNotEmpty) {
+        final raw = b64.contains(',') ? b64.split(',').last : b64;
+        bytes = Uint8List.fromList(base64Decode(raw));
+      } else if (info.filePath != null && info.filePath!.startsWith('http')) {
+        try {
+          final resp = await http.get(Uri.parse(info.filePath!));
+          if (resp.statusCode == 200) bytes = resp.bodyBytes;
+        } catch (_) {
+          // CORS/인증 등으로 실패하면 포함하지 않음
+        }
+      }
+      if (bytes != null) archive.addFile(ArchiveFile(info.fileName, bytes.length, bytes));
     }
 
-    // 2) labels.json (표준 래퍼) — 혼합 모드 가능성 방어를 위해 각 라벨의 mode 사용
+    // 2) labels.json (표준 래퍼)
     final entries = labels
-        .map((m) => <String, dynamic>{
-              'data_id': m.dataId,
-              'data_path': m.dataPath,
-              'labeled_at': m.labeledAt.toIso8601String(),
-              'mode': m.mode.name,
-              'label_data': LabelModelConverter.toJson(m),
-            })
+        .map(
+          (m) => <String, dynamic>{
+            'data_id': m.dataId,
+            'data_path': m.dataPath,
+            'labeled_at': m.labeledAt.toIso8601String(),
+            'mode': m.mode.name,
+            'label_data': LabelModelConverter.toJson(m),
+          },
+        )
         .toList();
     final text = jsonEncode(entries);
     archive.addFile(ArchiveFile('labels.json', text.length, utf8.encode(text)));
 
     // 3) ZIP → 브라우저 다운로드 트리거
     final zip = ZipEncoder().encode(archive);
-    final blob = html.Blob([zip]);
+    final blob = html.Blob([zip], 'application/zip');
     final url = html.Url.createObjectUrlFromBlob(blob);
     html.AnchorElement(href: url)
       ..setAttribute('download', '${project.name}_labels.zip')
@@ -305,9 +315,7 @@ class StorageHelperImpl implements StorageHelperInterface {
       throw StateError('HTTP ${resp.statusCode} while fetching $path');
     }
 
-    throw UnsupportedError(
-      'Web cannot read local OS paths. Provide base64Content or an http(s) URL in DataInfo.',
-    );
+    throw UnsupportedError('Web cannot read local OS paths. Provide base64Content or an http(s) URL in DataInfo.');
   }
 
   /// Web: 바이트 → Blob → Object URL. 이미 objectUrl이 있으면 그대로 사용.
