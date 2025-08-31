@@ -1,0 +1,38 @@
+name: traffic2badge
+
+on:
+  schedule:
+    - cron: '1 0 * * *'  # 매일 UTC 00:01 (KST 09:01쯤)
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # docs 브랜치로 푸시
+    steps:
+      - uses: actions/checkout@v4
+
+      # GitHub 트래픽(views/clones)을 읽어 뱃지(SVG) 생성
+      - id: traffic
+        uses: yi-Xu-0100/traffic-to-badge@v1.4.0
+        with:
+          my_token: ${{ secrets.PAT_LABLER }}
+
+          # (선택) 색상 커스터마이즈
+          clones_color: brightgreen
+          total_clones_color: brightgreen
+          views_color: blue
+          total_views_color: blue
+
+      # 생성된 뱃지만 docs 브랜치의 badges/ 경로로 배포
+      - name: Publish badges to docs/badges
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}  # 리포 기본 토큰으로 push
+          publish_branch: docs
+          publish_dir: ${{ steps.traffic.outputs.traffic_path }}  # 액션이 만든 폴더
+          destination_dir: badges
+          keep_files: true                 # 🔑 기존 웹앱/다른 파일 유지
+          enable_jekyll: false
+          commit_message: "chore(badge): update traffic badges [skip ci]"
