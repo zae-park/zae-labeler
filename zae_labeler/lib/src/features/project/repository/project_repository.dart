@@ -51,7 +51,19 @@ class ProjectRepository {
   /// 전체 프로젝트 리스트 스냅샷을 저장합니다.
   /// @param list 저장할 전체 [Project] 배열
   Future<void> saveAll(List<Project> list) async {
-    await storageHelper.saveProjectList(list);
+    final sanitized = list
+        .map((p) {
+          final dedup = <String, DataInfo>{};
+          for (final d in p.dataInfos) {
+            // filePath|fileName 기준으로 필터 (필요 시 해시/사이즈 등으로 강화)
+            final key = '${d.filePath ?? ''}|${d.fileName}';
+            dedup[key] = d.slimmedForPersist();
+          }
+          return p.copyWith(dataInfos: dedup.values.toList(growable: false));
+        })
+        .toList(growable: false);
+
+    await storageHelper.saveProjectList(sanitized);
   }
 
   /// 프로젝트를 삭제합니다.
