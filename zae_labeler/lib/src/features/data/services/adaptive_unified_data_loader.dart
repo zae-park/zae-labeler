@@ -1,6 +1,5 @@
 // lib/src/features/data/services/adaptive_unified_data_loader.dart
 import 'package:flutter/foundation.dart' show debugPrint;
-import 'package:zae_labeler/src/core/models/data/data_info.dart';
 import 'package:zae_labeler/src/core/models/data/unified_data.dart';
 import 'package:zae_labeler/src/core/models/project/project_model.dart';
 import 'package:zae_labeler/src/features/data/services/unified_data_service.dart';
@@ -25,8 +24,7 @@ class AdaptiveUnifiedDataLoader {
   Future<List<UnifiedData>> load(Project project) async {
     if (project.dataInfos.isEmpty) {
       debugPrint("⚠️ [AdaptiveLoader] No dataInfos → returning placeholder");
-      final u = await uds.fromDataInfo(DataInfo.create(fileName: 'untitled'));
-      return [u];
+      return [uds.empty()];
     }
 
     final futures = project.dataInfos.map((info) => uds.fromDataInfo(info));
