@@ -22,8 +22,10 @@ class ProjectListViewModel extends ChangeNotifier {
   final Set<String> _requestedSummaryIds = {};
 
   bool _isLoading = false;
+  bool _isPreloadingSummaries = false;
 
   bool get isLoading => _isLoading;
+  bool get isPreloadingSummaries => _isPreloadingSummaries;
   List<ProjectViewModel> get projectVMList => _projectVMs.values.toList(growable: false);
   Map<String, LabelingSummary?> get summaries => _summaries;
 
@@ -119,6 +121,27 @@ class ProjectListViewModel extends ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  Future<void> fetchAllSummaries({bool force = false, int concurrency = 4}) async {
+    if (_isPreloadingSummaries) return;
+    _isPreloadingSummaries = true;
+    notifyListeners();
+
+    try {
+      // 현재 보유한 프로젝트 VM들에서 id 목록 추출
+      final ids = _projectVMs.keys.toList(growable: false);
+      if (ids.isEmpty) return;
+
+      // 간단한 "배치 병렬" 처리(과도한 동시 호출 방지)
+      for (var i = 0; i < ids.length; i += concurrency) {
+        final batch = ids.sublist(i, i + concurrency > ids.length ? ids.length : i + concurrency);
+        await Future.wait([for (final id in batch) fetchSummary(id, force: force)]);
+      }
+    } finally {
+      _isPreloadingSummaries = false;
+      notifyListeners();
+    }
   }
 
   ProjectViewModel createNewProjectVM() {
