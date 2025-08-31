@@ -18,7 +18,10 @@ class ProjectTile extends StatelessWidget {
   void _openLabelingPage(BuildContext context) async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(settings: const RouteSettings(name: '/labeling'), builder: (_) => LabelingPage(project: vm.project)),
+      MaterialPageRoute(
+        settings: const RouteSettings(name: '/labeling'),
+        builder: (_) => LabelingPage(project: vm.project),
+      ),
     );
 
     // ✅ 라벨링 후 summary 갱신
@@ -78,7 +81,7 @@ class ProjectTile extends StatelessWidget {
     final summary = listVM.summaries[projectId];
 
     // ✅ 요약이 아직 없으면 최초 1회 로드
-    if (summary == null) {
+    if (summary == null && !listVM.isPreloadingSummaries) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (context.mounted) {
           context.read<ProjectListViewModel>().fetchSummary(projectId);
@@ -109,12 +112,21 @@ class ProjectTile extends StatelessWidget {
                     runSpacing: 8,
                     children: [
                       ElevatedButton.icon(
-                          onPressed: () => _openLabelingPage(context), icon: const Icon(Icons.play_arrow), label: Text(context.l10n.projectTile_label)),
+                        onPressed: () => _openLabelingPage(context),
+                        icon: const Icon(Icons.play_arrow),
+                        label: Text(context.l10n.projectTile_label),
+                      ),
                       OutlinedButton.icon(onPressed: () => _openEditPage(context), icon: const Icon(Icons.edit), label: Text(context.l10n.projectTile_edit)),
                       OutlinedButton.icon(
-                          onPressed: () => vm.downloadProjectConfig(), icon: const Icon(Icons.download), label: Text(context.l10n.projectTile_download)),
+                        onPressed: () => vm.downloadProjectConfig(),
+                        icon: const Icon(Icons.download),
+                        label: Text(context.l10n.projectTile_download),
+                      ),
                       OutlinedButton.icon(
-                          onPressed: () => vm.shareProject(context), icon: const Icon(Icons.share), label: Text(context.l10n.projectTile_share)),
+                        onPressed: () => vm.shareProject(context),
+                        icon: const Icon(Icons.share),
+                        label: Text(context.l10n.projectTile_share),
+                      ),
                       TextButton.icon(
                         onPressed: () => _confirmDelete(context),
                         icon: const Icon(Icons.delete, color: Colors.red),
@@ -130,7 +142,11 @@ class ProjectTile extends StatelessWidget {
 
             // 🔸 우측 인디케이터
             summary != null
-                ? SizedBox(width: 110, height: 110, child: LabelingCircularProgressButton(summary: summary, onPressed: () => _openLabelingPage(context)))
+                ? SizedBox(
+                    width: 110,
+                    height: 110,
+                    child: LabelingCircularProgressButton(summary: summary, onPressed: () => _openLabelingPage(context)),
+                  )
                 : const SizedBox(width: 64, height: 64, child: Center(child: CircularProgressIndicator(strokeWidth: 3))),
           ],
         ),
