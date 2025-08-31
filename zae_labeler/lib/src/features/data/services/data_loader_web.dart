@@ -94,9 +94,9 @@ class WebDataLoader implements DataLoader {
       }
     }
 
-    // 1) 경로가 없으면 타입만 세팅(뷰어가 '내용 없음' 처리)
+    // 1) 경로/캐시 모두 없으면 → payload 없는 typed UD를 만들지 말고 안전하게 unsupported
     if (path == null || path.isEmpty) {
-      return UnifiedData(dataInfo: info, fileType: type);
+      return UnifiedData(dataInfo: info, fileType: FileType.unsupported);
     }
 
     // 2) 클라우드/네트워크 로드
@@ -124,7 +124,8 @@ class WebDataLoader implements DataLoader {
       }
     } catch (e) {
       debugPrint('[WebDataLoader.fromDataInfo] $path load failed: $e');
-      return UnifiedData(dataInfo: info, fileType: type);
+      // 실패 시에도 '빈 payload + typed'는 금지
+      return UnifiedData(dataInfo: info, fileType: FileType.unsupported);
     }
   }
 }
