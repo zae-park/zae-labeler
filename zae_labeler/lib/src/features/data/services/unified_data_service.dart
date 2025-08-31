@@ -13,7 +13,9 @@ class UnifiedDataService {
 
   Future<UnifiedData> fromDataInfo(DataInfo info) {
     debugPrint('[UniDataService] id=${info.id} name=${info.fileName} path=${info.filePath} mime=${info.mimeType}');
-    // 필요시 여기서 추가 전처리/후처리(파싱 규칙 등)를 넣을 수 있습니다.
+    // 경로/캐시가 전혀 없으면 바로 unsupported로 (웹 재접속/캐시 미존재 방어)
+    final hasContent = (info.filePath?.isNotEmpty ?? false) || (info.base64Content?.isNotEmpty ?? false) || (info.objectUrl?.isNotEmpty ?? false);
+    if (!hasContent) return Future.value(UnifiedData(dataInfo: info, fileType: FileType.unsupported));
     return _loader.fromDataInfo(info);
   }
 
