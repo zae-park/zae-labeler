@@ -414,6 +414,42 @@ class CloudStorageHelper implements StorageHelperInterface {
     return objectKey;
   }
 
+  // ==============================
+  // 📌 Project Upload (Cloud 우선)
+  // ==============================
+
+  String _projectObjectPath(String projectId, String objectKey) => 'users/$_uid/projects/$projectId/$objectKey'; // ✅ 규칙과 일치
+
+  @override
+  Future<String> uploadProjectText(String projectId, String objectKey, String text, {String? contentType}) async {
+    final full = _projectObjectPath(projectId, objectKey);
+    final ref = storage.ref().child(full);
+    await ref.putData(Uint8List.fromList(utf8.encode(text)), fb_storage.SettableMetadata(contentType: contentType ?? 'text/plain; charset=utf-8'));
+    return full; // 이 값을 DataInfo.filePath로 사용
+  }
+
+  @override
+  Future<String> uploadProjectBase64(String projectId, String objectKey, String rawBase64, {String? contentType}) async {
+    final full = _projectObjectPath(projectId, objectKey);
+    final ref = storage.ref().child(full);
+    await ref.putData(base64Decode(rawBase64), fb_storage.SettableMetadata(contentType: contentType ?? 'application/octet-stream'));
+    return full;
+  }
+
+  @override
+  Future<String> uploadProjectBytes(String projectId, String objectKey, Uint8List bytes, {String? contentType}) async {
+    final full = _projectObjectPath(projectId, objectKey);
+    final ref = storage.ref().child(full);
+    await ref.putData(bytes, fb_storage.SettableMetadata(contentType: contentType ?? 'application/octet-stream'));
+    return full;
+  }
+
+  // (선택) 업로드 재시도 시간 단축: 네트워크 이슈 시 빠르게 실패하도록
+  CloudStorageHelper() {
+    storage.setMaxUploadRetryTime(const Duration(seconds: 15));
+    storage.setMaxOperationRetryTime(const Duration(seconds: 20));
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
   // 🔧 편의 메서드(인터페이스 외) — 선택 사용
   // ─────────────────────────────────────────────────────────────────────────
@@ -423,7 +459,12 @@ class CloudStorageHelper implements StorageHelperInterface {
   Future<void> saveSingleProject(Project project) async {
     final doc = _projectsCol.doc(project.id);
     final j = project.toJson(includeLabels: false);
-    j['dataInfos'] = project.dataInfos.map((e) => e.slimmedForPersist().toSlimJson()).toList();
+    j['dataInfos'] = project.dataInfos.map((e) {
+      final hasPath = (e.filePath?.isNotEmpty ?? false);
+      final hasB64 = (e.base64Content?.isNotEmpty ?? false);
+      // 업로드 성공 → 슬림 저장 / 업로드 실패 → base64 보존
+      return hasPath ? e.slimmedForPersist().toSlimJson() : (hasB64 ? e.toJson() : e.slimmedForPersist().toSlimJson());
+    }).toList();
     await doc.set(j, SetOptions(merge: true));
   }
 

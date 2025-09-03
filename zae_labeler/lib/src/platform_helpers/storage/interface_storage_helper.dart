@@ -155,4 +155,16 @@ abstract class StorageHelperInterface {
 
   /// 바이트 데이터를 업로드하고 경로(키)를 반환합니다.
   Future<String> uploadBytes(String objectKey, Uint8List bytes, {String? contentType});
+
+  // ==============================
+  // 📌 Project Upload (Cloud 우선)
+  // ==============================
+  /// 프로젝트 하위(objectKey는 'data/..' 같은 상대 경로)로 텍스트 업로드 후 저장 키를 반환
+  Future<String> uploadProjectText(String projectId, String objectKey, String text, {String? contentType});
+
+  /// 프로젝트 하위로 raw base64 업로드
+  Future<String> uploadProjectBase64(String projectId, String objectKey, String rawBase64, {String? contentType});
+
+  /// 프로젝트 하위로 바이트 업로드
+  Future<String> uploadProjectBytes(String projectId, String objectKey, Uint8List bytes, {String? contentType});
 }

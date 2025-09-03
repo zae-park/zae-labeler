@@ -392,4 +392,20 @@ class StorageHelperImpl implements StorageHelperInterface {
     await f.writeAsBytes(bytes);
     return f.path;
   }
+
+  // ==============================
+  // 📌 Project Upload (Cloud 우선)
+  // ==============================
+  @override
+  Future<String> uploadProjectText(String projectId, String objectKey, String text, {String? contentType}) async =>
+      UnsupportedError('Project-scoped upload is not supported in Native environment.').toString();
+
+  @override
+  Future<String> uploadProjectBase64(String projectId, String objectKey, String rawBase64, {String? contentType}) async =>
+      UnsupportedError('Project-scoped upload is not supported in Native environment.').toString();
+
+  /// 프로젝트 하위로 바이트 업로드
+  @override
+  Future<String> uploadProjectBytes(String projectId, String objectKey, Uint8List bytes, {String? contentType}) async =>
+      UnsupportedError('Project-scoped upload is not supported in Native environment.').toString();
 }
