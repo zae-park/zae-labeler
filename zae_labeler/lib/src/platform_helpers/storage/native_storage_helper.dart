@@ -361,4 +361,35 @@ class StorageHelperImpl implements StorageHelperInterface {
       }
     }
   }
+
+  // ==============================
+  // 📌 Object Upload (Cloud 우선)
+  // ==============================
+  Future<File> _fileFromKey(String objectKey) async {
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File(p.join(dir.path, objectKey));
+    await file.parent.create(recursive: true);
+    return file;
+  }
+
+  @override
+  Future<String> uploadText(String objectKey, String text, {String? contentType}) async {
+    final f = await _fileFromKey(objectKey);
+    await f.writeAsString(text);
+    return f.path;
+  }
+
+  @override
+  Future<String> uploadBase64(String objectKey, String rawBase64, {String? contentType}) async {
+    final f = await _fileFromKey(objectKey);
+    await f.writeAsBytes(base64Decode(rawBase64));
+    return f.path;
+  }
+
+  @override
+  Future<String> uploadBytes(String objectKey, Uint8List bytes, {String? contentType}) async {
+    final f = await _fileFromKey(objectKey);
+    await f.writeAsBytes(bytes);
+    return f.path;
+  }
 }

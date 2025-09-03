@@ -70,6 +70,15 @@ class SwitchableStorageHelper with ChangeNotifier implements StorageHelperInterf
   @override
   Future<void> clearAllCache() => _delegate.clearAllCache();
 
+  // Upload delegation
+  @override
+  Future<String> uploadText(String objectKey, String text, {String? contentType}) => _delegate.uploadText(objectKey, text, contentType: contentType);
+  @override
+  Future<String> uploadBase64(String objectKey, String rawBase64, {String? contentType}) =>
+      _delegate.uploadBase64(objectKey, rawBase64, contentType: contentType);
+  @override
+  Future<String> uploadBytes(String objectKey, Uint8List bytes, {String? contentType}) => _delegate.uploadBytes(objectKey, bytes, contentType: contentType);
+
   @override
   Future<Uint8List> readDataBytes(DataInfo info) {
     debugPrint('[Switchable] readDataBytes -> ${_delegate.runtimeType} path=${info.filePath}');

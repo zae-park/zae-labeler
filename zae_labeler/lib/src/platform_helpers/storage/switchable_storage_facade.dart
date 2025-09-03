@@ -64,4 +64,11 @@ class SwitchableStorageFacade implements StorageHelperInterface {
 
   @override
   Future<void> clearAllCache() => _inner.clearAllCache();
+
+  @override
+  Future<String> uploadText(String objectKey, String text, {String? contentType}) => _inner.uploadText(objectKey, text, contentType: contentType);
+  @override
+  Future<String> uploadBase64(String objectKey, String rawBase64, {String? contentType}) => _inner.uploadBase64(objectKey, rawBase64, contentType: contentType);
+  @override
+  Future<String> uploadBytes(String objectKey, Uint8List bytes, {String? contentType}) => _inner.uploadBytes(objectKey, bytes, contentType: contentType);
 }

@@ -388,6 +388,32 @@ class CloudStorageHelper implements StorageHelperInterface {
   @override
   Future<void> clearAllCache() async {}
 
+  // ==============================
+  // 📌 Object Upload (Cloud 우선)
+  // ==============================
+  @override
+  Future<String> uploadText(String objectKey, String text, {String? contentType}) async {
+    final ref = storage.ref().child(objectKey);
+    final bytes = Uint8List.fromList(utf8.encode(text));
+    await ref.putData(bytes, fb_storage.SettableMetadata(contentType: contentType ?? 'text/plain; charset=utf-8'));
+    return objectKey; // raw 경로(키)를 filePath로 사용
+  }
+
+  @override
+  Future<String> uploadBase64(String objectKey, String rawBase64, {String? contentType}) async {
+    final ref = storage.ref().child(objectKey);
+    final bytes = base64Decode(rawBase64);
+    await ref.putData(bytes, fb_storage.SettableMetadata(contentType: contentType ?? 'application/octet-stream'));
+    return objectKey;
+  }
+
+  @override
+  Future<String> uploadBytes(String objectKey, Uint8List bytes, {String? contentType}) async {
+    final ref = storage.ref().child(objectKey);
+    await ref.putData(bytes, fb_storage.SettableMetadata(contentType: contentType ?? 'application/octet-stream'));
+    return objectKey;
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
   // 🔧 편의 메서드(인터페이스 외) — 선택 사용
   // ─────────────────────────────────────────────────────────────────────────

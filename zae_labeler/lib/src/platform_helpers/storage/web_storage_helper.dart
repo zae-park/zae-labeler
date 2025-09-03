@@ -350,4 +350,19 @@ class StorageHelperImpl implements StorageHelperInterface {
     }
     _blobUrls.clear();
   }
+
+  // ==============================
+  // 📌 Object Upload (Cloud 우선)
+  // ==============================
+  @override
+  Future<String> uploadText(String objectKey, String text, {String? contentType}) =>
+      Future.error(UnsupportedError('uploadText is not supported in Web local storage'));
+
+  @override
+  Future<String> uploadBase64(String objectKey, String rawBase64, {String? contentType}) =>
+      Future.error(UnsupportedError('uploadBase64 is not supported in Web local storage'));
+
+  @override
+  Future<String> uploadBytes(String objectKey, Uint8List bytes, {String? contentType}) =>
+      Future.error(UnsupportedError('uploadBytes is not supported in Web local storage'));
 }
