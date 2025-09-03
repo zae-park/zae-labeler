@@ -15,7 +15,8 @@ class UnifiedDataService {
     debugPrint('[UniDataService] id=${info.id} name=${info.fileName} path=${info.filePath} mime=${info.mimeType}');
     // 경로/캐시가 전혀 없으면 바로 unsupported로 (웹 재접속/캐시 미존재 방어)
     final hasContent = (info.filePath?.isNotEmpty ?? false) || (info.base64Content?.isNotEmpty ?? false) || (info.objectUrl?.isNotEmpty ?? false);
-    if (!hasContent) return Future.value(UnifiedData(dataInfo: info, fileType: FileType.unsupported));
+    // if (!hasContent) return Future.value(UnifiedData(dataInfo: info, fileType: FileType.unsupported));
+    if (!hasContent) debugPrint('[UniDataService] \t\t no content → delegate to loader for fallback');
     return _loader.fromDataInfo(info);
   }
 
