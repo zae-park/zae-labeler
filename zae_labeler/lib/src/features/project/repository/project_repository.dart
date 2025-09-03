@@ -1,5 +1,8 @@
 // lib/src/features/project/repository/project_repository.dart
+import 'dart:convert';
+
 import 'package:collection/collection.dart' show IterableExtension; // firstWhereOrNull
+import 'package:flutter/material.dart';
 import 'package:zae_labeler/src/core/models/label/label_types.dart';
 import '../../../core/models/data/data_info.dart';
 import '../../../core/models/project/project_model.dart';
@@ -51,19 +54,21 @@ class ProjectRepository {
   /// 전체 프로젝트 리스트 스냅샷을 저장합니다.
   /// @param list 저장할 전체 [Project] 배열
   Future<void> saveAll(List<Project> list) async {
-    final sanitized = list
-        .map((p) {
-          final dedup = <String, DataInfo>{};
-          for (final d in p.dataInfos) {
-            // filePath|fileName 기준으로 필터 (필요 시 해시/사이즈 등으로 강화)
-            final key = '${d.filePath ?? ''}|${d.fileName}';
-            dedup[key] = d.slimmedForPersist();
-          }
-          return p.copyWith(dataInfos: dedup.values.toList(growable: false));
-        })
-        .toList(growable: false);
-
-    await storageHelper.saveProjectList(sanitized);
+    final fixed = <Project>[];
+    for (final proj in list) {
+      final repaired = <DataInfo>[];
+      for (final d in proj.dataInfos) {
+        repaired.add(await _ensureUploadedAndPath(proj.id, d));
+      }
+      // 중복 제거 (path|name 기준)
+      final dedup = <String, DataInfo>{};
+      for (final d in repaired) {
+        final key = '${d.filePath ?? ''}|${d.fileName}';
+        dedup[key] = d;
+      }
+      fixed.add(proj.copyWith(dataInfos: List<DataInfo>.unmodifiable(dedup.values)));
+    }
+    await storageHelper.saveProjectList(fixed);
   }
 
   /// 프로젝트를 삭제합니다.
@@ -196,5 +201,60 @@ class ProjectRepository {
     final updated = update(project);
     await saveProject(updated);
     return updated;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 업로드/경로 보장
+  // ─────────────────────────────────────────────────────────────────────────
+  Future<DataInfo> _ensureUploadedAndPath(String projectId, DataInfo d) async {
+    final hasPath = (d.filePath?.isNotEmpty ?? false);
+    if (hasPath) return d.slimmedForPersist();
+
+    final b64 = d.base64Content?.trim();
+    if (b64 == null || b64.isEmpty) {
+      // 업로드 불가 → 폴백(현재 WebLoader가 빈 payload로 처리)
+      return d;
+    }
+
+    final ext = '.${d.extension}'.toLowerCase();
+    final mime = (d.mimeType ?? '').toLowerCase();
+    final isJson = mime == 'application/json' || ext == '.json';
+    final isCsv = mime == 'text/csv' || ext == '.csv';
+    final isImage = mime.startsWith('image/') || ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'].contains(ext);
+
+    final normalized = d.normalizedFileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+    final objectKey = 'projects/$projectId/data/${d.id}_$normalized';
+
+    String path;
+    try {
+      if (isJson) {
+        final raw = _stripDataUrl(b64);
+        final text = utf8.decode(base64Decode(raw));
+        // 빠른 파싱 검증
+        jsonDecode(text);
+        path = await storageHelper.uploadText(objectKey, text, contentType: 'application/json; charset=utf-8');
+      } else if (isCsv) {
+        final raw = _stripDataUrl(b64);
+        final text = utf8.decode(base64Decode(raw));
+        path = await storageHelper.uploadText(objectKey, text, contentType: 'text/csv; charset=utf-8');
+      } else if (isImage) {
+        final raw = _stripDataUrl(b64);
+        path = await storageHelper.uploadBase64(objectKey, raw, contentType: (d.mimeType ?? 'image/*'));
+      } else {
+        final rawBytes = base64Decode(_stripDataUrl(b64));
+        path = await storageHelper.uploadBytes(objectKey, rawBytes, contentType: (d.mimeType ?? 'application/octet-stream'));
+      }
+    } catch (e) {
+      // Cloud 미지원(delegate가 Web/Native) 등인 경우 보존 저장으로 폴백
+      debugPrint('⚠️ _ensureUploadedAndPath failed: $e');
+      return d; // base64를 그대로 둠
+    }
+
+    return d.copyWith(filePath: path).slimmedForPersist();
+  }
+
+  String _stripDataUrl(String s) {
+    final i = s.indexOf(',');
+    return s.startsWith('data:') && i != -1 ? s.substring(i + 1) : s;
   }
 }
