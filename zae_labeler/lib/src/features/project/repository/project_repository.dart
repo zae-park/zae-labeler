@@ -223,7 +223,7 @@ class ProjectRepository {
     final isImage = mime.startsWith('image/') || ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'].contains(ext);
 
     final normalized = d.normalizedFileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
-    final objectKey = 'projects/$projectId/data/${d.id}_$normalized';
+    final objectName = 'data/${d.id}_$normalized';
 
     String path;
     try {
@@ -232,17 +232,17 @@ class ProjectRepository {
         final text = utf8.decode(base64Decode(raw));
         // 빠른 파싱 검증
         jsonDecode(text);
-        path = await storageHelper.uploadText(objectKey, text, contentType: 'application/json; charset=utf-8');
+        path = await storageHelper.uploadProjectText(projectId, objectName, text, contentType: 'application/json; charset=utf-8');
       } else if (isCsv) {
         final raw = _stripDataUrl(b64);
         final text = utf8.decode(base64Decode(raw));
-        path = await storageHelper.uploadText(objectKey, text, contentType: 'text/csv; charset=utf-8');
+        path = await storageHelper.uploadProjectText(projectId, objectName, text, contentType: 'text/csv; charset=utf-8');
       } else if (isImage) {
         final raw = _stripDataUrl(b64);
-        path = await storageHelper.uploadBase64(objectKey, raw, contentType: (d.mimeType ?? 'image/*'));
+        path = await storageHelper.uploadProjectBase64(projectId, objectName, raw, contentType: (d.mimeType ?? 'image/*'));
       } else {
         final rawBytes = base64Decode(_stripDataUrl(b64));
-        path = await storageHelper.uploadBytes(objectKey, rawBytes, contentType: (d.mimeType ?? 'application/octet-stream'));
+        path = await storageHelper.uploadProjectBytes(projectId, objectName, rawBytes, contentType: (d.mimeType ?? 'application/octet-stream'));
       }
     } catch (e) {
       // Cloud 미지원(delegate가 Web/Native) 등인 경우 보존 저장으로 폴백
