@@ -103,10 +103,17 @@ class CloudStorageHelper implements StorageHelperInterface {
     for (final project in projects) {
       final docRef = _projectsCol.doc(project.id);
       final j = project.toJson(includeLabels: false);
-      j['dataInfos'] = project.dataInfos
-          .map((e) => e.slimmedForPersist().toSlimJson()) // ✅ 옵션 A 일관 적용
-          .toList();
+      j['dataInfos'] = project.dataInfos.map((e) {
+        final hasPath = (e.filePath?.isNotEmpty ?? false);
+        final hasB64 = (e.base64Content?.isNotEmpty ?? false);
+        // 업로드 성공 → 슬림 저장, 실패 → base64 보존 저장
+        return hasPath ? e.slimmedForPersist().toSlimJson() : (hasB64 ? e.toJson() : e.slimmedForPersist().toSlimJson());
+      }).toList();
       batch.set(docRef, j, SetOptions(merge: true));
+      debugPrint(
+        '[CloudSave] ${project.id} dataInfos='
+        '${project.dataInfos.map((d) => "(${d.fileName},path=${d.filePath != null},b64=${(d.base64Content?.isNotEmpty ?? false)})").join(", ")}',
+      );
     }
     await batch.commit();
   }
