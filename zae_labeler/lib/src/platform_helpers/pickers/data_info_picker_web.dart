@@ -20,8 +20,13 @@ class PlatformDataInfoPicker implements DataInfoPicker {
   static const _uploadTimeout = Duration(seconds: 12); // ⏱ 업로드 타임아웃
   static const _urlTimeout = Duration(seconds: 8); // ⏱ URL 타임아웃
 
+  // 프로젝트 컨텍스트를 받는 버전으로 변경 (필요시 기존 pick()은 래핑)
+  Future<List<DataInfo>> pickForProject(String projectId) async => _pickImpl(projectId: projectId);
+
   @override
-  Future<List<DataInfo>> pick() async {
+  Future<List<DataInfo>> pick() async => _pickImpl(projectId: 'misc');
+
+  Future<List<DataInfo>> _pickImpl({required String projectId}) async {
     final res = await FilePicker.platform.pickFiles(
       allowMultiple: true,
       withData: true,
@@ -68,17 +73,9 @@ class PlatformDataInfoPicker implements DataInfoPicker {
 
       // 3) 업로드 + URL with timeout → 실패 시 세션 폴백
       try {
-        final url = await _uploadWithTimeout(uid: uid, fileName: f.name, bytes: bytes, contentType: ct);
-        out.add(
-          DataInfo.create(
-            fileName: f.name,
-            filePath: url, // ✅ 영구 복원 가능
-            mimeType: ct,
-            base64Content: null,
-            objectUrl: null,
-          ),
-        );
-        debugPrint('[Picker.web] added (cloud): ${f.name} -> $url');
+        final fullPath = await _uploadWithTimeout(uid: uid, projectId: projectId, fileName: f.name, bytes: bytes, contentType: ct);
+        out.add(DataInfo.create(fileName: f.name, filePath: fullPath, mimeType: ct, base64Content: null, objectUrl: null));
+        debugPrint('[Picker.web] added (cloud-path): ${f.name} -> $fullPath');
       } on TimeoutException catch (e) {
         debugPrint('⏳ [Picker.web] upload/url timeout for ${f.name}: $e');
         _addSessionFallback(out, f.name, bytes, ct, isJson, isImage);
@@ -92,18 +89,22 @@ class PlatformDataInfoPicker implements DataInfoPicker {
     return out;
   }
 
-  Future<String> _uploadWithTimeout({required String uid, required String fileName, required Uint8List bytes, required String contentType}) async {
-    final safe = fileName.replaceAll(RegExp(r'[^\w\-. ]+'), '_');
-    final path = 'users/$uid/uploads/${DateTime.now().millisecondsSinceEpoch}_$safe';
-    final ref = fb.FirebaseStorage.instance.ref(path);
-    debugPrint('[Picker.web] upload: $path ct=$contentType size=${bytes.length}');
+  Future<String> _uploadWithTimeout({
+    required String uid,
+    required String projectId,
+    required String fileName,
+    required Uint8List bytes,
+    required String contentType,
+  }) async {
+    final safe = fileName.replaceAll(RegExp(r'[^\w\\-. ]+'), '_');
+    // ✅ 프로젝트 스코프 + data 폴더 + 타임스탬프(or UUID) 접두
+    final fullPath = 'users/$uid/projects/$projectId/data/${DateTime.now().millisecondsSinceEpoch}_$safe';
+    final ref = fb.FirebaseStorage.instance.ref(fullPath);
+    debugPrint('[Picker.web] upload: $fullPath ct=$contentType size=${bytes.length}');
 
-    // ⏱ putData 타임아웃
-    final task = await ref.putData(bytes, fb.SettableMetadata(contentType: contentType)).timeout(_uploadTimeout);
-
-    // ⏱ getDownloadURL 타임아웃
-    final url = await task.ref.getDownloadURL().timeout(_urlTimeout);
-    return url;
+    await ref.putData(bytes, fb.SettableMetadata(contentType: contentType)).timeout(_uploadTimeout);
+    // 여기서 다운로드 URL은 만들지 않습니다. fullPath만 반환.
+    return fullPath; // ← 이 값을 DataInfo.filePath로 사용
   }
 
   void _addSessionFallback(List<DataInfo> out, String name, Uint8List bytes, String ct, bool isJson, bool isImage) {
