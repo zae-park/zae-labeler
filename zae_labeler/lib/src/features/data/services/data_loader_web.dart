@@ -63,15 +63,19 @@ class WebDataLoader implements DataLoader {
   @override
   Future<UnifiedData> fromDataInfo(DataInfo info) async {
     final type = _inferType(info);
+    debugPrint(
+      '[WebLoader] file=${info.fileName} mime=${info.mimeType} ext=${p.extension(info.fileName)} '
+      'type=$type path=${info.filePath} hasB64=${(info.base64Content?.isNotEmpty ?? false)}',
+    );
+
     final path = info.filePath?.trim();
     final b64 = info.base64Content?.trim();
 
-    // 0) ✅ base64 우선(세션 캐시 또는 폴백)
+    // 0) base64 우선
     if (b64 != null && b64.isNotEmpty) {
       switch (type) {
         case FileType.image:
           {
-            // 뷰어가 raw base64를 기대한다면 strip만; dataURL을 기대한다면 prefix를 붙이세요.
             final raw = _stripDataUrl(b64);
             return UnifiedData(dataInfo: info, fileType: FileType.image, imageBase64: raw);
           }
@@ -79,14 +83,14 @@ class WebDataLoader implements DataLoader {
           {
             final raw = _stripDataUrl(b64);
             final csvText = utf8.decode(base64Decode(raw));
-            return UnifiedData(dataInfo: info, fileType: FileType.series, seriesData: _parseCsvToSeries(csvText));
+            final series = _parseCsvToSeries(csvText) ?? <double>[];
+            return UnifiedData(dataInfo: info, fileType: FileType.series, seriesData: series);
           }
         case FileType.object:
           {
-            // ✅ object 타입은 오직 objectData만!
             final raw = _stripDataUrl(b64);
             final jsonText = utf8.decode(base64Decode(raw));
-            final map = _safeParseJson(jsonText);
+            final map = _safeParseJson(jsonText) ?? <String, dynamic>{};
             return UnifiedData(dataInfo: info, fileType: FileType.object, objectData: map);
           }
         case FileType.unsupported:
@@ -94,9 +98,22 @@ class WebDataLoader implements DataLoader {
       }
     }
 
-    // 1) 경로/캐시 모두 없으면 → payload 없는 typed UD를 만들지 말고 안전하게 unsupported
+    // 1) 경로/캐시 모두 없음 → 타입 유지 + '빈 payload' 폴백
     if (path == null || path.isEmpty) {
-      return UnifiedData(dataInfo: info, fileType: FileType.unsupported);
+      switch (type) {
+        case FileType.object:
+          debugPrint('[WebLoader] no path/base64 → object EMPTY {}');
+          return UnifiedData(dataInfo: info, fileType: FileType.object, objectData: <String, dynamic>{});
+        case FileType.series:
+          debugPrint('[WebLoader] no path/base64 → series EMPTY []');
+          return UnifiedData(dataInfo: info, fileType: FileType.series, seriesData: <double>[]);
+        case FileType.image:
+          debugPrint('[WebLoader] no path/base64 → image EMPTY ""');
+          return UnifiedData(dataInfo: info, fileType: FileType.image, imageBase64: '');
+        case FileType.unsupported:
+          debugPrint('[WebLoader] no path/base64 → unsupported');
+          return UnifiedData(dataInfo: info, fileType: FileType.unsupported);
+      }
     }
 
     // 2) 클라우드/네트워크 로드
@@ -105,18 +122,17 @@ class WebDataLoader implements DataLoader {
         case FileType.object:
           {
             final map = await _cloud.readJsonAt(path);
-            return UnifiedData(dataInfo: info, fileType: FileType.object, objectData: map);
+            return UnifiedData(dataInfo: info, fileType: FileType.object, objectData: map ?? <String, dynamic>{});
           }
         case FileType.series:
           {
             final text = await _cloud.readTextAt(path);
-            final series = _parseCsvToSeries(text);
+            final series = _parseCsvToSeries(text) ?? <double>[];
             return UnifiedData(dataInfo: info, fileType: FileType.series, seriesData: series);
           }
         case FileType.image:
           {
-            final imgB64 = await _cloud.readImageBase64At(path);
-            // CloudStorageHelper.readImageBase64At()은 raw base64를 반환(주석 참조)
+            final imgB64 = await _cloud.readImageBase64At(path) ?? '';
             return UnifiedData(dataInfo: info, fileType: FileType.image, imageBase64: imgB64);
           }
         case FileType.unsupported:
@@ -124,8 +140,20 @@ class WebDataLoader implements DataLoader {
       }
     } catch (e) {
       debugPrint('[WebDataLoader.fromDataInfo] $path load failed: $e');
-      // 실패 시에도 '빈 payload + typed'는 금지
-      return UnifiedData(dataInfo: info, fileType: FileType.unsupported);
+      // 실패 시에도 타입 유지 + '빈 payload' 폴백
+      switch (type) {
+        case FileType.object:
+          debugPrint('[WebLoader] fallback after error → object EMPTY {}');
+          return UnifiedData(dataInfo: info, fileType: FileType.object, objectData: <String, dynamic>{});
+        case FileType.series:
+          debugPrint('[WebLoader] fallback after error → series EMPTY []');
+          return UnifiedData(dataInfo: info, fileType: FileType.series, seriesData: <double>[]);
+        case FileType.image:
+          debugPrint('[WebLoader] fallback after error → image EMPTY ""');
+          return UnifiedData(dataInfo: info, fileType: FileType.image, imageBase64: '');
+        case FileType.unsupported:
+          return UnifiedData(dataInfo: info, fileType: FileType.unsupported);
+      }
     }
   }
 }
