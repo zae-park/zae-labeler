@@ -29,6 +29,13 @@ class _ProjectListPageState extends State<ProjectListPage> {
   void initState() {
     super.initState();
     _checkOnboarding();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final listVM = context.read<ProjectListViewModel>();
+      // 리스트를 VM 생성자에서 loadProjects()로 이미 로딩한다면 이 줄만으로 충분
+      // 필요한 경우: await listVM.loadProjects();
+      await listVM.fetchAllSummaries(force: true, concurrency: 4);
+    });
   }
 
   Future<void> _checkOnboarding() async {
@@ -84,6 +91,23 @@ class _ProjectListPageState extends State<ProjectListPage> {
                   _checkOnboarding();
                 },
               ),
+              Consumer<ProjectListViewModel>(
+                builder: (_, vm, __) {
+                  if (vm.isPreloadingSummaries) {
+                    return const Padding(
+                      padding: EdgeInsets.only(right: 12),
+                      child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                    );
+                  }
+                  return IconButton(
+                    tooltip: '진행률 새로고침',
+                    icon: const Icon(Icons.refresh),
+                    onPressed: () async {
+                      await context.read<ProjectListViewModel>().fetchAllSummaries(force: true, concurrency: 4);
+                    },
+                  );
+                },
+              ),
               IconButton(icon: const Icon(Icons.refresh), tooltip: context.l10n.appbar_refresh, onPressed: () => projectListVM.loadProjects()),
               PopupMenuButton<String>(
                 onSelected: (value) => localeVM.changeLocale(value),
@@ -98,7 +122,9 @@ class _ProjectListPageState extends State<ProjectListPage> {
                   final vm = projectListVM.createNewProjectVM();
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => ChangeNotifierProvider<ProjectViewModel>.value(value: vm, child: const ConfigureProjectPage())),
+                    MaterialPageRoute(
+                      builder: (_) => ChangeNotifierProvider<ProjectViewModel>.value(value: vm, child: const ConfigureProjectPage()),
+                    ),
                   );
                 },
               ),

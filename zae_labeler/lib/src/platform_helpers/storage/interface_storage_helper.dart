@@ -69,23 +69,13 @@ abstract class StorageHelperInterface {
   /// - [dataPath]: 원본 파일 경로/파일명(웹은 주로 null)
   /// - [labelModel]: 저장할 라벨(내부적으로 위 **표준 스키마**로 직렬화)
   /// - Native/Web/Cloud 공통: **원본 데이터 파일은 이동/복사하지 않습니다.**
-  Future<void> saveLabelData(
-    String projectId,
-    String dataId,
-    String dataPath,
-    LabelModel labelModel,
-  );
+  Future<void> saveLabelData(String projectId, String dataId, String dataPath, LabelModel labelModel);
 
   /// 단일 데이터 항목의 **라벨**을 로드합니다.
   /// - 저장된 레코드에 `mode`가 있으면 그 값을 우선 사용하고,
   ///   없다면 인자로 받은 [mode]를 힌트로 사용해 복원합니다.
   /// - 존재하지 않으면 구현체가 예외를 던질 수 있습니다.
-  Future<LabelModel> loadLabelData(
-    String projectId,
-    String dataId,
-    String dataPath,
-    LabelingMode mode,
-  );
+  Future<LabelModel> loadLabelData(String projectId, String dataId, String dataPath, LabelingMode mode);
 
   // ==============================
   // 📌 Project-wide Label IO
@@ -119,11 +109,7 @@ abstract class StorageHelperInterface {
   ///   - Web: `base64Content`에서 바이트를 복원해 ZIP에 포함할 수 있음.
   /// - Cloud: 서버가 원본에 접근 가능하면 **라벨만(`labels.json`) 업로드**하는 구성이 권장됩니다.
   /// - 반환: 결과물의 경로 또는 URL(플랫폼별 의미 상이).
-  Future<String> exportAllLabels(
-    Project project,
-    List<LabelModel> labelModels,
-    List<DataInfo> fileDataList,
-  );
+  Future<String> exportAllLabels(Project project, List<LabelModel> labelModels, List<DataInfo> fileDataList);
 
   /// 외부로부터 **라벨을 불러옵니다**.
   /// - Native: 파일 피커로 `labels.json`(또는 ZIP 내 JSON)을 선택해 파싱.
@@ -157,4 +143,28 @@ abstract class StorageHelperInterface {
   /// - Web: Blob URL revoke, 인메모리 버퍼 정리
   /// - Cloud: 로컬 캐시가 없다면 보통 no-op
   Future<void> clearAllCache();
+
+  // ==============================
+  // 📌 Object Upload (Cloud 우선)
+  // ==============================
+  /// 텍스트(예: JSON/CSV)를 업로드하고 스토리지상의 경로(키)를 반환합니다.
+  Future<String> uploadText(String objectKey, String text, {String? contentType});
+
+  /// raw base64(접두사 없는 순수 base64)를 업로드하고 경로(키)를 반환합니다.
+  Future<String> uploadBase64(String objectKey, String rawBase64, {String? contentType});
+
+  /// 바이트 데이터를 업로드하고 경로(키)를 반환합니다.
+  Future<String> uploadBytes(String objectKey, Uint8List bytes, {String? contentType});
+
+  // ==============================
+  // 📌 Project Upload (Cloud 우선)
+  // ==============================
+  /// 프로젝트 하위(objectKey는 'data/..' 같은 상대 경로)로 텍스트 업로드 후 저장 키를 반환
+  Future<String> uploadProjectText(String projectId, String objectKey, String text, {String? contentType});
+
+  /// 프로젝트 하위로 raw base64 업로드
+  Future<String> uploadProjectBase64(String projectId, String objectKey, String rawBase64, {String? contentType});
+
+  /// 프로젝트 하위로 바이트 업로드
+  Future<String> uploadProjectBytes(String projectId, String objectKey, Uint8List bytes, {String? contentType});
 }

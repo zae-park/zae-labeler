@@ -350,4 +350,35 @@ class StorageHelperImpl implements StorageHelperInterface {
     }
     _blobUrls.clear();
   }
+
+  // ==============================
+  // 📌 Object Upload (Cloud 우선)
+  // ==============================
+  @override
+  Future<String> uploadText(String objectKey, String text, {String? contentType}) =>
+      Future.error(UnsupportedError('uploadText is not supported in Web local storage'));
+
+  @override
+  Future<String> uploadBase64(String objectKey, String rawBase64, {String? contentType}) =>
+      Future.error(UnsupportedError('uploadBase64 is not supported in Web local storage'));
+
+  @override
+  Future<String> uploadBytes(String objectKey, Uint8List bytes, {String? contentType}) =>
+      Future.error(UnsupportedError('uploadBytes is not supported in Web local storage'));
+
+  // ==============================
+  // 📌 Project Upload (Cloud 우선)
+  // ==============================
+  @override
+  Future<String> uploadProjectText(String projectId, String objectKey, String text, {String? contentType}) async =>
+      UnsupportedError('Project-scoped upload is not supported in Native environment.').toString();
+
+  @override
+  Future<String> uploadProjectBase64(String projectId, String objectKey, String rawBase64, {String? contentType}) async =>
+      UnsupportedError('Project-scoped upload is not supported in Native environment.').toString();
+
+  /// 프로젝트 하위로 바이트 업로드
+  @override
+  Future<String> uploadProjectBytes(String projectId, String objectKey, Uint8List bytes, {String? contentType}) async =>
+      UnsupportedError('Project-scoped upload is not supported in Native environment.').toString();
 }
