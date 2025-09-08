@@ -92,6 +92,7 @@ jobs:
           flutter-version: '3.35.1'
 
       - name: Enable desktop
+        shell: bash
         run: |
           case "${{ runner.os }}" in
             Windows) flutter config --enable-windows-desktop ;;
@@ -110,13 +111,14 @@ jobs:
         working-directory: ./zae_labeler
 
       - name: Build desktop
+        shell: bash
+        working-directory: ./zae_labeler
         run: |
-          case "${{ runner.os }}" in
+          case "$RUNNER_OS" in
             Windows) flutter build windows --release --dart-define=FLAVOR=production ;;
             macOS)   flutter build macos   --release --dart-define=FLAVOR=production ;;
             Linux)   flutter build linux   --release --dart-define=FLAVOR=production ;;
           esac
-        working-directory: ./zae_labeler
 
       - name: Package artifact
         shell: bash
