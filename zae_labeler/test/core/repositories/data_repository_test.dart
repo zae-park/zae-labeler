@@ -43,7 +43,7 @@ class FakeStorageHelper implements StorageHelperInterface {
 
 void main() {
   // ⬇️ DataInfo 간단 생성 (필요 시 네 실제 생성자에 맞춰 수정)
-  DataInfo di(String id) => DataInfo.fromJson({'id': id, 'path': '/$id'});
+  DataInfo di(String id) => DataInfo.fromJson({'id': id, 'fileName': 'test_datainfo', 'path': '/$id'});
 
   late Project base;
   late FakeStorageHelper storage;
