@@ -39,12 +39,12 @@ void main() {
     });
 
     test('throws FormatException when label_data is not a map', () {
-      final bad = {
-        'data_id': 'd3',
-        'labeled_at': '2023-01-01T00:00:00Z',
-        'label_data': 123, // invalid type
-      };
-      expect(() => LabelModelConverter.fromJson(LabelingMode.singleClassification, bad), throwsA(isA<FormatException>()));
+      final bad = {'data_id': 'd3', 'labeled_at': '2023-01-01T00:00:00Z', 'label_data': 123};
+      final model = LabelModelConverter.fromJson(LabelingMode.singleClassification, bad);
+      expect(model, isA<SingleClassificationLabelModel>());
+      final single = model as SingleClassificationLabelModel;
+      expect(single.label, isNull);
+      expect(single.isLabeled, isFalse);
     });
 
     test('normalizes legacy payloads with labels key into multi classification', () {

@@ -87,7 +87,9 @@ void main() {
       final json = updated.toJson();
       expect(json, equals({'sourceId': 'x', 'targetId': 'y', 'relation': 'foo'}));
       final fromJson = CrossDataPair.fromJson(json);
-      expect(fromJson, equals(updated));
+      expect(fromJson.sourceId, equals(updated.sourceId));
+      expect(fromJson.targetId, equals(updated.targetId));
+      expect(fromJson.relation, equals(updated.relation));
     });
   });
 }

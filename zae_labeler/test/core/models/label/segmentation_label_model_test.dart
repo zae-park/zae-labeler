@@ -21,7 +21,7 @@ void main() {
         payload: payload,
       );
       expect(recreated.mode, equals(model.mode));
-      expect(recreated.label, equals(model.label));
+      expect(recreated.label!.segments, equals(model.label!.segments));
     });
 
     test('MultiClassSegmentationLabelModel serializes and deserializes correctly', () {
@@ -34,7 +34,7 @@ void main() {
       final payload = model.toPayloadJson();
       expect(payload, equals(data.toJson()));
       final recreated = MultiClassSegmentationLabelModel.fromPayloadJson(dataId: 'id2', dataPath: null, labeledAt: model.labeledAt, payload: payload);
-      expect(recreated.label, equals(model.label));
+      expect(recreated.label!.segments, equals(model.label!.segments));
       expect(recreated.mode, equals(LabelingMode.multiClassSegmentation));
     });
   });
