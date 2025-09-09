@@ -99,6 +99,22 @@ jobs:
             macOS)   flutter config --enable-macos-desktop   ;;
             Linux)   flutter config --enable-linux-desktop    ;;
           esac
+      
+      # 플랫폼 스캐폴드 보장
+      - name: Ensure Windows platform project
+        if: runner.os == 'Windows'
+        working-directory: ./zae_labeler
+        run: flutter create --platforms=windows .
+
+      - name: Ensure Linux platform project
+        if: runner.os == 'Linux'
+        working-directory: ./zae_labeler
+        run: flutter create --platforms=linux .
+
+      - name: Ensure macOS platform project
+        if: runner.os == 'macOS'
+        working-directory: ./zae_labeler
+        run: flutter create --platforms=macos .
 
       - name: Install Linux build deps
         if: runner.os == 'Linux'
