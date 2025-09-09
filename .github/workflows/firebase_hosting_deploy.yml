@@ -153,8 +153,11 @@ jobs:
           fi
 
       - name: Upload to GitHub Release
+        shell: bash
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.prepare_and_web.outputs.tag }}   # ← 준비 잡에서 나온 tag
         run: |
-          TAG="${{ needs.prepare_and_web.outputs.tag }}"
+          # ART는 이전 스텝에서 GITHUB_ENV로 설정했다면 바로 사용 가능
           gh release upload "$TAG" "$ART" --clobber
+
