@@ -11,7 +11,6 @@ import 'package:zae_labeler/src/features/locale/view_models/locale_view_model.da
 import 'package:zae_labeler/src/features/project/view_models/project_view_model.dart';
 import '../../../../core/services/user_preference_service.dart';
 import '../../view_models/project_list_view_model.dart';
-// import '../../../../view_models/locale_view_model.dart';
 import '../../../../core/models/project/project_model.dart';
 import 'configuration_page.dart';
 import '../../../../views/dialogs/onboarding_dialog.dart';
@@ -30,11 +29,10 @@ class _ProjectListPageState extends State<ProjectListPage> {
     super.initState();
     _checkOnboarding();
 
+    // 첫 진입: 리스트는 VM 쪽에서 이미 로드된다는 가정하에, 진행률 프리로드만 수행
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final listVM = context.read<ProjectListViewModel>();
-      // 리스트를 VM 생성자에서 loadProjects()로 이미 로딩한다면 이 줄만으로 충분
-      // 필요한 경우: await listVM.loadProjects();
-      await listVM.fetchAllSummaries(force: true, concurrency: 4);
+      await listVM.preloadProgressForAll(force: true, concurrency: 4);
     });
   }
 
@@ -58,6 +56,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
       if (result != null) {
         final file = result.files.single;
         final content = file.bytes != null ? utf8.decode(file.bytes!) : await io.File(file.path!).readAsString();
+
         final jsonData = jsonDecode(content);
         final project = Project.fromJson(jsonData);
 
@@ -66,6 +65,9 @@ class _ProjectListPageState extends State<ProjectListPage> {
         await projectListVM.upsertProject(project);
 
         if (mounted) GlobalAlertManager.show(context, '${context.l10n.message_import_project_success}: ${project.name}', type: AlertType.success);
+
+        // 가져온 직후 진행률 프리로드 한 번 더
+        await projectListVM.preloadProgressForAll(force: true, concurrency: 4);
       }
     } catch (e) {
       if (mounted) GlobalAlertManager.show(context, '${context.l10n.message_import_project_failed}: $e', type: AlertType.error);
@@ -78,10 +80,16 @@ class _ProjectListPageState extends State<ProjectListPage> {
 
     return Consumer2<ProjectListViewModel, LocaleViewModel>(
       builder: (context, projectListVM, localeVM, child) {
+        final isPreloading = projectListVM.isPreloadingSummaries;
+        final done = projectListVM.preloadDone;
+        final total = projectListVM.preloadTotal;
+
         return Scaffold(
-          appBar: AppHeader(
-            title: loc.projectList_title,
+          appBar: AppBar(
+            title: Text(isPreloading ? '${loc.projectList_title}  •  $done/$total' : loc.projectList_title),
+            bottom: isPreloading ? const PreferredSize(preferredSize: Size.fromHeight(3), child: LinearProgressIndicator(minHeight: 3)) : null,
             actions: [
+              // 온보딩 다시 보기
               IconButton(
                 icon: const Icon(Icons.help),
                 tooltip: context.l10n.appbar_onboarding,
@@ -91,30 +99,34 @@ class _ProjectListPageState extends State<ProjectListPage> {
                   _checkOnboarding();
                 },
               ),
-              Consumer<ProjectListViewModel>(
-                builder: (_, vm, __) {
-                  if (vm.isPreloadingSummaries) {
-                    return const Padding(
-                      padding: EdgeInsets.only(right: 12),
-                      child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-                    );
-                  }
-                  return IconButton(
-                    tooltip: '진행률 새로고침',
-                    icon: const Icon(Icons.refresh),
-                    onPressed: () async {
-                      await context.read<ProjectListViewModel>().fetchAllSummaries(force: true, concurrency: 4);
-                    },
-                  );
+
+              // 진행률 프리로드 새로고침
+              IconButton(
+                tooltip: '진행률 새로고침',
+                icon: const Icon(Icons.autorenew),
+                onPressed: isPreloading ? null : () => context.read<ProjectListViewModel>().preloadProgressForAll(force: true, concurrency: 4),
+              ),
+
+              // 프로젝트 리스트 재로딩 (메타)
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                tooltip: context.l10n.appbar_refresh,
+                onPressed: () async {
+                  await projectListVM.loadProjects();
+                  // 메타 새로고침 후 진행률도 재계산(필요 시)
+                  await projectListVM.preloadProgressForAll(force: true, concurrency: 4);
                 },
               ),
-              IconButton(icon: const Icon(Icons.refresh), tooltip: context.l10n.appbar_refresh, onPressed: () => projectListVM.loadProjects()),
+
+              // 언어 변경
               PopupMenuButton<String>(
                 onSelected: (value) => localeVM.changeLocale(value),
                 itemBuilder: (context) => const [PopupMenuItem(value: 'en', child: Text('English')), PopupMenuItem(value: 'ko', child: Text('한국어'))],
                 icon: const Icon(Icons.language),
                 tooltip: context.l10n.appbar_language,
               ),
+
+              // 새 프로젝트 생성
               IconButton(
                 icon: const Icon(Icons.add),
                 tooltip: loc.appbar_project_create,
@@ -128,17 +140,25 @@ class _ProjectListPageState extends State<ProjectListPage> {
                   );
                 },
               ),
+
+              // 프로젝트 가져오기(JSON)
               IconButton(icon: const Icon(Icons.file_upload), tooltip: context.l10n.appbar_project_import, onPressed: () => _importProject(context)),
             ],
           ),
+
+          // 본문: 당겨서 진행률 프리로드 재시작
           body: projectListVM.projectVMList.isEmpty
               ? Center(child: Text(context.l10n.projectList_empty))
-              : ListView.builder(
-                  itemCount: projectListVM.projectVMList.length,
-                  itemBuilder: (context, index) {
-                    final vm = projectListVM.projectVMList[index];
-                    return ProjectTile(key: ValueKey(vm.project.id), vm: vm);
-                  },
+              : RefreshIndicator(
+                  onRefresh: () => projectListVM.preloadProgressForAll(force: true, concurrency: 4),
+                  child: ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: projectListVM.projectVMList.length,
+                    itemBuilder: (context, index) {
+                      final vm = projectListVM.projectVMList[index];
+                      return ProjectTile(key: ValueKey(vm.project.id), vm: vm);
+                    },
+                  ),
                 ),
         );
       },
