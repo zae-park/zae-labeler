@@ -21,6 +21,12 @@ class ProjectListViewModel extends ChangeNotifier {
   final Map<String, LabelingSummary?> _summaries = {};
   final Set<String> _requestedSummaryIds = {};
 
+  // 1) 이미 있는 상태값 옆에 진행 카운터 추가
+  int _preloadDone = 0;
+  int _preloadTotal = 0;
+  int get preloadDone => _preloadDone;
+  int get preloadTotal => _preloadTotal;
+
   bool _isLoading = false;
   bool _isPreloadingSummaries = false;
 
@@ -123,24 +129,38 @@ class ProjectListViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> preloadProgressForAll({bool force = false, int concurrency = 4}) async {
+    await fetchAllSummaries(force: force, concurrency: concurrency);
+  }
+
   Future<void> fetchAllSummaries({bool force = false, int concurrency = 4}) async {
     if (_isPreloadingSummaries) return;
     _isPreloadingSummaries = true;
+    _preloadDone = 0;
+
     notifyListeners();
 
     try {
-      // 현재 보유한 프로젝트 VM들에서 id 목록 추출
       final ids = _projectVMs.keys.toList(growable: false);
+      _preloadTotal = ids.length; // ✅ 총량 설정
       if (ids.isEmpty) return;
 
-      // 간단한 "배치 병렬" 처리(과도한 동시 호출 방지)
       for (var i = 0; i < ids.length; i += concurrency) {
         final batch = ids.sublist(i, i + concurrency > ids.length ? ids.length : i + concurrency);
-        await Future.wait([for (final id in batch) fetchSummary(id, force: force)]);
+        await Future.wait([for (final id in batch) _fetchSummaryAndCount(id, force: force)]);
       }
     } finally {
       _isPreloadingSummaries = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> _fetchSummaryAndCount(String id, {required bool force}) async {
+    try {
+      await fetchSummary(id, force: force);
+    } finally {
+      _preloadDone += 1; // ✅ 완료 카운트
+      notifyListeners(); // 상단 AppBar 진행 텍스트나 인디케이터 갱신
     }
   }
 
