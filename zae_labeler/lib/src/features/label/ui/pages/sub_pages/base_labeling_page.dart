@@ -127,16 +127,23 @@ class _BaseLabelingPageState<T extends LabelingViewModel> extends State<BaseLabe
     );
   }
 
-  /// 라벨링 뷰어 (이미지, 시계열 등)
-  Widget buildViewer(T vm) {
-    final dataId = vm.currentData.dataInfo.id;
+  /// 기본값 null: 기본 Viewer 사용.
+  /// 서브 페이지에서 Viewer를 완전히 교체하고 싶으면 이걸 오버라이드해 위젯을 반환.
+  @protected
+  Widget? buildViewerOverride(T vm) => null;
 
-    // ✅ 현재 아이템의 렌더 소스 준비(Blob URL or Bytes) → 준비된 소스로 ViewerBuilder 렌더
+  Widget buildViewer(T vm) {
+    // 1) 서브 페이지가 오버라이드 제공하면 그걸 사용
+    final custom = buildViewerOverride(vm);
+    if (custom != null) return custom;
+
+    // 2) 아니면 기존 공통 뷰어 로직 사용
+    final dataKey = vm.currentData.dataInfo.id;
     return FutureBuilder<void>(
-      key: ValueKey(dataId), // 데이터 아이디가 바뀔 때마다 FutureBuilder 재실행
-      future: vm.ensureRenderableReadyForCurrent(), // VM에 추가(또는 DataManager에 위임)
+      key: ValueKey(dataKey),
+      future: vm.ensureRenderableReadyForCurrent(),
       builder: (context, snap) {
-        final src = vm.currentRenderable(); // Object? (String URL | Uint8List | null)
+        final src = vm.currentRenderable();
         if (src == null) return const Center(child: CircularProgressIndicator());
         return ViewerBuilder.fromSource(source: src, data: vm.currentData);
       },
