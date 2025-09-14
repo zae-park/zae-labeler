@@ -10,14 +10,40 @@ import '../../../../../views/widgets/navigator.dart';
 import '../../../../../views/widgets/shared/labeling_progress.dart';
 import '../../../../../views/widgets/shared/viewer_builder.dart';
 
+/// 저장/동기화 콜백 시그니처
+typedef OnSaveCallback<T extends LabelingViewModel> = Future<void> Function(BuildContext context, T vm);
+
 /// BaseLabelingPage
-/// - 라벨링 페이지 공통 기능을 제공하는 추상 클래스
-/// - ClassificationLabelingPage 및 SegmentationLabelingPage에서 상속
-abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatelessWidget {
+/// - 라벨링 페이지 공통 기능 + 공통 AppBar를 제공하는 베이스 클래스
+/// - ClassificationLabelingPage, SegmentationLabelingPage 등에서 상속
+abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatefulWidget {
   final Project project;
   final T viewModel;
 
-  const BaseLabelingPage({super.key, required this.project, required this.viewModel});
+  /// 선택: 저장/동기화(Cloud Sync) 콜백 (주입 안되면 버튼 클릭 시 안내만 노출)
+  final OnSaveCallback<T>? onSave;
+
+  const BaseLabelingPage({super.key, required this.project, required this.viewModel, this.onSave});
+
+  /// 모드별 커스텀 UI(본문)에 해당 — 반드시 구현
+  Widget buildModeSpecificUI(T vm);
+
+  /// 숫자 키 처리 — 반드시 구현
+  void handleNumericKeyInput(T vm, int index);
+
+  @override
+  State<BaseLabelingPage<T>> createState() => _BaseLabelingPageState<T>();
+}
+
+class _BaseLabelingPageState<T extends LabelingViewModel> extends State<BaseLabelingPage<T>> {
+  bool _isSaving = false;
+  late final FocusNode _kbFocusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _kbFocusNode = FocusNode();
+  }
 
   void _finishLabelingAndPop(BuildContext context, T vm) {
     final ratio = vm.progressRatio;
@@ -26,26 +52,48 @@ abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatelessWi
     Navigator.pop(context, true);
   }
 
+  Future<void> _onSavePressed(T vm) async {
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
+    try {
+      if (widget.onSave != null) {
+        await widget.onSave!(context, vm);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('저장/동기화 콜백이 아직 연결되지 않았습니다.')));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('동기화 실패: $e')));
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) _finishLabelingAndPop(context, viewModel);
+        if (!didPop) _finishLabelingAndPop(context, widget.viewModel);
       },
-      child: ChangeNotifierProvider<T>(
-        create: (_) => viewModel,
-        // 필요하면 바로 초기 로드/프리로드 하게 lazy: false도 가능
-        // lazy: false,
+      child: ChangeNotifierProvider<T>.value(
+        value: widget.viewModel,
         child: Consumer<T>(
           builder: (context, vm, _) {
             return Scaffold(
-              appBar: buildAppBar(context),
+              appBar: _buildAppBar(context, vm),
               body: KeyboardListener(
-                focusNode: FocusNode(),
+                focusNode: _kbFocusNode,
                 autofocus: true,
                 onKeyEvent: (event) => _handleKeyEvent(event, vm),
-                child: Column(children: [Expanded(child: buildViewer(vm)), buildProgressBar(context, vm), buildModeSpecificUI(vm), buildNavigator(vm)]),
+                child: Column(
+                  children: [
+                    Expanded(child: buildViewer(vm)),
+                    buildProgressBar(context, vm),
+                    widget.buildModeSpecificUI(vm),
+                    buildNavigator(vm),
+                  ],
+                ),
               ),
             );
           },
@@ -54,17 +102,26 @@ abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatelessWi
     );
   }
 
-  /// 공통 AppBar
-  PreferredSizeWidget buildAppBar(BuildContext context) {
+  /// 공통 AppBar (제목 + zip 다운로드 + 저장/동기화 버튼)
+  PreferredSizeWidget _buildAppBar(BuildContext context, T vm) {
     final loc = AppLocalizations.of(context)!;
     return AppBar(
-      title: Text('${project.name} ${loc.projectTile_label}'),
+      title: Text('${widget.project.name} ${loc.projectTile_label}', overflow: TextOverflow.ellipsis),
       actions: [
+        // 저장/동기화(Cloud) 버튼
+        _isSaving
+            ? const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+              )
+            : IconButton(tooltip: '저장 / 클라우드 동기화', icon: const Icon(Icons.cloud_upload), onPressed: () => _onSavePressed(vm)),
+
+        // 기타 옵션(예: zip 압축 다운로드)
         PopupMenuButton<String>(
           onSelected: (value) {
-            if (value == 'zip') _downloadLabels(viewModel);
+            if (value == 'zip') _downloadLabels(vm);
           },
-          itemBuilder: (_) => const [PopupMenuItem<String>(value: 'zip', child: Text("zip 압축 후 다운로드"))],
+          itemBuilder: (_) => const [PopupMenuItem<String>(value: 'zip', child: Text('zip 압축 후 다운로드'))],
         ),
       ],
     );
@@ -72,8 +129,11 @@ abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatelessWi
 
   /// 라벨링 뷰어 (이미지, 시계열 등)
   Widget buildViewer(T vm) {
+    final dataId = vm.currentData.dataInfo.id;
+
     // ✅ 현재 아이템의 렌더 소스 준비(Blob URL or Bytes) → 준비된 소스로 ViewerBuilder 렌더
     return FutureBuilder<void>(
+      key: ValueKey(dataId), // 데이터 아이디가 바뀔 때마다 FutureBuilder 재실행
       future: vm.ensureRenderableReadyForCurrent(), // VM에 추가(또는 DataManager에 위임)
       builder: (context, snap) {
         final src = vm.currentRenderable(); // Object? (String URL | Uint8List | null)
@@ -84,7 +144,12 @@ abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatelessWi
   }
 
   /// 하단 네비게이터
-  Widget buildNavigator(T vm) => Column(children: [LabelingProgress(labelingVM: vm), NavigationButtons(onPrevious: vm.movePrevious, onNext: vm.moveNext)]);
+  Widget buildNavigator(T vm) => Column(
+    children: [
+      LabelingProgress(labelingVM: vm),
+      NavigationButtons(onPrevious: vm.movePrevious, onNext: vm.moveNext),
+    ],
+  );
 
   /// 라벨링 진행도 표시
   Widget buildProgressBar(BuildContext context, T vm) {
@@ -107,12 +172,7 @@ abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatelessWi
     );
   }
 
-  /// 모드별 커스텀 UI
-  Widget buildModeSpecificUI(T vm);
-
   /// 키보드 입력 처리 (숫자/이동)
-  void handleNumericKeyInput(T vm, int index);
-
   void _handleKeyEvent(KeyEvent event, T vm) {
     if (event is! KeyDownEvent) return;
 
@@ -122,7 +182,7 @@ abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatelessWi
       vm.moveNext();
     } else if (event.logicalKey.keyId >= LogicalKeyboardKey.digit0.keyId && event.logicalKey.keyId <= LogicalKeyboardKey.digit9.keyId) {
       final index = event.logicalKey.keyId - LogicalKeyboardKey.digit0.keyId - 1;
-      handleNumericKeyInput(vm, index);
+      widget.handleNumericKeyInput(vm, index);
     }
   }
 
