@@ -25,6 +25,11 @@ abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatefulWid
 
   const BaseLabelingPage({super.key, required this.project, required this.viewModel, this.onSave});
 
+  /// 기본값 null: 기본 Viewer 사용.
+  /// 서브 페이지에서 Viewer를 완전히 교체하고 싶으면 이걸 오버라이드해 위젯을 반환.
+  @protected
+  Widget? buildViewerOverride(BuildContext context, T vm) => null;
+
   /// 모드별 커스텀 UI(본문)에 해당 — 반드시 구현
   Widget buildModeSpecificUI(T vm);
 
@@ -127,14 +132,9 @@ class _BaseLabelingPageState<T extends LabelingViewModel> extends State<BaseLabe
     );
   }
 
-  /// 기본값 null: 기본 Viewer 사용.
-  /// 서브 페이지에서 Viewer를 완전히 교체하고 싶으면 이걸 오버라이드해 위젯을 반환.
-  @protected
-  Widget? buildViewerOverride(T vm) => null;
-
   Widget buildViewer(T vm) {
     // 1) 서브 페이지가 오버라이드 제공하면 그걸 사용
-    final custom = buildViewerOverride(vm);
+    final custom = widget.buildViewerOverride(context, vm);
     if (custom != null) return custom;
 
     // 2) 아니면 기존 공통 뷰어 로직 사용
