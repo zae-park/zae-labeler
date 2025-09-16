@@ -118,8 +118,9 @@ class ProjectListViewModel extends ChangeNotifier {
       final project = _projectVMs[projectId]?.project;
       if (project == null) return;
 
-      // Label 파사드에서 요약 계산 API를 노출한다고 가정
-      final summary = await appUseCases.label.computeSummary(projectId);
+      // ⬇️ 클라우드 우선 요약 계산 (내부에서 withCloud 사용)
+      final summary = await appUseCases.label.computeSummaryCloudFirst(projectId);
+
       _summaries[projectId] = summary;
     } catch (e) {
       debugPrint("❌ Failed to fetch summary for project $projectId: $e");
