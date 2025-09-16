@@ -4,6 +4,7 @@ import '../../../core/models/label/label_model.dart' show LabelModel, LabelingMo
 import '../../label/repository/label_repository.dart';
 import '../../project/repository/project_repository.dart';
 import 'package:zae_labeler/src/utils/label_validator.dart';
+import 'package:zae_labeler/src/platform_helpers/storage/switchable_storage_helper.dart'; // withCloud 사용
 
 /// ---------------------------------------------------------------------------
 /// 📊 라벨링 요약 DTO
@@ -17,12 +18,7 @@ class LabelingSummary {
 
   const LabelingSummary({required this.total, required this.complete, required this.warning, required this.incomplete, required this.progress});
 
-  LabelingSummary.empty()
-      : total = 0,
-        complete = 0,
-        warning = 0,
-        incomplete = 0,
-        progress = 0.0;
+  LabelingSummary.empty() : total = 0, complete = 0, warning = 0, incomplete = 0, progress = 0.0;
 
   @override
   String toString() =>
@@ -156,6 +152,24 @@ class LabelUseCases {
     }
     final labels = await labelRepo.loadAllLabels(projectId);
     return computeSummaryFor(project, labels);
+  }
+
+  Future<LabelingSummary> computeSummaryCloudFirst(String projectId) async {
+    final project = await projectRepo.findById(projectId);
+    if (project == null) {
+      return LabelingSummary.empty();
+    }
+    final storage = labelRepo.storageHelper; // LabelRepository에 getter 필요
+    if (storage is SwitchableStorageHelper) {
+      try {
+        final models = await storage.withCloud((cloud) => cloud.loadAllLabelModels(projectId));
+        return computeSummaryFor(project, models);
+      } catch (_) {
+        final local = await labelRepo.loadAllLabels(projectId);
+        return computeSummaryFor(project, local);
+      }
+    }
+    return computeSummary(projectId);
   }
 
   /// (편의) 프로젝트 객체로 직접 요약 계산(라벨은 내부 조회).
