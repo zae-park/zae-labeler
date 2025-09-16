@@ -17,6 +17,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zae_labeler/src/features/project/logic/project_validator.dart';
 import 'package:zae_labeler/src/features/project/use_cases/edit_project_use_case.dart';
 import 'package:firebase_storage/firebase_storage.dart' as fb;
+import 'package:zae_labeler/src/platform_helpers/storage/cloud_storage_helper.dart';
+import 'package:zae_labeler/src/platform_helpers/storage/storage_policies.dart';
 
 import 'src/core/services/user_preference_service.dart';
 import 'src/features/locale/view_models/locale_view_model.dart';
@@ -72,7 +74,13 @@ Future<BootstrapResult> bootstrap({required Locale systemLocale}) async {
   storage.setMaxDownloadRetryTime(const Duration(seconds: 12));
 
   // 1) Storage/Share 준비: 항상 로컬로 시작하고, Switchable로 래핑
-  final switchable = SwitchableStorageHelper(createLocalStorageHelper());
+  final switchable = SwitchableStorageHelper.explicit(
+    local: createLocalStorageHelper(),
+    cloud: CloudStorageHelper(),
+    initialMode: StorageMode.local, // 로그인해도 기본 로컬
+    readPolicy: ReadPolicy.auto, // 요약=cloud 우선, 에셋=local 우선 등 내부 판단
+    writePolicy: WritePolicy.localOnly,
+  );
   final share = await _chooseShareHelper();
 
   // 2) 선행 비동기들을 병렬로 수행

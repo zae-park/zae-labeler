@@ -36,14 +36,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      title: Text(title),
-      leading: leading,
-      actions: actions,
-      centerTitle: centerTitle,
-      backgroundColor: backgroundColor,
-      elevation: elevation,
-    );
+    return AppBar(title: Text(title), leading: leading, actions: actions, centerTitle: centerTitle, backgroundColor: backgroundColor, elevation: elevation);
   }
 
   @override

@@ -15,7 +15,8 @@ class ProjectTile extends StatelessWidget {
 
   const ProjectTile({super.key, required this.vm});
 
-  void _openLabelingPage(BuildContext context) async {
+  // 라벨링 페이지 이동 및 복귀 후 summary 강제 갱신
+  Future<void> _openLabelingPage(BuildContext context) async {
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
@@ -24,15 +25,14 @@ class ProjectTile extends StatelessWidget {
       ),
     );
 
-    // ✅ 라벨링 후 summary 갱신
     if (result == true && context.mounted) {
       final listVM = context.read<ProjectListViewModel>();
       await listVM.fetchSummary(vm.project.id, force: true);
     }
   }
 
-  void _openEditPage(BuildContext context) async {
-    // ✅ 기존 vm 인스턴스를 그대로 전달 (picker/AppUC/shareHelper 포함)
+  // 설정 페이지 이동 (기존 VM 그대로 전달)
+  Future<void> _openEditPage(BuildContext context) async {
     final updated = await Navigator.push<Project?>(
       context,
       MaterialPageRoute(
@@ -41,13 +41,15 @@ class ProjectTile extends StatelessWidget {
       ),
     );
 
-    // 기존 흐름 유지: 반환 스냅샷 반영(편집 페이지에서 pop(updated) 하는 경우)
     if (updated != null) {
       vm.updateFrom(updated);
       vm.onChanged?.call(updated);
+      // 편집 후에도 진행률 요약은 변동 가능 → 갱신
+      if (context.mounted) await context.read<ProjectListViewModel>().fetchSummary(vm.project.id, force: true);
     }
   }
 
+  // 삭제 확인
   Future<void> _confirmDelete(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -74,18 +76,33 @@ class ProjectTile extends StatelessWidget {
     }
   }
 
+  // 타일 개별 오버플로 메뉴 (재계산/삭제)
+  Widget _overflowMenu(BuildContext context) {
+    return PopupMenuButton<String>(
+      onSelected: (value) async {
+        switch (value) {
+          case 'recalc':
+            await context.read<ProjectListViewModel>().fetchSummary(vm.project.id, force: true);
+            break;
+          case 'delete':
+            await _confirmDelete(context);
+            break;
+        }
+      },
+      itemBuilder: (ctx) => [const PopupMenuItem(value: 'recalc', child: Text('진행률 재계산')), const PopupMenuItem(value: 'delete', child: Text('삭제'))],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final projectId = vm.project.id;
     final listVM = context.watch<ProjectListViewModel>();
     final summary = listVM.summaries[projectId];
 
-    // ✅ 요약이 아직 없으면 최초 1회 로드
+    // 요약이 아직 없고, 현재 전역 프리로드 중이 아니면 지연 로드 1회
     if (summary == null && !listVM.isPreloadingSummaries) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) {
-          context.read<ProjectListViewModel>().fetchSummary(projectId);
-        }
+        if (context.mounted) context.read<ProjectListViewModel>().fetchSummary(projectId);
       });
     }
 
@@ -98,14 +115,27 @@ class ProjectTile extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // 🔹 좌측 정보
+            // 🔹 좌측 정보 + 오버플로 메뉴
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(vm.project.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          vm.project.name,
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                      _overflowMenu(context), // ⋮
+                    ],
+                  ),
                   const SizedBox(height: 4),
-                  Text("Mode: $modeText"),
+                  Text('Mode: $modeText'),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 12,
@@ -140,14 +170,14 @@ class ProjectTile extends StatelessWidget {
 
             const SizedBox(width: 12),
 
-            // 🔸 우측 인디케이터
-            summary != null
-                ? SizedBox(
-                    width: 110,
-                    height: 110,
-                    child: LabelingCircularProgressButton(summary: summary, onPressed: () => _openLabelingPage(context)),
-                  )
-                : const SizedBox(width: 64, height: 64, child: Center(child: CircularProgressIndicator(strokeWidth: 3))),
+            // 🔸 우측 인디케이터 (항상 고정 크기)
+            SizedBox(
+              width: 110,
+              height: 110,
+              child: summary != null
+                  ? LabelingCircularProgressButton(summary: summary, onPressed: () => _openLabelingPage(context))
+                  : const Center(child: SizedBox(width: 64, height: 64, child: CircularProgressIndicator(strokeWidth: 3))),
+            ),
           ],
         ),
       ),
