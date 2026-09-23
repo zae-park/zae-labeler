@@ -2,24 +2,6 @@
   {
     "path": "/zae-park/zae-labeler",
     "title": "Overview",
-    "count": 2,
-    "uniques": 2
-  },
-  {
-    "path": "/zae-park/zae-labeler/branches",
-    "title": "/branches",
-    "count": 1,
-    "uniques": 1
-  },
-  {
-    "path": "/zae-park/zae-labeler/commit/84ba49fb303ca770aac2decdb28ac057403f1aee",
-    "title": "/commit/84ba49fb303ca770aac2decdb28ac057403f1aee",
-    "count": 1,
-    "uniques": 1
-  },
-  {
-    "path": "/zae-park/zae-labeler/tree/docs",
-    "title": "/tree/docs",
     "count": 1,
     "uniques": 1
   }
