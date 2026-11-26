@@ -4,7 +4,6 @@ import 'package:uuid/uuid.dart';
 
 import 'package:zae_labeler/common/widgets/global_alert.dart';
 import 'package:zae_labeler/src/core/use_cases/app_use_cases.dart';
-import 'package:zae_labeler/src/features/label/view_models/labeling_view_model.dart';
 
 import '../../../core/models/data/data_info.dart';
 import '../../../core/models/label/label_model.dart' show LabelingMode; // 임시: 모드 여기 위치
@@ -12,7 +11,6 @@ import '../../../core/models/project/project_model.dart';
 
 import '../../../platform_helpers/pickers/data_info_picker_interface.dart';
 import '../../../platform_helpers/share/interface_share_helper.dart';
-import '../../../platform_helpers/storage/interface_storage_helper.dart';
 
 /// {@template project_view_model}
 /// 🔧 ProjectViewModel
@@ -23,7 +21,7 @@ import '../../../platform_helpers/storage/interface_storage_helper.dart';
 /// - **쓰기(편집)**: `EditProjectUseCase`에 위임합니다.
 ///   - 이름/모드/클래스/데이터 편집 등은 `appUseCases.project.edit`를 호출하여
 ///     **새 Project 스냅샷**을 돌려받아 `project` 필드를 교체합니다.
-/// - **읽기/진행률**: LabelingViewModelFactory로 진행률만 계산해 UI에 노출합니다.
+/// - **읽기/진행률**: 프로젝트 목록의 진행률 요약은 `ProjectListViewModel`이 `LabelUseCases`로 계산합니다.
 /// - **저장/내보내기/공유**: 파사드(`ProjectUseCases`)의 IO/Export 계열을 사용합니다.
 ///
 /// ### 기존 대비 변화
@@ -57,33 +55,10 @@ class ProjectViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ────────────────────────────────────────────
-  // 📦 진행률 정보 (LabelingViewModel에서 계산)
-  // ────────────────────────────────────────────
-  double progressRatio = 0.0;
-  int completeCount = 0;
-  int warningCount = 0;
-  int incompleteCount = 0;
-  bool progressLoaded = false;
-
   ProjectViewModel({required this.appUseCases, required this.picker, this.shareHelper, this.onChanged, Project? initial, bool? isEditing})
     : isEditing = isEditing ?? (initial != null),
       project = initial ?? Project(id: const Uuid().v4(), name: 'New Project', mode: LabelingMode.singleClassification, classes: const ["True", "False"]) {
     _initialMode = project.mode; // ✅ 내부에서 설정
-  }
-
-  // ────────────────────────────────────────────
-  // 📊 진행률 로딩 (읽기 전용)
-  // ────────────────────────────────────────────
-  Future<void> loadProgress(StorageHelperInterface helper) async {
-    final labelingVM = await LabelingViewModelFactory.createAsync(project, helper, appUseCases);
-    progressRatio = labelingVM.progressRatio;
-    completeCount = labelingVM.completeCount;
-    warningCount = labelingVM.warningCount;
-    incompleteCount = labelingVM.incompleteCount;
-    progressLoaded = true;
-    labelingVM.dispose();
-    notifyListeners();
   }
 
   // ==============================

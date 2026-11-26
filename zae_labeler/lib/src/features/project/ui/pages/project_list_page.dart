@@ -1,37 +1,33 @@
 import 'dart:convert';
 import 'dart:io' as io;
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zae_labeler/l10n/app_localizations.dart';
 import 'package:zae_labeler/common/i18n.dart';
 import 'package:zae_labeler/common/common_widgets.dart';
-import 'package:zae_labeler/src/features/locale/view_models/locale_view_model.dart';
-import 'package:zae_labeler/src/features/project/view_models/project_view_model.dart';
-import '../../../../core/services/user_preference_service.dart';
-import '../../view_models/project_list_view_model.dart';
-// import '../../../../view_models/locale_view_model.dart';
+import '../../../../core/di/providers.dart';
 import '../../../../core/models/project/project_model.dart';
 import 'configuration_page.dart';
 import '../../../../views/dialogs/onboarding_dialog.dart';
 import '../widgets/project_tile.dart';
 
-class ProjectListPage extends StatefulWidget {
+class ProjectListPage extends ConsumerStatefulWidget {
   const ProjectListPage({super.key});
 
   @override
-  State<ProjectListPage> createState() => _ProjectListPageState();
+  ConsumerState<ProjectListPage> createState() => _ProjectListPageState();
 }
 
-class _ProjectListPageState extends State<ProjectListPage> {
+class _ProjectListPageState extends ConsumerState<ProjectListPage> {
   @override
   void initState() {
     super.initState();
     _checkOnboarding();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final listVM = context.read<ProjectListViewModel>();
+      final listVM = ref.read(projectListViewModelProvider);
       // 리스트를 VM 생성자에서 loadProjects()로 이미 로딩한다면 이 줄만으로 충분
       // 필요한 경우: await listVM.loadProjects();
       await listVM.fetchAllSummaries(force: true, concurrency: 4);
@@ -39,7 +35,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
   }
 
   Future<void> _checkOnboarding() async {
-    final prefs = context.read<UserPreferenceService>();
+    final prefs = ref.read(userPreferenceServiceProvider);
     if (!prefs.hasSeenOnboarding && mounted) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _showOnboardingOverlay());
     }
@@ -48,7 +44,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
   Future<void> _showOnboardingOverlay() async {
     await showDialog(context: context, barrierDismissible: true, builder: (_) => const OnboardingDialog());
 
-    final prefs = context.read<UserPreferenceService>();
+    final prefs = ref.read(userPreferenceServiceProvider);
     await prefs.setHasSeenOnboarding(true);
   }
 
@@ -62,7 +58,7 @@ class _ProjectListPageState extends State<ProjectListPage> {
         final project = Project.fromJson(jsonData);
 
         if (!mounted) return;
-        final projectListVM = context.read<ProjectListViewModel>();
+        final projectListVM = ref.read(projectListViewModelProvider);
         await projectListVM.upsertProject(project);
 
         if (mounted) GlobalAlertManager.show(context, '${context.l10n.message_import_project_success}: ${project.name}', type: AlertType.success);
@@ -76,72 +72,66 @@ class _ProjectListPageState extends State<ProjectListPage> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
 
-    return Consumer2<ProjectListViewModel, LocaleViewModel>(
-      builder: (context, projectListVM, localeVM, child) {
-        return Scaffold(
-          appBar: AppHeader(
-            title: loc.projectList_title,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.help),
-                tooltip: context.l10n.appbar_onboarding,
-                onPressed: () async {
-                  final prefs = await SharedPreferences.getInstance();
-                  await prefs.setBool('hasSeenOnboarding', false);
-                  _checkOnboarding();
-                },
-              ),
-              Consumer<ProjectListViewModel>(
-                builder: (_, vm, __) {
-                  if (vm.isPreloadingSummaries) {
-                    return const Padding(
-                      padding: EdgeInsets.only(right: 12),
-                      child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-                    );
-                  }
-                  return IconButton(
-                    tooltip: '진행률 새로고침',
-                    icon: const Icon(Icons.refresh),
-                    onPressed: () async {
-                      await context.read<ProjectListViewModel>().fetchAllSummaries(force: true, concurrency: 4);
-                    },
-                  );
-                },
-              ),
-              IconButton(icon: const Icon(Icons.refresh), tooltip: context.l10n.appbar_refresh, onPressed: () => projectListVM.loadProjects()),
-              PopupMenuButton<String>(
-                onSelected: (value) => localeVM.changeLocale(value),
-                itemBuilder: (context) => const [PopupMenuItem(value: 'en', child: Text('English')), PopupMenuItem(value: 'ko', child: Text('한국어'))],
-                icon: const Icon(Icons.language),
-                tooltip: context.l10n.appbar_language,
-              ),
-              IconButton(
-                icon: const Icon(Icons.add),
-                tooltip: loc.appbar_project_create,
-                onPressed: () {
-                  final vm = projectListVM.createNewProjectVM();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ChangeNotifierProvider<ProjectViewModel>.value(value: vm, child: const ConfigureProjectPage()),
-                    ),
-                  );
-                },
-              ),
-              IconButton(icon: const Icon(Icons.file_upload), tooltip: context.l10n.appbar_project_import, onPressed: () => _importProject(context)),
-            ],
+    final projectListVM = ref.watch(projectListViewModelProvider);
+    final localeVM = ref.read(localeViewModelProvider);
+
+    return Scaffold(
+      appBar: AppHeader(
+        title: loc.projectList_title,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.help),
+            tooltip: context.l10n.appbar_onboarding,
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('hasSeenOnboarding', false);
+              _checkOnboarding();
+            },
           ),
-          body: projectListVM.projectVMList.isEmpty
-              ? Center(child: Text(context.l10n.projectList_empty))
-              : ListView.builder(
-                  itemCount: projectListVM.projectVMList.length,
-                  itemBuilder: (context, index) {
-                    final vm = projectListVM.projectVMList[index];
-                    return ProjectTile(key: ValueKey(vm.project.id), vm: vm);
-                  },
-                ),
-        );
-      },
+          Builder(
+            builder: (_) {
+              if (projectListVM.isPreloadingSummaries) {
+                return const Padding(
+                  padding: EdgeInsets.only(right: 12),
+                  child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                );
+              }
+              return IconButton(
+                tooltip: '진행률 새로고침',
+                icon: const Icon(Icons.refresh),
+                onPressed: () async {
+                  await projectListVM.fetchAllSummaries(force: true, concurrency: 4);
+                },
+              );
+            },
+          ),
+          IconButton(icon: const Icon(Icons.refresh), tooltip: context.l10n.appbar_refresh, onPressed: () => projectListVM.loadProjects()),
+          PopupMenuButton<String>(
+            onSelected: (value) => localeVM.changeLocale(value),
+            itemBuilder: (context) => const [PopupMenuItem(value: 'en', child: Text('English')), PopupMenuItem(value: 'ko', child: Text('한국어'))],
+            icon: const Icon(Icons.language),
+            tooltip: context.l10n.appbar_language,
+          ),
+          IconButton(
+            icon: const Icon(Icons.add),
+            tooltip: loc.appbar_project_create,
+            onPressed: () {
+              final vm = projectListVM.createNewProjectVM();
+              Navigator.push(context, MaterialPageRoute(builder: (_) => ConfigureProjectPage(viewModel: vm)));
+            },
+          ),
+          IconButton(icon: const Icon(Icons.file_upload), tooltip: context.l10n.appbar_project_import, onPressed: () => _importProject(context)),
+        ],
+      ),
+      body: projectListVM.projectVMList.isEmpty
+          ? Center(child: Text(context.l10n.projectList_empty))
+          : ListView.builder(
+              itemCount: projectListVM.projectVMList.length,
+              itemBuilder: (context, index) {
+                final vm = projectListVM.projectVMList[index];
+                return ProjectTile(key: ValueKey(vm.project.id), vm: vm);
+              },
+            ),
     );
   }
 }
