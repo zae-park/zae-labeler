@@ -1,11 +1,11 @@
-// 📁 views/widgets/shared/viewer_builder.dart
+// lib/src/features/label/ui/widgets/viewers/viewer_builder.dart
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:zae_labeler/src/core/models/data/file_type.dart';
 import 'package:zae_labeler/src/core/models/data/unified_data.dart';
-import '../../../features/label/ui/widgets/viewers/image_viewer.dart';
-import '../../../features/label/ui/widgets/viewers/object_viewer.dart';
-import '../../../features/label/ui/widgets/viewers/time_series_viewer.dart';
+import 'image_viewer.dart';
+import 'object_viewer.dart';
+import 'time_series_viewer.dart';
 
 class ViewerBuilder extends StatelessWidget {
   /// 렌더 소스 (옵션)
@@ -73,7 +73,11 @@ class _JsonPlaceholder extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Text(message, style: const TextStyle(color: Colors.grey), textAlign: TextAlign.center),
+        child: Text(
+          message,
+          style: const TextStyle(color: Colors.grey),
+          textAlign: TextAlign.center,
+        ),
       ),
     );
   }

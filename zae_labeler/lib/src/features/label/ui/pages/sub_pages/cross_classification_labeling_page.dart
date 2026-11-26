@@ -1,21 +1,19 @@
-// 📁 lib/src/views/pages/sub_pages/cross_classification_labeling_page.dart
+// lib/src/features/label/ui/pages/sub_pages/cross_classification_labeling_page.dart
 import 'package:flutter/material.dart';
-import 'package:zae_labeler/src/features/label/view_models/sub_view_models/classification_labeling_view_model.dart';
 
-import '../../../../../core/models/project/project_model.dart';
-import '../../../../../views/widgets/shared/viewer_builder.dart';
+import '../../../view_models/classification_labeling_view_model.dart';
+import '../../widgets/classification_label_selector.dart';
+import '../../widgets/viewers/viewer_builder.dart';
 import 'base_labeling_page.dart';
 
 class CrossClassificationLabelingPage extends BaseLabelingPage<CrossClassificationLabelingViewModel> {
-  const CrossClassificationLabelingPage({Key? key, required Project project, required CrossClassificationLabelingViewModel viewModel})
-      : super(key: key, project: project, viewModel: viewModel);
+  const CrossClassificationLabelingPage({super.key, required super.viewModel});
 
   @override
-  Widget buildViewer(CrossClassificationLabelingViewModel vm) {
-    if (vm.totalCount == 0 || vm.currentPair == null) {
-      return const Center(child: Text('쌍을 초기화하는 중입니다...'));
+  Widget buildViewer(BuildContext context, CrossClassificationLabelingViewModel vm) {
+    if (vm.currentPair == null) {
+      return const Center(child: Text('교차 분류에는 데이터가 2개 이상 필요합니다.'));
     }
-
     return Row(
       children: [
         Expanded(child: ViewerBuilder(data: vm.currentSourceData)),
@@ -26,29 +24,14 @@ class CrossClassificationLabelingPage extends BaseLabelingPage<CrossClassificati
   }
 
   @override
-  Widget buildModeSpecificUI(CrossClassificationLabelingViewModel vm) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Wrap(
-        spacing: 8.0,
-        children: List.generate(project.classes.length, (index) {
-          final label = project.classes[index];
-          return ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: vm.isLabelSelected(label) ? Colors.blue : Colors.grey,
-            ),
-            onPressed: () => vm.updateLabel(label),
-            child: Text(label),
-          );
-        }),
-      ),
-    );
+  Widget buildModeSpecificUI(BuildContext context, CrossClassificationLabelingViewModel vm) {
+    return ClassificationLabelSelector(classes: vm.project.classes, isSelected: vm.isLabelSelected, onToggle: vm.toggleLabel);
   }
 
   @override
   void handleNumericKeyInput(CrossClassificationLabelingViewModel vm, int index) {
-    if (index >= 0 && index < project.classes.length) {
-      vm.updateLabel(project.classes[index]);
+    if (index >= 0 && index < vm.project.classes.length) {
+      vm.setRelation(vm.project.classes[index]);
     }
   }
 }

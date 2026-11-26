@@ -1,18 +1,22 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zae_labeler/common/i18n.dart';
 import 'package:zae_labeler/src/features/project/view_models/project_view_model.dart';
 import '../../../../../common/common_widgets.dart';
-import '../../view_models/project_list_view_model.dart';
+import 'package:zae_labeler/src/core/di/providers.dart';
 import '../../../../views/widgets/labeling_mode_selector.dart';
 
-class ConfigureProjectPage extends StatelessWidget {
-  const ConfigureProjectPage({super.key});
+/// 프로젝트 생성/편집 페이지.
+/// - 편집 대상 [viewModel]은 호출 측(ProjectList/ProjectTile)이 소유하며 생성자로 전달합니다.
+class ConfigureProjectPage extends ConsumerWidget {
+  final ProjectViewModel viewModel;
+
+  const ConfigureProjectPage({super.key, required this.viewModel});
 
   void _addClass(BuildContext context) {
     final classController = TextEditingController();
-    final projectVM = Provider.of<ProjectViewModel>(context, listen: false);
+    final projectVM = viewModel;
 
     showDialog(
       context: context,
@@ -41,9 +45,9 @@ class ConfigureProjectPage extends StatelessWidget {
     );
   }
 
-  void _confirmProject(BuildContext context) {
-    final projectVM = Provider.of<ProjectViewModel>(context, listen: false);
-    final projectListVM = Provider.of<ProjectListViewModel>(context, listen: false);
+  void _confirmProject(BuildContext context, WidgetRef ref) {
+    final projectVM = viewModel;
+    final projectListVM = ref.read(projectListViewModelProvider);
 
     final updatedProject = projectVM.project;
     final isNewProject = !projectVM.isEditing;
@@ -61,9 +65,11 @@ class ConfigureProjectPage extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<ProjectViewModel>(
-      builder: (context, projectVM, child) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ListenableBuilder(
+      listenable: viewModel,
+      builder: (context, _) {
+        final projectVM = viewModel;
         return Scaffold(
           appBar: AppBar(title: Text(projectVM.isEditing ? context.l10n.configPage_title_edit : context.l10n.configPage_title_create)),
           body: Padding(
@@ -184,7 +190,7 @@ class ConfigureProjectPage extends StatelessWidget {
 
                   const SizedBox(height: 32),
                   ElevatedButton(
-                    onPressed: projectVM.isBusy ? null : () => _confirmProject(context),
+                    onPressed: projectVM.isBusy ? null : () => _confirmProject(context, ref),
                     child: Text(projectVM.isBusy ? 'Data 업데이트 중...' : context.l10n.configPage_confirm),
                   ),
                 ],

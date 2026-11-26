@@ -1,92 +1,88 @@
+// lib/src/features/label/ui/pages/sub_pages/base_labeling_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+
 import 'package:zae_labeler/l10n/app_localizations.dart';
-import 'package:zae_labeler/src/features/label/view_models/sub_view_models/base_labeling_view_model.dart';
-import 'package:zae_labeler/src/features/project/view_models/managers/progress_notifier.dart';
 
-import '../../../../../core/models/project/project_model.dart';
-import '../../../../../views/widgets/navigator.dart';
-import '../../../../../views/widgets/shared/labeling_progress.dart';
-import '../../../../../views/widgets/shared/viewer_builder.dart';
+import '../../../view_models/labeling_view_model.dart';
+import '../../widgets/labeling_progress.dart';
+import '../../widgets/navigation_buttons.dart';
+import '../../widgets/viewers/viewer_builder.dart';
 
-/// BaseLabelingPage
-/// - 라벨링 페이지 공통 기능을 제공하는 추상 클래스
-/// - ClassificationLabelingPage 및 SegmentationLabelingPage에서 상속
+/// 라벨링 페이지 공통 골격 (템플릿 메서드).
+///
+/// - VM의 생명주기는 Riverpod provider가 소유하므로, 이 위젯은 **구독만** 합니다(dispose하지 않음).
+/// - 모드별 페이지는 [buildModeSpecificUI], [handleNumericKeyInput]을 구현하고 필요 시 [buildViewer]를 override합니다.
 abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatelessWidget {
-  final Project project;
   final T viewModel;
 
-  const BaseLabelingPage({super.key, required this.project, required this.viewModel});
-
-  void _finishLabelingAndPop(BuildContext context, T vm) {
-    final ratio = vm.progressRatio;
-    final project = vm.project;
-    context.read<ProgressNotifier>().updateProgress(project.id, ratio);
-    Navigator.pop(context, true);
-  }
+  const BaseLabelingPage({super.key, required this.viewModel});
 
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) _finishLabelingAndPop(context, viewModel);
+      // 라벨링 종료 시 true를 반환 → 호출 측(ProjectTile)이 진행률 요약을 새로고침
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) Navigator.pop(context, true);
       },
-      child: ChangeNotifierProvider<T>(
-        create: (_) => viewModel,
-        // 필요하면 바로 초기 로드/프리로드 하게 lazy: false도 가능
-        // lazy: false,
-        child: Consumer<T>(
-          builder: (context, vm, _) {
-            return Scaffold(
-              appBar: buildAppBar(context),
-              body: KeyboardListener(
-                focusNode: FocusNode(),
-                autofocus: true,
-                onKeyEvent: (event) => _handleKeyEvent(event, vm),
-                child: Column(children: [Expanded(child: buildViewer(vm)), buildProgressBar(context, vm), buildModeSpecificUI(vm), buildNavigator(vm)]),
-              ),
-            );
-          },
-        ),
+      child: ListenableBuilder(
+        listenable: viewModel,
+        builder: (context, _) {
+          final vm = viewModel;
+          return Scaffold(
+            appBar: buildAppBar(context, vm),
+            body: Focus(
+              autofocus: true,
+              onKeyEvent: (_, event) => _handleKeyEvent(event, vm),
+              child: vm.totalCount == 0
+                  ? const Center(child: Text('라벨링할 데이터가 없습니다.'))
+                  : Column(
+                      children: [
+                        Expanded(child: buildViewer(context, vm)),
+                        buildProgressBar(context, vm),
+                        buildModeSpecificUI(context, vm),
+                        buildNavigator(vm),
+                      ],
+                    ),
+            ),
+          );
+        },
       ),
     );
   }
 
   /// 공통 AppBar
-  PreferredSizeWidget buildAppBar(BuildContext context) {
+  PreferredSizeWidget buildAppBar(BuildContext context, T vm) {
     final loc = AppLocalizations.of(context)!;
     return AppBar(
-      title: Text('${project.name} ${loc.projectTile_label}'),
+      title: Text('${vm.project.name} ${loc.projectTile_label}'),
       actions: [
         PopupMenuButton<String>(
           onSelected: (value) {
-            if (value == 'zip') _downloadLabels(viewModel);
+            if (value == 'zip') _downloadLabels(vm);
           },
-          itemBuilder: (_) => const [PopupMenuItem<String>(value: 'zip', child: Text("zip 압축 후 다운로드"))],
+          itemBuilder: (_) => const [PopupMenuItem<String>(value: 'zip', child: Text('zip 압축 후 다운로드'))],
         ),
       ],
     );
   }
 
-  /// 라벨링 뷰어 (이미지, 시계열 등)
-  Widget buildViewer(T vm) {
-    // ✅ 현재 아이템의 렌더 소스 준비(Blob URL or Bytes) → 준비된 소스로 ViewerBuilder 렌더
-    return FutureBuilder<void>(
-      future: vm.ensureRenderableReadyForCurrent(), // VM에 추가(또는 DataManager에 위임)
-      builder: (context, snap) {
-        final src = vm.currentRenderable(); // Object? (String URL | Uint8List | null)
-        if (src == null) return const Center(child: CircularProgressIndicator());
-        return ViewerBuilder.fromSource(source: src, data: vm.currentData);
-      },
-    );
+  /// 라벨링 뷰어. 렌더 소스는 VM이 이동 시점에 미리 준비하므로 여기서는 동기적으로 읽기만 합니다.
+  Widget buildViewer(BuildContext context, T vm) {
+    if (vm.isRenderPending) return const Center(child: CircularProgressIndicator());
+    return ViewerBuilder.fromSource(source: vm.currentRenderable(), data: vm.currentData);
   }
 
-  /// 하단 네비게이터
-  Widget buildNavigator(T vm) => Column(children: [LabelingProgress(labelingVM: vm), NavigationButtons(onPrevious: vm.movePrevious, onNext: vm.moveNext)]);
+  /// 하단 위치 표시 + 이전/다음
+  Widget buildNavigator(T vm) => Column(
+    children: [
+      LabelingProgress(labelingVM: vm),
+      NavigationButtons(onPrevious: vm.movePrevious, onNext: vm.moveNext, hasPrevious: vm.hasPrevious, hasNext: vm.hasNext),
+    ],
+  );
 
-  /// 라벨링 진행도 표시
+  /// 진행률 바
   Widget buildProgressBar(BuildContext context, T vm) {
     final loc = AppLocalizations.of(context)!;
     return Padding(
@@ -107,26 +103,31 @@ abstract class BaseLabelingPage<T extends LabelingViewModel> extends StatelessWi
     );
   }
 
-  /// 모드별 커스텀 UI
-  Widget buildModeSpecificUI(T vm);
+  /// 모드별 라벨 입력 UI
+  Widget buildModeSpecificUI(BuildContext context, T vm);
 
-  /// 키보드 입력 처리 (숫자/이동)
+  /// 숫자 키(1~9 → index 0~8) 입력 처리
   void handleNumericKeyInput(T vm, int index);
 
-  void _handleKeyEvent(KeyEvent event, T vm) {
-    if (event is! KeyDownEvent) return;
+  KeyEventResult _handleKeyEvent(KeyEvent event, T vm) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    final key = event.logicalKey;
 
-    if (event.logicalKey == LogicalKeyboardKey.arrowLeft || event.logicalKey == LogicalKeyboardKey.backspace) {
+    if (key == LogicalKeyboardKey.arrowLeft || key == LogicalKeyboardKey.backspace) {
       vm.movePrevious();
-    } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-      vm.moveNext();
-    } else if (event.logicalKey.keyId >= LogicalKeyboardKey.digit0.keyId && event.logicalKey.keyId <= LogicalKeyboardKey.digit9.keyId) {
-      final index = event.logicalKey.keyId - LogicalKeyboardKey.digit0.keyId - 1;
-      handleNumericKeyInput(vm, index);
+      return KeyEventResult.handled;
     }
+    if (key == LogicalKeyboardKey.arrowRight) {
+      vm.moveNext();
+      return KeyEventResult.handled;
+    }
+    if (key.keyId >= LogicalKeyboardKey.digit1.keyId && key.keyId <= LogicalKeyboardKey.digit9.keyId) {
+      handleNumericKeyInput(vm, key.keyId - LogicalKeyboardKey.digit1.keyId);
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
-  /// 라벨 다운로드
   Future<void> _downloadLabels(T vm) async {
     try {
       final filePath = await vm.exportAllLabels();

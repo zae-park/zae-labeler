@@ -6,14 +6,13 @@
 /// - 페이지별 arguments 타입 체크
 ///
 /// MaterialApp.onGenerateRoute 에서
-///   `onGenerateRoute: (settings) => AppRouter.onGenerateRoute(context, settings)`
-/// 로 사용하세요.
+///   `onGenerateRoute: (settings) => AppRouter.onGenerateRoute(settings, isSignedIn: ...)`
+/// 로 사용하세요. 로그인 상태는 호출 측(Riverpod ref)에서 주입합니다.
 import 'package:flutter/material.dart';
 import 'env.dart';
-import 'package:provider/provider.dart';
 
-import 'src/features/auth/view_models/auth_view_models.dart';
 import 'src/core/models/project/project_model.dart';
+import 'src/features/project/view_models/project_view_model.dart';
 
 import 'src/views/pages/not_found_page.dart';
 import 'src/views/pages/splash_page.dart';
@@ -35,9 +34,7 @@ class AppRouter {
   ///
   /// - Prod && 미로그인 상태에서 보호 라우트로 이동할 경우 스플래시로 리다이렉트
   /// - 알려지지 않은 라우트는 NotFoundPage
-  static Route<dynamic>? onGenerateRoute(BuildContext context, RouteSettings settings) {
-    final isSignedIn = context.read<AuthViewModel>().isSignedIn;
-
+  static Route<dynamic> onGenerateRoute(RouteSettings settings, {required bool isSignedIn}) {
     // ✅ Auth Guard (Prod 한정)
     if (isProd && !isSignedIn && settings.name != Routes.root && settings.name != Routes.auth) {
       return MaterialPageRoute(builder: (_) => const SplashScreen());
@@ -53,12 +50,22 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const ProjectListPage(), settings: settings);
 
       case Routes.configuration:
-        return MaterialPageRoute(builder: (_) => const ConfigureProjectPage(), settings: settings);
+        final args = settings.arguments;
+        if (args is ProjectViewModel) {
+          return MaterialPageRoute(
+            builder: (_) => ConfigureProjectPage(viewModel: args),
+            settings: settings,
+          );
+        }
+        return MaterialPageRoute(builder: (_) => const NotFoundPage(), settings: settings);
 
       case Routes.labeling:
         final args = settings.arguments;
         if (args is Project) {
-          return MaterialPageRoute(builder: (_) => LabelingPage(project: args), settings: settings);
+          return MaterialPageRoute(
+            builder: (_) => LabelingPage(project: args),
+            settings: settings,
+          );
         }
         // 인자 타입 불일치 → 404
         return MaterialPageRoute(builder: (_) => const NotFoundPage(), settings: settings);

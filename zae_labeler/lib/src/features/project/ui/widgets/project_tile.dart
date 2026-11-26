@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:zae_labeler/common/i18n.dart';
 import 'package:zae_labeler/common/common_widgets.dart';
@@ -8,14 +8,14 @@ import '../../../../core/models/project/project_model.dart';
 import '../../view_models/project_view_model.dart';
 import '../../../label/ui/pages/labeling_page.dart';
 import '../pages/configuration_page.dart';
-import '../../view_models/project_list_view_model.dart';
+import '../../../../core/di/providers.dart';
 
-class ProjectTile extends StatelessWidget {
+class ProjectTile extends ConsumerWidget {
   final ProjectViewModel vm;
 
   const ProjectTile({super.key, required this.vm});
 
-  void _openLabelingPage(BuildContext context) async {
+  void _openLabelingPage(BuildContext context, WidgetRef ref) async {
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
@@ -26,8 +26,7 @@ class ProjectTile extends StatelessWidget {
 
     // ✅ 라벨링 후 summary 갱신
     if (result == true && context.mounted) {
-      final listVM = context.read<ProjectListViewModel>();
-      await listVM.fetchSummary(vm.project.id, force: true);
+      await ref.read(projectListViewModelProvider).fetchSummary(vm.project.id, force: true);
     }
   }
 
@@ -37,7 +36,7 @@ class ProjectTile extends StatelessWidget {
       context,
       MaterialPageRoute(
         settings: const RouteSettings(name: '/configuration'),
-        builder: (_) => ChangeNotifierProvider<ProjectViewModel>.value(value: vm, child: const ConfigureProjectPage()),
+        builder: (_) => ConfigureProjectPage(viewModel: vm),
       ),
     );
 
@@ -48,7 +47,7 @@ class ProjectTile extends StatelessWidget {
     }
   }
 
-  Future<void> _confirmDelete(BuildContext context) async {
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -65,8 +64,7 @@ class ProjectTile extends StatelessWidget {
     );
 
     if (confirmed == true) {
-      final projectListVM = context.read<ProjectListViewModel>();
-      await projectListVM.removeProject(vm.project.id);
+      await ref.read(projectListViewModelProvider).removeProject(vm.project.id);
 
       if (context.mounted) {
         GlobalAlertManager.show(context, '${context.l10n.projectTile_deleteMessage}: ${vm.project.name}', type: AlertType.success);
@@ -75,16 +73,16 @@ class ProjectTile extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final projectId = vm.project.id;
-    final listVM = context.watch<ProjectListViewModel>();
+    final listVM = ref.watch(projectListViewModelProvider);
     final summary = listVM.summaries[projectId];
 
     // ✅ 요약이 아직 없으면 최초 1회 로드
     if (summary == null && !listVM.isPreloadingSummaries) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (context.mounted) {
-          context.read<ProjectListViewModel>().fetchSummary(projectId);
+          ref.read(projectListViewModelProvider).fetchSummary(projectId);
         }
       });
     }
@@ -112,7 +110,7 @@ class ProjectTile extends StatelessWidget {
                     runSpacing: 8,
                     children: [
                       ElevatedButton.icon(
-                        onPressed: () => _openLabelingPage(context),
+                        onPressed: () => _openLabelingPage(context, ref),
                         icon: const Icon(Icons.play_arrow),
                         label: Text(context.l10n.projectTile_label),
                       ),
@@ -128,7 +126,7 @@ class ProjectTile extends StatelessWidget {
                         label: Text(context.l10n.projectTile_share),
                       ),
                       TextButton.icon(
-                        onPressed: () => _confirmDelete(context),
+                        onPressed: () => _confirmDelete(context, ref),
                         icon: const Icon(Icons.delete, color: Colors.red),
                         label: Text(context.l10n.projectTile_delete, style: const TextStyle(color: Colors.red)),
                       ),
@@ -145,7 +143,7 @@ class ProjectTile extends StatelessWidget {
                 ? SizedBox(
                     width: 110,
                     height: 110,
-                    child: LabelingCircularProgressButton(summary: summary, onPressed: () => _openLabelingPage(context)),
+                    child: LabelingCircularProgressButton(summary: summary, onPressed: () => _openLabelingPage(context, ref)),
                   )
                 : const SizedBox(width: 64, height: 64, child: Center(child: CircularProgressIndicator(strokeWidth: 3))),
           ],
