@@ -9,7 +9,8 @@ import 'package:http/http.dart' as http;
 
 import 'package:archive/archive.dart';
 
-import 'interface_storage_helper.dart'; // ← 현재는 여기에 LabelModelConverter가 있다고 가정
+import 'interface_storage_helper.dart';
+import 'local_label_store.dart'; // ← 현재는 여기에 LabelModelConverter가 있다고 가정
 import '../../core/models/project/project_model.dart';
 import '../../core/models/data/data_info.dart';
 import '../../core/models/label/label_model.dart';
@@ -37,8 +38,6 @@ class StorageHelperImpl implements StorageHelperInterface {
   static const _kPrefix = 'zae_labeler:';
   static const _kProjectConfigKey = '${_kPrefix}project_config_snapshots';
   static const _kProjectListKey = '${_kPrefix}project_registry';
-
-  String _labelsKey(String projectId) => '${_kPrefix}labels:$projectId';
 
   // ==============================
   // 📌 Project Configuration IO
@@ -118,105 +117,50 @@ class StorageHelperImpl implements StorageHelperInterface {
   }
 
   // ==============================
-  // 📌 Single Label Data IO
+  // 📌 Label IO (항목별 키, LocalLabelStore)
   // ==============================
+
+  /// 라벨은 항목별 키로 저장합니다. 예전 포맷(프로젝트당 배열 1개)은 첫 접근 시 자동 마이그레이션됩니다.
+  final LocalLabelStore _labels = LocalLabelStore(_LocalStorageBackend(), prefix: _kPrefix);
+
+  static Map<String, dynamic> _entryOf(String dataId, String? dataPath, LabelModel m) => <String, dynamic>{
+    'data_id': dataId,
+    'data_path': dataPath,
+    'mode': m.mode.name,
+    'labeled_at': m.labeledAt.toIso8601String(),
+    'label_data': LabelModelConverter.toJson(m),
+  };
+
+  static LabelModel _modelOf(Map<String, dynamic> entry, LabelingMode fallback) {
+    final modeName = entry['mode'];
+    final mode = modeName is String ? LabelingMode.values.firstWhere((m) => m.name == modeName, orElse: () => fallback) : fallback;
+    return LabelModelConverter.fromJson(mode, entry);
+  }
 
   @override
   Future<void> saveLabelData(String projectId, String dataId, String dataPath, LabelModel labelModel) async {
-    final storageKey = _labelsKey(projectId);
-    final labelsJson = html.window.localStorage[storageKey];
-
-    List<Map<String, dynamic>> entries = [];
-    if (labelsJson != null) {
-      final jsonData = jsonDecode(labelsJson) as List;
-      entries = jsonData.cast<Map<String, dynamic>>();
-    }
-
-    final entry = <String, dynamic>{
-      'data_id': dataId,
-      'data_path': dataPath,
-      'mode': labelModel.mode.name, // enum.name
-      'labeled_at': labelModel.labeledAt.toIso8601String(),
-      'label_data': LabelModelConverter.toJson(labelModel),
-    };
-
-    final idx = entries.indexWhere((e) => e['data_id'] == dataId);
-    if (idx >= 0) {
-      entries[idx] = entry;
-    } else {
-      entries.add(entry);
-    }
-
-    html.window.localStorage[storageKey] = jsonEncode(entries);
+    _labels.save(projectId, _entryOf(dataId, dataPath, labelModel));
   }
 
   @override
   Future<LabelModel> loadLabelData(String projectId, String dataId, String dataPath, LabelingMode modeHint) async {
-    final storageKey = _labelsKey(projectId);
-    final labelsJson = html.window.localStorage[storageKey];
-    if (labelsJson == null) {
-      return LabelModelFactory.createNew(modeHint, dataId: dataId);
-    }
-
-    final entries = (jsonDecode(labelsJson) as List).cast<Map<String, dynamic>>();
-    final entry = entries.firstWhere((e) => e['data_id'] == dataId, orElse: () => const {});
-
-    if (entry.isEmpty) {
-      return LabelModelFactory.createNew(modeHint, dataId: dataId);
-    }
-
-    final modeName = entry['mode'] as String?;
-    final mode = modeName != null ? LabelingMode.values.firstWhere((m) => m.name == modeName, orElse: () => modeHint) : modeHint;
-
-    // ✅ converter에 래퍼 전체(Map) 전달
-    return LabelModelConverter.fromJson(mode, entry);
+    final entry = _labels.load(projectId, dataId);
+    return entry == null ? LabelModelFactory.createNew(modeHint, dataId: dataId) : _modelOf(entry, modeHint);
   }
-
-  // ==============================
-  // 📌 Project-wide Label IO
-  // ==============================
 
   @override
   Future<void> saveAllLabels(String projectId, List<LabelModel> labels) async {
-    final storageKey = _labelsKey(projectId);
-
-    final entries = labels
-        .map(
-          (m) => <String, dynamic>{
-            'data_id': m.dataId,
-            'data_path': m.dataPath,
-            'labeled_at': m.labeledAt.toIso8601String(),
-            'mode': m.mode.name, // enum.name
-            'label_data': LabelModelConverter.toJson(m),
-          },
-        )
-        .toList();
-
-    html.window.localStorage[storageKey] = jsonEncode(entries);
+    _labels.replaceAll(projectId, [for (final m in labels) _entryOf(m.dataId, m.dataPath, m)]);
   }
 
   @override
   Future<List<LabelModel>> loadAllLabelModels(String projectId) async {
-    final storageKey = _labelsKey(projectId);
-    final labelsJson = html.window.localStorage[storageKey];
-    if (labelsJson == null) return const [];
-
-    final entries = (jsonDecode(labelsJson) as List).cast<Map<String, dynamic>>();
-    return [
-      for (final e in entries)
-        LabelModelConverter.fromJson(
-          (e['mode'] is String)
-              ? LabelingMode.values.firstWhere((m) => m.name == e['mode'], orElse: () => LabelingMode.singleClassification)
-              : LabelingMode.singleClassification,
-          e, // ✅ 래퍼 전체 전달
-        ),
-    ];
+    return [for (final e in _labels.loadAll(projectId)) _modelOf(e, LabelingMode.singleClassification)];
   }
 
   @override
   Future<void> deleteProjectLabels(String projectId) async {
-    final storageKey = _labelsKey(projectId);
-    html.window.localStorage.remove(storageKey);
+    _labels.deleteAll(projectId);
   }
 
   @override
@@ -390,4 +334,21 @@ class StorageHelperImpl implements StorageHelperInterface {
   @override
   Future<String> uploadProjectBytes(String projectId, String objectKey, Uint8List bytes, {String? contentType}) async =>
       UnsupportedError('Project-scoped upload is not supported in Native environment.').toString();
+}
+
+/// `window.localStorage` 위의 [KeyValueBackend].
+class _LocalStorageBackend implements KeyValueBackend {
+  html.Storage get _ls => html.window.localStorage;
+
+  @override
+  String? get(String key) => _ls[key];
+
+  @override
+  void set(String key, String value) => _ls[key] = value;
+
+  @override
+  void remove(String key) => _ls.remove(key);
+
+  @override
+  Iterable<String> get keys => _ls.keys.toList();
 }
