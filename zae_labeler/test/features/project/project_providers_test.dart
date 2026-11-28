@@ -129,7 +129,7 @@ void main() {
       expect(container.read(projectListProvider).value!.map((p) => p.name), contains('Brand new'));
 
       final saved = await editor.confirm();
-      expect(storage.projects.map((p) => p.id), contains(saved.id));
+      expect(storage.projects.map((p) => p.id), contains(saved!.id));
     });
 
     test('이름 입력은 디바운스되어 마지막 값만 프로젝트 1개 단위로 저장된다', () async {
@@ -164,7 +164,7 @@ void main() {
       editor.setName('Confirmed');
       final saved = await editor.confirm();
 
-      expect(saved.name, 'Confirmed');
+      expect(saved!.name, 'Confirmed');
       expect(storage.projects.first.name, 'Confirmed');
     });
 
@@ -180,6 +180,28 @@ void main() {
 
       expect(storage.projects.first.name, 'Closed early');
       expect(container.read(projectListProvider).value!.first.name, 'Closed early');
+    });
+
+    test('검증 실패는 예외 대신 error 상태로 남고, confirm은 저장하지 않는다', () async {
+      ProjectEditorNotifier.renameDebounce = Duration.zero;
+      addTearDown(() => ProjectEditorNotifier.renameDebounce = const Duration(milliseconds: 400));
+      final existing = (await listNow()).first;
+      final provider = projectEditorProvider(existing);
+      container.listen(provider, (_, __) {});
+      final editor = container.read(provider.notifier);
+
+      editor.setName('   ');
+      await pumpEventQueue();
+      expect(container.read(provider).error, isNotNull);
+      expect(storage.projects.first.name, 'First', reason: '잘못된 이름은 저장되지 않음');
+
+      expect(await editor.confirm(), isNull);
+      expect(storage.projects.first.name, 'First');
+
+      editor.setName('Fixed');
+      await pumpEventQueue();
+      expect(container.read(provider).error, isNull);
+      expect((await editor.confirm())?.name, 'Fixed');
     });
 
     test('기존 프로젝트: 모드 변경 시 기존 라벨을 삭제한다', () async {
