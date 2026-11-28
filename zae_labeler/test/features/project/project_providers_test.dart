@@ -103,6 +103,7 @@ void main() {
       var summary = await container.read(projectSummaryProvider('p1').future);
       expect(summary.total, 2);
       expect(summary.complete, 1);
+      expect(storage.loadProjectListCalls, 1, reason: '요약 계산을 위해 프로젝트 목록을 다시 읽지 않음');
 
       storage.seed('p1', [SingleClassificationLabelModel(dataId: 'd2', label: 'B', labeledAt: DateTime(2025))]);
       container.invalidate(projectSummaryProvider);
@@ -119,7 +120,7 @@ void main() {
       final editor = container.read(provider.notifier);
 
       expect(container.read(provider).isEditing, isFalse);
-      await editor.setName('Brand new');
+      editor.setName('Brand new');
       await editor.addClass('C');
 
       final state = container.read(provider);
@@ -129,6 +130,56 @@ void main() {
 
       final saved = await editor.confirm();
       expect(storage.projects.map((p) => p.id), contains(saved.id));
+    });
+
+    test('이름 입력은 디바운스되어 마지막 값만 프로젝트 1개 단위로 저장된다', () async {
+      ProjectEditorNotifier.renameDebounce = const Duration(milliseconds: 50);
+      addTearDown(() => ProjectEditorNotifier.renameDebounce = const Duration(milliseconds: 400));
+
+      final existing = (await listNow()).first;
+      final provider = projectEditorProvider(existing);
+      container.listen(provider, (_, __) {});
+      final editor = container.read(provider.notifier);
+      final listSavesBefore = storage.saveProjectListCalls;
+
+      for (final n in ['N', 'Ne', 'New', 'New name']) {
+        editor.setName(n);
+      }
+      expect(container.read(provider).project.name, 'New name', reason: '화면에는 즉시 반영');
+      expect(storage.saveProjectCalls, 0);
+
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+      expect(storage.saveProjectCalls, 1);
+      expect(storage.saveProjectListCalls, listSavesBefore, reason: '편집 중에는 목록 전체를 다시 쓰지 않음');
+      expect(storage.projects.first.name, 'New name');
+      expect(container.read(projectListProvider).value!.first.name, 'New name');
+    });
+
+    test('confirm은 대기 중인 이름 변경을 먼저 저장한다', () async {
+      final existing = (await listNow()).first;
+      final provider = projectEditorProvider(existing);
+      container.listen(provider, (_, __) {});
+      final editor = container.read(provider.notifier);
+
+      editor.setName('Confirmed');
+      final saved = await editor.confirm();
+
+      expect(saved.name, 'Confirmed');
+      expect(storage.projects.first.name, 'Confirmed');
+    });
+
+    test('저장 전에 화면을 닫아도 대기 중인 이름은 저장된다', () async {
+      final existing = (await listNow()).first;
+      final provider = projectEditorProvider(existing);
+      final sub = container.listen(provider, (_, __) {});
+
+      container.read(provider.notifier).setName('Closed early');
+      sub.close();
+      await container.pump();
+      await pumpEventQueue();
+
+      expect(storage.projects.first.name, 'Closed early');
+      expect(container.read(projectListProvider).value!.first.name, 'Closed early');
     });
 
     test('기존 프로젝트: 모드 변경 시 기존 라벨을 삭제한다', () async {

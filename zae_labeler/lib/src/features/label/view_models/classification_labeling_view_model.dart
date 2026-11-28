@@ -48,7 +48,7 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
 
   @override
   Future<void> postInitialize() async {
-    _pairs = generateCrossPairs([for (final d in dataManager.allData) d.dataId]);
+    _pairs = generateCrossPairs([for (final info in dataManager.dataInfos) info.id]);
     _pairIndex = 0;
   }
 
@@ -62,9 +62,16 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
     return v is CrossDataPair ? v.relation : '';
   }
 
-  UnifiedData _dataById(String id) => dataManager.allData.firstWhere((e) => e.dataId == id);
-  UnifiedData get currentSourceData => _dataById(currentPair!.sourceId);
-  UnifiedData get currentTargetData => _dataById(currentPair!.targetId);
+  UnifiedData get currentSourceData => dataManager.dataFor(currentPair!.sourceId);
+  UnifiedData get currentTargetData => dataManager.dataFor(currentPair!.targetId);
+
+  /// 쌍의 두 데이터를 함께 읽습니다.
+  @override
+  Future<void> prepareCurrentItem() async {
+    final p = currentPair;
+    if (p == null) return;
+    await Future.wait([dataManager.ensureLoaded(p.sourceId), dataManager.ensureLoaded(p.targetId)]);
+  }
 
   bool isLabelSelected(String relation) {
     final p = currentPair;
@@ -98,21 +105,21 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
   Future<void> moveNext() async {
     if (!hasNext) return;
     _pairIndex++;
-    notify();
+    await refreshCurrentItem();
   }
 
   @override
   Future<void> movePrevious() async {
     if (!hasPrevious) return;
     _pairIndex--;
-    notify();
+    await refreshCurrentItem();
   }
 
   @override
   Future<void> jumpTo(int index) async {
-    if (index < 0 || index >= _pairs.length) return;
+    if (index < 0 || index >= _pairs.length || index == _pairIndex) return;
     _pairIndex = index;
-    notify();
+    await refreshCurrentItem();
   }
 
   // ── 쌍 단위 진행률 ──
@@ -136,6 +143,6 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
   String get currentItemName {
     final p = currentPair;
     if (p == null) return '';
-    return '${_dataById(p.sourceId).fileName} ↔ ${_dataById(p.targetId).fileName}';
+    return '${dataManager.infoFor(p.sourceId).fileName} ↔ ${dataManager.infoFor(p.targetId).fileName}';
   }
 }

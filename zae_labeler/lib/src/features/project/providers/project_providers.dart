@@ -1,4 +1,6 @@
 // lib/src/features/project/providers/project_providers.dart
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -65,11 +67,15 @@ class ProjectListNotifier extends AsyncNotifier<List<Project>> {
 final projectListProvider = AsyncNotifierProvider<ProjectListNotifier, List<Project>>(ProjectListNotifier.new);
 
 /// 프로젝트별 라벨링 진행률 요약. 실패하면 빈 요약을 돌려줍니다.
-/// 전체 새로고침은 `ref.invalidate(projectSummaryProvider)`.
+/// - 목록에 이미 있는 [Project]를 사용하므로 프로젝트마다 목록 전체를 다시 읽지 않습니다(라벨만 조회).
+/// - 전체 새로고침은 `ref.invalidate(projectSummaryProvider)`.
 final projectSummaryProvider = FutureProvider.family<LabelingSummary, String>((ref, projectId) async {
   ref.watch(storageRevisionProvider);
+  final labels = ref.watch(labelUseCasesProvider);
   try {
-    return await ref.watch(labelUseCasesProvider).computeSummary(projectId);
+    final projects = await ref.read(projectListProvider.future);
+    final project = projects.where((p) => p.id == projectId).firstOrNull;
+    return project == null ? await labels.computeSummary(projectId) : await labels.computeSummaryByProject(project);
   } catch (e) {
     debugPrint('❌ Failed to fetch summary for project $projectId: $e');
     return LabelingSummary.empty();
@@ -103,22 +109,62 @@ class ProjectEditorNotifier extends Notifier<ProjectEditorState> {
 
   final Project? initial;
 
+  /// 이름 입력은 키 입력마다 저장하지 않고, 입력이 멈춘 뒤 한 번 저장합니다.
+  static Duration renameDebounce = const Duration(milliseconds: 400);
+
+  Timer? _renameTimer;
+  String? _pendingName;
+
+  /// dispose 시점에는 state를 읽을 수 없으므로 마지막 스냅샷을 따로 보관합니다.
+  late Project _latest;
+
   @override
-  ProjectEditorState build() => ProjectEditorState(
-    project: initial ?? Project(id: const Uuid().v4(), name: 'New Project', mode: LabelingMode.singleClassification, classes: const ['True', 'False']),
-    isEditing: initial != null,
-  );
+  ProjectEditorState build() {
+    // 화면을 닫을 때 아직 저장되지 않은 이름이 있으면 마저 저장합니다.
+    final editor = ref.read(projectUseCasesProvider).editor;
+    final list = ref.read(projectListProvider.notifier);
+    ref.onDispose(() {
+      _renameTimer?.cancel();
+      final name = _pendingName;
+      if (name == null) return;
+      _pendingName = null;
+      unawaited(editor.rename(_latest, name).then(list.syncLocal, onError: (Object e) => debugPrint('❌ rename on dispose failed: $e')));
+    });
+
+    _latest = initial ?? Project(id: const Uuid().v4(), name: 'New Project', mode: LabelingMode.singleClassification, classes: const ['True', 'False']);
+    return ProjectEditorState(project: _latest, isEditing: initial != null);
+  }
+
+  void _setProject(Project project) {
+    _latest = project;
+    state = state.copyWith(project: project);
+  }
 
   Future<void> _apply(Future<Project> Function(Project current) edit) async {
     final updated = await edit(state.project);
     if (!ref.mounted) return;
-    state = state.copyWith(project: updated);
+    _setProject(updated);
     ref.read(projectListProvider.notifier).syncLocal(updated);
   }
 
   EditProjectUseCase get _editor => ref.read(projectUseCasesProvider).editor;
 
-  Future<void> setName(String name) => _apply((p) => _editor.rename(p, name));
+  /// 화면에는 즉시 반영하고, 저장은 [renameDebounce] 뒤 한 번만 합니다.
+  void setName(String name) {
+    _setProject(state.project.copyWith(name: name));
+    _pendingName = name;
+    _renameTimer?.cancel();
+    _renameTimer = Timer(renameDebounce, flushPendingName);
+  }
+
+  /// 대기 중인 이름 변경을 지금 저장합니다.
+  Future<void> flushPendingName() async {
+    _renameTimer?.cancel();
+    final name = _pendingName;
+    if (name == null) return;
+    _pendingName = null;
+    await _apply((p) => _editor.rename(p, name));
+  }
 
   /// 모드를 바꾸면 기존 라벨은 삭제됩니다(EditProjectUseCase 기본 정책).
   Future<void> setLabelingMode(LabelingMode mode) async {
@@ -167,6 +213,7 @@ class ProjectEditorNotifier extends Notifier<ProjectEditorState> {
 
   /// 확정: 목록에 반영하고 목록 전체를 저장합니다.
   Future<Project> confirm() async {
+    await flushPendingName();
     final project = state.project;
     await ref.read(projectListProvider.notifier).upsert(project);
     return project;

@@ -38,6 +38,9 @@ class SwitchableStorageHelper with ChangeNotifier implements StorageHelperInterf
   Future<void> saveProjectList(List<Project> projects) => _delegate.saveProjectList(projects);
 
   @override
+  Future<void> saveProject(Project project) => _delegate.saveProject(project);
+
+  @override
   Future<List<Project>> loadProjectList() => _delegate.loadProjectList();
 
   @override

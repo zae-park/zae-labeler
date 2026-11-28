@@ -101,15 +101,7 @@ class CloudStorageHelper implements StorageHelperInterface {
   Future<void> saveProjectList(List<Project> projects) async {
     final batch = firestore.batch();
     for (final project in projects) {
-      final docRef = _projectsCol.doc(project.id);
-      final j = project.toJson(includeLabels: false);
-      j['dataInfos'] = project.dataInfos.map((e) {
-        final hasPath = (e.filePath?.isNotEmpty ?? false);
-        final hasB64 = (e.base64Content?.isNotEmpty ?? false);
-        // 업로드 성공 → 슬림 저장, 실패 → base64 보존 저장
-        return hasPath ? e.slimmedForPersist().toSlimJson() : (hasB64 ? e.toJson() : e.slimmedForPersist().toSlimJson());
-      }).toList();
-      batch.set(docRef, j, SetOptions(merge: true));
+      batch.set(_projectsCol.doc(project.id), _projectDoc(project), SetOptions(merge: true));
       debugPrint(
         '[CloudSave] ${project.id} dataInfos='
         '${project.dataInfos.map((d) => "(${d.fileName},path=${d.filePath != null},b64=${(d.base64Content?.isNotEmpty ?? false)})").join(", ")}',
@@ -119,6 +111,21 @@ class CloudStorageHelper implements StorageHelperInterface {
   }
 
   /// Firestore에서 사용자의 프로젝트 리스트를 로드합니다.
+  /// 프로젝트 문서 1개만 병합 저장합니다(라벨 제외).
+  @override
+  Future<void> saveProject(Project project) => _projectsCol.doc(project.id).set(_projectDoc(project), SetOptions(merge: true));
+
+  /// 프로젝트 문서 직렬화. 업로드 성공(경로 있음) → 슬림 저장, 실패 → base64 보존 저장.
+  Map<String, dynamic> _projectDoc(Project project) {
+    final j = project.toJson(includeLabels: false);
+    j['dataInfos'] = project.dataInfos.map((e) {
+      final hasPath = (e.filePath?.isNotEmpty ?? false);
+      final hasB64 = (e.base64Content?.isNotEmpty ?? false);
+      return hasPath ? e.slimmedForPersist().toSlimJson() : (hasB64 ? e.toJson() : e.slimmedForPersist().toSlimJson());
+    }).toList();
+    return j;
+  }
+
   @override
   Future<List<Project>> loadProjectList() async {
     final snap = await _projectsCol.get();
@@ -460,21 +467,4 @@ class CloudStorageHelper implements StorageHelperInterface {
   // ─────────────────────────────────────────────────────────────────────────
   // 🔧 편의 메서드(인터페이스 외) — 선택 사용
   // ─────────────────────────────────────────────────────────────────────────
-
-  /// 단일 프로젝트를 병합 저장(라벨 제외).
-  /// - DataInfo는 **toSlimJson()**으로 직렬화.
-  Future<void> saveSingleProject(Project project) async {
-    final doc = _projectsCol.doc(project.id);
-    final j = project.toJson(includeLabels: false);
-    j['dataInfos'] = project.dataInfos.map((e) {
-      final hasPath = (e.filePath?.isNotEmpty ?? false);
-      final hasB64 = (e.base64Content?.isNotEmpty ?? false);
-      // 업로드 성공 → 슬림 저장 / 업로드 실패 → base64 보존
-      return hasPath ? e.slimmedForPersist().toSlimJson() : (hasB64 ? e.toJson() : e.slimmedForPersist().toSlimJson());
-    }).toList();
-    await doc.set(j, SetOptions(merge: true));
-  }
-
-  /// 단일 프로젝트 삭제(라벨 포함) 편의 메서드.
-  Future<void> deleteSingleProject(String projectId) async => await deleteProject(projectId);
 }
