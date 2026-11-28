@@ -1,58 +1,58 @@
-// 📁 lib/src/views/pages/sub_pages/segmentation_labeling_page.dart
+// lib/src/features/label/ui/pages/sub_pages/segmentation_labeling_page.dart
 import 'package:flutter/material.dart';
-import 'package:zae_labeler/src/features/label/view_models/sub_view_models/segmentation_labeling_view_model.dart';
 
-import '../../../../../core/models/project/project_model.dart';
-import '../../../../../views/widgets/grid_painter.dart';
+import '../../../view_models/segmentation_labeling_view_model.dart';
+import '../../widgets/segmentation_grid.dart';
 import 'base_labeling_page.dart';
 
 class SegmentationLabelingPage extends BaseLabelingPage<SegmentationLabelingViewModel> {
-  const SegmentationLabelingPage({Key? key, required Project project, required SegmentationLabelingViewModel viewModel})
-      : super(key: key, project: project, viewModel: viewModel);
+  const SegmentationLabelingPage({super.key, required super.viewModel});
 
   @override
-  Widget buildViewer(SegmentationLabelingViewModel vm) {
+  Widget buildViewer(BuildContext context, SegmentationLabelingViewModel vm) {
     return Stack(
       alignment: Alignment.center,
       children: [
-        Positioned.fill(child: super.buildViewer(vm)),
-        Positioned.fill(
-          child: GridPainterWidget(mode: SegmentationMode.pixelMask, onLabelUpdated: (labeledData) => vm.updateSegmentationGrid(labeledData)),
-        ),
+        Positioned.fill(child: super.buildViewer(context, vm)),
+        Positioned.fill(child: SegmentationGrid(viewModel: vm)),
       ],
     );
   }
 
   @override
-  Widget buildModeSpecificUI(SegmentationLabelingViewModel vm) {
+  Widget buildModeSpecificUI(BuildContext context, SegmentationLabelingViewModel vm) {
+    final classes = vm.project.classes;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-      child: Row(
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          const Text('클래스 선택:'),
-          const SizedBox(width: 12),
-          DropdownButton<String>(
-            value: vm.selectedClass,
-            items: vm.project.classes.map((cls) => DropdownMenuItem<String>(value: cls, child: Text(cls))).toList(),
-            onChanged: (newValue) {
-              if (newValue != null) vm.setSelectedClass(newValue);
-            },
-          ),
-          const SizedBox(width: 12),
-          ElevatedButton.icon(icon: const Icon(Icons.save), label: const Text('선택 라벨 저장'), onPressed: vm.saveCurrentGridAsLabel),
-          const SizedBox(width: 8),
+          for (int i = 0; i < classes.length; i++)
+            ChoiceChip(
+              avatar: CircleAvatar(backgroundColor: segmentationColorFor(i)),
+              label: Text('${i + 1}. ${classes[i]}'),
+              selected: !vm.isErasing && vm.selectedClass == classes[i],
+              onSelected: (_) => vm.setSelectedClass(classes[i]),
+            ),
+          FilterChip(avatar: const Icon(Icons.auto_fix_normal, size: 18), label: const Text('지우개'), selected: vm.isErasing, onSelected: vm.setErasing),
           ElevatedButton.icon(
-              icon: const Icon(Icons.clear),
-              label: const Text('라벨 초기화'),
-              onPressed: vm.clearLabels,
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent)),
+            icon: const Icon(Icons.clear),
+            label: const Text('라벨 초기화'),
+            onPressed: vm.clearLabels,
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+          ),
         ],
       ),
     );
   }
 
+  /// 숫자 키로 클래스 빠르게 선택
   @override
   void handleNumericKeyInput(SegmentationLabelingViewModel vm, int index) {
-    // 선택적: 숫자 키에 대응하는 클래스 빠르게 선택하고 싶을 경우 구현 가능
+    if (index >= 0 && index < vm.project.classes.length) {
+      vm.setSelectedClass(vm.project.classes[index]);
+    }
   }
 }

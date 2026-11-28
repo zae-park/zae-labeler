@@ -35,20 +35,11 @@ class ProjectRepository {
     return list.firstWhereOrNull((p) => p.id == id);
   }
 
-  /// 단일 프로젝트를 저장합니다.
-  /// - 동일 ID가 존재하면 교체, 없으면 추가합니다.
-  /// - 내부적으로 전체 리스트 스냅샷을 저장합니다.
+  /// 단일 프로젝트를 저장합니다(동일 ID면 교체, 없으면 추가).
+  /// - 목록 전체를 읽고 다시 쓰지 않고 해당 프로젝트만 저장합니다(클라우드: 문서 1개).
   /// @param project 저장할 프로젝트
   Future<void> saveProject(Project project) async {
-    final current = await fetchAllProjects();
-    final index = current.indexWhere((p) => p.id == project.id);
-
-    if (index != -1) {
-      current[index] = project;
-    } else {
-      current.add(project);
-    }
-    await saveAll(current);
+    await storageHelper.saveProject(await _prepareForPersist(project));
   }
 
   /// 전체 프로젝트 리스트 스냅샷을 저장합니다.
@@ -56,19 +47,19 @@ class ProjectRepository {
   Future<void> saveAll(List<Project> list) async {
     final fixed = <Project>[];
     for (final proj in list) {
-      final repaired = <DataInfo>[];
-      for (final d in proj.dataInfos) {
-        repaired.add(await _ensureUploadedAndPath(proj.id, d));
-      }
-      // 중복 제거 (path|name 기준)
-      final dedup = <String, DataInfo>{};
-      for (final d in repaired) {
-        final key = '${d.filePath ?? ''}|${d.fileName}';
-        dedup[key] = d;
-      }
-      fixed.add(proj.copyWith(dataInfos: List<DataInfo>.unmodifiable(dedup.values)));
+      fixed.add(await _prepareForPersist(proj));
     }
     await storageHelper.saveProjectList(fixed);
+  }
+
+  /// 저장 전 정리: 경로 없는 데이터는 업로드해 경로를 채우고, (path|name) 기준으로 중복을 제거합니다.
+  Future<Project> _prepareForPersist(Project proj) async {
+    final dedup = <String, DataInfo>{};
+    for (final d in proj.dataInfos) {
+      final repaired = await _ensureUploadedAndPath(proj.id, d);
+      dedup['${repaired.filePath ?? ''}|${repaired.fileName}'] = repaired;
+    }
+    return proj.copyWith(dataInfos: List<DataInfo>.unmodifiable(dedup.values));
   }
 
   /// 프로젝트를 삭제합니다.

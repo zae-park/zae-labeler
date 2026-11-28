@@ -1,46 +1,34 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:zae_labeler/common/common_widgets.dart';
 import 'package:zae_labeler/common/i18n.dart';
 
-import 'package:zae_labeler/src/features/auth/view_models/auth_view_models.dart';
-import 'package:zae_labeler/src/features/locale/view_models/locale_view_model.dart';
-// import '../../view_models/locale_view_model.dart';
-import '../../core/services/user_preference_service.dart';
+import '../../features/auth/providers/auth_provider.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerProviderStateMixin {
   bool _showStartButton = false;
   bool _showLoginButtons = false;
 
   @override
   void initState() {
     super.initState();
-    _applySavedLocale();
 
     // 시작하기 버튼은 3초 후 표시
     Timer(const Duration(seconds: 3), () {
       if (mounted) {
         setState(() => _showStartButton = true);
       }
-    });
-  }
-
-  void _applySavedLocale() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final prefs = context.read<UserPreferenceService>();
-      final locale = prefs.locale;
-      context.read<LocaleViewModel>().changeLocale(locale.languageCode);
     });
   }
 
@@ -74,24 +62,22 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   Future<void> _signInWithGoogle(BuildContext context) async {
-    final authVM = context.read<AuthViewModel>();
-    await authVM.signInWithGoogle();
-    if (authVM.isSignedIn && mounted) {
+    await ref.read(authProvider.notifier).signInWithGoogle();
+    if (ref.read(authProvider).isSignedIn && mounted) {
       Navigator.pushReplacementNamed(context, '/project_list');
     }
   }
 
   Future<void> _signInWithGitHub(BuildContext context) async {
-    final authVM = context.read<AuthViewModel>();
-    await authVM.signInWithGitHub();
-    if (authVM.isSignedIn && mounted) {
+    await ref.read(authProvider.notifier).signInWithGitHub();
+    if (ref.read(authProvider).isSignedIn && mounted) {
       Navigator.pushReplacementNamed(context, '/project_list');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final authVM = context.watch<AuthViewModel>();
+    final authVM = ref.watch(authProvider);
 
     return GestureDetector(
       onTap: _handleUserInteraction,
@@ -101,8 +87,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           child: AutoSeparatedColumn(
             separator: const SizedBox(height: 16),
             children: [
-              Expanded(child: Center(child: Image.asset('assets/zae-splash2.gif', width: 250, height: 250, fit: BoxFit.contain))),
-              const Text("ZAE Labeler", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+              Expanded(
+                child: Center(child: Image.asset('assets/zae-splash2.gif', width: 250, height: 250, fit: BoxFit.contain)),
+              ),
+              const Text(
+                "ZAE Labeler",
+                style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+              ),
               SizedBox(
                 height: 200,
                 child: Stack(
@@ -151,9 +142,15 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                                 ),
                               ),
                             ElevatedButton.icon(
-                                icon: const Icon(Icons.login), label: Text(context.l10n.splashPage_google), onPressed: () => _signInWithGoogle(context)),
+                              icon: const Icon(Icons.login),
+                              label: Text(context.l10n.splashPage_google),
+                              onPressed: () => _signInWithGoogle(context),
+                            ),
                             ElevatedButton.icon(
-                                icon: const Icon(Icons.code), label: Text(context.l10n.splashPage_github), onPressed: () => _signInWithGitHub(context)),
+                              icon: const Icon(Icons.code),
+                              label: Text(context.l10n.splashPage_github),
+                              onPressed: () => _signInWithGitHub(context),
+                            ),
                             TextButton.icon(icon: const Icon(Icons.open_in_new), label: Text(context.l10n.splashPage_guest), onPressed: _handleGuestAccess),
                           ],
                         ),

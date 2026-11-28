@@ -3,16 +3,26 @@ import 'package:flutter/material.dart';
 
 enum AlertType { info, success, error }
 
+/// 화면 상단 알림을 순서대로 하나씩 보여줍니다.
+///
+/// 요청 시점에 **루트 Overlay**를 잡아 두므로, 알림을 요청한 화면이 닫혀도(예: 저장 후 pop)
+/// 대기 중인 알림이 안전하게 표시됩니다.
 class GlobalAlertManager {
   static final _queue = <_AlertRequest>[];
   static bool _isShowing = false;
 
   static void show(BuildContext context, String message, {AlertType type = AlertType.info, Duration duration = const Duration(seconds: 2)}) {
-    _queue.add(_AlertRequest(message, type, duration));
-    if (!_isShowing) _showNext(context);
+    final overlay = Overlay.maybeOf(context, rootOverlay: true);
+    if (overlay == null) return;
+    _queue.add(_AlertRequest(message, type, duration, overlay));
+    if (!_isShowing) _showNext();
   }
 
-  static void _showNext(BuildContext context) {
+  static void _showNext() {
+    // 그 사이 사라진 Overlay(앱 재시작 등)에 대한 요청은 건너뜁니다.
+    while (_queue.isNotEmpty && !_queue.first.overlay.mounted) {
+      _queue.removeAt(0);
+    }
     if (_queue.isEmpty) {
       _isShowing = false;
       return;
@@ -20,17 +30,14 @@ class GlobalAlertManager {
 
     _isShowing = true;
     final current = _queue.removeAt(0);
-
-    final overlay = Overlay.of(context);
     final entry = OverlayEntry(
       builder: (_) => _GlobalAlertWidget(message: current.message, type: current.type),
     );
-
-    overlay.insert(entry);
+    current.overlay.insert(entry);
 
     Future.delayed(current.duration, () {
-      entry.remove();
-      _showNext(context); // 다음 알림
+      if (entry.mounted) entry.remove();
+      _showNext(); // 다음 알림
     });
   }
 }
@@ -39,8 +46,9 @@ class _AlertRequest {
   final String message;
   final AlertType type;
   final Duration duration;
+  final OverlayState overlay;
 
-  _AlertRequest(this.message, this.type, this.duration);
+  _AlertRequest(this.message, this.type, this.duration, this.overlay);
 }
 
 class _GlobalAlertWidget extends StatelessWidget {
@@ -94,7 +102,13 @@ class _GlobalAlertWidget extends StatelessWidget {
               children: [
                 Icon(icon, color: Colors.white, size: 20),
                 const SizedBox(width: 8),
-                Expanded(child: Text(message, style: const TextStyle(color: Colors.white, fontSize: 14), overflow: TextOverflow.ellipsis)),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
           ),

@@ -3,6 +3,7 @@ import '../../../core/models/project/project_model.dart';
 import '../../../core/models/label/label_model.dart' show LabelModel, LabelingMode, LabelStatus;
 import '../../label/repository/label_repository.dart';
 import '../../project/repository/project_repository.dart';
+import 'package:zae_labeler/src/utils/cross_pairing.dart';
 import 'package:zae_labeler/src/utils/label_validator.dart';
 
 /// ---------------------------------------------------------------------------
@@ -17,12 +18,7 @@ class LabelingSummary {
 
   const LabelingSummary({required this.total, required this.complete, required this.warning, required this.incomplete, required this.progress});
 
-  LabelingSummary.empty()
-      : total = 0,
-        complete = 0,
-        warning = 0,
-        incomplete = 0,
-        progress = 0.0;
+  LabelingSummary.empty() : total = 0, complete = 0, warning = 0, incomplete = 0, progress = 0.0;
 
   @override
   String toString() =>
@@ -168,13 +164,19 @@ class LabelUseCases {
   /// - 경고는 완료와 별도 집계(불완전/의심치가 있는 경우)
   /// - 미완료 = total - complete
   LabelingSummary computeSummaryFor(Project project, List<LabelModel> labels) {
-    final total = project.dataInfos.length;
-    int complete = 0, warning = 0;
-
     final labelMap = {for (final m in labels) m.dataId: m};
-    for (final info in project.dataInfos) {
-      final lbl = labelMap[info.id];
-      final status = LabelValidator.getStatus(project, lbl);
+
+    // 진행 단위: 교차 분류는 데이터 쌍(nC2, dataId = pairId), 나머지는 데이터 1건
+    final unitIds = project.mode == LabelingMode.crossClassification
+        ? [
+            for (final p in generateCrossPairs([for (final d in project.dataInfos) d.id])) p.pairId,
+          ]
+        : [for (final d in project.dataInfos) d.id];
+
+    final total = unitIds.length;
+    int complete = 0, warning = 0;
+    for (final id in unitIds) {
+      final status = LabelValidator.getStatus(project, labelMap[id]);
       if (status == LabelStatus.complete) complete++;
       if (status == LabelStatus.warning) warning++;
     }

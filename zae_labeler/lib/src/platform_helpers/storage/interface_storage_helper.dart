@@ -55,6 +55,10 @@ abstract class StorageHelperInterface {
   /// - 공유/백업 목적이 아닌 **로컬(또는 사용자 스코프) 레벨** 데이터.
   Future<void> saveProjectList(List<Project> projects);
 
+  /// 프로젝트 **1개**를 추가하거나 갱신합니다(라벨 제외).
+  /// - 편집 화면의 잦은 저장에 사용합니다. 클라우드는 문서 1개만 쓰고, 로컬은 목록 파일을 갱신합니다.
+  Future<void> saveProject(Project project);
+
   /// 저장된 **프로젝트 목록(레지스트리)** 을 불러옵니다.
   /// - 없으면 빈 리스트 반환.
   Future<List<Project>> loadProjectList();
