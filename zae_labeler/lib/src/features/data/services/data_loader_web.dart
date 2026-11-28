@@ -11,9 +11,12 @@ import 'package:zae_labeler/src/platform_helpers/storage/cloud_storage_helper.da
 import 'data_loader_interface.dart';
 
 class WebDataLoader implements DataLoader {
-  final CloudStorageHelper _cloud;
+  final CloudStorageHelper? _injectedCloud;
 
-  WebDataLoader({CloudStorageHelper? cloud}) : _cloud = cloud ?? CloudStorageHelper();
+  /// 클라우드 경로를 실제로 읽을 때 처음 생성합니다(생성 시 Firebase 인스턴스에 접근하므로 지연).
+  late final CloudStorageHelper _cloud = _injectedCloud ?? CloudStorageHelper();
+
+  WebDataLoader({CloudStorageHelper? cloud}) : _injectedCloud = cloud;
 
   FileType _inferType(DataInfo info) {
     final mime = (info.mimeType ?? '').toLowerCase();

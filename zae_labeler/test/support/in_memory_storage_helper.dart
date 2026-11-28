@@ -79,6 +79,14 @@ class InMemoryStorageHelper implements StorageHelperInterface {
   @override
   Future<String> downloadProjectConfig(Project project) async => 'config://${project.id}';
 
+  final uploads = <String>[];
+
+  @override
+  Future<String> uploadProjectBase64(String projectId, String objectKey, String rawBase64, {String? contentType}) async {
+    uploads.add('$projectId/$objectKey');
+    return 'memory://$projectId/$objectKey';
+  }
+
   @override
   Future<String?> ensureLocalObjectUrl(DataInfo info) async => null;
 

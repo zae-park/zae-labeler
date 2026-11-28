@@ -10,6 +10,7 @@ import '../../../core/models/data/data_info.dart';
 import '../../../core/models/label/label_model.dart' show LabelingMode;
 import '../../../core/models/project/project_model.dart';
 import '../../label/use_cases/label_use_cases.dart' show LabelingSummary;
+import '../logic/project_validator.dart';
 import '../use_cases/edit_project_use_case.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -94,10 +95,17 @@ class ProjectEditorState {
   final bool isEditing;
   final bool isBusy;
 
-  const ProjectEditorState({required this.project, required this.isEditing, this.isBusy = false});
+  /// 마지막 편집이 검증/저장에 실패한 이유(성공하면 null).
+  final String? error;
 
-  ProjectEditorState copyWith({Project? project, bool? isBusy}) =>
-      ProjectEditorState(project: project ?? this.project, isEditing: isEditing, isBusy: isBusy ?? this.isBusy);
+  const ProjectEditorState({required this.project, required this.isEditing, this.isBusy = false, this.error});
+
+  ProjectEditorState copyWith({Project? project, bool? isBusy, String? error, bool clearError = false}) => ProjectEditorState(
+    project: project ?? this.project,
+    isEditing: isEditing,
+    isBusy: isBusy ?? this.isBusy,
+    error: clearError ? null : (error ?? this.error),
+  );
 }
 
 /// 프로젝트 생성/편집 화면 상태. 인자로 편집할 프로젝트(신규면 null)를 받습니다.
@@ -140,12 +148,24 @@ class ProjectEditorNotifier extends Notifier<ProjectEditorState> {
     state = state.copyWith(project: project);
   }
 
-  Future<void> _apply(Future<Project> Function(Project current) edit) async {
-    final updated = await edit(state.project);
-    if (!ref.mounted) return;
-    _setProject(updated);
-    ref.read(projectListProvider.notifier).syncLocal(updated);
+  /// 편집을 적용합니다. 검증/저장에 실패하면 예외를 던지지 않고 [ProjectEditorState.error]에 남기고 false를 돌려줍니다.
+  /// (UI 콜백·타이머에서 호출되므로 예외가 처리되지 않은 채 흩어지지 않게 합니다.)
+  Future<bool> _apply(Future<Project> Function(Project current) edit) async {
+    try {
+      final updated = await edit(state.project);
+      if (!ref.mounted) return true;
+      _latest = updated;
+      state = state.copyWith(project: updated, clearError: true);
+      ref.read(projectListProvider.notifier).syncLocal(updated);
+      return true;
+    } catch (e) {
+      debugPrint('❌ project edit failed: $e');
+      if (ref.mounted) state = state.copyWith(error: _messageOf(e));
+      return false;
+    }
   }
+
+  static String _messageOf(Object e) => e is ArgumentError ? '${e.message}' : '$e';
 
   EditProjectUseCase get _editor => ref.read(projectUseCasesProvider).editor;
 
@@ -157,41 +177,41 @@ class ProjectEditorNotifier extends Notifier<ProjectEditorState> {
     _renameTimer = Timer(renameDebounce, flushPendingName);
   }
 
-  /// 대기 중인 이름 변경을 지금 저장합니다.
-  Future<void> flushPendingName() async {
+  /// 대기 중인 이름 변경을 지금 저장합니다. 성공(또는 대기 없음)이면 true.
+  Future<bool> flushPendingName() async {
     _renameTimer?.cancel();
     final name = _pendingName;
-    if (name == null) return;
+    if (name == null) return true;
     _pendingName = null;
-    await _apply((p) => _editor.rename(p, name));
+    return _apply((p) => _editor.rename(p, name));
   }
 
   /// 모드를 바꾸면 기존 라벨은 삭제됩니다(EditProjectUseCase 기본 정책).
-  Future<void> setLabelingMode(LabelingMode mode) async {
-    if (state.project.mode == mode) return;
-    await _apply((p) => _editor.changeMode(p, mode));
+  Future<bool> setLabelingMode(LabelingMode mode) async {
+    if (state.project.mode == mode) return true;
+    return _apply((p) => _editor.changeMode(p, mode));
   }
 
-  Future<void> addClass(String className) async {
+  Future<bool> addClass(String className) async {
     final name = className.trim();
-    if (name.isEmpty) return;
-    await _apply((p) => _editor.addClass(p, name));
+    if (name.isEmpty) return true;
+    return _apply((p) => _editor.addClass(p, name));
   }
 
-  Future<void> editClass(int index, String newName) => _apply((p) => _editor.editClass(p, index, newName));
+  Future<bool> editClass(int index, String newName) => _apply((p) => _editor.editClass(p, index, newName));
 
-  Future<void> removeClass(int index) => _apply((p) => _editor.removeClass(p, index));
+  Future<bool> removeClass(int index) => _apply((p) => _editor.removeClass(p, index));
 
-  Future<void> addDataInfos(List<DataInfo> infos) async {
-    if (infos.isEmpty) return;
-    await _apply((p) => _editor.addDataInfos(p, infos));
+  Future<bool> addDataInfos(List<DataInfo> infos) async {
+    if (infos.isEmpty) return true;
+    return _apply((p) => _editor.addDataInfos(p, infos));
   }
 
-  Future<void> removeDataInfoAt(int index) async {
+  Future<bool> removeDataInfoAt(int index) async {
     final infos = state.project.dataInfos;
-    if (index < 0 || index >= infos.length) return;
+    if (index < 0 || index >= infos.length) return true;
     final id = infos[index].id;
-    await _apply((p) => _editor.removeDataInfoById(p, id));
+    return _apply((p) => _editor.removeDataInfoById(p, id));
   }
 
   /// 파일 선택기로 데이터를 고르고 추가합니다. 진행 중에는 [ProjectEditorState.isBusy].
@@ -212,9 +232,16 @@ class ProjectEditorNotifier extends Notifier<ProjectEditorState> {
   }
 
   /// 확정: 목록에 반영하고 목록 전체를 저장합니다.
-  Future<Project> confirm() async {
-    await flushPendingName();
+  /// 검증에 실패하면 저장하지 않고 null을 돌려줍니다(이유는 [ProjectEditorState.error]).
+  Future<Project?> confirm() async {
+    if (!await flushPendingName()) return null;
     final project = state.project;
+    try {
+      ProjectValidator.validate(project);
+    } catch (e) {
+      state = state.copyWith(error: _messageOf(e));
+      return null;
+    }
     await ref.read(projectListProvider.notifier).upsert(project);
     return project;
   }

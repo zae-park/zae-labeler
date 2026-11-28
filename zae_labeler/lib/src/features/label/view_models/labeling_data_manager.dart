@@ -33,7 +33,10 @@ class LabelingDataManager {
   /// 외부에서 이미 읽은 데이터가 있으면 그대로 사용(테스트/프리패치용). 이 항목들은 다시 읽지 않습니다.
   final List<UnifiedData>? initialDataList;
 
-  final AdaptiveUnifiedDataLoader loader;
+  final AdaptiveUnifiedDataLoader? _injectedLoader;
+
+  /// 실제로 파일을 읽을 때 처음 생성합니다(플랫폼 로더 생성 비용·의존성을 미룸).
+  late final AdaptiveUnifiedDataLoader loader = _injectedLoader ?? AdaptiveUnifiedDataLoader(uds: UnifiedDataService(), storage: storageHelper);
 
   /// 메모리에 유지할 최대 항목 수(콘텐츠 + 렌더 캐시).
   final int cacheSize;
@@ -58,7 +61,7 @@ class LabelingDataManager {
     this.cacheSize = 16,
     this.preloadRadius = 1,
   }) : assert(cacheSize > 2 * preloadRadius),
-       loader = loader ?? AdaptiveUnifiedDataLoader(uds: UnifiedDataService(), storage: storageHelper);
+       _injectedLoader = loader;
 
   // ───────────────────────────────────────────
   // 🚚 Load

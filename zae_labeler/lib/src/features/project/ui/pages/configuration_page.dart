@@ -45,12 +45,16 @@ class ConfigureProjectPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmProject(BuildContext context, ProjectEditorState state, ProjectEditorNotifier editor) async {
+  Future<void> _confirmProject(BuildContext context, WidgetRef ref, ProjectEditorState state, ProjectEditorNotifier editor) async {
     final isNewProject = !state.isEditing;
     debugPrint("[confirmProject] mode: ${state.project.mode} is new? : $isNewProject, dataInfos: ${state.project.dataInfos.length}");
 
     final saved = await editor.confirm();
     if (!context.mounted) return;
+    if (saved == null) {
+      GlobalAlertManager.show(context, '⚠️ ${ref.read(projectEditorProvider(project)).error ?? '저장할 수 없습니다.'}', type: AlertType.error);
+      return;
+    }
     GlobalAlertManager.show(context, '${saved.name} project has been ${isNewProject ? "created" : "updated"}.', type: AlertType.success);
     Navigator.pop(context, saved);
   }
@@ -73,7 +77,7 @@ class ConfigureProjectPage extends ConsumerWidget {
                   Expanded(
                     child: TextFormField(
                       initialValue: state.project.name,
-                      decoration: InputDecoration(labelText: context.l10n.project_name),
+                      decoration: InputDecoration(labelText: context.l10n.project_name, errorText: state.error, errorMaxLines: 3),
                       onChanged: (value) => editor.setName(value),
                       validator: (value) => (value == null || value.isEmpty) ? "Please enter a project name" : null,
                     ),
@@ -178,7 +182,7 @@ class ConfigureProjectPage extends ConsumerWidget {
 
               const SizedBox(height: 32),
               ElevatedButton(
-                onPressed: state.isBusy ? null : () => _confirmProject(context, state, editor),
+                onPressed: state.isBusy ? null : () => _confirmProject(context, ref, state, editor),
                 child: Text(state.isBusy ? 'Data 업데이트 중...' : context.l10n.configPage_confirm),
               ),
             ],
