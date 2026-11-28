@@ -58,6 +58,15 @@ class InMemoryStorageHelper implements StorageHelperInterface {
     projects = List<Project>.from(list);
   }
 
+  int saveProjectCalls = 0;
+
+  @override
+  Future<void> saveProject(Project project) async {
+    saveProjectCalls++;
+    final i = projects.indexWhere((p) => p.id == project.id);
+    i < 0 ? projects.add(project) : projects[i] = project;
+  }
+
   @override
   Future<void> deleteProject(String projectId) async {
     projects = projects.where((p) => p.id != projectId).toList();

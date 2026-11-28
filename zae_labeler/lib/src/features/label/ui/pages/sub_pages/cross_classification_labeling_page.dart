@@ -14,6 +14,7 @@ class CrossClassificationLabelingPage extends BaseLabelingPage<CrossClassificati
     if (vm.currentPair == null) {
       return const Center(child: Text('교차 분류에는 데이터가 2개 이상 필요합니다.'));
     }
+    if (vm.isRenderPending) return const Center(child: CircularProgressIndicator());
     return Row(
       children: [
         Expanded(child: ViewerBuilder(data: vm.currentSourceData)),

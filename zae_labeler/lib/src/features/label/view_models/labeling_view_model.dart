@@ -59,13 +59,12 @@ abstract class LabelingViewModel extends ChangeNotifier {
       ..clear()
       ..addAll(await labelUseCases.loadMap(project.id));
     _statuses.clear();
-    for (final d in dataManager.allData) {
-      _statuses[d.dataId] = labelUseCases.statusOf(project, _labels[d.dataId]);
+    for (final info in dataManager.dataInfos) {
+      _statuses[info.id] = labelUseCases.statusOf(project, _labels[info.id]);
     }
 
-    await _prepareCurrentRender();
-
     await postInitialize();
+    await _prepareCurrentRender();
     _initialized = true;
     notify();
   }
@@ -105,7 +104,12 @@ abstract class LabelingViewModel extends ChangeNotifier {
   Future<void> _moveTo(void Function() move, {required bool canMove}) async {
     if (!canMove) return;
     move();
-    // 인덱스 변경을 즉시 반영(뷰어는 렌더 소스가 준비될 때까지 로딩 표시)
+    await refreshCurrentItem();
+  }
+
+  /// 포커스가 바뀐 뒤 호출합니다: 즉시 알림(뷰어는 로딩 표시) → 현재 항목 준비 → [postMove] → 알림.
+  @protected
+  Future<void> refreshCurrentItem() async {
     _renderPending = true;
     notify();
     await _prepareCurrentRender();
@@ -113,19 +117,25 @@ abstract class LabelingViewModel extends ChangeNotifier {
     notify();
   }
 
-  /// 현재 항목의 렌더 소스를 준비하고 주변을 프리로드합니다.
+  /// 현재 항목의 내용을 읽고 렌더 소스를 준비한 뒤, 주변을 백그라운드로 프리로드합니다.
+  /// 여러 항목을 함께 보여주는 모드(교차 분류)는 override합니다.
+  @protected
+  Future<void> prepareCurrentItem() async {
+    await dataManager.ensureRenderableReadyForCurrent();
+    unawaited(dataManager.preloadAround());
+  }
+
   /// 빠르게 연속 이동한 경우 마지막 요청만 pending 플래그를 해제합니다.
   Future<void> _prepareCurrentRender() async {
     final request = ++_renderRequest;
     _renderPending = true;
     try {
-      await dataManager.ensureRenderableReadyForCurrent();
+      await prepareCurrentItem();
     } catch (e) {
       debugPrint('[LabelingViewModel] render prepare failed: $e');
     } finally {
       if (request == _renderRequest) _renderPending = false;
     }
-    unawaited(dataManager.preloadAround());
   }
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -139,16 +149,16 @@ abstract class LabelingViewModel extends ChangeNotifier {
   LabelModel labelOf(String dataId) => _labels[dataId] ?? LabelModelFactory.createNew(mode, dataId: dataId);
 
   /// 현재 포커스 데이터의 라벨. 데이터가 없으면 null.
-  LabelModel? get currentLabel => dataManager.isEmpty ? null : labelOf(currentData.dataId);
+  LabelModel? get currentLabel => dataManager.isEmpty ? null : labelOf(dataManager.currentInfo.id);
 
   /// 현재 포커스 데이터에 UI 입력을 반영합니다. (입력 → [inputMapper] → [commitLabel])
   Future<void> applyInput(dynamic input) async {
     if (dataManager.isEmpty) return;
-    final data = currentData;
-    final dataPath = data.dataInfo.filePath ?? '';
+    final info = dataManager.currentInfo;
+    final dataPath = info.filePath ?? '';
     await commitLabel(
-      data.dataId,
-      inputMapper.map(input, dataId: data.dataId, dataPath: dataPath),
+      info.id,
+      inputMapper.map(input, dataId: info.id, dataPath: dataPath),
       dataPath: dataPath,
     );
   }
@@ -178,13 +188,13 @@ abstract class LabelingViewModel extends ChangeNotifier {
   double get progressRatio => totalCount == 0 ? 0.0 : completeCount / totalCount;
 
   /// 진행 표시줄에 보일 현재 항목 이름.
-  String get currentItemName => dataManager.isEmpty ? '' : currentData.fileName;
+  String get currentItemName => dataManager.isEmpty ? '' : dataManager.currentInfo.fileName;
 
   // ──────────────────────────────────────────────────────────────────────────
   // Data / Render
   // ──────────────────────────────────────────────────────────────────────────
 
-  List<UnifiedData> get unifiedDataList => dataManager.allData;
+  /// 현재 항목의 내용(아직 읽는 중이면 내용 없는 항목).
   UnifiedData get currentData => dataManager.currentData;
   bool get isEmpty => dataManager.isEmpty;
 

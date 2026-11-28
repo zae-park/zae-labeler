@@ -120,6 +120,15 @@ class StorageHelperImpl implements StorageHelperInterface {
     await file.writeAsString(jsonEncode(list), flush: true);
   }
 
+  /// 로컬 레지스트리는 목록 하나로 저장되므로, 해당 항목만 교체해 다시 씁니다.
+  @override
+  Future<void> saveProject(Project project) async {
+    final list = await loadProjectList();
+    final i = list.indexWhere((p) => p.id == project.id);
+    i < 0 ? list.add(project) : list[i] = project;
+    await saveProjectList(list);
+  }
+
   @override
   Future<List<Project>> loadProjectList() async {
     final file = await _docFile(_kRegistryFileName);

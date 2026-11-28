@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:zae_labeler/l10n/app_localizations.dart';
 import 'package:zae_labeler/src/core/di/providers.dart';
+import 'package:zae_labeler/src/core/models/data/data_info.dart';
 import 'package:zae_labeler/src/core/models/label/label_model.dart';
 import 'package:zae_labeler/src/core/models/project/project_model.dart';
 import 'package:zae_labeler/src/features/label/modes/labeling_mode_registry.dart';
@@ -24,7 +25,13 @@ import 'package:zae_labeler/src/features/project/repository/project_repository.d
 
 import '../../support/in_memory_storage_helper.dart';
 
-Project _project(LabelingMode mode) => Project(id: 'p-${mode.name}', name: 'Proj', mode: mode, classes: const ['A', 'B']);
+Project _project(LabelingMode mode) => Project(
+  id: 'p-${mode.name}',
+  name: 'Proj',
+  mode: mode,
+  classes: const ['A', 'B'],
+  dataInfos: const [DataInfo(id: 'd1', fileName: 'missing.png')],
+);
 
 void main() {
   late InMemoryStorageHelper storage;
@@ -114,6 +121,7 @@ void main() {
 
     await tester.pumpAndSettle();
     expect(find.byType(ClassificationLabelingPage), findsOneWidget);
+    expect(find.text('라벨링할 데이터가 없습니다.'), findsNothing);
     expect(find.text('A'), findsOneWidget);
 
     final LabelingViewModel vm = container.read(labelingViewModelProvider(project)).requireValue;
