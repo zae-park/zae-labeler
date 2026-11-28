@@ -36,6 +36,7 @@ dependencies:
   google_sign_in: ^7.1.1
   kakao_flutter_sdk_user: ^1.9.2
   flutter_riverpod: ^3.0.0
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_test:

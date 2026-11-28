@@ -16,6 +16,8 @@ import 'package:zae_labeler/l10n/app_localizations.dart';
 import 'app_router.dart';
 import 'bootstrap.dart';
 import 'src/core/di/providers.dart';
+import 'src/features/auth/providers/auth_provider.dart';
+import 'src/features/locale/providers/locale_provider.dart';
 
 class ZaeLabeler extends StatefulWidget {
   final Locale systemLocale;
@@ -62,7 +64,7 @@ class _App extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // ✅ Auth ↔ Storage 핫스왑 구독 유지
     ref.watch(authStorageSyncProvider);
-    final locale = ref.watch(localeViewModelProvider.select((vm) => vm.currentLocale));
+    final locale = ref.watch(localeProvider);
 
     return MaterialApp(
       title: 'ZAE Labeler',
@@ -70,7 +72,7 @@ class _App extends ConsumerWidget {
 
       // 🌐 로케일
       locale: locale,
-      supportedLocales: const [Locale('en'), Locale('ko')],
+      supportedLocales: [for (final code in supportedLanguageCodes) Locale(code)],
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -79,8 +81,8 @@ class _App extends ConsumerWidget {
       ],
 
       // 🧭 라우팅 (가드 판단 시점의 로그인 상태를 읽음)
-      onGenerateRoute: (settings) => AppRouter.onGenerateRoute(settings, isSignedIn: ref.read(authViewModelProvider).isSignedIn),
-      onUnknownRoute: (settings) => AppRouter.onGenerateRoute(settings, isSignedIn: ref.read(authViewModelProvider).isSignedIn),
+      onGenerateRoute: (settings) => AppRouter.onGenerateRoute(settings, isSignedIn: ref.read(authProvider).isSignedIn),
+      onUnknownRoute: (settings) => AppRouter.onGenerateRoute(settings, isSignedIn: ref.read(authProvider).isSignedIn),
     );
   }
 }
