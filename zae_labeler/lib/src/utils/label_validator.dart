@@ -12,6 +12,9 @@ class LabelValidator {
       return project.classes.contains(lm.label);
     } else if (lm is MultiClassificationLabelModel) {
       return lm.label!.isNotEmpty && lm.label!.every(project.classes.contains);
+    } else if (lm is CrossClassificationLabelModel) {
+      final relation = lm.label?.relation ?? '';
+      return relation.isNotEmpty && project.classes.contains(relation);
     } else if (lm is SingleClassSegmentationLabelModel) {
       // 🔧 구현 예정 (현재는 기본값 true)
       return lm.isLabeled;

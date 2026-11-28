@@ -133,6 +133,11 @@ class CrossDataPair {
 
   const CrossDataPair({required this.sourceId, required this.targetId, this.relation = ''});
 
+  /// 쌍 라벨을 저장할 때 쓰는 dataId (`"{sourceId}_{targetId}"`).
+  static String idFor(String sourceId, String targetId) => '${sourceId}_$targetId';
+
+  String get pairId => idFor(sourceId, targetId);
+
   CrossDataPair copyWith({String? sourceId, String? targetId, String? relation}) => CrossDataPair(
         sourceId: sourceId ?? this.sourceId,
         targetId: targetId ?? this.targetId,

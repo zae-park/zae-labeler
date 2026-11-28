@@ -1,6 +1,7 @@
 // lib/src/features/label/view_models/classification_labeling_view_model.dart
 import 'package:zae_labeler/src/core/models/data/unified_data.dart';
 import 'package:zae_labeler/src/core/models/label/label_model.dart';
+import 'package:zae_labeler/src/utils/cross_pairing.dart';
 
 import 'labeling_view_model.dart';
 
@@ -37,7 +38,7 @@ class ClassificationLabelingViewModel extends LabelingViewModel {
 
 /// 교차(쌍) 분류 라벨링 VM.
 ///
-/// 데이터 n개로 만든 nC2 쌍을 순서대로 탐색하며, 각 쌍의 relation을 `"{source}_{target}"` dataId로 저장합니다.
+/// 데이터 n개로 만든 nC2 쌍을 순서대로 탐색하며, 각 쌍의 relation을 [CrossDataPair.pairId]로 저장합니다.
 /// relation은 라벨 맵(단일 소스)에서 바로 읽으므로 별도 복제 상태를 두지 않습니다.
 class CrossClassificationLabelingViewModel extends LabelingViewModel {
   CrossClassificationLabelingViewModel({required super.project, required super.storageHelper, required super.labelUseCases, super.dataManager});
@@ -45,15 +46,9 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
   List<CrossDataPair> _pairs = const [];
   int _pairIndex = 0;
 
-  static String pairIdOf(CrossDataPair p) => '${p.sourceId}_${p.targetId}';
-
   @override
   Future<void> postInitialize() async {
-    final ids = dataManager.allData.map((e) => e.dataId).toList(growable: false);
-    _pairs = [
-      for (int i = 0; i < ids.length - 1; i++)
-        for (int j = i + 1; j < ids.length; j++) CrossDataPair(sourceId: ids[i], targetId: ids[j]),
-    ];
+    _pairs = generateCrossPairs([for (final d in dataManager.allData) d.dataId]);
     _pairIndex = 0;
   }
 
@@ -62,7 +57,7 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
 
   /// 저장된 relation(없으면 빈 문자열).
   String relationOf(CrossDataPair pair) {
-    final saved = savedLabelOf(pairIdOf(pair));
+    final saved = savedLabelOf(pair.pairId);
     final v = saved?.label;
     return v is CrossDataPair ? v.relation : '';
   }
@@ -80,7 +75,7 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
   Future<void> setRelation(String relation) async {
     final p = currentPair;
     if (p == null) return;
-    final id = pairIdOf(p);
+    final id = p.pairId;
     final model = inputMapper.map(
       p.copyWith(relation: relation),
       dataId: id,
@@ -127,11 +122,15 @@ class CrossClassificationLabelingViewModel extends LabelingViewModel {
   @override
   int get currentIndex => _pairIndex;
 
-  @override
-  int get completeCount => _pairs.where((p) => relationOf(p).isNotEmpty).length;
+  /// 목록 화면 요약(`LabelUseCases.computeSummaryFor`)과 같은 규칙: 프로젝트 클래스에 있는 relation이면 완료,
+  /// 클래스 목록에서 빠진 relation이면 경고.
+  LabelStatus _pairStatus(CrossDataPair p) => labelUseCases.statusOf(project, savedLabelOf(p.pairId));
 
   @override
-  int get warningCount => 0;
+  int get completeCount => _pairs.where((p) => _pairStatus(p) == LabelStatus.complete).length;
+
+  @override
+  int get warningCount => _pairs.where((p) => _pairStatus(p) == LabelStatus.warning).length;
 
   @override
   String get currentItemName {
