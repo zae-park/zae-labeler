@@ -7,7 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:zae_labeler/common/common_widgets.dart';
 import 'package:zae_labeler/common/i18n.dart';
 
-import '../../core/di/providers.dart';
+import '../../features/auth/providers/auth_provider.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -23,21 +23,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
   @override
   void initState() {
     super.initState();
-    _applySavedLocale();
 
     // 시작하기 버튼은 3초 후 표시
     Timer(const Duration(seconds: 3), () {
       if (mounted) {
         setState(() => _showStartButton = true);
       }
-    });
-  }
-
-  void _applySavedLocale() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final locale = ref.read(userPreferenceServiceProvider).locale;
-      ref.read(localeViewModelProvider).changeLocale(locale.languageCode);
     });
   }
 
@@ -71,24 +62,22 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
   }
 
   Future<void> _signInWithGoogle(BuildContext context) async {
-    final authVM = ref.read(authViewModelProvider);
-    await authVM.signInWithGoogle();
-    if (authVM.isSignedIn && mounted) {
+    await ref.read(authProvider.notifier).signInWithGoogle();
+    if (ref.read(authProvider).isSignedIn && mounted) {
       Navigator.pushReplacementNamed(context, '/project_list');
     }
   }
 
   Future<void> _signInWithGitHub(BuildContext context) async {
-    final authVM = ref.read(authViewModelProvider);
-    await authVM.signInWithGitHub();
-    if (authVM.isSignedIn && mounted) {
+    await ref.read(authProvider.notifier).signInWithGitHub();
+    if (ref.read(authProvider).isSignedIn && mounted) {
       Navigator.pushReplacementNamed(context, '/project_list');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final authVM = ref.watch(authViewModelProvider);
+    final authVM = ref.watch(authProvider);
 
     return GestureDetector(
       onTap: _handleUserInteraction,

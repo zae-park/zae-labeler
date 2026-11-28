@@ -8,23 +8,23 @@
 //   테스트에서는 `storageHelperProvider`만 override하면 하위 그래프가 모두 따라옵니다.
 // - 스토리지 핫스왑은 `SwitchableStorageHelper`가 내부 delegate를 바꾸는 방식이므로
 //   Repository/UseCase 인스턴스는 재생성되지 않아도 항상 현재 스토리지를 사용합니다.
+import 'dart:ui' show Locale;
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../features/auth/view_models/auth_view_models.dart';
 import '../../features/label/repository/label_repository.dart';
 import '../../features/label/use_cases/label_use_cases.dart';
-import '../../features/locale/view_models/locale_view_model.dart';
 import '../../features/project/logic/project_validator.dart';
 import '../../features/project/repository/project_repository.dart';
 import '../../features/project/use_cases/edit_project_use_case.dart';
 import '../../features/project/use_cases/project_use_cases.dart';
-import '../../features/project/view_models/project_list_view_model.dart';
 import '../../platform_helpers/pickers/data_info_picker.dart';
 import '../../platform_helpers/share/interface_share_helper.dart';
 import '../../platform_helpers/storage/interface_storage_helper.dart';
 import '../../platform_helpers/storage/switchable_storage_helper.dart';
+import '../services/locale_service.dart';
 import '../services/user_preference_service.dart';
 import '../use_cases/app_use_cases.dart';
 
@@ -39,7 +39,10 @@ final firebaseAuthProvider = Provider<FirebaseAuth>((ref) => _mustOverride('fire
 /// 로컬/클라우드 간 핫스왑 가능한 스토리지. 로그인 상태 동기화에서만 직접 사용합니다.
 final switchableStorageProvider = Provider<SwitchableStorageHelper>((ref) => _mustOverride('switchableStorageProvider'));
 
-final userPreferenceServiceProvider = Provider<UserPreferenceService>((ref) => _mustOverride('userPreferenceServiceProvider'));
+final sharedPreferencesProvider = Provider<SharedPreferences>((ref) => _mustOverride('sharedPreferencesProvider'));
+
+/// 기기(시스템) 로케일. 저장된 언어가 없을 때 기본값으로 사용합니다.
+final systemLocaleProvider = Provider<Locale>((ref) => const Locale('en'));
 
 final shareHelperProvider = Provider<ShareHelperInterface>((ref) => _mustOverride('shareHelperProvider'));
 
@@ -68,39 +71,41 @@ final appUseCasesProvider = Provider<AppUseCases>(
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Platform services
+// Preferences / Platform services
 // ─────────────────────────────────────────────────────────────────────────────
+
+final userPreferenceServiceProvider = Provider<UserPreferenceService>((ref) => UserPreferenceService(ref.watch(sharedPreferencesProvider)));
+
+final localeServiceProvider = Provider<LocaleService>((ref) => LocaleService(ref.watch(sharedPreferencesProvider)));
 
 /// 플랫폼 인지형 Picker (Web은 업로드 후 URL, Native는 절대경로)
 final dataInfoPickerProvider = Provider<DataInfoPicker>((ref) => createDataInfoPicker(auth: ref.watch(firebaseAuthProvider)));
 
+/// 스토리지가 로컬↔클라우드로 바뀔 때마다 1씩 증가합니다.
+/// 저장소 내용을 캐시하는 provider(프로젝트 목록, 진행률 요약)는 이것을 watch해 자동으로 다시 읽습니다.
+class StorageRevision extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void bump() => state++;
+}
+
+final storageRevisionProvider = NotifierProvider<StorageRevision, int>(StorageRevision.new);
+
 /// 로그인 상태 변화에 맞춰 스토리지를 로컬/클라우드로 전환합니다.
 /// 루트 위젯에서 watch하면 앱이 살아있는 동안 구독이 유지됩니다.
-/// (`authStateChanges()`는 구독 즉시 현재 상태를 한 번 방출하므로 초기 동기화도 함께 처리됩니다.)
+/// - `authStateChanges()`는 구독 즉시 현재 상태를 한 번 방출하므로 초기 동기화도 함께 처리됩니다.
+/// - 실제로 모드가 바뀐 경우에만 전환하고 [storageRevisionProvider]를 올립니다(시작 시 불필요한 재로딩 방지).
 final authStorageSyncProvider = Provider<void>((ref) {
   final auth = ref.watch(firebaseAuthProvider);
   final storage = ref.watch(switchableStorageProvider);
+  var isCloud = false; // bootstrap은 항상 로컬로 시작
   final sub = auth.authStateChanges().listen((user) {
-    if (user != null) {
-      storage.switchToCloud();
-    } else {
-      storage.switchToLocal();
-    }
+    final wantCloud = user != null;
+    if (wantCloud == isCloud) return;
+    isCloud = wantCloud;
+    wantCloud ? storage.switchToCloud() : storage.switchToLocal();
+    ref.read(storageRevisionProvider.notifier).bump();
   });
   ref.onDispose(sub.cancel);
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// App-level ViewModels
-// TODO(riverpod): ChangeNotifier 기반 VM을 Notifier/AsyncNotifier로 단계적 전환
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// 부트스트랩에서 비동기로 복원한 인스턴스를 override로 주입합니다.
-final localeViewModelProvider = ChangeNotifierProvider<LocaleViewModel>((ref) => _mustOverride('localeViewModelProvider'));
-
-final authViewModelProvider = ChangeNotifierProvider<AuthViewModel>((ref) => AuthViewModel.withDefaultUseCases(ref.watch(firebaseAuthProvider)));
-
-final projectListViewModelProvider = ChangeNotifierProvider<ProjectListViewModel>(
-  (ref) =>
-      ProjectListViewModel(appUseCases: ref.watch(appUseCasesProvider), shareHelper: ref.watch(shareHelperProvider), picker: ref.watch(dataInfoPickerProvider)),
-);

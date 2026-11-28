@@ -12,7 +12,6 @@ import 'package:flutter/material.dart';
 import 'env.dart';
 
 import 'src/core/models/project/project_model.dart';
-import 'src/features/project/view_models/project_view_model.dart';
 
 import 'src/views/pages/not_found_page.dart';
 import 'src/views/pages/splash_page.dart';
@@ -50,14 +49,12 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const ProjectListPage(), settings: settings);
 
       case Routes.configuration:
+        // arguments: 편집할 Project (없으면 새 프로젝트)
         final args = settings.arguments;
-        if (args is ProjectViewModel) {
-          return MaterialPageRoute(
-            builder: (_) => ConfigureProjectPage(viewModel: args),
-            settings: settings,
-          );
-        }
-        return MaterialPageRoute(builder: (_) => const NotFoundPage(), settings: settings);
+        return MaterialPageRoute(
+          builder: (_) => ConfigureProjectPage(project: args is Project ? args : null),
+          settings: settings,
+        );
 
       case Routes.labeling:
         final args = settings.arguments;

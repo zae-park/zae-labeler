@@ -1,12 +1,17 @@
 // test/support/in_memory_storage_helper.dart
 import 'package:zae_labeler/src/core/models/data/data_info.dart';
 import 'package:zae_labeler/src/core/models/label/label_model.dart';
+import 'package:zae_labeler/src/core/models/project/project_model.dart';
 import 'package:zae_labeler/src/platform_helpers/storage/interface_storage_helper.dart';
 
-/// 라벨 저장/조회만 메모리로 구현한 테스트용 스토리지.
+/// 프로젝트 목록과 라벨 저장/조회를 메모리로 구현한 테스트용 스토리지.
 /// 호출 횟수를 기록해 "저장 1회", "일괄 로드 1회" 같은 계약을 검증할 수 있습니다.
 class InMemoryStorageHelper implements StorageHelperInterface {
   final Map<String, Map<String, LabelModel>> _labels = {};
+  List<Project> projects = [];
+
+  int saveProjectListCalls = 0;
+  int loadProjectListCalls = 0;
 
   int saveLabelCalls = 0;
   int loadAllCalls = 0;
@@ -40,6 +45,30 @@ class InMemoryStorageHelper implements StorageHelperInterface {
     loadAllCalls++;
     return List<LabelModel>.from(_labels[projectId]?.values ?? const <LabelModel>[]);
   }
+
+  @override
+  Future<List<Project>> loadProjectList() async {
+    loadProjectListCalls++;
+    return List<Project>.from(projects);
+  }
+
+  @override
+  Future<void> saveProjectList(List<Project> list) async {
+    saveProjectListCalls++;
+    projects = List<Project>.from(list);
+  }
+
+  @override
+  Future<void> deleteProject(String projectId) async {
+    projects = projects.where((p) => p.id != projectId).toList();
+    _labels.remove(projectId);
+  }
+
+  @override
+  Future<void> deleteProjectLabels(String projectId) async => _labels.remove(projectId);
+
+  @override
+  Future<String> downloadProjectConfig(Project project) async => 'config://${project.id}';
 
   @override
   Future<String?> ensureLocalObjectUrl(DataInfo info) async => null;
